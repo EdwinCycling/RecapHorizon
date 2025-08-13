@@ -1,0 +1,8 @@
+{
+  "name": "RecapSmart",
+  "description": "An application to record, upload, transcribe, and analyze your sessions with AI.",
+  "requestFramePermissions": [
+    "microphone",
+    "display-capture"
+  ]
+}

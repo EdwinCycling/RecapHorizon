@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { RecordingStatus, type SpeechRecognition } from './types';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
+// Mermaid is ESM-only; import dynamically to avoid type issues
+let mermaid: any;
 import PptxGenJS from 'pptxgenjs';
 import { 
   signInWithEmailAndPassword, 
@@ -23,7 +25,8 @@ import {
   orderBy,
   addDoc,
   deleteDoc,
-  deleteField
+  deleteField,
+  increment
 } from 'firebase/firestore';
 import { auth, db } from './src/firebase';
 
@@ -837,7 +840,7 @@ const PowerPointOptionsModal: React.FC<{
 
 
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap';
 type AnalysisType = ViewType | 'presentation';
 type ChatRole = 'user' | 'model';
 interface ChatMessage {
@@ -956,6 +959,7 @@ const translations = {
         noContent: "Nog geen inhoud gegenereerd.",
         chatWithTranscript: "Chat met Transcript",
         readAnswers: "Lees antwoorden voor",
+        mindmap: "Mindmap",
         askAQuestion: "Stel een vraag over de transcriptie...",
         generatingPresentation: "Presentatie wordt gemaakt...",
         generatingImageForSlide: "Afbeelding genereren voor slide: \"{title}\"...",
@@ -994,6 +998,68 @@ const translations = {
         templateUploaded: "Sjabloon: {name}",
         clearTemplate: "Wis sjabloon",
         pptTemplateNote: "Opmerking: AI-afbeeldingen zijn uitgeschakeld bij gebruik van een aangepast sjabloon.",
+        listenAlongTitle: "Luister mee met podcasts en YouTube",
+        listenAlongBody: "Gebruik RecapSmart om mee te luisteren met podcasts en YouTube-video's. Handig voor extra uitleg en om meer uit een uitzending te halen: zet systeemgeluid aan, speel de video of podcast af en laat RecapSmart automatisch transcriberen en samenvatten.",
+        landingHeroSubtitle: "Transformeer je meetings, webinars en gesprekken in professionele documenten, presentaties en inzichten met AI",
+        waitlistTitle: "📋 Toegang op Uitnodiging",
+        waitlistLead: "RecapSmart is momenteel alleen beschikbaar voor uitgenodigde gebruikers. Meld je aan voor de wachtlijst!",
+        emailPlaceholder: "jouw@email.nl",
+        waitlistSignUp: "Aanmelden",
+        waitlistMoreInfo: "Meer informatie over de wachtlijst",
+        haveAccessLead: "Heb je al toegang? Log dan in om te beginnen",
+        loginNow: "Inloggen",
+        featuresTitle: "Perfect Voor:",
+        featureRecordingTitle: "🎙️ Slimme Opname",
+        featureRecordingDesc: "Neem meetings, webinars en gesprekken op met je microfoon en systeem audio. Automatische transcriptie in Nederlands of Engels.",
+        featureAIAnalysisTitle: "📝 AI Analyse",
+        featureAIAnalysisDesc: "Genereer samenvattingen, FAQ's, leerpunten en vervolgvragen automatisch met Google Gemini AI.",
+        featurePresentationsTitle: "📊 Presentaties",
+        featurePresentationsDesc: "Maak professionele PowerPoint presentaties met AI gegenereerde content en afbeeldingen.",
+        featureChatTitle: "💬 Chat & Vragen",
+        featureChatDesc: "Stel vragen over je transcriptie en krijg gedetailleerde antwoorden. Ondersteuning voor voice input.",
+        featurePodcastTitle: "🎧 Podcast Scripts",
+        featurePodcastDesc: "Genereer podcast scripts en content op basis van je meetings. Perfect voor content creators.",
+        featurePrivacyTitle: "🔒 Privacy & Anonimisatie",
+        featurePrivacyDesc: "Automatische anonimisatie van namen en gevoelige informatie. Instelbare regels voor jouw organisatie.",
+        privacyTitle: "🔒 Volledige Privacy Garantie",
+        privacyLead: "Belangrijk: Je sessies worden NIET opgeslagen in onze database. Alle data blijft volledig lokaal op jouw apparaat.",
+        privacyItemRecordings: "🎙️ Opnames blijven lokaal",
+        privacyItemTranscripts: "📝 Transcripties zijn privé",
+        privacyItemAIOutput: "🤖 AI output alleen voor jou",
+        privacyItemApiKeyLocal: "🔑 API key lokaal opgeslagen",
+        privacyItemNoServers: "🌐 Geen data naar onze servers",
+        privacyItemWeStoreNothing: "✅ Wij bewaren helemaal niets",
+        privacyFootnote: "Jouw privacy staat voorop. We kunnen jouw sessies niet zien, opslaan of gebruiken.",
+        useCasesTitle: "💼 Perfect Voor:",
+        useCasesMgmtTitle: "Management & Leiderschap",
+        useCasesMgmt1: "Projectmanagers en teamleiders",
+        useCasesMgmt2: "Product owners en productmanagers",
+        useCasesMgmt3: "Executives en CEO's (voor strategische meetings en rapportages)",
+        useCasesMgmt4: "Salesmanagers en accountmanagers (voor klantgesprekken en pitches)",
+        useCasesAdviceTitle: "Advies & Consultatie",
+        useCasesAdvice1: "Consultants en adviseurs",
+        useCasesAdvice2: "Support consultants",
+        useCasesAdvice3: "HR-professionals en recruiters (voor interviews en onboarding)",
+        useCasesAdvice4: "Financiële adviseurs en auditors (voor compliance en rapporten)",
+        useCasesCreationTitle: "Creatie & Communicatie",
+        useCasesCreation1: "Content creators en journalisten",
+        useCasesCreation2: "Marketeers en PR-specialisten (voor brainstorms en campagnes)",
+        useCasesCreation3: "Webinar hosts en trainers",
+        useCasesCreation4: "Podcasters en vloggers (voor opnames en editten)",
+        useCasesResearchTitle: "Onderzoek & Analyse",
+        useCasesResearch1: "Onderzoekers en academici",
+        useCasesResearch2: "Legal professionals",
+        useCasesResearch3: "Accountants en boekhouders",
+        useCasesResearch4: "Data-analisten en onderzoekers in business intelligence (voor data-sessies en inzichten)",
+        howItWorksTitle: "🔄 Hoe Het Werkt:",
+        hiwStep1Title: "Opnemen",
+        hiwStep1Desc: "Start een opname van je meeting of upload een transcript",
+        hiwStep2Title: "AI Verwerking",
+        hiwStep2Desc: "AI analyseert en genereert content op basis van je input",
+        hiwStep3Title: "Resultaat",
+        hiwStep3Desc: "Download je documenten, presentaties en inzichten",
+        ctaTitle: "🚀 Klaar om te Starten?",
+        ctaLead: "Log in en ontdek hoe RecapSmart je workflow kan transformeren. Bespaar uren aan handmatige notities en documentatie.",
         listening: "Luisteren...",
         speaking: "Spreek je vraag in...",
         startListening: "Start spraakherkenning",
@@ -1071,6 +1137,7 @@ const translations = {
         noContent: "No content generated yet.",
         chatWithTranscript: "Chat with Transcript",
         readAnswers: "Read answers aloud",
+        mindmap: "Mindmap",
         askAQuestion: "Ask a question about the transcript...",
         generatingPresentation: "Generating presentation...",
         generatingImageForSlide: "Generating image for slide: \"{title}\"...",
@@ -1109,6 +1176,68 @@ const translations = {
         templateUploaded: "Template: {name}",
         clearTemplate: "Clear template",
         pptTemplateNote: "Note: AI images are disabled when using a custom template.",
+        listenAlongTitle: "Listen along with podcasts and YouTube",
+        listenAlongBody: "Use RecapSmart to listen along to podcasts and YouTube videos. Great for extra explanations and getting more out of any show: enable system audio, play the video or podcast, and let RecapSmart transcribe and summarize automatically.",
+        landingHeroSubtitle: "Transform your meetings, webinars and conversations into professional documents, presentations and insights with AI",
+        waitlistTitle: "📋 Access by Invitation",
+        waitlistLead: "RecapSmart is currently available by invitation only. Join the waitlist!",
+        emailPlaceholder: "your@email.com",
+        waitlistSignUp: "Join",
+        waitlistMoreInfo: "More about the waitlist",
+        haveAccessLead: "Already have access? Log in to get started",
+        loginNow: "Log in",
+        featuresTitle: "Perfect For:",
+        featureRecordingTitle: "🎙️ Smart Recording",
+        featureRecordingDesc: "Record meetings, webinars and conversations with your microphone and system audio. Automatic transcription in Dutch or English.",
+        featureAIAnalysisTitle: "📝 AI Analysis",
+        featureAIAnalysisDesc: "Generate summaries, FAQs, key learnings and follow-up questions automatically with Google Gemini AI.",
+        featurePresentationsTitle: "📊 Presentations",
+        featurePresentationsDesc: "Create professional PowerPoint presentations with AI-generated content and images.",
+        featureChatTitle: "💬 Chat & Questions",
+        featureChatDesc: "Ask questions about your transcript and get detailed answers. Voice input supported.",
+        featurePodcastTitle: "🎧 Podcast Scripts",
+        featurePodcastDesc: "Generate podcast scripts and content from your meetings. Perfect for content creators.",
+        featurePrivacyTitle: "🔒 Privacy & Anonymization",
+        featurePrivacyDesc: "Automatic anonymization of names and sensitive information. Configurable rules for your organization.",
+        privacyTitle: "🔒 Full Privacy Guarantee",
+        privacyLead: "Important: Your sessions are NOT stored in our database. All data stays fully local on your device.",
+        privacyItemRecordings: "🎙️ Recordings stay local",
+        privacyItemTranscripts: "📝 Transcripts are private",
+        privacyItemAIOutput: "🤖 AI output only for you",
+        privacyItemApiKeyLocal: "🔑 API key stored locally",
+        privacyItemNoServers: "🌐 No data to our servers",
+        privacyItemWeStoreNothing: "✅ We store nothing at all",
+        privacyFootnote: "Your privacy comes first. We cannot see, store or use your sessions.",
+        useCasesTitle: "💼 Perfect For:",
+        useCasesMgmtTitle: "Management & Leadership",
+        useCasesMgmt1: "Project managers and team leads",
+        useCasesMgmt2: "Product owners and product managers",
+        useCasesMgmt3: "Executives and CEOs (for strategic meetings and reporting)",
+        useCasesMgmt4: "Sales managers and account managers (for customer talks and pitches)",
+        useCasesAdviceTitle: "Advisory & Consulting",
+        useCasesAdvice1: "Consultants and advisors",
+        useCasesAdvice2: "Support consultants",
+        useCasesAdvice3: "HR professionals and recruiters (for interviews and onboarding)",
+        useCasesAdvice4: "Financial advisors and auditors (for compliance and reports)",
+        useCasesCreationTitle: "Creation & Communication",
+        useCasesCreation1: "Content creators and journalists",
+        useCasesCreation2: "Marketers and PR specialists (for brainstorms and campaigns)",
+        useCasesCreation3: "Webinar hosts and trainers",
+        useCasesCreation4: "Podcasters and vloggers (for recording and editing)",
+        useCasesResearchTitle: "Research & Analysis",
+        useCasesResearch1: "Researchers and academics",
+        useCasesResearch2: "Legal professionals",
+        useCasesResearch3: "Accountants and bookkeepers",
+        useCasesResearch4: "Data analysts and BI researchers (for data sessions and insights)",
+        howItWorksTitle: "🔄 How It Works:",
+        hiwStep1Title: "Record",
+        hiwStep1Desc: "Start a recording of your meeting or upload a transcript",
+        hiwStep2Title: "AI Processing",
+        hiwStep2Desc: "AI analyzes and generates content based on your input",
+        hiwStep3Title: "Result",
+        hiwStep3Desc: "Download your documents, presentations and insights",
+        ctaTitle: "🚀 Ready to Start?",
+        ctaLead: "Log in and discover how RecapSmart can transform your workflow. Save hours on manual notes and documentation.",
         listening: "Listening...",
         speaking: "Speak your question...",
         startListening: "Start speech recognition",
@@ -1223,6 +1352,12 @@ export default function App() {
   const [sentimentAnalysisResult, setSentimentAnalysisResult] = useState<SentimentAnalysisResult | null>(null);
   const [isAnalyzingSentiment, setIsAnalyzingSentiment] = useState<boolean>(false);
   const [presentationReport, setPresentationReport] = useState<string | null>(null);
+  const [mindmapMermaid, setMindmapMermaid] = useState<string>('');
+  const [mindmapSvg, setMindmapSvg] = useState<string>('');
+
+  useEffect(() => {
+    // Defer mermaid import until used to avoid type resolution issues
+  }, [theme]);
   
   // PPT Template state
   const [pptTemplate, setPptTemplate] = useState<File | null>(null);
@@ -1249,6 +1384,7 @@ export default function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showSystemAudioHelp, setShowSystemAudioHelp] = useState(false);
 
   // Auth state
   const [authState, setAuthState] = useState<AuthState>({
@@ -1450,8 +1586,9 @@ export default function App() {
                         
                         // Load users if admin
                         if (userData.isAdmin) {
-                            await loadUsers();
-                            await loadWaitlist();
+                            // Bypass admin guard immediately after auth state change to avoid stale state race
+                            await loadUsers({ bypassAdminCheck: true });
+                            await loadWaitlist({ bypassAdminCheck: true });
                         }
                     }
                 } catch (error) {
@@ -2209,6 +2346,21 @@ export default function App() {
 
             setTranscript(text);
             setStatus(RecordingStatus.FINISHED);
+            // Increment user session count on successful finish
+            try {
+              if (authState.user) {
+                await updateDoc(doc(db, 'users', authState.user.uid), {
+                  sessionCount: increment(1),
+                  updatedAt: serverTimestamp()
+                });
+                setAuthState(prev => prev.user ? ({ ...prev, user: { ...prev.user, sessionCount: (prev.user.sessionCount || 0) + 1 } }) : prev);
+                if (authState.isAdmin) {
+                  loadUsers({ bypassAdminCheck: true });
+                }
+              }
+            } catch (e) {
+              console.warn('Kon sessionCount niet updaten:', e);
+            }
             setActiveView('transcript');
             setLoadingText('');
             
@@ -2670,7 +2822,8 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
             updatedAt: serverTimestamp()
           });
           
-          setApiKey('');
+          // Houd key in-memory voor huidige sessie (geen localStorage)
+          setApiKey(newApiKey);
           setHasDatabaseApiKey(true);
           localStorage.removeItem('recapsmart_api_key');
           displayToast('API key veilig opgeslagen in database!', 'success');
@@ -3012,9 +3165,10 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
     }
   };
 
-  const loadUsers = async () => {
+  const loadUsers = async (options?: { bypassAdminCheck?: boolean }) => {
+    const bypass = options?.bypassAdminCheck === true;
     // Controleer of gebruiker admin is
-    if (!authState.user || !authState.isAdmin) {
+    if (!bypass && (!authState.user || !authState.isAdmin)) {
       console.error('Unauthorized access to loadUsers');
       displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
       return;
@@ -3190,9 +3344,10 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
     }
   };
 
-  const loadWaitlist = async () => {
+  const loadWaitlist = async (options?: { bypassAdminCheck?: boolean }) => {
+    const bypass = options?.bypassAdminCheck === true;
     // Controleer of gebruiker admin is voor wachtlijst beheer
-    if (!authState.user || !authState.isAdmin) {
+    if (!bypass && (!authState.user || !authState.isAdmin)) {
       console.error('Unauthorized access to loadWaitlist');
       return;
     }
@@ -3507,10 +3662,10 @@ ${transcript}
                 if (slide.imagePrompt) {
                     try {
                         setLoadingText(t('generatingImageForSlide', { title: slide.title }));
-                        const imageResponse = await ai.models.generateImages({ model: 'imagen-3.0-generate-002', prompt: `${slide.imagePrompt}, ${presentationData.imageStylePrompt}`, config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '16:9' } });
-                        if (imageResponse.generatedImages?.length > 0) {
-                            (slide as any).base64Image = imageResponse.generatedImages[0].image.imageBytes;
-                        }
+                        const imageResponse: any = await ai.models.generateImages({ model: 'imagen-3.0-generate-002', prompt: `${slide.imagePrompt}, ${presentationData.imageStylePrompt}`, config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '16:9' } });
+                        const candidate = imageResponse?.generatedImages?.[0] || imageResponse?.images?.[0] || null;
+                        const base64 = candidate?.image?.imageBytes || candidate?.inlineData?.data || candidate?.bytes || null;
+                        if (base64) (slide as any).base64Image = base64;
                     } catch (imgErr) { console.warn(`Could not generate image for slide "${slide.title}":`, imgErr); }
                 }
             }
@@ -3555,8 +3710,25 @@ ${transcript}
       const textPart = { text: transcribePrompt };
       
       const transcribeResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: { parts: [textPart, audioPart] } });
-      setTranscript(transcribeResponse.text);
-      setStatus(RecordingStatus.FINISHED);
+        setTranscript(transcribeResponse.text);
+        setStatus(RecordingStatus.FINISHED);
+        // Increment user session count on successful finish
+        try {
+          if (authState.user) {
+            await updateDoc(doc(db, 'users', authState.user.uid), {
+              sessionCount: increment(1),
+              updatedAt: serverTimestamp()
+            });
+            // Optimistic local update
+            setAuthState(prev => prev.user ? ({ ...prev, user: { ...prev.user, sessionCount: (prev.user.sessionCount || 0) + 1 } }) : prev);
+            // Refresh users list if admin panel is open
+            if (authState.isAdmin) {
+              loadUsers({ bypassAdminCheck: true });
+            }
+          }
+        } catch (e) {
+          console.warn('Kon sessionCount niet updaten:', e);
+        }
       setActiveView('transcript');
 
     } catch (err: any) {
@@ -3750,6 +3922,52 @@ ${transcript}
   };
 
   const renderAnalysisView = () => {
+    const renderMindmapView = () => {
+      if (!transcript.trim()) return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
+      if (!mindmapMermaid) {
+        return (
+          <div className="flex items-center justify-center p-8">
+            <button
+              onClick={async () => {
+                try {
+                  setLoadingText(t('generating', { type: 'Mindmap' }));
+                  const ai = new GoogleGenAI({ apiKey: apiKey });
+                  const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
+                  const prompt = `${sys}\n\nTranscript:\n${transcript.slice(0, 12000)}`;
+                  const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+                  const raw = res.text || '';
+                  const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
+                  if (!/^mindmap\b/.test(cleaned)) throw new Error('Invalid mindmap output');
+                  setMindmapMermaid(cleaned);
+                  try {
+                    const mod = await import('mermaid');
+                    const m: any = (mod as any).default || mod;
+                    const { svg } = await m.render('mindmap-svg', cleaned);
+                    setMindmapSvg(svg);
+                  } catch (rErr) { console.warn('Mermaid render failed', rErr); }
+                } catch (e: any) {
+                  setError(`${t('generationFailed', { type: 'Mindmap' })}: ${e.message || t('unknownError')}`);
+                } finally {
+                  setLoadingText('');
+                }
+              }}
+              className="px-6 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+            >
+              {t('mindmap')}
+            </button>
+          </div>
+        );
+      }
+      return (
+        <div className="p-4">
+          {mindmapSvg ? (
+            <div className="overflow-auto max-h-[70vh]" dangerouslySetInnerHTML={{ __html: mindmapSvg }} />
+          ) : (
+            <pre className="text-sm whitespace-pre-wrap bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 overflow-auto max-h-[70vh]">{mindmapMermaid}</pre>
+          )}
+        </div>
+      );
+    };
     const analysisActions: any[] = [
         { id: 'transcript', type: 'view', icon: TranscriptIcon, label: () => isAnonymized ? t('transcriptAnonymized') : t('transcript') },
         { id: 'anonymize', type: 'action', icon: AnonymizeIcon, label: () => t('anonymize'), onClick: handleAnonymizeTranscript, disabled: () => isProcessing || isAnonymized || !transcript.trim() },
@@ -3761,10 +3979,11 @@ ${transcript}
         { id: 'followUp', type: 'view', icon: FollowUpIcon, label: () => t('followUp') },
         { id: 'chat', type: 'view', icon: ChatIcon, label: () => t('chat') },
         { id: 'podcast', type: 'view', icon: PodcastIcon, label: () => t('podcast') },
-        { id: 'presentation', type: 'action', icon: PresentationIcon, label: () => t('exportPPT'), onClick: () => setShowPptOptions(true), disabled: () => isProcessing || !transcript.trim() }
+        { id: 'presentation', type: 'action', icon: PresentationIcon, label: () => t('exportPPT'), onClick: () => setShowPptOptions(true), disabled: () => isProcessing || !transcript.trim() },
+        { id: 'mindmap', type: 'view', icon: SparklesIcon, label: () => t('mindmap') }
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, podcast: podcastScript, chat: '', keyword: '', sentiment: '' };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, podcast: podcastScript, chat: '', keyword: '', sentiment: '', mindmap: '' };
 
     const handleTabClick = (view: ViewType) => {
         if (['summary', 'faq', 'learning', 'followUp'].includes(view)) handleGenerateAnalysis(view);
@@ -3772,6 +3991,30 @@ ${transcript}
         else if (view === 'podcast') handleGeneratePodcast();
         else if (view === 'sentiment') handleAnalyzeSentiment();
         else setActiveView(view);
+        if (view === 'mindmap' && !mindmapMermaid) {
+            // auto-generate on opening tab
+            (async () => {
+              try {
+                setLoadingText(t('generating', { type: 'Mindmap' }));
+                const ai = new GoogleGenAI({ apiKey: apiKey });
+                const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
+                const prompt = `${sys}\n\nTranscript:\n${transcript.slice(0, 12000)}`;
+                const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+                const raw = res.text || '';
+                const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
+                if (!/^mindmap\b/.test(cleaned)) throw new Error('Invalid mindmap output');
+                setMindmapMermaid(cleaned);
+                try {
+                  const mod = await import('mermaid');
+                  const m: any = (mod as any).default || mod;
+                  const { svg } = await m.render('mindmap-svg', cleaned);
+                  setMindmapSvg(svg);
+                } catch (rErr) { console.warn('Mermaid render failed', rErr); }
+              } catch (e: any) {
+                setError(`${t('generationFailed', { type: 'Mindmap' })}: ${e.message || t('unknownError')}`);
+              } finally { setLoadingText(''); }
+            })();
+        }
     };
     
     const renderContent = () => {
@@ -3779,6 +4022,7 @@ ${transcript}
             return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
         }
         if (activeView === 'chat') return renderChatView();
+        if (activeView === 'mindmap') return renderMindmapView();
         
         if (activeView === 'podcast') {
             if (loadingText && !podcastScript) {
@@ -4040,7 +4284,7 @@ ${transcript}
       )}
       
       <header className="fixed top-2 sm:top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-16px)] sm:w-auto">
-        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-2 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-lg mx-auto max-w-[94vw] sm:max-w-none">
+        <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 sm:gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-2 sm:px-3 py-1.5 sm:py-2 rounded-full shadow-lg mx-auto max-w-[94vw] sm:max-w-none">
           {/* Logo & brand */}
           <div className="flex items-center gap-2 min-w-0">
             <img src="/logo.png" alt="RecapSmart Logo" className="w-8 h-8 rounded-lg" />
@@ -4083,11 +4327,16 @@ ${transcript}
               <span>Inloggen</span>
             </button>
           ) : (
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-wrap">
               {authState.isAdmin && (
                 <button 
-                  onClick={() => setShowAdminPanel(true)} 
-                  className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-purple-500 hover:bg-purple-600 h-10 min-w-0 sm:min-w-[100px]"
+                  onClick={async () => {
+                    setShowAdminPanel(true);
+                    // Ensure data is fresh when opening panel
+                    await loadUsers({ bypassAdminCheck: true });
+                    await loadWaitlist({ bypassAdminCheck: true });
+                  }} 
+                  className="flex items-center justify-center gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all text-white bg-purple-500 hover:bg-purple-600 h-9 sm:h-10 min-w-0"
                 >
                   <span>👑</span>
                   <span>Admin</span>
@@ -4095,7 +4344,7 @@ ${transcript}
               )}
               <button 
                 onClick={handleLogout} 
-                className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white h-10 min-w-0 sm:min-w-[100px]"
+                className="flex items-center justify-center gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white h-9 sm:h-10 min-w-0"
               >
                 <span>🚪</span>
                 <span>Uitloggen</span>
@@ -4530,7 +4779,11 @@ ${transcript}
                             )}
                           </td>
                           <td className="p-2 text-xs text-slate-500 dark:text-slate-400">
-                            {user.lastLogin ? user.lastLogin.toDate().toLocaleDateString('nl-NL') : 'Nooit'}
+                            {user.lastLogin
+                              ? (typeof (user.lastLogin as any)?.toDate === 'function'
+                                  ? (user.lastLogin as any).toDate().toLocaleDateString('nl-NL')
+                                  : new Date(user.lastLogin as any).toLocaleDateString('nl-NL'))
+                              : 'Nooit'}
                           </td>
                           <td className="p-2 text-center">{user.sessionCount}</td>
                           <td className="p-2">
@@ -4560,6 +4813,36 @@ ${transcript}
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSystemAudioHelp && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Systeem-audio inschakelen</h3>
+              <button onClick={() => setShowSystemAudioHelp(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+                Volg deze stappen om mee te luisteren met podcasts en video's. Zet bij het delen van je scherm de optie <strong>"Systeem audio"</strong> aan.
+              </p>
+              <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                <img src="/uitleg.png" alt="Uitleg systeem audio aanzetten" className="w-full h-auto" />
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <a href="#listen-along-info" className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline">
+                  Meer informatie over meeluisteren
+                </a>
+                <button onClick={() => setShowSystemAudioHelp(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">
+                  Begrepen
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -4763,18 +5046,17 @@ ${transcript}
                 </span>
               </h1>
               <p className="text-lg sm:text-2xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed px-1">
-                Transformeer je meetings, webinars en gesprekken in professionele documenten, presentaties en inzichten met AI
+                {t('landingHeroSubtitle')}
               </p>
               
               {/* Waitlist Section - Prominent bovenaan */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-2xl p-8 mb-8 max-w-4xl mx-auto">
-                <h2 className="text-2xl font-bold text-blue-800 dark:text-blue-200 mb-4 text-center">
-                  📋 Toegang op Uitnodiging
-                </h2>
-                <p className="text-blue-700 dark:text-blue-300 mb-6 text-center text-lg">
-                  RecapSmart is momenteel alleen beschikbaar voor uitgenodigde gebruikers. 
-                  Meld je aan voor de wachtlijst!
-                </p>
+                 <h2 className="text-2xl font-bold text-blue-800 dark:text-blue-200 mb-4 text-center">
+                   {t('waitlistTitle')}
+                 </h2>
+                 <p className="text-blue-700 dark:text-blue-300 mb-6 text-center text-lg">
+                   {t('waitlistLead')}
+                 </p>
                 
                 {/* Waitlist Form */}
                 <div className="flex gap-2 sm:gap-3 max-w-md mx-auto mb-4 px-2">
@@ -4782,7 +5064,7 @@ ${transcript}
                     type="email"
                     value={waitlistEmail}
                     onChange={(e) => setWaitlistEmail(e.target.value)}
-                    placeholder="jouw@email.nl"
+                    placeholder={t('emailPlaceholder')}
                     className="flex-1 px-3 sm:px-4 py-2 border-2 border-blue-300 dark:border-blue-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
                     required
                   />
@@ -4791,26 +5073,26 @@ ${transcript}
                     disabled={!waitlistEmail.trim()}
                     className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors duration-200"
                   >
-                    Aanmelden
+                    {t('waitlistSignUp')}
                   </button>
                 </div>
                 <button
                   onClick={() => setShowWaitlistModal(true)}
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm underline transition-colors mx-auto block"
                 >
-                  Meer informatie over de wachtlijst
+                  {t('waitlistMoreInfo')}
                 </button>
               </div>
               
             <div className="text-center px-2">
                 <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm sm:text-base">
-                  Heb je al toegang? Log dan in om te beginnen
+                  {t('haveAccessLead')}
                 </p>
                 <button 
                   onClick={() => setShowLoginModal(true)} 
                   className="px-6 sm:px-10 py-4 sm:py-5 text-lg sm:text-xl font-semibold rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl"
                 >
-                  🔐 Inloggen
+                  🔐 {t('loginNow')}
                 </button>
               </div>
             </div>
@@ -4880,201 +5162,192 @@ ${transcript}
 
             {/* Privacy Section */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 sm:p-8 rounded-2xl mb-16 border-2 border-green-200 dark:border-green-700 mx-1">
-              <h2 className="text-3xl font-bold text-green-800 dark:text-green-200 mb-6 text-center">
-                🔒 Volledige Privacy Garantie
-              </h2>
+              <h2 className="text-3xl font-bold text-green-800 dark:text-green-200 mb-6 text-center">{t('privacyTitle')}</h2>
               <div className="max-w-5xl mx-auto">
-                <p className="text-green-700 dark:text-green-300 text-lg text-center mb-6">
-                  <strong>Belangrijk:</strong> Je sessies worden NIET opgeslagen in onze database. Alle data blijft volledig lokaal op jouw apparaat.
-                </p>
+                <p className="text-green-700 dark:text-green-300 text-lg text-center mb-6">{t('privacyLead')}</p>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                      <span className="text-green-800 dark:text-green-200 font-medium">🎙️ Opnames blijven lokaal</span>
+                      <span className="text-green-800 dark:text-green-200 font-medium">{t('privacyItemRecordings')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                      <span className="text-green-800 dark:text-green-200 font-medium">📝 Transcripties zijn privé</span>
+                      <span className="text-green-800 dark:text-green-200 font-medium">{t('privacyItemTranscripts')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                      <span className="text-green-800 dark:text-green-200 font-medium">🤖 AI output alleen voor jou</span>
+                      <span className="text-green-800 dark:text-green-200 font-medium">{t('privacyItemAIOutput')}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                      <span className="text-green-800 dark:text-green-200 font-medium">🔑 API key lokaal opgeslagen</span>
+                      <span className="text-green-800 dark:text-green-200 font-medium">{t('privacyItemApiKeyLocal')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                      <span className="text-green-800 dark:text-green-200 font-medium">🌐 Geen data naar onze servers</span>
+                      <span className="text-green-800 dark:text-green-200 font-medium">{t('privacyItemNoServers')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                      <span className="text-green-800 dark:text-green-200 font-medium">✅ Wij bewaren helemaal niets</span>
+                      <span className="text-green-800 dark:text-green-200 font-medium">{t('privacyItemWeStoreNothing')}</span>
                     </div>
                   </div>
                 </div>
-                <p className="text-green-600 dark:text-green-400 text-center mt-6 text-sm">
-                  Jouw privacy staat voorop. We kunnen jouw sessies niet zien, opslaan of gebruiken.
-                </p>
+                <p className="text-green-600 dark:text-green-400 text-center mt-6 text-sm">{t('privacyFootnote')}</p>
               </div>
             </div>
 
             {/* Use Cases Section */}
             <div className="bg-gradient-to-r from-slate-50 to-cyan-50 dark:from-slate-800 dark:to-slate-700 p-6 sm:p-8 rounded-2xl mb-16 mx-1">
-              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-6 text-center">
-                💼 Perfect Voor:
-              </h2>
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-6 text-center">{t('useCasesTitle')}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {/* Management & Leiderschap */}
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-cyan-600">Management & Leiderschap</h3>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-cyan-600">{t('useCasesMgmtTitle')}</h3>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Projectmanagers en teamleiders</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesMgmt1')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Product owners en productmanagers</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesMgmt2')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Executives en CEO's (voor strategische meetings en rapportages)</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesMgmt3')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Salesmanagers en accountmanagers (voor klantgesprekken en pitches)</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesMgmt4')}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Advies & Consultatie */}
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-cyan-600">Advies & Consultatie</h3>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-cyan-600">{t('useCasesAdviceTitle')}</h3>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Consultants en adviseurs</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesAdvice1')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Support consultants</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesAdvice2')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">HR-professionals en recruiters (voor interviews en onboarding)</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesAdvice3')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Financiële adviseurs en auditors (voor compliance en rapporten)</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesAdvice4')}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Creatie & Communicatie */}
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-cyan-600">Creatie & Communicatie</h3>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-cyan-600">{t('useCasesCreationTitle')}</h3>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Content creators en journalisten</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesCreation1')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Marketeers en PR-specialisten (voor brainstorms en campagnes)</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesCreation2')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Webinar hosts en trainers</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesCreation3')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Podcasters en vloggers (voor opnames en editten)</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesCreation4')}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Onderzoek & Analyse */}
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-cyan-600">Onderzoek & Analyse</h3>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2 text-cyan-600">{t('useCasesResearchTitle')}</h3>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Onderzoekers en academici</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesResearch1')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Legal professionals</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesResearch2')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Accountants en boekhouders</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesResearch3')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">Data-analisten en onderzoekers in business intelligence (voor data-sessies en inzichten)</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('useCasesResearch4')}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Listen Along Info */}
+            <div id="listen-along-info" className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-6 sm:p-8 rounded-2xl mb-16 mx-1 border-2 border-purple-200 dark:border-purple-700">
+              <h2 className="text-2xl font-bold text-purple-800 dark:text-purple-200 mb-3 text-center">
+                🎧 {t('listenAlongTitle')}
+              </h2>
+              <p className="text-purple-800/90 dark:text-purple-200/90 text-center max-w-4xl mx-auto">
+                {t('listenAlongBody')}
+              </p>
+            </div>
+
             {/* How It Works */}
             <div className="mb-16">
               <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-8 text-center">
-                🔄 Hoe Het Werkt:
+                {t('howItWorksTitle')}
               </h2>
               <div className="grid md:grid-cols-3 gap-8">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-cyan-100 dark:bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">1</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Opnemen</h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Start een opname van je meeting of upload een transcript
-                  </p>
+                  <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('hiwStep1Title')}</h3>
+                  <p className="text-slate-600 dark:text-slate-400">{t('hiwStep1Desc')}</p>
                 </div>
                 <div className="text-center">
                   <div className="w-20 h-20 bg-cyan-100 dark:bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">2</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">AI Verwerking</h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    AI analyseert en genereert content op basis van je input
-                  </p>
+                  <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('hiwStep2Title')}</h3>
+                  <p className="text-slate-600 dark:text-slate-400">{t('hiwStep2Desc')}</p>
                 </div>
                 <div className="text-center">
                   <div className="w-20 h-20 bg-cyan-100 dark:bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">3</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Resultaat</h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Download je documenten, presentaties en inzichten
-                  </p>
+                  <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('hiwStep3Title')}</h3>
+                  <p className="text-slate-600 dark:text-slate-400">{t('hiwStep3Desc')}</p>
                 </div>
               </div>
             </div>
 
             {/* CTA Section */}
             <div className="bg-gradient-to-r from-cyan-500 to-blue-600 p-8 rounded-2xl text-white">
-              <h2 className="text-3xl font-bold mb-4 text-center">
-                🚀 Klaar om te Starten?
-              </h2>
-              <p className="text-xl text-cyan-100 mb-8 text-center max-w-2xl mx-auto">
-                Log in en ontdek hoe RecapSmart je workflow kan transformeren. 
-                Bespaar uren aan handmatige notities en documentatie.
-              </p>
+              <h2 className="text-3xl font-bold mb-4 text-center">{t('ctaTitle')}</h2>
+              <p className="text-xl text-cyan-100 mb-8 text-center max-w-2xl mx-auto">{t('ctaLead')}</p>
               
               <div className="flex justify-center px-2">
                 <button 
                   onClick={() => setShowLoginModal(true)} 
                   className="px-8 py-4 text-lg font-semibold rounded-xl bg-white text-cyan-600 hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
                 >
-                  🔐 Nu Inloggen
+                  🔐 {t('loginNow')}
                 </button>
               </div>
             </div>
@@ -5112,7 +5385,7 @@ ${transcript}
             )}
         </div>
         
-        {status !== RecordingStatus.FINISHED && status !== RecordingStatus.RECORDING && status !== RecordingStatus.PAUSED ? (
+        {(status === RecordingStatus.IDLE || status === RecordingStatus.ERROR) ? (
              <div className="w-full max-w-xl bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 space-y-6">
                 {/* API Key Waarschuwing */}
                 {!apiKey && !hasDatabaseApiKey && (
@@ -5158,17 +5431,22 @@ ${transcript}
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
                             <span className="text-cyan-500 font-black tracking-wider text-sm block uppercase mb-2">{t('step2')}</span> {t('startOrUpload')}
                         </h2>
-                        <div className="flex gap-4 mt-4">
-                            <button onClick={startRecording} disabled={isProcessing} className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 hover:bg-gray-300 dark:hover:bg-slate-600 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
+                    <button onClick={startRecording} disabled={isProcessing} className="w-full sm:flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 hover:bg-gray-300 dark:hover:bg-slate-600 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200">
                                 <MicIcon className="w-6 h-6" />
                                 <span className="text-lg font-semibold">{t('startRecording')}</span>
                             </button>
                             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown"/>
-                            <button onClick={() => fileInputRef.current?.click()} disabled={isProcessing} className="flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 hover:bg-gray-300 dark:hover:bg-slate-600 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200">
+                    <button onClick={() => fileInputRef.current?.click()} disabled={isProcessing} className="w-full sm:flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 hover:bg-gray-300 dark:hover:bg-slate-600 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200">
                                 <UploadIcon className="w-6 h-6" />
-                                <span className="text-lg font-semibold">📄 Upload Document</span>
+                                <span className="text-lg font-semibold">📄 {t('uploadTranscript')}</span>
                             </button>
                         </div>
+                <div className="mt-2 text-center">
+                    <button onClick={() => setShowSystemAudioHelp(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline">
+                        🔊 Audio meeluisteren? Uitleg
+                    </button>
+                </div>
                         
                         {/* Supported formats info */}
                         <div className="mt-3 text-center">

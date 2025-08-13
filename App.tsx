@@ -909,15 +909,18 @@ interface AuthState {
 // --- i18n ---
 const translations = {
     nl: {
-        cookieTitle: "Cookies for Analytics",
-        cookiePoint1: "Essential cookies only",
-        cookiePoint2: "No tracking of personal data",
-        cookiePoint3: "Helps us improve the app",
-        accept: "Accept",
-        decline: "Decline",
+        cookieTitle: "Cookies voor Analytics",
+        cookiePoint1: "Alleen essentiële cookies",
+        cookiePoint2: "Geen tracking van persoonlijke data",
+        cookiePoint3: "Helpt ons de app te verbeteren",
+        accept: "Accepteren",
+        decline: "Weigeren",
         sessionLang: "Selecteer Sessie Taal",
         dutch: "Nederlands",
         english: "English",
+        portuguese: "Portugees",
+        german: "Duits",
+        french: "Frans",
         startRecording: "Start Opname",
         uploadTranscript: "Upload Transcript",
         waitingPermission: "Wachten op schermopname toestemming...",
@@ -6728,6 +6731,21 @@ const translations = {
         saveApiKey: "API Key Opslaan",
         privacyNote: "Privacy Opmerking",
         apiKeyPrivacy: "Je API key wordt alleen lokaal opgeslagen op je apparaat en wordt nooit naar onze servers gestuurd.",
+        pricingTitle: "💙 Eerlijke Prijzen",
+        pricingTagline: "De enige companion die je nodig hebt – bespaar uren per week",
+        pricingPerMonth: "per maand",
+        pricingMonthly: "Maandelijks",
+        pricingPrice: "€2",
+        pricingMinTerm: "minimaal 6 maanden",
+        pricingCancelable: "daarna per maand opzegbaar (1 maand opzegtermijn)",
+        pricingFreeTitle: "Gratis Modus",
+        pricingFreeDesc: "Beperkte functionaliteit, 10 dagen toegang",
+        pricingBenefitsTitle: "Wat je krijgt",
+        pricingBenefit1: "Automatische transcriptie en AI-samenvattingen",
+        pricingBenefit2: "PowerPoint generatie en mindmaps",
+        pricingBenefit3: "Podcast scripts en chat over je transcript",
+        pricingBenefit4: "Anonimisatie en privacy – data blijft lokaal",
+        pricingCta: "Start nu",
     },
     en: {
         cookieTitle: "Cookies for Analytics",
@@ -6739,6 +6757,9 @@ const translations = {
         sessionLang: "Select Session Language",
         dutch: "Nederlands",
         english: "English",
+        portuguese: "Português",
+        german: "Deutsch",
+        french: "Français",
         startRecording: "Start Recording",
         uploadTranscript: "Upload Transcript",
         waitingPermission: "Waiting for screen recording permission...",
@@ -6916,12 +6937,522 @@ const translations = {
         saveApiKey: "Save API Key",
         privacyNote: "Privacy Note",
         apiKeyPrivacy: "Your API key is only stored locally on your device and is never sent to our servers.",
+        pricingTitle: "💙 Fair Pricing",
+        pricingTagline: "The only companion you need — save hours every week",
+        pricingPerMonth: "per month",
+        pricingMonthly: "Monthly",
+        pricingPrice: "€2",
+        pricingMinTerm: "minimum 6 months",
+        pricingCancelable: "after that, cancel any month (1-month notice)",
+        pricingFreeTitle: "Free Mode",
+        pricingFreeDesc: "Limited features, 10 days access",
+        pricingBenefitsTitle: "What you get",
+        pricingBenefit1: "Automatic transcription and AI summaries",
+        pricingBenefit2: "PowerPoint generation and mindmaps",
+        pricingBenefit3: "Podcast scripts and chat over your transcript",
+        pricingBenefit4: "Anonymization and privacy — data stays local",
+        pricingCta: "Start now",
         recording: "Recording",
         paused: "Paused",
         recordingInProgress: "Recording in progress...",
         recordingPaused: "Recording paused",
         recordingActive: "Recording active",
-    }
+    },
+    pt: {
+        cookieTitle: "Cookies para Analytics",
+        cookiePoint1: "Apenas cookies essenciais",
+        cookiePoint2: "Sem rastreamento de dados pessoais",
+        cookiePoint3: "Ajuda-nos a melhorar a aplicação",
+        accept: "Aceitar",
+        decline: "Recusar",
+        sessionLang: "Selecionar idioma da sessão",
+        dutch: "Holandês",
+        english: "Inglês",
+        portuguese: "Português",
+        german: "Alemão",
+        french: "Francês",
+        startRecording: "Iniciar Gravação",
+        uploadTranscript: "Carregar Transcrição",
+        waitingPermission: "A aguardar permissão de gravação do ecrã...",
+        pause: "Pausar",
+        stop: "Parar",
+        resume: "Retomar",
+        recordingStopped: "Gravação parada. Pronto para transcrever.",
+        transcribeSession: "Transcrever Sessão",
+        transcribing: "A transcrever...",
+        summarizing: "A resumir...",
+        processing: "A processar...",
+        appTitle: "RecapSmart",
+        appDescription: "Grave, carregue, transcreva e analise as suas sessões com IA.",
+        reset: "Repor",
+        startNewSession: "Nova Sessão",
+        errorRecording: "Erro ao iniciar a gravação",
+        permissionDenied: "Permissão de gravação de ecrã e/ou microfone negada. Recarregue a página e conceda permissão quando solicitado.",
+        noDevices: "Nenhum dispositivo adequado encontrado (ecrã, microfone).",
+        unknownError: "Ocorreu um erro desconhecido.",
+        anonymizing: "A anonimizar transcrição...",
+        anonymizationComplete: "Anonimização concluída.",
+        termsReplaced: "{count} termos substituídos.",
+        nothingToReplace: "Nenhum termo para substituir.",
+        anonymizeSuccess: "Anonimização concluída. Substituído {report}.",
+        anonymizeNothing: "Anonimização concluída. Nenhum termo encontrado.",
+        selectLangFirst: "Selecione um idioma antes de gravar.",
+        noAudioToTranscribe: "Nenhum áudio gravado para transcrever.",
+        apiKeyMissing: "Falta a API_KEY.",
+        aiError: "Falha no processamento de IA",
+        transcriptEmpty: "A transcrição está vazia.",
+        generating: "A gerar {type}...",
+        generationFailed: "Falha a gerar {type} de IA",
+        transcript: "Transcrição",
+        transcriptAnonymized: "Transcrição (A)",
+        summary: "Resumo",
+        faq: "FAQ",
+        keyLearnings: "Principais Aprendizados",
+        followUp: "Seguimento",
+        chat: "Chat",
+        podcast: "Podcast",
+        anonymize: "Anonimizar",
+        makePodcast: "Criar Podcast",
+        exportPPT: "Exportar PPT",
+        copyContent: "Copiar conteúdo",
+        noContent: "Ainda sem conteúdo gerado.",
+        chatWithTranscript: "Conversar com Transcrição",
+        readAnswers: "Ler respostas em voz alta",
+        mindmap: "Mapa mental",
+        askAQuestion: "Faça uma pergunta sobre a transcrição...",
+        generatingPresentation: "A gerar apresentação...",
+        generatingImageForSlide: "A gerar imagem para o slide: \"{title}\"...",
+        finalizingPresentation: "A finalizar apresentação...",
+        presentationFailed: "Falha ao gerar apresentação",
+        speechRecognitionUnsupported: "Reconhecimento de fala não suportado neste navegador.",
+        podcastGenerating: "A gerar guião de podcast...",
+        podcastFailed: "Falha ao gerar podcast",
+        fileReadFailed: "Falha ao ler ficheiro",
+        selectLangToUpload: "Selecione um idioma antes de carregar uma transcrição.",
+        keywordAnalysis: "Análise de Palavras-chave",
+        sentimentAnalysis: "Análise de Sentimento",
+        showSentiment: "Mostrar Sentimento",
+        hideSentiment: "Ocultar Sentimento",
+        analyzingSentiment: "A analisar sentimento...",
+        startOrUpload: "Iniciar Sessão",
+        step1: "Passo 1",
+        step2: "Passo 2",
+        presentationSuccess: "Apresentação '{fileName}' criada com {slideCount} slides.",
+        podcastReady: "Podcast pronto a reproduzir",
+        rewindPodcast: "Reiniciar podcast",
+        downloadScript: "Descarregar guião",
+        play: "Reproduzir",
+        podcastDownloadNote: "Nota: o browser não suporta download direto de áudio.",
+        inhoudsopgave: "Índice",
+        taak: "Tarefa",
+        eigenaar: "Responsável",
+        deadline: "Prazo",
+        sentimentSummary: "Resumo de Sentimento",
+        sentimentConclusion: "Conclusão Geral",
+        sentimentOverall: "Análise Global de Sentimento",
+        keywordExplanation: "Explicação para '{keyword}'",
+        fetchingExplanation: "A obter explicação...",
+        close: "Fechar",
+        uploadTemplate: "Carregar Modelo",
+        templateUploaded: "Modelo: {name}",
+        clearTemplate: "Limpar modelo",
+        pptTemplateNote: "Nota: imagens de IA desativadas com modelo personalizado.",
+        listenAlongTitle: "Ouça com podcasts e YouTube",
+        listenAlongBody: "Ative o áudio do sistema e deixe o RecapSmart transcrever e resumir automaticamente.",
+        landingHeroSubtitle: "Transforme reuniões e conversas em documentos, apresentações e insights profissionais com IA",
+        waitlistTitle: "📋 Acesso por Convite",
+        waitlistLead: "O RecapSmart está disponível apenas por convite. Junte-se à lista de espera!",
+        emailPlaceholder: "o.seu@email.com",
+        waitlistSignUp: "Inscrever-se",
+        waitlistMoreInfo: "Mais informações",
+        aboutAiTitle: "🤖 Sobre IA & Chave API",
+        aboutAiBody: "O RecapSmart usa a API Google Gemini; para isso precisamos de uma chave API. A chave é sua — por isso o RecapSmart é acessível.",
+        haveAccessLead: "Já tem acesso? Inicie sessão",
+        loginNow: "Iniciar sessão",
+        featuresTitle: "Perfeito Para:",
+        featureRecordingTitle: "🎙️ Gravação Inteligente",
+        featureRecordingDesc: "Grave reuniões com microfone e áudio do sistema.",
+        featureAIAnalysisTitle: "📝 Análise por IA",
+        featureAIAnalysisDesc: "Gere resumos, FAQs, aprendizados e perguntas de seguimento.",
+        featurePresentationsTitle: "📊 Apresentações",
+        featurePresentationsDesc: "Crie PowerPoints com conteúdo e imagens por IA.",
+        featureChatTitle: "💬 Chat & Perguntas",
+        featureChatDesc: "Pergunte sobre a sua transcrição. Entrada por voz.",
+        featurePodcastTitle: "🎧 Guiões de Podcast",
+        featurePodcastDesc: "Gere guiões de podcast a partir das suas reuniões.",
+        featurePrivacyTitle: "🔒 Privacidade & Anonimização",
+        featurePrivacyDesc: "Anonimização automática de dados sensíveis.",
+        privacyTitle: "🔒 Garantia Total de Privacidade",
+        privacyLead: "Importante: As suas sessões NÃO são guardadas em servidores.",
+        privacyItemRecordings: "🎙️ Gravações ficam locais",
+        privacyItemTranscripts: "📝 Transcrições são privadas",
+        privacyItemAIOutput: "🤖 Saída de IA só para si",
+        privacyItemApiKeyLocal: "🔑 Chave API guardada localmente",
+        privacyItemNoServers: "🌐 Sem dados para os nossos servidores",
+        privacyItemWeStoreNothing: "✅ Não guardamos nada",
+        privacyItemNoVideo: "🎥 Nenhum vídeo é gravado",
+        privacyItemAudioStored: "🔊 Ficheiros de áudio são guardados localmente",
+        privacyFootnote: "A sua privacidade em primeiro lugar.",
+        useCasesTitle: "💼 Perfeito Para:",
+        useCasesMgmtTitle: "Gestão & Liderança",
+        useCasesAdviceTitle: "Consultoria",
+        useCasesCreationTitle: "Criação & Comunicação",
+        useCasesResearchTitle: "Investigação & Análise",
+        howItWorksTitle: "🔄 Como Funciona:",
+        hiwStep1Title: "Gravar",
+        hiwStep1Desc: "Inicie uma gravação ou carregue uma transcrição",
+        hiwStep2Title: "Processamento IA",
+        hiwStep2Desc: "IA analisa e gera conteúdo",
+        hiwStep3Title: "Resultado",
+        hiwStep3Desc: "Descarregue documentos e insights",
+        ctaTitle: "🚀 Pronto para Começar?",
+        ctaLead: "Poupe horas em notas e documentação.",
+        pricingTitle: "💙 Preço Justo",
+        pricingTagline: "O único companheiro de que precisa — poupe horas por semana",
+        pricingPerMonth: "por mês",
+        pricingMonthly: "Mensal",
+        pricingPrice: "€2",
+        pricingMinTerm: "mínimo 6 meses",
+        pricingCancelable: "depois, cancelável mensalmente (1 mês)",
+        pricingFreeTitle: "Modo Grátis",
+        pricingFreeDesc: "Funcionalidade limitada, 10 dias",
+        pricingBenefitsTitle: "O que recebe",
+        pricingBenefit1: "Transcrição automática e resumos IA",
+        pricingBenefit2: "Geração de PowerPoint e mapas mentais",
+        pricingBenefit3: "Guiões de podcast e chat sobre a transcrição",
+        pricingBenefit4: "Anonimização e privacidade — dados locais",
+        pricingCta: "Começar agora",
+    },
+    de: {
+        cookieTitle: "Cookies für Analytics",
+        cookiePoint1: "Nur essenzielle Cookies",
+        cookiePoint2: "Keine Verfolgung persönlicher Daten",
+        cookiePoint3: "Hilft uns, die App zu verbessern",
+        accept: "Akzeptieren",
+        decline: "Ablehnen",
+        sessionLang: "Sitzungssprache wählen",
+        dutch: "Niederländisch",
+        english: "Englisch",
+        portuguese: "Portugiesisch",
+        german: "Deutsch",
+        french: "Französisch",
+        startRecording: "Aufnahme starten",
+        uploadTranscript: "Transkript hochladen",
+        waitingPermission: "Warte auf Bildschirmaufnahme-Berechtigung...",
+        pause: "Pause",
+        stop: "Stopp",
+        resume: "Fortsetzen",
+        recordingStopped: "Aufnahme gestoppt. Bereit zum Transkribieren.",
+        transcribeSession: "Sitzung transkribieren",
+        transcribing: "Transkribiere...",
+        summarizing: "Fasse zusammen...",
+        processing: "Verarbeite...",
+        appTitle: "RecapSmart",
+        appDescription: "Sitzungen aufnehmen, hochladen, transkribieren und mit KI analysieren.",
+        reset: "Zurücksetzen",
+        startNewSession: "Neue Sitzung",
+        errorRecording: "Fehler beim Start der Aufnahme",
+        permissionDenied: "Berechtigung für Bildschirm-/Mikrofonaufnahme verweigert.",
+        noDevices: "Keine geeigneten Geräte gefunden (Bildschirm, Mikrofon).",
+        unknownError: "Unbekannter Fehler.",
+        anonymizing: "Anonymisiere Transkript...",
+        anonymizationComplete: "Anonymisierung abgeschlossen.",
+        termsReplaced: "{count} Begriffe ersetzt.",
+        nothingToReplace: "Keine zu ersetzenden Begriffe gefunden.",
+        anonymizeSuccess: "Anonymisierung abgeschlossen. {report} ersetzt.",
+        anonymizeNothing: "Anonymisierung abgeschlossen. Keine Begriffe gefunden.",
+        selectLangFirst: "Bitte zuerst eine Sprache wählen.",
+        noAudioToTranscribe: "Kein Audio zur Transkription aufgenommen.",
+        apiKeyMissing: "API_KEY fehlt.",
+        aiError: "KI-Verarbeitung fehlgeschlagen",
+        transcriptEmpty: "Transkript ist leer.",
+        generating: "Erzeuge {type}...",
+        generationFailed: "KI-{type} fehlgeschlagen",
+        transcript: "Transkript",
+        transcriptAnonymized: "Transkript (A)",
+        summary: "Zusammenfassung",
+        faq: "FAQ",
+        keyLearnings: "Wichtigste Learnings",
+        followUp: "Follow-up",
+        chat: "Chat",
+        podcast: "Podcast",
+        anonymize: "Anonymisieren",
+        makePodcast: "Podcast erstellen",
+        exportPPT: "PPT exportieren",
+        copyContent: "Inhalt kopieren",
+        noContent: "Noch kein Inhalt generiert.",
+        chatWithTranscript: "Mit Transkript chatten",
+        readAnswers: "Antworten vorlesen",
+        mindmap: "Mindmap",
+        askAQuestion: "Frage zum Transkript stellen...",
+        generatingPresentation: "Erzeuge Präsentation...",
+        generatingImageForSlide: "Erzeuge Bild für Folie: \"{title}\"...",
+        finalizingPresentation: "Finalisiere Präsentation...",
+        presentationFailed: "Präsentation fehlgeschlagen",
+        speechRecognitionUnsupported: "Spracherkennung wird nicht unterstützt.",
+        podcastGenerating: "Erzeuge Podcast-Skript...",
+        podcastFailed: "Podcast-Erzeugung fehlgeschlagen",
+        fileReadFailed: "Datei konnte nicht gelesen werden",
+        selectLangToUpload: "Bitte Sprache vor dem Hochladen wählen.",
+        keywordAnalysis: "Keyword-Analyse",
+        sentimentAnalysis: "Sentiment-Analyse",
+        showSentiment: "Sentiment anzeigen",
+        hideSentiment: "Sentiment ausblenden",
+        analyzingSentiment: "Analysiere Sentiment...",
+        startOrUpload: "Sitzung starten",
+        step1: "Schritt 1",
+        step2: "Schritt 2",
+        presentationSuccess: "Präsentation '{fileName}' mit {slideCount} Folien erstellt.",
+        podcastReady: "Podcast abspielbereit",
+        rewindPodcast: "Podcast neu starten",
+        downloadScript: "Skript herunterladen",
+        play: "Abspielen",
+        podcastDownloadNote: "Hinweis: Direkter Audio-Download nicht unterstützt.",
+        inhoudsopgave: "Inhaltsverzeichnis",
+        taak: "Aufgabe",
+        eigenaar: "Verantwortlich",
+        deadline: "Frist",
+        sentimentSummary: "Sentiment-Zusammenfassung",
+        sentimentConclusion: "Gesamtfazit",
+        sentimentOverall: "Gesamte Sentiment-Analyse",
+        keywordExplanation: "Erklärung für '{keyword}'",
+        fetchingExplanation: "Erklärung wird geladen...",
+        close: "Schließen",
+        uploadTemplate: "Vorlage hochladen",
+        templateUploaded: "Vorlage: {name}",
+        clearTemplate: "Vorlage löschen",
+        pptTemplateNote: "Hinweis: KI-Bilder bei eigener Vorlage deaktiviert.",
+        listenAlongTitle: "Mithören bei Podcasts und YouTube",
+        listenAlongBody: "Systemaudio aktivieren, abspielen und automatisch transkribieren lassen.",
+        landingHeroSubtitle: "Meetings in professionelle Dokumente, Präsentationen und Insights verwandeln",
+        waitlistTitle: "📋 Zugang per Einladung",
+        waitlistLead: "RecapSmart ist derzeit nur auf Einladung verfügbar.",
+        emailPlaceholder: "ihre@email.de",
+        waitlistSignUp: "Eintragen",
+        waitlistMoreInfo: "Mehr erfahren",
+        aboutAiTitle: "🤖 Über KI & API-Schlüssel",
+        aboutAiBody: "Wir nutzen die Google Gemini API. Schlüssel gehört Ihnen — deshalb günstig.",
+        haveAccessLead: "Schon Zugang? Jetzt anmelden",
+        loginNow: "Anmelden",
+        featuresTitle: "Perfekt Für:",
+        featureRecordingTitle: "🎙️ Intelligente Aufnahme",
+        featureRecordingDesc: "Meetings mit Mikrofon und Systemaudio aufnehmen.",
+        featureAIAnalysisTitle: "📝 KI-Analyse",
+        featureAIAnalysisDesc: "Zusammenfassungen, FAQs, Learnings und Folgefragen.",
+        featurePresentationsTitle: "📊 Präsentationen",
+        featurePresentationsDesc: "PowerPoints mit KI-Inhalten und -Bildern.",
+        featureChatTitle: "💬 Chat & Fragen",
+        featureChatDesc: "Fragen zum Transkript. Spracheingabe.",
+        featurePodcastTitle: "🎧 Podcast-Skripte",
+        featurePodcastDesc: "Skripte aus Meetings generieren.",
+        featurePrivacyTitle: "🔒 Privatsphäre & Anonymisierung",
+        featurePrivacyDesc: "Automatische Anonymisierung sensibler Daten.",
+        privacyTitle: "🔒 Volle Datenschutz-Garantie",
+        privacyLead: "Keine Speicherung Ihrer Sitzungen. Alles bleibt lokal.",
+        privacyItemRecordings: "🎙️ Aufnahmen bleiben lokal",
+        privacyItemTranscripts: "📝 Transkripte sind privat",
+        privacyItemAIOutput: "🤖 KI-Ausgabe nur für Sie",
+        privacyItemApiKeyLocal: "🔑 API-Schlüssel lokal gespeichert",
+        privacyItemNoServers: "🌐 Keine Daten an unsere Server",
+        privacyItemWeStoreNothing: "✅ Wir speichern nichts",
+        privacyItemNoVideo: "🎥 Kein Video wird aufgezeichnet",
+        privacyItemAudioStored: "🔊 Audiodateien werden lokal gespeichert",
+        privacyFootnote: "Ihre Privatsphäre hat Vorrang.",
+        useCasesTitle: "💼 Perfekt Für:",
+        useCasesMgmtTitle: "Management & Führung",
+        useCasesAdviceTitle: "Beratung",
+        useCasesCreationTitle: "Kreation & Kommunikation",
+        useCasesResearchTitle: "Forschung & Analyse",
+        howItWorksTitle: "🔄 So funktioniert's:",
+        hiwStep1Title: "Aufnehmen",
+        hiwStep1Desc: "Aufnahme starten oder Transkript hochladen",
+        hiwStep2Title: "KI-Verarbeitung",
+        hiwStep2Desc: "KI analysiert und generiert Inhalte",
+        hiwStep3Title: "Ergebnis",
+        hiwStep3Desc: "Dokumente und Insights herunterladen",
+        ctaTitle: "🚀 Startklar?",
+        ctaLead: "Sparen Sie Stunden bei Notizen und Doku.",
+        pricingTitle: "💙 Faire Preise",
+        pricingTagline: "Der einzige Begleiter, den Sie brauchen — sparen Sie jede Woche Stunden",
+        pricingPerMonth: "pro Monat",
+        pricingMonthly: "Monatlich",
+        pricingPrice: "€2",
+        pricingMinTerm: "mindestens 6 Monate",
+        pricingCancelable: "danach monatlich kündbar (1 Monat)",
+        pricingFreeTitle: "Kostenloser Modus",
+        pricingFreeDesc: "Begrenzte Funktionen, 10 Tage",
+        pricingBenefitsTitle: "Ihre Vorteile",
+        pricingBenefit1: "Automatische Transkription und KI-Zusammenfassungen",
+        pricingBenefit2: "PowerPoint-Generierung und Mindmaps",
+        pricingBenefit3: "Podcast-Skripte und Chat über Ihr Transkript",
+        pricingBenefit4: "Anonymisierung und Datenschutz — Daten bleiben lokal",
+        pricingCta: "Jetzt starten",
+    } as any,
+    fr: {
+        cookieTitle: "Cookies pour l'analyse",
+        cookiePoint1: "Cookies essentiels uniquement",
+        cookiePoint2: "Aucun suivi des données personnelles",
+        cookiePoint3: "Nous aide à améliorer l'application",
+        accept: "Accepter",
+        decline: "Refuser",
+        sessionLang: "Choisir la langue de la session",
+        dutch: "Néerlandais",
+        english: "Anglais",
+        portuguese: "Portugais",
+        german: "Allemand",
+        french: "Français",
+        startRecording: "Démarrer l'enregistrement",
+        uploadTranscript: "Importer la transcription",
+        waitingPermission: "En attente de l'autorisation d'enregistrement d'écran...",
+        pause: "Pause",
+        stop: "Arrêter",
+        resume: "Reprendre",
+        recordingStopped: "Enregistrement arrêté. Prêt à transcrire.",
+        transcribeSession: "Transcrire la session",
+        transcribing: "Transcription...",
+        summarizing: "Résumé...",
+        processing: "Traitement...",
+        appTitle: "RecapSmart",
+        appDescription: "Enregistrez, importez, transcrivez et analysez vos sessions avec l'IA.",
+        reset: "Réinitialiser",
+        startNewSession: "Nouvelle session",
+        errorRecording: "Erreur au démarrage de l'enregistrement",
+        permissionDenied: "Autorisation d'enregistrement écran/micro refusée.",
+        noDevices: "Aucun périphérique adapté trouvé.",
+        unknownError: "Erreur inconnue.",
+        anonymizing: "Anonymisation de la transcription...",
+        anonymizationComplete: "Anonymisation terminée.",
+        termsReplaced: "{count} termes remplacés.",
+        nothingToReplace: "Aucun terme à remplacer.",
+        anonymizeSuccess: "Anonymisation terminée. {report} remplacé(s).",
+        anonymizeNothing: "Anonymisation terminée. Aucun terme trouvé.",
+        selectLangFirst: "Veuillez d'abord choisir une langue.",
+        noAudioToTranscribe: "Aucun audio enregistré à transcrire.",
+        apiKeyMissing: "API_KEY manquante.",
+        aiError: "Échec du traitement IA",
+        transcriptEmpty: "La transcription est vide.",
+        generating: "Génération de {type}...",
+        generationFailed: "Échec de génération IA {type}",
+        transcript: "Transcription",
+        transcriptAnonymized: "Transcription (A)",
+        summary: "Résumé",
+        faq: "FAQ",
+        keyLearnings: "Points clés",
+        followUp: "Suivi",
+        chat: "Chat",
+        podcast: "Podcast",
+        anonymize: "Anonymiser",
+        makePodcast: "Créer un podcast",
+        exportPPT: "Exporter PPT",
+        copyContent: "Copier le contenu",
+        noContent: "Aucun contenu généré pour l'instant.",
+        chatWithTranscript: "Discuter avec la transcription",
+        readAnswers: "Lire les réponses à voix haute",
+        mindmap: "Carte mentale",
+        askAQuestion: "Posez une question sur la transcription...",
+        generatingPresentation: "Génération de la présentation...",
+        generatingImageForSlide: "Génération d'image pour la diapo : \"{title}\"...",
+        finalizingPresentation: "Finalisation de la présentation...",
+        presentationFailed: "Échec de la présentation",
+        speechRecognitionUnsupported: "La reconnaissance vocale n'est pas prise en charge.",
+        podcastGenerating: "Génération du script de podcast...",
+        podcastFailed: "Échec de génération du podcast",
+        fileReadFailed: "Lecture du fichier impossible",
+        selectLangToUpload: "Veuillez choisir une langue avant d'importer.",
+        keywordAnalysis: "Analyse de mots-clés",
+        sentimentAnalysis: "Analyse de sentiment",
+        showSentiment: "Afficher le sentiment",
+        hideSentiment: "Masquer le sentiment",
+        analyzingSentiment: "Analyse du sentiment...",
+        startOrUpload: "Démarrer la session",
+        step1: "Étape 1",
+        step2: "Étape 2",
+        presentationSuccess: "Présentation '{fileName}' créée avec {slideCount} diapositives.",
+        podcastReady: "Podcast prêt à être joué",
+        rewindPodcast: "Relancer le podcast",
+        downloadScript: "Télécharger le script",
+        play: "Lire",
+        podcastDownloadNote: "Remarque : le navigateur ne prend pas en charge le téléchargement audio direct.",
+        inhoudsopgave: "Sommaire",
+        taak: "Tâche",
+        eigenaar: "Responsable",
+        deadline: "Échéance",
+        sentimentSummary: "Résumé du sentiment",
+        sentimentConclusion: "Conclusion générale",
+        sentimentOverall: "Analyse globale du sentiment",
+        keywordExplanation: "Explication pour '{keyword}'",
+        fetchingExplanation: "Récupération de l'explication...",
+        close: "Fermer",
+        uploadTemplate: "Importer un modèle",
+        templateUploaded: "Modèle : {name}",
+        clearTemplate: "Effacer le modèle",
+        pptTemplateNote: "Remarque : images IA désactivées avec un modèle personnalisé.",
+        listenAlongTitle: "Écouter avec les podcasts et YouTube",
+        listenAlongBody: "Activez l'audio système et laissez l'IA transcrire et résumer automatiquement.",
+        landingHeroSubtitle: "Transformez réunions et conversations en documents, présentations et insights professionnels avec l'IA",
+        waitlistTitle: "📋 Accès sur invitation",
+        waitlistLead: "RecapSmart est disponible uniquement sur invitation.",
+        emailPlaceholder: "votre@email.com",
+        waitlistSignUp: "S'inscrire",
+        waitlistMoreInfo: "En savoir plus",
+        aboutAiTitle: "🤖 À propos de l'IA & clé API",
+        aboutAiBody: "Votre clé API Google Gemini reste la vôtre — RecapSmart est abordable grâce à cela.",
+        haveAccessLead: "Vous avez déjà un accès ? Connectez-vous",
+        loginNow: "Se connecter",
+        featuresTitle: "Parfait pour :",
+        featureRecordingTitle: "🎙️ Enregistrement intelligent",
+        featureRecordingDesc: "Enregistrez avec micro et audio système.",
+        featureAIAnalysisTitle: "📝 Analyse IA",
+        featureAIAnalysisDesc: "Générez résumés, FAQ, apprentissages et questions de suivi.",
+        featurePresentationsTitle: "📊 Présentations",
+        featurePresentationsDesc: "Créez des PowerPoint pro avec contenu et images IA.",
+        featureChatTitle: "💬 Chat & Questions",
+        featureChatDesc: "Posez des questions. Entrée vocale.",
+        featurePodcastTitle: "🎧 Scripts de podcast",
+        featurePodcastDesc: "Générez des scripts à partir de vos réunions.",
+        featurePrivacyTitle: "🔒 Confidentialité & Anonymisation",
+        featurePrivacyDesc: "Anonymisation automatique des données sensibles.",
+        privacyTitle: "🔒 Garantie de confidentialité",
+        privacyLead: "Aucune session n'est stockée chez nous. Tout reste localement.",
+        privacyItemRecordings: "🎙️ Enregistrements locaux",
+        privacyItemTranscripts: "📝 Transcriptions privées",
+        privacyItemAIOutput: "🤖 Sortie IA pour vous seulement",
+        privacyItemApiKeyLocal: "🔑 Clé API stockée localement",
+        privacyItemNoServers: "🌐 Aucune donnée vers nos serveurs",
+        privacyItemWeStoreNothing: "✅ Nous ne stockons rien",
+        privacyItemNoVideo: "🎥 Aucune vidéo n'est enregistrée",
+        privacyItemAudioStored: "🔊 Fichiers audio stockés localement",
+        privacyFootnote: "Votre confidentialité avant tout.",
+        useCasesTitle: "💼 Parfait pour :",
+        useCasesMgmtTitle: "Management & Leadership",
+        useCasesAdviceTitle: "Conseil",
+        useCasesCreationTitle: "Création & Communication",
+        useCasesResearchTitle: "Recherche & Analyse",
+        howItWorksTitle: "🔄 Comment ça marche :",
+        hiwStep1Title: "Enregistrer",
+        hiwStep1Desc: "Démarrez un enregistrement ou importez une transcription",
+        hiwStep2Title: "Traitement IA",
+        hiwStep2Desc: "L'IA analyse et génère du contenu",
+        hiwStep3Title: "Résultat",
+        hiwStep3Desc: "Téléchargez documents et insights",
+        ctaTitle: "🚀 Prêt à commencer ?",
+        ctaLead: "Économisez des heures de prises de notes.",
+        pricingTitle: "💙 Tarifs justes",
+        pricingTagline: "Le seul compagnon dont vous avez besoin — gagnez des heures chaque semaine",
+        pricingPerMonth: "par mois",
+        pricingMonthly: "Mensuel",
+        pricingPrice: "€2",
+        pricingMinTerm: "minimum 6 mois",
+        pricingCancelable: "ensuite résiliable mensuellement (1 mois)",
+        pricingFreeTitle: "Mode gratuit",
+        pricingFreeDesc: "Fonctionnalités limitées, 10 jours",
+        pricingBenefitsTitle: "Ce que vous obtenez",
+        pricingBenefit1: "Transcription automatique et résumés IA",
+        pricingBenefit2: "Génération PowerPoint et cartes mentales",
+        pricingBenefit3: "Scripts de podcast et chat autour de la transcription",
+        pricingBenefit4: "Anonymisation et confidentialité — données locales",
+        pricingCta: "Commencer maintenant",
+    } as any
 };
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
@@ -6940,7 +7471,7 @@ export default function App() {
   const [status, setStatus] = useState<RecordingStatus>(RecordingStatus.IDLE);
   // `language` is for the content (what's spoken), `uiLang` is for the app chrome
   const [language, setLanguage] = useState<'nl' | 'en' | null>(null);
-  const [uiLang, setUiLang] = useState<'nl' | 'en'>('en');
+  const [uiLang, setUiLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr'>('en');
   
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -7000,6 +7531,7 @@ export default function App() {
   useEffect(() => { isListeningRef.current = isListening }, [isListening]);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [showInfoPage, setShowInfoPage] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
 
   // Ensure audio context is resumed on user gesture on iOS
   useEffect(() => {
@@ -7207,7 +7739,7 @@ export default function App() {
 
   
   const t = (key: keyof typeof translations['nl'], params?: Record<string, string | number>) => {
-    let str = translations[uiLang][key] || translations['en'][key];
+    let str = (translations as any)[uiLang]?.[key] || translations['en'][key];
     if (params) {
         Object.entries(params).forEach(([paramKey, paramValue]) => {
             str = str.replace(`{${paramKey}}`, String(paramValue));
@@ -7218,7 +7750,7 @@ export default function App() {
 
   // --- PERSISTENCE & THEME ---
     useEffect(() => {
-        const savedLang = localStorage.getItem('uiLang') as 'nl' | 'en' | null;
+        const savedLang = localStorage.getItem('uiLang') as 'nl' | 'en' | 'pt' | 'de' | 'fr' | null;
         if (savedLang) setUiLang(savedLang);
         
         // Laad API key uit localStorage of database
@@ -9185,48 +9717,14 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
     }
 
     try {
-      // In een echte app zou je hier een email service gebruiken
-      // Voor nu tonen we een popup met de email content
-      const emailContent = `Beste gebruiker,
-
-Je bent uitgenodigd om je aan te melden bij RecapSmart!
-
-Je kunt nu een account aanmaken op: ${window.location.origin}
-
-Met vriendelijke groet,
-Het RecapSmart Team`;
-
-      // Toon email content in een popup
-      const emailWindow = window.open('', '_blank', 'width=600,height=400');
-      if (emailWindow) {
-        emailWindow.document.write(`
-          <html>
-            <head><title>Uitnodigingsmail</title></title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-              .header { background: #06b6d4; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
-              .content { background: #f8fafc; padding: 20px; border-radius: 8px; }
-              .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>📧 Uitnodigingsmail</h1>
-            </div>
-            <div class="content">
-              <h3>Email naar: ${email}</h3>
-              <pre style="white-space: pre-wrap; background: white; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0;">${emailContent}</pre>
-            </div>
-            <div class="footer">
-              <p><strong>Opmerking:</strong> In een productieomgeving wordt deze email automatisch verstuurd via een email service.</p>
-              <p>Je kunt deze popup sluiten en de gebruiker handmatig uitnodigen.</p>
-            </div>
-          </body>
-          </html>
-        `);
-      }
-      
-              displayToast(`Uitnodigingsmail succesvol voorbereid voor ${email}!`, 'success');
+      const subject = encodeURIComponent('Uitnodiging voor RecapSmart');
+      const body = encodeURIComponent(
+        `Beste gebruiker,\n\nJe bent uitgenodigd om je aan te melden bij RecapSmart!\n\n` +
+        `Je kunt nu een account aanmaken op: ${window.location.origin}\n\n` +
+        `Met vriendelijke groet,\nHet RecapSmart Team`
+      );
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+      displayToast(`Mailto geopend voor ${email}`, 'success');
     } catch (error) {
       console.error('Error sending invitation email:', error);
               displayToast('Fout bij voorbereiden van uitnodigingsmail.', 'error');
@@ -9247,52 +9745,15 @@ Het RecapSmart Team`;
         displayToast('Geen geldige emails gevonden.', 'info');
         return;
       }
-
-      // Toon alle emails in één popup
-      const emailContent = `Beste gebruikers,
-
-Jullie zijn uitgenodigd om je aan te melden bij RecapSmart!
-
-Jullie kunnen nu een account aanmaken op: ${window.location.origin}
-
-Met vriendelijke groet,
-Het RecapSmart Team`;
-
-      const emailWindow = window.open('', '_blank', 'width=600,height=400');
-      if (emailWindow) {
-        emailWindow.document.write(`
-          <html>
-            <head><title>Uitnodigingsmails</title></title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-              .header { background: #06b6d4; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
-              .content { background: #f8fafc; padding: 20px; border-radius: 8px; }
-              .emails { background: white; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; margin: 15px 0; }
-              .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>📧 Uitnodigingsmails</h1>
-            </div>
-            <div class="content">
-              <h3>Emails naar:</h3>
-              <div class="emails">
-                ${emails.map(email => `<div>• ${email}</div>`).join('')}
-              </div>
-              <h3>Email content:</h3>
-              <pre style="white-space: pre-wrap; background: white; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0;">${emailContent}</pre>
-            </div>
-            <div class="footer">
-              <p><strong>Opmerking:</strong> In een productieomgeving worden deze emails automatisch verstuurd via een email service.</p>
-              <p>Je kunt deze popup sluiten en de gebruikers handmatig uitnodigen.</p>
-            </div>
-          </body>
-          </html>
-        `);
-      }
-      
-              displayToast(`${emails.length} uitnodigingsmails succesvol voorbereid!`, 'success');
+      const subject = encodeURIComponent('Uitnodiging voor RecapSmart');
+      const body = encodeURIComponent(
+        `Beste gebruikers,\n\nJullie zijn uitgenodigd om je aan te melden bij RecapSmart!\n\n` +
+        `Jullie kunnen nu een account aanmaken op: ${window.location.origin}\n\n` +
+        `Met vriendelijke groet,\nHet RecapSmart Team`
+      );
+      // Create a mailto with multiple recipients separated by comma
+      window.location.href = `mailto:${emails.join(',')}&subject=${subject}&body=${body}`;
+      displayToast(`${emails.length} mailto uitnodigingen geopend`, 'success');
     } catch (error) {
       console.error('Error sending invitation emails:', error);
               displayToast('Fout bij voorbereiden van uitnodigingsmails.', 'error');
@@ -10038,13 +10499,20 @@ ${transcript}
             <span className="text-lg font-bold text-cyan-600 dark:text-cyan-400 hidden sm:block">RecapSmart</span>
           </button>
           
-          <div className="flex items-center gap-1 bg-gray-200 dark:bg-slate-800 p-1 rounded-full shrink-0">
-              <button title={t('dutch')} onClick={() => setUiLang('nl')} className={`flex items-center justify-center h-7 w-7 rounded-full transition-colors ${uiLang === 'nl' ? 'bg-white dark:bg-slate-600' : 'hover:bg-gray-300 dark:hover:bg-slate-700'}`}>
-                  <NlFlagIcon className="w-5 rounded-sm"/>
-              </button>
-              <button title={t('english')} onClick={() => setUiLang('en')} className={`flex items-center justify-center h-7 w-7 rounded-full transition-colors ${uiLang === 'en' ? 'bg-white dark:bg-slate-600' : 'hover:bg-gray-300 dark:hover:bg-slate-700'}`}>
-                  <UkFlagIcon className="w-5 rounded-sm"/>
-              </button>
+          <div className="flex items-center bg-gray-200 dark:bg-slate-800 px-2 py-1 rounded-full shrink-0">
+              <label htmlFor="ui-lang" className="sr-only">Language</label>
+              <select
+                id="ui-lang"
+                value={uiLang}
+                onChange={(e) => setUiLang(e.target.value as 'nl' | 'en' | 'pt' | 'de' | 'fr')}
+                className="bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+              >
+                <option value="en">{t('english')}</option>
+                <option value="nl">{t('dutch')}</option>
+                <option value="pt">{t('portuguese')}</option>
+                <option value="de">{t('german')}</option>
+                <option value="fr">{t('french')}</option>
+              </select>
           </div>
                           <button onClick={toggleTheme} className="flex items-center justify-center h-9 w-9 bg-gray-200 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-opacity-80">
                   {theme === 'light' ? <MoonIcon className="w-5 h-5"/> : <SunIcon className="w-5 h-5"/>}
@@ -10305,6 +10773,42 @@ ${transcript}
               onPasswordReset={handlePasswordReset}
               onClose={() => setShowLoginModal(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Pricing Modal */}
+      {showPricingModal && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('pricingTitle')}</h3>
+              <button onClick={() => setShowPricingModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">{t('pricingTagline')}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-2 bg-white dark:bg-slate-900/40 border border-gray-100 dark:border-slate-700 rounded-2xl p-6">
+                <div className="flex items-end gap-2">
+                  <span className="text-5xl font-extrabold text-cyan-600">{t('pricingPrice')}</span>
+                  <span className="text-slate-500 dark:text-slate-400 mb-2">/{t('pricingMonthly')}</span>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 mt-2">{t('pricingMinTerm')} — {t('pricingCancelable')}</p>
+                <h4 className="mt-6 font-semibold text-slate-800 dark:text-slate-200">{t('pricingBenefitsTitle')}</h4>
+                <ul className="mt-2 space-y-2 text-slate-600 dark:text-slate-400">
+                  <li>• {t('pricingBenefit1')}</li>
+                  <li>• {t('pricingBenefit2')}</li>
+                  <li>• {t('pricingBenefit3')}</li>
+                  <li>• {t('pricingBenefit4')}</li>
+                </ul>
+                <button onClick={() => { setShowPricingModal(false); setShowLoginModal(true); }} className="mt-6 px-6 py-3 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-colors">{t('pricingCta')}</button>
+              </div>
+              <div className="bg-white dark:bg-slate-900/40 border border-gray-100 dark:border-slate-700 rounded-2xl p-6">
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('pricingFreeTitle')}</h4>
+                <p className="text-slate-600 dark:text-slate-400 mt-2">{t('pricingFreeDesc')}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -11095,6 +11599,33 @@ ${transcript}
               </div>
             </div>
 
+            {/* Pricing Block */}
+            <div className="bg-gradient-to-r from-slate-50 to-cyan-50 dark:from-slate-800 dark:to-slate-700 p-6 sm:p-8 rounded-2xl mb-16 mx-1 border-2 border-cyan-200 dark:border-cyan-700">
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-3 text-center">{t('pricingTitle')}</h2>
+              <p className="text-slate-600 dark:text-slate-400 text-center mb-6">{t('pricingTagline')}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <div className="md:col-span-2 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-6 shadow">
+                  <div className="flex items-end gap-2">
+                    <span className="text-5xl font-extrabold text-cyan-600">{t('pricingPrice')}</span>
+                    <span className="text-slate-500 dark:text-slate-400 mb-2">/{t('pricingMonthly')}</span>
+                  </div>
+                  <p className="text-slate-500 dark:text-slate-400 mt-2">{t('pricingMinTerm')} — {t('pricingCancelable')}</p>
+                  <h3 className="mt-6 font-semibold text-slate-800 dark:text-slate-200">{t('pricingBenefitsTitle')}</h3>
+                  <ul className="mt-2 space-y-2 text-slate-600 dark:text-slate-400">
+                    <li>• {t('pricingBenefit1')}</li>
+                    <li>• {t('pricingBenefit2')}</li>
+                    <li>• {t('pricingBenefit3')}</li>
+                    <li>• {t('pricingBenefit4')}</li>
+                  </ul>
+                  <button onClick={() => setShowLoginModal(true)} className="mt-6 px-6 py-3 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-colors">{t('pricingCta')}</button>
+                </div>
+                <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-6 shadow">
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200">{t('pricingFreeTitle')}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 mt-2">{t('pricingFreeDesc')}</p>
+                </div>
+              </div>
+            </div>
+
             {/* CTA Section */}
             <div className="bg-gradient-to-r from-cyan-500 to-blue-600 p-8 rounded-2xl text-white">
               <h2 className="text-3xl font-bold mb-4 text-center">{t('ctaTitle')}</h2>
@@ -11282,6 +11813,14 @@ ${transcript}
             </a>
             <span className="hidden sm:inline">•</span>
             <span>RecapSmart v0.85</span>
+            <span className="hidden sm:inline">•</span>
+            <a
+              href="/pricing"
+              className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors cursor-pointer"
+              onClick={(e) => { e.preventDefault(); setShowPricingModal(true); }}
+            >
+              Pricing
+            </a>
           </div>
         </footer>
       </main>

@@ -909,6 +909,12 @@ interface AuthState {
 // --- i18n ---
 const translations = {
     nl: {
+        cookieTitle: "Cookies for Analytics",
+        cookiePoint1: "Essential cookies only",
+        cookiePoint2: "No tracking of personal data",
+        cookiePoint3: "Helps us improve the app",
+        accept: "Accept",
+        decline: "Decline",
         sessionLang: "Selecteer Sessie Taal",
         dutch: "Nederlands",
         english: "English",
@@ -1087,6 +1093,12 @@ const translations = {
         apiKeyPrivacy: "Je API key wordt alleen lokaal opgeslagen op je apparaat en wordt nooit naar onze servers gestuurd.",
     },
     en: {
+        cookieTitle: "Cookies for Analytics",
+        cookiePoint1: "Essential cookies only",
+        cookiePoint2: "No tracking of personal data",
+        cookiePoint3: "Helps us improve the app",
+        accept: "Accept",
+        decline: "Decline",
         sessionLang: "Select Session Language",
         dutch: "Nederlands",
         english: "English",
@@ -1287,7 +1299,7 @@ export default function App() {
   const [status, setStatus] = useState<RecordingStatus>(RecordingStatus.IDLE);
   // `language` is for the content (what's spoken), `uiLang` is for the app chrome
   const [language, setLanguage] = useState<'nl' | 'en' | null>(null);
-  const [uiLang, setUiLang] = useState<'nl' | 'en'>('nl');
+  const [uiLang, setUiLang] = useState<'nl' | 'en'>('en');
   
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -1346,6 +1358,29 @@ export default function App() {
   const isListeningRef = useRef(isListening);
   useEffect(() => { isListeningRef.current = isListening }, [isListening]);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Ensure audio context is resumed on user gesture on iOS
+  useEffect(() => {
+    const resumeAudioContext = () => {
+      const AudioContextClass: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      try {
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume?.();
+        }
+        ctx.close?.();
+      } catch {}
+      window.removeEventListener('touchend', resumeAudioContext);
+      window.removeEventListener('click', resumeAudioContext);
+    };
+    window.addEventListener('touchend', resumeAudioContext, { passive: true } as any);
+    window.addEventListener('click', resumeAudioContext);
+    return () => {
+      window.removeEventListener('touchend', resumeAudioContext);
+      window.removeEventListener('click', resumeAudioContext);
+    };
+  }, []);
 
   // New analysis states
   const [keywordAnalysis, setKeywordAnalysis] = useState<KeywordTopic[] | null>(null);
@@ -2006,17 +2041,41 @@ export default function App() {
     setDuration(0);
 
     try {
-      const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { sampleRate: 44100, channelCount: 2 } });
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+      const supportsDisplay = typeof (navigator.mediaDevices as any).getDisplayMedia === 'function';
+
+      let displayStream: MediaStream | null = null;
+      if (supportsDisplay && !isIOS) {
+        try {
+          displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: { sampleRate: 44100, channelCount: 2 } as MediaTrackConstraints
+          } as DisplayMediaStreamConstraints);
+        } catch (dsErr) {
+          console.warn('Display capture not available or denied. Falling back to microphone only.');
+        }
+      }
+
       let micStream: MediaStream | null = null;
       try {
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 44100, channelCount: 2 }, video: false });
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: { sampleRate: 44100, channelCount: 2 } as MediaTrackConstraints,
+          video: false
+        });
       } catch (micErr) {
-        console.warn("Microphone access denied. Continuing with system audio only.");
+        console.warn('Microphone access denied.');
       }
 
       streamsRef.current = [displayStream, micStream].filter(Boolean) as MediaStream[];
-      
-      const newAudioContext = new AudioContext();
+
+      // Create AudioContext in a mobile/iOS friendly way
+      const AudioContextClass: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const newAudioContext = new AudioContextClass();
+      // iOS requires explicit resume after a user gesture
+      if (newAudioContext.state === 'suspended') {
+        try { await newAudioContext.resume(); } catch {}
+      }
       audioContextRef.current = newAudioContext;
 
       const destination = newAudioContext.createMediaStreamDestination();
@@ -2027,33 +2086,55 @@ export default function App() {
 
       let hasAudio = false;
 
-      const displayAudioTracks = displayStream.getAudioTracks();
-      if (displayAudioTracks.length > 0) {
-        const displaySource = newAudioContext.createMediaStreamSource(new MediaStream(displayAudioTracks));
-        displaySource.connect(destination);
-        displaySource.connect(analyser);
-        hasAudio = true;
-        console.log('Display audio connected to analyser');
+      if (displayStream) {
+        const displayAudioTracks = displayStream.getAudioTracks();
+        if (displayAudioTracks.length > 0) {
+          const displaySource = newAudioContext.createMediaStreamSource(new MediaStream(displayAudioTracks));
+          displaySource.connect(destination);
+          displaySource.connect(analyser);
+          hasAudio = true;
+          console.log('Display audio connected to analyser');
+        }
       }
 
       if (micStream) {
         const micAudioTracks = micStream.getAudioTracks();
         if (micAudioTracks.length > 0) {
-            const micSource = newAudioContext.createMediaStreamSource(new MediaStream(micAudioTracks));
-            micSource.connect(destination);
-            micSource.connect(analyser);
-            hasAudio = true;
-            console.log('Microphone audio connected to analyser');
+          const micSource = newAudioContext.createMediaStreamSource(new MediaStream(micAudioTracks));
+          micSource.connect(destination);
+          micSource.connect(analyser);
+          hasAudio = true;
+          console.log('Microphone audio connected to analyser');
         }
       }
-      
+
       if (!hasAudio) {
         throw new Error(t("noDevices"));
       }
-      
+
       const combinedStream = destination.stream;
-      
-      const recorder = new MediaRecorder(combinedStream, { mimeType: 'audio/webm; codecs=opus' });
+
+      // Pick a mimeType supported by the current browser (iOS Safari does not support audio/webm)
+      let selectedType = '';
+      try {
+        const candidates = [
+          'audio/webm; codecs=opus',
+          'audio/webm',
+          'audio/mp4',
+          'audio/aac',
+          'audio/mpeg'
+        ];
+        for (const type of candidates) {
+          if ((window as any).MediaRecorder && (MediaRecorder as any).isTypeSupported && (MediaRecorder as any).isTypeSupported(type)) {
+            selectedType = type;
+            break;
+          }
+        }
+      } catch {}
+
+      const recorder = selectedType
+        ? new MediaRecorder(combinedStream, { mimeType: selectedType })
+        : new MediaRecorder(combinedStream);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
 
@@ -2062,18 +2143,19 @@ export default function App() {
       };
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const derivedType = recorder.mimeType || (audioChunksRef.current[0]?.type || 'audio/webm');
+        const audioBlob = new Blob(audioChunksRef.current, { type: derivedType });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
         setStatus(RecordingStatus.STOPPED);
         cleanupStreams();
-        if(timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = null;
       };
 
       recorder.start();
       setStatus(RecordingStatus.RECORDING);
-      
+
       // Start de audio visualisatie
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
@@ -5000,12 +5082,12 @@ ${transcript}
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex-1">
               <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
-                <strong>🍪 Cookies voor Analytics</strong> - We gebruiken cookies om de app te verbeteren en gebruikspatronen te analyseren.
+                <strong>🍪 {t('cookieTitle')}</strong> - {t('privacyLead')}
               </p>
               <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span>• Alleen essentiële cookies</span>
-                <span>• Geen tracking van persoonlijke data</span>
-                <span>• Helpt ons de app te verbeteren</span>
+                <span>• {t('cookiePoint1')}</span>
+                <span>• {t('cookiePoint2')}</span>
+                <span>• {t('cookiePoint3')}</span>
               </div>
             </div>
             <div className="flex gap-2">
@@ -5013,13 +5095,13 @@ ${transcript}
                 onClick={handleDeclineCookies}
                 className="px-4 py-2 text-sm bg-gray-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
               >
-                Weigeren
+                {t('decline')}
               </button>
               <button 
                 onClick={handleAcceptCookies}
                 className="px-4 py-2 text-sm bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
               >
-                Accepteren
+                {t('accept')}
               </button>
             </div>
           </div>
@@ -5103,7 +5185,7 @@ ${transcript}
                 <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
                   <MicIcon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">🎙️ Slimme Opname</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featureRecordingTitle')}</h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   Neem meetings, webinars en gesprekken op met je microfoon en systeem audio. Automatische transcriptie in Nederlands of Engels.
                 </p>
@@ -5113,7 +5195,7 @@ ${transcript}
                 <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
                   <SummaryIcon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">📝 AI Analyse</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featureAIAnalysisTitle')}</h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   Genereer samenvattingen, FAQ's, leerpunten en vervolgvragen automatisch met Google Gemini AI.
                 </p>
@@ -5123,7 +5205,7 @@ ${transcript}
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
                   <PresentationIcon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">📊 Presentaties</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featurePresentationsTitle')}</h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   Maak professionele PowerPoint presentaties met AI gegenereerde content en afbeeldingen.
                 </p>
@@ -5133,7 +5215,7 @@ ${transcript}
                 <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
                   <ChatIcon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">💬 Chat & Vragen</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featureChatTitle')}</h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   Stel vragen over je transcriptie en krijg gedetailleerde antwoorden. Ondersteuning voor voice input.
                 </p>
@@ -5143,7 +5225,7 @@ ${transcript}
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
                   <PodcastIcon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">🎧 Podcast Scripts</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featurePodcastTitle')}</h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   Genereer podcast scripts en content op basis van je meetings. Perfect voor content creators.
                 </p>
@@ -5153,7 +5235,7 @@ ${transcript}
                 <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
                   <AnonymizeIcon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">🔒 Privacy & Anonimisatie</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featurePrivacyTitle')}</h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   Automatische anonimisatie van namen en gevoelige informatie. Instelbare regels voor jouw organisatie.
                 </p>
@@ -5392,20 +5474,20 @@ ${transcript}
                     <div className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
                         <AlertTriangleIcon className="w-6 h-6 text-amber-500" />
                         <div className="flex-1">
-                            <p className="font-semibold mb-1">API Key Vereist</p>
-                            <p className="text-sm mb-2">Je hebt een Google Gemini API key nodig om opnames te kunnen transcriberen en analyseren.</p>
+                            <p className="font-semibold mb-1">{t('setupApiKey')}</p>
+                            <p className="text-sm mb-2">{t('haveAccessLead')}</p>
                             <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded p-2 text-sm">
-                                <p className="text-green-700 dark:text-green-300 font-medium">✅ Gratis & Veilig</p>
-                                <p className="text-green-600 dark:text-green-400">• Volledig gratis bij Google</p>
-                                <p className="text-green-600 dark:text-green-400">• Geen betalingsmiddel nodig</p>
-                                <p className="text-green-600 dark:text-green-400">• Alleen lokaal opgeslagen op je apparaat</p>
+                                <p className="text-green-700 dark:text-green-300 font-medium">✅ {t('privacyTitle')}</p>
+                                <p className="text-green-600 dark:text-green-400">• {t('privacyItemApiKeyLocal')}</p>
+                                <p className="text-green-600 dark:text-green-400">• {t('privacyItemNoServers')}</p>
+                                <p className="text-green-600 dark:text-green-400">• {t('privacyItemWeStoreNothing')}</p>
                             </div>
                         </div>
                         <button 
                             onClick={() => setShowApiKeyModal(true)} 
                             className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium"
                         >
-                            API Key Instellen
+                            {t('setupApiKey')}
                         </button>
                     </div>
                 )}

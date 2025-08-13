@@ -1357,15 +1357,8 @@ export default function App() {
   const [anonymizationRules, setAnonymizationRules] = useState<AnonymizationRule[]>(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       const saved = localStorage.getItem('anonymization_rules');
-      return saved ? JSON.parse(saved) : [
-        { id: 1, originalText: 'Jan', replacementText: 'medewerker', isExact: true },
-        { id: 2, originalText: 'Fatima', replacementText: 'medewerker', isExact: true },
-        { id: 3, originalText: 'Pietersen', replacementText: 'medewerker', isExact: true },
-        { id: 4, originalText: 'Mr. Pietersen', replacementText: 'medewerker', isExact: true },
-        { id: 5, originalText: 'exact', replacementText: 'Company', isExact: true },
-        { id: 6, originalText: 'Jan', replacementText: 'medewerker', isExact: false },
-        { id: 7, originalText: 'Peter', replacementText: 'medewerker', isExact: false }
-      ];
+      // Nieuw: geen default regels meer. Leeg betekent: geen anonimisatie mogelijk tot user regels toevoegt.
+      return saved ? JSON.parse(saved) : [];
     }
     return [];
   });

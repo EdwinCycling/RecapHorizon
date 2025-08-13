@@ -1358,6 +1358,7 @@ export default function App() {
   const isListeningRef = useRef(isListening);
   useEffect(() => { isListeningRef.current = isListening }, [isListening]);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const [showInfoPage, setShowInfoPage] = useState(false);
 
   // Ensure audio context is resumed on user gesture on iOS
   useEffect(() => {
@@ -2639,7 +2640,9 @@ const handleKeywordClick = async (keyword: string) => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const prompt = `Geef een korte en duidelijke uitleg van de term '${keyword}' in de context van de volgende transcriptie. Geef alleen de uitleg terug, zonder extra titels of opmaak. Houd het beknopt. Transcript: --- ${transcript} ---`;
+        const prompt = language === 'en'
+          ? `Provide a short and clear explanation of the term '${keyword}' in the context of the following transcript. Return only the explanation, no extra titles or formatting. Keep it concise. Transcript: --- ${transcript} ---`
+          : `Geef een korte en duidelijke uitleg van de term '${keyword}' in de context van de volgende transcriptie. Geef alleen de uitleg terug, zonder extra titels of opmaak. Houd het beknopt. Transcript: --- ${transcript} ---`;
         const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         setKeywordExplanation(response.text);
     } catch (err: any) {
@@ -2669,7 +2672,9 @@ const handleGenerateKeywordAnalysis = async () => {
     setError(null);
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const prompt = `Analyseer de volgende transcriptie. Identificeer de meest voorkomende en belangrijke trefwoorden. Groepeer deze trefwoorden in 5-7 relevante onderwerpen. Geef voor elk onderwerp een korte, beschrijvende naam en een lijst met de bijbehorende trefwoorden. Geef alleen het JSON-object terug. Transcript: --- ${transcript} ---`;
+        const prompt = language === 'en'
+          ? `Analyze the following transcript. Identify the most frequent and important keywords. Group these into 5-7 relevant topics. For each topic, provide a short descriptive name and a list of associated keywords. Return JSON only. Transcript: --- ${transcript} ---`
+          : `Analyseer de volgende transcriptie. Identificeer de meest voorkomende en belangrijke trefwoorden. Groepeer deze trefwoorden in 5-7 relevante onderwerpen. Geef voor elk onderwerp een korte, beschrijvende naam en een lijst met de bijbehorende trefwoorden. Geef alleen het JSON-object terug. Transcript: --- ${transcript} ---`;
 
         const schema = {
             type: Type.ARRAY,
@@ -2719,7 +2724,9 @@ const handleAnalyzeSentiment = async () => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const prompt = `Analyseer het sentiment van de volgende transcriptie. Geef een JSON-object terug. Het object moet bevatten: 1. 'taggedText': de volledige transcriptie met positieve sentimentdelen verpakt in [POS]...[/POS], negatieve in [NEG]...[/NEG], en neutrale in [NEU]...[/NEU]. 2. 'summary': een korte, feitelijke samenvatting van de gevonden sentimenten (bijv. "Het gesprek was overwegend positief met enkele negatieve punten over X."). 3. 'conclusion': een algemene conclusie over de algehele toon en sfeer van het gesprek. Transcript: --- ${transcript} ---`;
+        const prompt = language === 'en'
+          ? `Analyze the sentiment of the following transcript. Return a JSON object with: 1. 'taggedText': the full transcript with positive parts wrapped in [POS]...[/POS], negative in [NEG]...[/NEG], neutral in [NEU]...[/NEU]. 2. 'summary': a short factual summary of the sentiments. 3. 'conclusion': an overall conclusion about the tone and atmosphere. Transcript: --- ${transcript} ---`
+          : `Analyseer het sentiment van de volgende transcriptie. Geef een JSON-object terug. Het object moet bevatten: 1. 'taggedText': de volledige transcriptie met positieve sentimentdelen verpakt in [POS]...[/POS], negatieve in [NEG]...[/NEG], en neutrale in [NEU]...[/NEU]. 2. 'summary': een korte, feitelijke samenvatting van de gevonden sentimenten (bijv. "Het gesprek was overwegend positief met enkele negatieve punten over X."). 3. 'conclusion': een algemene conclusie over de algehele toon en sfeer van het gesprek. Transcript: --- ${transcript} ---`;
 
         const schema = {
             type: Type.OBJECT,
@@ -2766,7 +2773,24 @@ const handleGeneratePodcast = async () => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const prompt = `Je bent een podcast scriptschrijver voor de 'RecapSmart Podcast', gepresenteerd door 'Albert'. Gebruik de volgende transcriptie om een levendig en boeiend podcastscript te maken dat direct kan worden uitgesproken.
+        const prompt = language === 'en'
+            ? `You are a podcast scriptwriter for the 'RecapSmart Podcast', hosted by 'Albert'. Use the transcript below to create an engaging, natural-sounding script that can be spoken aloud directly.
+
+Structure:
+1.  [INTRO]: Welcome listeners and introduce the main topic of today concisely.
+2.  [CORE]: Go deeper using the key discussions, findings and insights from the transcript to form a compelling story or clear analysis.
+3.  [CLOSING]: Summarize the key points. Give concrete, actionable tips or action items. End with a friendly sign-off.
+
+Important:
+- Write as a continuous, natural spoken narrative.
+- Do not include headings like "[INTRO]" in the output.
+- Output only the text Albert will speak, with no extra formatting.
+
+Here is the transcript:
+---
+${transcript}
+---`
+            : `Je bent een podcast scriptschrijver voor de 'RecapSmart Podcast', gepresenteerd door 'Albert'. Gebruik de volgende transcriptie om een levendig en boeiend podcastscript te maken dat direct kan worden uitgesproken.
 
 **Script Structuur:**
 1.  **[INTRO]:** Albert heet de luisteraars welkom en introduceert het hoofdonderwerp van vandaag op een pakkende manier.
@@ -4368,10 +4392,10 @@ ${transcript}
       <header className="fixed top-2 sm:top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-16px)] sm:w-auto">
         <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 sm:gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-2 sm:px-3 py-1.5 sm:py-2 rounded-full shadow-lg mx-auto max-w-[94vw] sm:max-w-none">
           {/* Logo & brand */}
-          <div className="flex items-center gap-2 min-w-0">
+          <button onClick={() => setShowInfoPage(true)} className="flex items-center gap-2 min-w-0 hover:opacity-90">
             <img src="/logo.png" alt="RecapSmart Logo" className="w-8 h-8 rounded-lg" />
             <span className="text-lg font-bold text-cyan-600 dark:text-cyan-400 hidden sm:block">RecapSmart</span>
-          </div>
+          </button>
           
           <div className="flex items-center gap-1 bg-gray-200 dark:bg-slate-800 p-1 rounded-full shrink-0">
               <button title={t('dutch')} onClick={() => setUiLang('nl')} className={`flex items-center justify-center h-7 w-7 rounded-full transition-colors ${uiLang === 'nl' ? 'bg-white dark:bg-slate-600' : 'hover:bg-gray-300 dark:hover:bg-slate-700'}`}>
@@ -5113,8 +5137,15 @@ ${transcript}
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner className="w-8 h-8" text="Laden..." />
           </div>
-        ) : !authState.user ? (
+        ) : showInfoPage || !authState.user ? (
           <div className="text-center py-16 w-full max-w-6xl mx-auto">
+            {authState.user && (
+              <div className="mb-6">
+                <button onClick={() => setShowInfoPage(false)} className="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors">
+                  ← {t('startNewSession')}
+                </button>
+              </div>
+            )}
             {/* Hero Section */}
             <div className="mb-16">
               {/* Logo */}
@@ -5186,9 +5217,7 @@ ${transcript}
                   <MicIcon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featureRecordingTitle')}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Neem meetings, webinars en gesprekken op met je microfoon en systeem audio. Automatische transcriptie in Nederlands of Engels.
-                </p>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{t('featureRecordingDesc')}</p>
               </div>
 
               <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 hover:shadow-xl transition-all duration-300">
@@ -5196,9 +5225,7 @@ ${transcript}
                   <SummaryIcon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featureAIAnalysisTitle')}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Genereer samenvattingen, FAQ's, leerpunten en vervolgvragen automatisch met Google Gemini AI.
-                </p>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{t('featureAIAnalysisDesc')}</p>
               </div>
 
               <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 hover:shadow-xl transition-all duration-300">
@@ -5206,9 +5233,7 @@ ${transcript}
                   <PresentationIcon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featurePresentationsTitle')}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Maak professionele PowerPoint presentaties met AI gegenereerde content en afbeeldingen.
-                </p>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{t('featurePresentationsDesc')}</p>
               </div>
 
               <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 hover:shadow-xl transition-all duration-300">
@@ -5216,9 +5241,7 @@ ${transcript}
                   <ChatIcon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featureChatTitle')}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Stel vragen over je transcriptie en krijg gedetailleerde antwoorden. Ondersteuning voor voice input.
-                </p>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{t('featureChatDesc')}</p>
               </div>
 
               <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 hover:shadow-xl transition-all duration-300">
@@ -5226,9 +5249,7 @@ ${transcript}
                   <PodcastIcon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featurePodcastTitle')}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Genereer podcast scripts en content op basis van je meetings. Perfect voor content creators.
-                </p>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{t('featurePodcastDesc')}</p>
               </div>
 
               <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 hover:shadow-xl transition-all duration-300">
@@ -5236,9 +5257,7 @@ ${transcript}
                   <AnonymizeIcon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">{t('featurePrivacyTitle')}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Automatische anonimisatie van namen en gevoelige informatie. Instelbare regels voor jouw organisatie.
-                </p>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{t('featurePrivacyDesc')}</p>
               </div>
             </div>
 

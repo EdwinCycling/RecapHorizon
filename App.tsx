@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react'; 
 import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData } from './types';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation

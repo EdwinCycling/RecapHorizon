@@ -1,7 +1,7 @@
 {
   "name": "recapsmart",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.81808",
   "type": "module",
   "scripts": {
     "dev": "vite",

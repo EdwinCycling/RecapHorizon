@@ -32,29 +32,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, type MonthlyTokensUsage } from './src/firebase';
 
-// DEBUG: Environment variables check
-console.log('🔍 Environment Variables Debug:', {
-  VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY ? '✅ SET' : '❌ MISSING',
-  VITE_FIREBASE_AUTH_DOMAIN: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? '✅ SET' : '❌ MISSING',
-  VITE_FIREBASE_PROJECT_ID: import.meta.env.VITE_FIREBASE_PROJECT_ID ? '✅ SET' : '❌ MISSING',
-  VITE_FIREBASE_STORAGE_BUCKET: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ? '✅ SET' : '❌ MISSING',
-  VITE_FIREBASE_MESSAGING_SENDER_ID: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? '✅ SET' : '❌ MISSING',
-  VITE_FIREBASE_APP_ID: import.meta.env.VITE_FIREBASE_APP_ID ? '✅ SET' : '❌ MISSING',
-  GEMINI_API_KEY: import.meta.env.GEMINI_API_KEY ? '✅ SET' : '❌ MISSING',
-});
 
-// DEBUG: Show actual values (be careful with this in production)
-if (import.meta.env.DEV) {
-  console.log('🔍 Environment Variables Values (DEV only):', {
-    VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY?.substring(0, 10) + '...',
-    VITE_FIREBASE_AUTH_DOMAIN: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    VITE_FIREBASE_PROJECT_ID: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    VITE_FIREBASE_STORAGE_BUCKET: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    VITE_FIREBASE_MESSAGING_SENDER_ID: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    VITE_FIREBASE_APP_ID: import.meta.env.VITE_FIREBASE_APP_ID,
-    GEMINI_API_KEY: import.meta.env.GEMINI_API_KEY?.substring(0, 10) + '...',
-  });
-}
 
 // --- ICONS ---
 
@@ -169,7 +147,8 @@ const LoginForm: React.FC<{
   onCreateAccount: (email: string, password: string) => Promise<void>;
   onPasswordReset: (email: string) => Promise<boolean>;
   onClose: () => void;
-}> = ({ onLogin, onCreateAccount, onPasswordReset, onClose }) => {
+  t: (key: string, params?: Record<string, string | number>) => string;
+}> = ({ onLogin, onCreateAccount, onPasswordReset, onClose, t }) => {
   const [mode, setMode] = useState<'login' | 'create' | 'reset'>('login');
   const [email, setEmail] = useState(() => {
     // Load last used email from localStorage
@@ -199,21 +178,21 @@ const LoginForm: React.FC<{
         await onLogin(email, password);
       } else if (mode === 'create') {
         if (password !== confirmPassword) {
-          throw new Error('Wachtwoorden komen niet overeen');
+          throw new Error(t('passwordsDoNotMatch'));
         }
         if (password.length < 6) {
-          throw new Error('Wachtwoord moet minimaal 6 karakters zijn');
+          throw new Error(t('passwordTooShort'));
         }
         // Save email to localStorage
         localStorage.setItem('last_email', email);
         await onCreateAccount(email, password);
       } else if (mode === 'reset') {
         await onPasswordReset(email);
-        setSuccess('Wachtwoord reset email verzonden!');
+        setSuccess(t('passwordResetEmailSent'));
         setTimeout(() => setMode('login'), 2000);
       }
     } catch (error: any) {
-      setError(error.message || 'Er is een fout opgetreden');
+      setError(error.message || t('generalError'));
     } finally {
       setIsLoading(false);
     }
@@ -235,7 +214,7 @@ const LoginForm: React.FC<{
 
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Email
+          {t('email')}
         </label>
         <input
           type="email"
@@ -249,9 +228,9 @@ const LoginForm: React.FC<{
 
       {mode !== 'reset' && (
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Wachtwoord
-          </label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          {t('password')}
+        </label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -272,7 +251,7 @@ const LoginForm: React.FC<{
           </div>
           {mode === 'create' && (
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Dit wachtwoord is specifiek voor deze app
+              {t('passwordAppSpecific')}
             </p>
           )}
         </div>
@@ -281,7 +260,7 @@ const LoginForm: React.FC<{
       {mode === 'create' && (
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Bevestig Wachtwoord
+            {t('confirmPassword')}
           </label>
           <div className="relative">
             <input
@@ -311,7 +290,7 @@ const LoginForm: React.FC<{
         >
           {isLoading ? (
             <LoadingSpinner className="w-5 h-5" text="" />
-          ) : mode === 'login' ? 'Inloggen' : mode === 'create' ? 'Account Aanmaken' : 'Reset Versturen'}
+          ) : mode === 'login' ? t('loginNow') : mode === 'create' ? t('accountCreate') : t('resetSend')}
         </button>
       </div>
 
@@ -323,14 +302,14 @@ const LoginForm: React.FC<{
               onClick={() => setMode('create')}
               className="text-cyan-500 hover:text-cyan-600 transition-colors"
             >
-              Account aanmaken
+              {t('accountCreate')}
             </button>
             <button
               type="button"
               onClick={() => setMode('reset')}
               className="text-cyan-500 hover:text-cyan-600 transition-colors"
             >
-              Wachtwoord vergeten?
+              {t('forgotPassword')}
             </button>
           </>
         )}
@@ -351,7 +330,7 @@ const LoginForm: React.FC<{
             onClick={() => setMode('login')}
             className="text-cyan-500 hover:text-cyan-600 transition-colors"
           >
-            Terug naar inloggen
+            {t('backToLogin')}
           </button>
         )}
       </div>
@@ -929,6 +908,30 @@ interface AuthState {
   isAdmin: boolean;
 }
 
+// Email helper functions
+const openEmailClient = (to: string, subject: string, body: string) => {
+  const encodedSubject = encodeURIComponent(subject);
+  const encodedBody = encodeURIComponent(body);
+  window.location.href = `mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`;
+};
+
+const openEmailClientWithoutTo = (subject: string, body: string) => {
+  const encodedSubject = encodeURIComponent(subject);
+  const encodedBody = encodeURIComponent(body);
+  window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
+};
+
+// Helper function to generate email content for transcript analysis
+const generateEmailContent = (type: string, content: string, timestamp?: string) => {
+  const getStartStamp = () => {
+    const d = recordingStartMs ? new Date(recordingStartMs) : new Date();
+    return d.toLocaleString('nl-NL');
+  };
+  const stamp = timestamp || getStartStamp();
+  const subject = `RecapSmart ${stamp} - ${type}`;
+  const body = `## ${type}\n\n${content}`;
+  return { subject, body };
+};
 
 // --- i18n ---
 import { translations } from './src/locales';
@@ -936,6 +939,7 @@ import { subscriptionService } from './src/subscriptionService';
 import { tokenCounter } from './src/tokenCounter';
 import UpgradeModal from './src/components/UpgradeModal';
 import PricingPage from './src/components/PricingPage';
+import FAQPage from './src/components/FAQPage';
 
 
  
@@ -954,9 +958,9 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 export default function App() {
   const [status, setStatus] = useState<RecordingStatus>(RecordingStatus.IDLE);
   // `language` is for the content (what's spoken), `uiLang` is for the app chrome
-  const [language, setLanguage] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | null>(null);
-  const [outputLang, setOutputLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr'>('en');
-  const [uiLang, setUiLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr'>('en');
+  const [language, setLanguage] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es' | null>(null);
+  const [outputLang, setOutputLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'>('en');
+  const [uiLang, setUiLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'>('en');
   
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -1084,6 +1088,7 @@ export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showSystemAudioHelp, setShowSystemAudioHelp] = useState(false);
+  const [showFormatsInfo, setShowFormatsInfo] = useState(false);
   // Recording time tracking
   const [recordingStartMs, setRecordingStartMs] = useState<number | null>(null);
   const [pauseAccumulatedMs, setPauseAccumulatedMs] = useState<number>(0);
@@ -1107,6 +1112,7 @@ export default function App() {
   };
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
+  const [showFAQPage, setShowFAQPage] = useState(false);
 
   // Auth state
   const [authState, setAuthState] = useState<AuthState>({
@@ -3812,9 +3818,8 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
     }
 
     try {
-      // In een echte app zou je hier een email service gebruiken
-      // Voor nu tonen we een popup met de email content
-      const emailContent = `Beste gebruiker,
+      const subject = 'Uitnodiging voor RecapSmart - Je kunt nu een account aanmaken!';
+      const body = `Beste gebruiker,
 
 Je bent uitgenodigd om je aan te melden bij RecapSmart!
 
@@ -3823,37 +3828,10 @@ Je kunt nu een account aanmaken op: ${window.location.origin}
 Met vriendelijke groet,
 Het RecapSmart Team`;
 
-      // Toon email content in een popup
-      const emailWindow = window.open('', '_blank', 'width=600,height=400');
-      if (emailWindow) {
-        emailWindow.document.write(`
-          <html>
-            <head><title>Uitnodigingsmail</title></title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-              .header { background: #06b6d4; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
-              .content { background: #f8fafc; padding: 20px; border-radius: 8px; }
-              .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>📧 Uitnodigingsmail</h1>
-            </div>
-            <div class="content">
-              <h3>Email naar: ${email}</h3>
-              <pre style="white-space: pre-wrap; background: white; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0;">${emailContent}</pre>
-            </div>
-            <div class="footer">
-              <p><strong>Opmerking:</strong> In een productieomgeving wordt deze email automatisch verstuurd via een email service.</p>
-              <p>Je kunt deze popup sluiten en de gebruiker handmatig uitnodigen.</p>
-            </div>
-          </body>
-          </html>
-        `);
-      }
+      // Open lokale mail client
+      openEmailClient(email, subject, body);
       
-              displayToast(`Uitnodigingsmail succesvol voorbereid voor ${email}!`, 'success');
+      displayToast(`Email client geopend voor ${email}!`, 'success');
     } catch (error) {
       console.error('Error sending invitation email:', error);
               displayToast('Fout bij voorbereiden van uitnodigingsmail.', 'error');
@@ -3875,51 +3853,68 @@ Het RecapSmart Team`;
         return;
       }
 
-      // Toon alle emails in één popup
-      const emailContent = `Beste gebruikers,
+      // Voor meerdere emails, open de eerste in mail client en toon de rest in een popup
+      if (emails.length === 1) {
+        // Als er maar 1 email is, open direct de mail client
+        const subject = 'Uitnodiging voor RecapSmart - Je kunt nu een account aanmaken!';
+        const body = `Beste gebruiker,
 
-Jullie zijn uitgenodigd om je aan te melden bij RecapSmart!
+Je bent uitgenodigd om je aan te melden bij RecapSmart!
 
-Jullie kunnen nu een account aanmaken op: ${window.location.origin}
+Je kunt nu een account aanmaken op: ${window.location.origin}
 
 Met vriendelijke groet,
 Het RecapSmart Team`;
 
-      const emailWindow = window.open('', '_blank', 'width=600,height=400');
-      if (emailWindow) {
-        emailWindow.document.write(`
-          <html>
-            <head><title>Uitnodigingsmails</title></title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-              .header { background: #06b6d4; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
-              .content { background: #f8fafc; padding: 20px; border-radius: 8px; }
-              .emails { background: white; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; margin: 15px 0; }
-              .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>📧 Uitnodigingsmails</h1>
-            </div>
-            <div class="content">
-              <h3>Emails naar:</h3>
-              <div class="emails">
-                ${emails.map(email => `<div>• ${email}</div>`).join('')}
-              </div>
-              <h3>Email content:</h3>
-              <pre style="white-space: pre-wrap; background: white; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0;">${emailContent}</pre>
-            </div>
-            <div class="footer">
-              <p><strong>Opmerking:</strong> In een productieomgeving worden deze emails automatisch verstuurd via een email service.</p>
-              <p>Je kunt deze popup sluiten en de gebruikers handmatig uitnodigen.</p>
-            </div>
-          </body>
-          </html>
-        `);
+        openEmailClient(emails[0], subject, body);
+        displayToast(`Email client geopend voor ${emails[0]}!`, 'success');
+      } else {
+        // Voor meerdere emails, toon een overzicht en open de eerste
+        const subject = 'Uitnodiging voor RecapSmart - Je kunt nu een account aanmaken!';
+        const body = `Beste gebruiker,
+
+Je bent uitgenodigd om je aan te melden bij RecapSmart!
+
+Je kunt nu een account aanmaken op: ${window.location.origin}
+
+Met vriendelijke groet,
+Het RecapSmart Team`;
+
+        // Open eerste email in mail client
+        openEmailClient(emails[0], subject, body);
+        
+        // Toon overzicht van alle emails
+        const emailList = emails.slice(1).map(email => `• ${email}`).join('\n');
+        displayToast(`Email client geopend voor ${emails[0]}. Overige emails: ${emails.length - 1}`, 'success');
+        
+        // Toon popup met alle emails voor referentie
+        const emailWindow = window.open('', '_blank', 'width=600,height=400');
+        if (emailWindow) {
+          emailWindow.document.write(`
+            <html>
+              <head><title>Uitnodigingsmails Overzicht</title></head>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+                .header { background: #06b6d4; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
+                .content { background: #f8fafc; padding: 20px; border-radius: 8px; }
+                .emails { background: white; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; margin: 15px 0; }
+              </style>
+              <body>
+                <div class="header">
+                  <h1>📧 Uitnodigingsmails Overzicht</h1>
+                </div>
+                <div class="content">
+                  <h3>Alle emails voor uitnodigingen:</h3>
+                  <div class="emails">
+                    ${emails.map(email => `<div>• ${email}</div>`).join('')}
+                  </div>
+                  <p><strong>Tip:</strong> De eerste email is geopend in je mail client. Kopieer de content voor de overige emails.</p>
+                </div>
+              </body>
+            </html>
+          `);
+        }
       }
-      
-              displayToast(`${emails.length} uitnodigingsmails succesvol voorbereid!`, 'success');
     } catch (error) {
       console.error('Error sending invitation emails:', error);
               displayToast('Fout bij voorbereiden van uitnodigingsmails.', 'error');
@@ -4525,9 +4520,8 @@ ${transcript}
                 ⬇️
             </button>
             <button onClick={() => {
-                const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - ${t('mindmap')}`);
-                const body = encodeURIComponent(`## ${t('mindmap')}\n\n${mindmapMermaid}`);
-                window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                const { subject, body } = generateEmailContent(t('mindmap'), `## ${t('mindmap')}\n\n${mindmapMermaid}`);
+                openEmailClientWithoutTo(subject, body);
             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
                 ✉️
             </button>
@@ -4721,8 +4715,7 @@ ${transcript}
                             ⬇️
                         </button>
                         <button onClick={() => {
-                            const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - ${t('executiveSummary')}`);
-                            const body = encodeURIComponent((() => {
+                            const content = (() => {
                                 const parts: string[] = [
                                   `## ${t('executiveSummary')}`,
                                   '',
@@ -4734,8 +4727,9 @@ ${transcript}
                                   `${t('callToAction')}: ${executiveSummaryData.call_to_action}`
                                 ];
                                 return parts.join('\n');
-                            })());
-                            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                            })();
+                            const { subject, body } = generateEmailContent(t('executiveSummary'), content);
+                            openEmailClientWithoutTo(subject, body);
                         }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
                             ✉️
                         </button>
@@ -4772,9 +4766,8 @@ ${transcript}
                             ⬇️
                         </button>
                         <button onClick={() => {
-                            const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - ${t('storytelling')}`);
-                            const body = encodeURIComponent(`## ${t('storytelling')}\n\n${storytellingData.story}`);
-                            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                            const { subject, body } = generateEmailContent(t('storytelling'), `## ${t('storytelling')}\n\n${storytellingData.story}`);
+                            openEmailClientWithoutTo(subject, body);
                         }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
                             ✉️
                         </button>
@@ -4841,8 +4834,7 @@ ${transcript}
                                     displayToast('Tekstbestand gedownload', 'success');
                                 }} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm hover:bg-slate-800">Download .txt</button>
                                 <button onClick={() => {
-                                    const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - ${t('quizQuestions') || 'Quizvragen'}`);
-                                    const body = encodeURIComponent((() => {
+                                    const content = (() => {
                                         const parts: string[] = ['## Quizvragen', ''];
                                         if (!quizQuestions) return '';
                                         quizQuestions.forEach((q, idx) => {
@@ -4852,8 +4844,9 @@ ${transcript}
                                             parts.push('');
                                         });
                                         return parts.join('\n');
-                                    })());
-                                    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                                    })();
+                                    const { subject, body } = generateEmailContent(t('quizQuestions') || 'Quizvragen', content);
+                                    openEmailClientWithoutTo(subject, body);
                                 }} className="px-3 py-1.5 rounded bg-slate-600 text-white text-sm hover:bg-slate-700">Mail</button>
                             </div>
                         )}
@@ -4929,9 +4922,8 @@ ${transcript}
                                  ⬇️
                              </button>
                              <button onClick={() => {
-                                 const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - ${t('sentimentAnalysis')}`);
-                                 const body = encodeURIComponent(fullContent);
-                                 window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                                 const { subject, body } = generateEmailContent(t('sentimentAnalysis'), fullContent);
+                                 openEmailClientWithoutTo(subject, body);
                              }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
                                  ✉️
                              </button>
@@ -4987,8 +4979,7 @@ ${transcript}
                             ⬇️
                         </button>
                         <button onClick={() => {
-                            const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - ${t('keywordAnalysis')}`);
-                            const body = encodeURIComponent((() => {
+                            const content = (() => {
                                 const parts: string[] = [`## ${t('keywordAnalysis')}`, ''];
                                 if (keywordAnalysis) {
                                     keywordAnalysis.forEach(topic => {
@@ -4997,8 +4988,9 @@ ${transcript}
                                     });
                                 }
                                 return parts.join('\n');
-                            })());
-                            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                            })();
+                            const { subject, body } = generateEmailContent(t('keywordAnalysis'), content);
+                            openEmailClientWithoutTo(subject, body);
                         }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
                             ✉️
                         </button>
@@ -5163,9 +5155,8 @@ ${transcript}
                                         ⬇️
                                     </button>
                                     <button onClick={() => {
-                                        const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - Business Case`);
-                                        const body = encodeURIComponent(`## Business Case\n\n${businessCaseData.businessCase}`);
-                                        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                                        const { subject, body } = generateEmailContent('Business Case', `## Business Case\n\n${businessCaseData.businessCase}`);
+                                        openEmailClientWithoutTo(subject, body);
                                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
                                         ✉️
                                     </button>
@@ -5205,9 +5196,8 @@ ${transcript}
                         const allActions = [...primaryActions, ...analysisActions];
                         const found = allActions.find(a => a.id === activeView);
                         const fnName = found ? found.label() : activeView;
-                        const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - ${fnName}`);
-                        const body = encodeURIComponent(content || '');
-                        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                        const { subject, body } = generateEmailContent(fnName, content || '');
+                        openEmailClientWithoutTo(subject, body);
                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
                         ✉️
                     </button>
@@ -5433,11 +5423,11 @@ ${transcript}
       <header className="fixed top-2 sm:top-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-16px)] sm:w-auto">
         <div className="flex flex-wrap items-center justify-between sm:justify-start gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-md shadow-md mx-auto max-w-[94vw] sm:max-w-none">
           {/* Logo & brand */}
-          <button onClick={() => setShowInfoPage(true)} className="flex items-center gap-2 min-w-0 hover:opacity-90">
-            {!showInfoPage && (
+          {!showInfoPage && (
+            <button onClick={() => setShowInfoPage(true)} className="flex items-center gap-2 min-w-0 hover:opacity-90">
               <img src="/logo.png" alt="RecapSmart Logo" className="w-8 h-8 rounded-lg" />
-            )}
-          </button>
+            </button>
+          )}
           
           <div className="flex items-center gap-2 bg-gray-200 dark:bg-slate-800 px-2 py-1 rounded-md shrink-0">
             <select value={uiLang} onChange={(e) => setUiLang(e.target.value as any)} className="bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none">
@@ -5589,7 +5579,7 @@ ${transcript}
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
               <div>
                 <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">AI-Gegenereerde Content</h4>
-                <p>RecapSmart maakt gebruik van Google Gemini AI-technologie om transcripties, samenvattingen, analyses en andere content te genereren. Alle gegenereerde content is AI-gebaseerd en dient alleen ter ondersteuning van je werk.</p>
+                <p>RecapSmart maakt gebruik van de nieuwste AI-technologie om transcripties, samenvattingen, analyses en andere content te genereren. Alle gegenereerde content is AI-gebaseerd en dient alleen ter ondersteuning van je werk.</p>
               </div>
               
               <div>
@@ -5604,7 +5594,7 @@ ${transcript}
               
               <div>
                 <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Google Gemini API</h4>
-                <p>De app integreert met Google Gemini AI-services. De kwaliteit en beschikbaarheid van deze services zijn afhankelijk van Google's voorwaarden en kunnen variëren. We hebben geen controle over de onderliggende AI-modellen of hun output.</p>
+                <p>De app integreert met AI-services. De kwaliteit en beschikbaarheid van deze services zijn afhankelijk van de voorwaarden van de AI-provider en kunnen variëren. We hebben geen controle over de onderliggende AI-modellen of hun output.</p>
               </div>
               
               <div>
@@ -5669,7 +5659,7 @@ ${transcript}
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">🔒 Volledige Privacy Garantie</h4>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">🔒 {t('privacyTitle')}</h4>
                 <p><strong>Belangrijk:</strong> Wanneer je de app gebruikt, worden je sessies NIET opgeslagen in onze database.</p>
                 <ul className="list-disc list-inside space-y-1 text-xs mt-2">
                   <li>🎙️ <strong>Opnames:</strong> Blijven volledig lokaal op jouw apparaat</li>
@@ -5713,7 +5703,7 @@ ${transcript}
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-md w-full m-4 p-6">
             <div className="flex justify-between items-start mb-6">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">🔐 Inloggen</h3>
+              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">🔐 {t('loginNow')}</h3>
               <button 
                 onClick={() => setShowLoginModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
@@ -5727,6 +5717,7 @@ ${transcript}
               onCreateAccount={handleCreateAccount}
               onPasswordReset={handlePasswordReset}
               onClose={() => setShowLoginModal(false)}
+              t={t}
             />
           </div>
         </div>
@@ -5737,18 +5728,18 @@ ${transcript}
           <div className="min-h-screen p-6">
             <div className="max-w-6xl mx-auto">
               <div className="flex justify-between items-start mb-6">
-                <h3 className="text-2xl font-bold text-cyan-500 dark:text-cyan-400">👑 Admin Panel</h3>
+                <h3 className="text-2xl font-bold text-cyan-500 dark:text-cyan-400">👑 {t('adminPanel')}</h3>
                 <button 
                   onClick={() => setShowAdminPanel(false)}
                   className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors flex items-center gap-2"
                 >
-                  <span>← Terug naar Start Sessie</span>
+                  <span>← {t('backToStartSession')}</span>
                 </button>
               </div>
             
             {/* Add User Section - Always visible */}
             <div className="bg-gray-50 dark:bg-slate-700/50 p-6 rounded-lg mb-8">
-              <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">Gebruiker Toevoegen</h4>
+              <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('addUser')}</h4>
               <div className="flex gap-3">
                 <input
                   type="email"
@@ -5762,7 +5753,7 @@ ${transcript}
                   disabled={!newUserEmail.trim()}
                   className="px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:bg-slate-400 transition-colors font-semibold text-lg"
                 >
-                  Toevoegen
+                  {t('add')}
                 </button>
               </div>
               
@@ -5773,33 +5764,33 @@ ${transcript}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                   title="Synchroniseer gebruikers tussen Firebase Auth en Firestore"
                 >
-                  🔄 Synchroniseer Gebruikers
+                  🔄 {t('syncUsers')}
                 </button>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                  Repareert ontbrekende UID velden en synchroniseert gebruikers
+                  {t('syncUsersDesc')}
                 </p>
               </div>
             </div>
 
             {/* Export Buttons - Prominently placed above tabs */}
             <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-lg p-6 mb-8">
-              <h4 className="text-xl font-semibold text-emerald-800 dark:text-emerald-300 mb-4">📊 Export Functionaliteit</h4>
+              <h4 className="text-xl font-semibold text-emerald-800 dark:text-emerald-300 mb-4">📊 {t('exportFunctionality')}</h4>
               <div className="flex gap-4 flex-wrap">
                 <button 
                   onClick={exportWaitlistToCsv} 
                   className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 text-lg"
                 >
-                  📋 Export Wachtlijst naar CSV
+                  📋 {t('exportWaitlistToCsv')}
                 </button>
                 <button 
                   onClick={exportUsersToCsv} 
                   className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 text-lg"
                 >
-                  👥 Export Gebruikers naar CSV
+                  👥 {t('exportUsersToCsv')}
                 </button>
               </div>
               <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-3">
-                Exporteer data voor analyse en administratie
+                {t('exportFunctionalityDesc')}
               </p>
             </div>
 
@@ -6094,6 +6085,34 @@ ${transcript}
         </div>
       )}
 
+      {/* Supported formats modal */}
+      {showFormatsInfo && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-xl w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('supportedFormatsTitle')}</h3>
+              <button onClick={() => setShowFormatsInfo(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <p>{t('supportedFormatsIntro')}</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>TXT — {t('formatTxt')}</li>
+                <li>PDF — {t('formatPdf')}</li>
+                <li>RTF — {t('formatRtf')}</li>
+                <li>HTML — {t('formatHtml')}</li>
+                <li>Markdown (MD) — {t('formatMd')}</li>
+              </ul>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t('supportedFormatsNote')}</p>
+              <div className="pt-2 flex justify-end">
+                <button onClick={() => setShowFormatsInfo(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Settings Modal */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
@@ -6278,18 +6297,21 @@ ${transcript}
           <div className="text-center py-16 w-full max-w-6xl mx-auto">
             {/* Start new session knop bovenaan info pagina verwijderd */}
             {/* Hero Section */}
-            <div className="mb-16">
-              {/* Logo */}
-              <div className="flex justify-center mb-8">
-                <img src="/logo.png" alt="RecapSmart Logo" className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl shadow-2xl" />
+            <div className="mb-20">
+              {/* Logo - kleiner en subtieler */}
+              <div className="flex justify-center mb-6">
+                <img src="/logo.png" alt="RecapSmart Logo" className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl shadow-lg" />
               </div>
               
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-slate-900 dark:text-slate-100 mb-6">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
+              {/* Hoofdtitel - meer compact en elegant */}
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600">
                   RecapSmart
                 </span>
               </h1>
-              <p className="text-lg sm:text-2xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed px-1">
+              
+              {/* Subtitel - compactere spacing */}
+              <p className="text-base sm:text-xl text-slate-600 dark:text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed px-1">
                 {t('landingHeroSubtitle')}
               </p>
               
@@ -6304,10 +6326,11 @@ ${transcript}
                       onCreateAccount={handleCreateAccount}
                       onPasswordReset={handlePasswordReset}
                       onClose={() => {}}
+                      t={t}
                     />
                   </div>
                   {/* Toegang op uitnodiging (rechts, minder prominent) */}
-                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-6">
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/20 p-6">
                     <h2 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">toegang op uitnodiging</h2>
                     <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">{t('waitlistLead')}</p>
                     <div className="flex gap-2">
@@ -6340,7 +6363,7 @@ ${transcript}
             {/* CTA beknopt onder login */}
             <div className="text-center px-2 mt-6">
               <div className="mt-4 text-sm">
-                <a href="/het-team" onClick={(e) => { e.preventDefault(); setShowTeamModal(true); }} className="text-cyan-600 dark:text-cyan-400 hover:underline">Ontmoet het team</a>
+                {/* Team link verwijderd */}
               </div>
             </div>
             </div>
@@ -6362,31 +6385,31 @@ ${transcript}
                     <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featureAIAnalysisDesc')}</p>
                   </div>
                 </div>
-                <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
-                  <img src="/images/hero-3.jpg" alt="Presentaties maken" className="w-full h-44 object-cover" />
-                  <div className="p-5">
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">presentaties</h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featurePresentationsDesc')}</p>
+                                  <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
+                    <img src="/images/hero-3.jpg" alt="Export maken" className="w-full h-44 object-cover" />
+                    <div className="p-5">
+                      <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">export</h3>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featurePresentationsDesc')}</p>
+                    </div>
                   </div>
-                </div>
               </div>
             </div>
 
             {/* Privacy Section - clean list, no icons */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 sm:p-8 rounded-2xl mb-16 border border-green-200 dark:border-green-700 mx-1">
-              <h2 className="text-3xl font-semibold text-green-800 dark:text-green-200 mb-6 text-center">volledige privacy garantie</h2>
+                              <h2 className="text-3xl font-semibold text-green-800 dark:text-green-200 mb-6 text-center">{t('privacyTitle')}</h2>
               <div className="max-w-4xl mx-auto">
                 <p className="text-green-700 dark:text-green-300 text-base text-center mb-6">{t('privacyLead')}</p>
                 <div className="grid md:grid-cols-2 gap-6 text-sm">
                   <ul className="list-disc list-inside space-y-2 text-green-900 dark:text-green-200">
-                    <li>Opnames blijven lokaal</li>
-                    <li>Transcripties zijn privé</li>
-                    <li>AI output alleen voor jou</li>
+                    <li>{t('privacyBullet1')}</li>
+                    <li>{t('privacyBullet2')}</li>
+                    <li>{t('privacyBullet3')}</li>
                   </ul>
                   <ul className="list-disc list-inside space-y-2 text-green-900 dark:text-green-200">
-                    <li>Geen sessie data naar onze servers</li>
-                    <li>API key blijft lokaal</li>
-                    <li>Wij bewaren niets</li>
+                    <li>{t('privacyBullet4')}</li>
+                    <li>{t('privacyBullet5')}</li>
+                    <li>{t('privacyBullet6')}</li>
                   </ul>
                 </div>
                 <p className="text-green-600 dark:text-green-400 text-center mt-6 text-xs">{t('privacyFootnote')}</p>
@@ -6395,67 +6418,67 @@ ${transcript}
 
             {/* Use cases - clean bullets without icons; add supporting images */}
             <div className="bg-gradient-to-r from-slate-50 to-cyan-50 dark:from-slate-800 dark:to-slate-700 p-6 sm:p-8 rounded-2xl mb-16 mx-1">
-              <h2 className="text-3xl font-semibold text-slate-800 dark:text-slate-200 mb-6 text-center">perfect voor</h2>
+              <h2 className="text-3xl font-semibold text-slate-800 dark:text-slate-200 mb-6 text-center">{t('useCasesTitle')}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div>
                   <img src="/images/usecase-meeting.jpg" alt="Online vergadering met recap overzicht" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">directe meeting samenvattingen</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Je hebt een online vergadering, je laat RecapSmart meelopen op je PC, luisterend naar systeem audio.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">RecapSmart levert direct een beknopte samenvatting, actiepunten en besluiten, zodat je direct weet wat er is afgesproken.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseMeetingTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseMeetingDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseMeetingDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-webinar.jpg" alt="Webinar samenvatting" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">webinar essentie in minuten</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Je hebt een lang en informatief webinar gevolgd, RecapSmart luistert mee op je PC.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Krijg direct de belangrijkste leerpunten, keywords en een samenvatting, zonder urenlang door je aantekeningen te spitten.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseWebinarTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseWebinarDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseWebinarDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-conversation.jpg" alt="Belangrijk gesprek in kantoor" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">nooit meer details missen</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Een belangrijk gesprek met collega's en je laat RecapSmart meelopen op je iPhone.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Na afloop direct een overzicht met afspraken.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseConversationTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseConversationDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseConversationDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-sales.jpg" alt="Klantgesprek analyse" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">grip op klantgesprekken</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Dagelijkse klantgesprekken? Gebruik Sentiment Analyse voor extra inzicht.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Telefoongesprekken direct luisteren kan en mag niet.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseSalesTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseSalesDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseSalesDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-quiz.jpg" alt="Quizvragen leren" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">kennischeck met quizvragen</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Herhaal een training of test je team.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">AI maakt quizvragen voor zelfstudie of toetsing.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseQuizTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseQuizDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseQuizDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-faq.jpg" alt="FAQ genereren" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">vliegensvlug faq's</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Snel een lijst met vragen en antwoorden.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Upload je Q&A; de AI doet de rest.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseFaqTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseFaqDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseFaqDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-exec.jpg" alt="Executive summary" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">executive overzicht</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Strategische update in O-S-C-R-B-C stijl.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Perfect voor je directieslide.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseExecTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseExecDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseExecDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-voice.jpg" alt="Voice input plannen" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">strategie met voice input</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Spreek je ideeën in, AI werkt ze uit.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Inclusief documenten en executive samenvatting.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseVoiceTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseVoiceDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseVoiceDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-chat.jpg" alt="Chat over content" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">chat over je content</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Vraag alles over je meeting of webinar.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Directe antwoorden zonder zoeken.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseChatTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseChatDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseChatDesc2')}</p>
                 </div>
                 <div>
                   <img src="/images/usecase-export.jpg" alt="Alles bundelen in één document" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
-                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">alles in één document</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Bundel alle uitkomsten en exporteer.</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200">Met het RecapSmart-venster stel je alles samen.</p>
+                  <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseExportTitle')}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{t('useCaseExportDesc1')}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">{t('useCaseExportDesc2')}</p>
                 </div>
               </div>
             </div>
@@ -6530,7 +6553,7 @@ ${transcript}
                           <select
                             value={language ?? ''}
                             onChange={(e) => setLanguage(e.target.value as any)}
-                            className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100"
+                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 border-2 border-cyan-200 dark:border-cyan-600 focus:border-cyan-400 dark:focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all duration-200 hover:shadow-lg hover:scale-105 font-medium"
                           >
                             <option value="" disabled>{t('sessionLang')}</option>
                             <option value="nl">{t('dutch')}</option>
@@ -6538,6 +6561,7 @@ ${transcript}
                             <option value="de">{t('german')}</option>
                             <option value="fr">{t('french')}</option>
                             <option value="pt">{t('portuguese')}</option>
+                            <option value="es">{t('spanish')}</option>
                           </select>
                         </div>
                     </div>
@@ -6552,44 +6576,47 @@ ${transcript}
                           <select
                             value={outputLang}
                             onChange={(e) => setOutputLang(e.target.value as any)}
-                            className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100"
+                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 border-2 border-cyan-200 dark:border-cyan-600 focus:border-cyan-400 dark:focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all duration-200 hover:shadow-lg hover:scale-105 font-medium"
                           >
                             <option value="nl">{t('dutch')}</option>
                             <option value="en">{t('english')}</option>
                             <option value="de">{t('german')}</option>
                             <option value="fr">{t('french')}</option>
                             <option value="pt">{t('portuguese')}</option>
+                            <option value="es">{t('spanish')}</option>
                           </select>
                         </div>
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100 mt-6">
-                            {t('startOrUpload')}
+                            <span className="text-cyan-500 font-black tracking-wider text-sm block uppercase mb-2">{t('step3')}</span> {t('startOrUpload')}
                         </h2>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
-                    <button onClick={startRecording} disabled={isProcessing || !language || !outputLang} className="w-full sm:flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 hover:bg-gray-300 dark:hover:bg-slate-600 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200">
-                                <MicIcon className="w-6 h-6" />
-                                <span className="text-lg font-semibold">{t('startRecording')}</span>
-                            </button>
-                            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(authState.isAdmin ? '.txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown')}/>
-                    <button onClick={() => fileInputRef.current?.click()} disabled={isProcessing || !language || !outputLang} className="w-full sm:flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 hover:bg-gray-300 dark:hover:bg-slate-600 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200">
-                                <UploadIcon className="w-6 h-6" />
-                                <span className="text-lg font-semibold">📄 {t('uploadTranscript')}</span>
-                            </button>
-                        </div>
-                <div className="mt-2 text-center">
-                    <button onClick={() => setShowSystemAudioHelp(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline">
-                        🔊 Audio meeluisteren? Uitleg
-                    </button>
-                </div>
-                        
-                        {/* Supported formats info */}
+                    <div className="w-full sm:flex-1">
+                        <button onClick={startRecording} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 text-white hover:from-green-600 hover:to-emerald-700 dark:hover:from-green-700 dark:hover:to-emerald-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <MicIcon className="w-6 h-6" />
+                            <span className="text-lg font-semibold">{t('startRecording')}</span>
+                        </button>
+                        {/* Listen along help link - positioned under start recording button */}
                         <div className="mt-3 text-center">
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                📋 Ondersteunde formaten: TXT ✅, PDF ✅, RTF ✅, HTML ✅, MD ✅
-                            </p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                                💡 PDF en RTF worden automatisch omgezet naar platte tekst
-                            </p>
+                            <button onClick={() => setShowSystemAudioHelp(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                🔊 {t('listenAlongHelp')}
+                            </button>
                         </div>
+                    </div>
+                    
+                    <div className="w-full sm:flex-1">
+                        <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(authState.isAdmin ? '.txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown')}/>
+                        <button onClick={() => fileInputRef.current?.click()} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <UploadIcon className="w-6 h-6" />
+                            <span className="text-lg font-semibold">{t('uploadTranscript')}</span>
+                        </button>
+                        {/* Supported formats info link - positioned under upload transcript button */}
+                        <div className="mt-3 text-center">
+                            <button onClick={() => setShowFormatsInfo(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                {t('supportedFormatsLink')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
                     </div>
                 )}
             </div>
@@ -6701,7 +6728,7 @@ RecapSmart: Voorbij de chaos, de essentie voorop.
                   setShowCookieModal(true);
                 }}
               >
-                Cookies
+                {t('cookies')}
               </a>
               <span className="hidden sm:inline">•</span>
               <a 
@@ -6709,7 +6736,7 @@ RecapSmart: Voorbij de chaos, de essentie voorop.
                 className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
                 onClick={(e) => { e.preventDefault(); setShowStoryModal(true); }}
               >
-                Ons verhaal
+                {t('ourStory')}
               </a>
               <span className="hidden sm:inline">•</span>
               <a 
@@ -6717,7 +6744,15 @@ RecapSmart: Voorbij de chaos, de essentie voorop.
                 className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
                 onClick={(e) => { e.preventDefault(); setShowTeamModal(true); }}
               >
-                Het team
+                {t('theTeam')}
+              </a>
+              <span className="hidden sm:inline">•</span>
+              <a 
+                href="/faq" 
+                className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
+                onClick={(e) => { e.preventDefault(); setShowFAQPage(true); }}
+              >
+                FAQ
               </a>
               <span className="hidden sm:inline">•</span>
               <a 
@@ -6728,7 +6763,7 @@ RecapSmart: Voorbij de chaos, de essentie voorop.
                   setShowDisclaimerModal(true);
                 }}
               >
-                Disclaimer
+                {t('disclaimer')}
               </a>
               <span className="hidden sm:inline">•</span>
               <a 
@@ -6755,7 +6790,7 @@ RecapSmart: Voorbij de chaos, de essentie voorop.
                   Admin
                 </button>
               )}
-              <span className="text-xs opacity-75">v0.71</span>
+              <span className="text-xs opacity-75">v0.81808</span>
             </div>
           </div>
         </footer>
@@ -6788,6 +6823,11 @@ RecapSmart: Voorbij de chaos, de essentie voorop.
           // TODO: Implement actual upgrade flow
         }}
       />
+    )}
+
+    {/* FAQ Page */}
+    {showFAQPage && (
+      <FAQPage onClose={() => setShowFAQPage(false)} t={t} />
     )}
     </>
   );

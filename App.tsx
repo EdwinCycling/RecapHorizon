@@ -5272,7 +5272,6 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                 <ul className="text-xs text-slate-600 dark:text-cyan-400 mt-1 space-y-1">
                   <li>{t('cookiePolicyLanguagePreference')}</li>
                   <li>{t('cookiePolicyThemePreference')}</li>
-                  <li>{t('cookiePolicyApiKey')}</li>
                 </ul>
               </div>
             </div>
@@ -6276,14 +6275,14 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                 <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
                   <img src="/images/hero-2.jpg" alt="AI analyse resultaten" className="w-full h-44 object-cover" />
                   <div className="p-5">
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">ai analyse</h3>
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">AI analyse</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featureAIAnalysisDesc')}</p>
                   </div>
                 </div>
                                   <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
                     <img src="/images/hero-3.jpg" alt="Export maken" className="w-full h-44 object-cover" />
                     <div className="p-5">
-                      <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">export</h3>
+                      <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2"> Export</h3>
                       <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featurePresentationsDesc')}</p>
                     </div>
                   </div>

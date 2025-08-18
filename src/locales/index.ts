@@ -3,6 +3,7 @@ import { en } from './en';
 import { pt } from './pt';
 import { de } from './de';
 import { fr } from './fr';
+import { es } from './es';
 
 export const translations = {
   nl,
@@ -10,6 +11,7 @@ export const translations = {
   pt,
   de,
   fr,
+  es,
 };
 
 export type TranslationKey = keyof typeof nl;

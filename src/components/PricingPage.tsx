@@ -88,9 +88,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+        {/* Header with SEO-optimized title */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-3xl font-bold text-gray-800">{t('pricingTitle')}</h2>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">{t('pricingTitle')}</h1>
+            <p className="text-gray-600 mt-2">Choose the perfect plan for your AI transcription needs</p>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl font-bold"

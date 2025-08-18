@@ -6,6 +6,29 @@ import { GoogleGenAI, Chat, Type } from "@google/genai";
 let mermaid: any;
 import PptxGenJS from 'pptxgenjs';
 import RecapSmartPanel from './src/components/RecapSmartPanel';
+
+// SEO Meta Tag Manager
+const updateMetaTags = (title: string, description: string, keywords?: string) => {
+  document.title = title;
+  
+  let metaDescription = document.querySelector('meta[name="description"]');
+  if (!metaDescription) {
+    metaDescription = document.createElement('meta');
+    metaDescription.setAttribute('name', 'description');
+    document.head.appendChild(metaDescription);
+  }
+  metaDescription.setAttribute('content', description);
+  
+  if (keywords) {
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', keywords);
+  }
+};
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -500,233 +523,18 @@ const KeywordExplanationModal: React.FC<{ keyword: string; explanation: string |
         </div>
     );
 };
-const ApiKeySetupModal: React.FC<{ 
-    isOpen: boolean; 
-    onClose: () => void; 
-    onSave: (apiKey: string) => void; 
-    t: (key: any, params?: any) => string; 
-    storagePreference: 'local' | 'database';
-    onStoragePreferenceChange: (preference: 'local' | 'database') => void;
-    isLoggedIn: boolean;
-}> = ({ isOpen, onClose, onSave, t, storagePreference, onStoragePreferenceChange, isLoggedIn }) => {
-    const [inputApiKey, setInputApiKey] = useState('');
-    const [isValidating, setIsValidating] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [showPassword, setShowPassword] = useState(false);
+// ApiKeySetupModal component removed - users cannot input their own API keys
+// ApiKeySetupModal state and function removed
 
-    const handleSave = async () => {
-        if (!inputApiKey.trim()) {
-            setError(t('apiKeyRequired'));
-            return;
-        }
+// ApiKeySetupModal instructions section removed
 
-        setIsValidating(true);
-        setError(null);
+// ApiKeySetupModal input section removed
 
-        try {
-            // Test de API key met een eenvoudige call
-            const ai = new GoogleGenAI({ apiKey: inputApiKey.trim() });
-            await ai.models.generateContent({ 
-                model: 'gemini-2.5-flash', 
-                contents: 'Test' 
-            });
-            
-            onSave(inputApiKey.trim());
-        } catch (err: any) {
-            setError(t('apiKeyInvalid'));
-        } finally {
-            setIsValidating(false);
-        }
-    };
+// ApiKeySetupModal storage info section removed
 
-    if (!isOpen) return null;
+// ApiKeySetupModal privacy note section removed
 
-    return (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-            <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-6 max-h-[80vh] overflow-y-auto">
-                <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400 mb-4">🔑 Google Gemini API Key Instellen</h3>
                 
-                <div className="space-y-6">
-                    {/* Instructions */}
-                    <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
-                        <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">📋 Stap-voor-stap instructies voor het ophalen van je API key:</h4>
-                        
-                        {/* Gratis & Veilig Info */}
-                        <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded p-3 mb-3">
-                            <p className="text-green-700 dark:text-green-300 font-medium text-sm">✅ Volledig Gratis & Veilig</p>
-                            <p className="text-green-600 dark:text-green-400 text-sm">• Geen kosten bij Google</p>
-                            <p className="text-green-600 dark:text-green-400 text-sm">• Geen betalingsmiddel nodig</p>
-                            <p className="text-green-600 dark:text-green-400 text-sm">• Ruime gratis limiet per maand</p>
-                        </div>
-                        
-                        <ol className="list-decimal list-inside space-y-2 text-sm text-blue-700 dark:text-blue-300">
-                            <li>Klik op de blauwe knop hieronder</li>
-                            <li>Log in met je Google account</li>
-                            <li>Klik op "Create API Key"</li>
-                            <li>Kopieer de gegenereerde key</li>
-                            <li>Plak de key in het veld hieronder</li>
-                        </ol>
-                        <div className="mt-3">
-                            <a 
-                                href="https://aistudio.google.com/apikey" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                            >
-                                🔑 Haal je gratis API key op bij Google AI Studio
-                            </a>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
-                                <strong>Directe link:</strong> https://aistudio.google.com/apikey
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* API Key Input */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            🔑 Voer je Google Gemini API key in:
-                        </label>
-                        <div className="relative">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                value={inputApiKey}
-                                onChange={(e) => setInputApiKey(e.target.value)}
-                                placeholder="AIzaSyC... (begint altijd met AIzaSy)"
-                                className="w-full px-3 py-2 pr-10 border-2 border-cyan-300 dark:border-cyan-500 rounded-md bg-cyan-50 dark:bg-cyan-900/20 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:border-cyan-400 placeholder-cyan-400 dark:placeholder-cyan-500"
-                                disabled={isValidating}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                                title={showPassword ? "Verberg API key" : "Toon API key"}
-                            >
-                                {showPassword ? "👁️‍🗨️" : "👁️"}
-                            </button>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            💡 Je API key begint altijd met "AIzaSy" en is ongeveer 40 karakters lang
-                        </p>
-                        {error && (
-                            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
-                        )}
-                    </div>
-
-                    {/* Storage Preference */}
-                    <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
-                        <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-3">💾 Kies waar je API key wordt opgeslagen:</h4>
-                        
-                        <div className="space-y-3">
-                            <label className="flex items-start gap-3 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="storage"
-                                    value="local"
-                                    checked={storagePreference === 'local'}
-                                    onChange={(e) => onStoragePreferenceChange(e.target.value as 'local' | 'database')}
-                                    className="mt-1"
-                                />
-                                <div>
-                                    <span className="font-medium text-blue-700 dark:text-blue-300">🌐 Browser (Lokaal)</span>
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                        • API key wordt opgeslagen in je browser<br/>
-                                        • Alleen toegankelijk op dit apparaat<br/>
-                                        • Verloren bij het wissen van browser data<br/>
-                                        • <strong>Voordeel:</strong> Volledig lokaal, geen database opslag
-                                    </p>
-                                </div>
-                            </label>
-                            
-                            <label className="flex items-start gap-3 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="storage"
-                                    value="database"
-                                    checked={storagePreference === 'database'}
-                                    onChange={(e) => onStoragePreferenceChange(e.target.value as 'local' | 'database')}
-                                    className="mt-1"
-                                />
-                                <div>
-                                    <span className="font-medium text-blue-700 dark:text-blue-300">🗄️ Database (Veilig & Versleuteld)</span>
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                        • API key wordt gehashed en versleuteld opgeslagen<br/>
-                                        • Toegankelijk op alle apparaten waar je inlogt<br/>
-                                        • Veilig tegen data verlies<br/>
-                                        • <strong>Voordeel:</strong> Backup en synchronisatie tussen apparaten
-                                    </p>
-                                    {!isLoggedIn && (
-                                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                                            ⚠️ Je moet ingelogd zijn om deze optie te gebruiken. Je kunt je eerst aanmelden en dan terugkomen.
-                                        </p>
-                                    )}
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Privacy Note */}
-                    <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-lg p-3">
-                        <p className="text-sm text-green-700 dark:text-green-300">
-                            <strong>🔒 Privacy & Veiligheid:</strong> Je API key wordt nooit in plain text opgeslagen en wordt alleen gebruikt voor AI verwerking.
-                        </p>
-                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                            <strong>💡 Database opslag:</strong> API key wordt gehashed met SHA-256 + salt en versleuteld opgeslagen. Zelfs wij kunnen de originele key niet lezen.
-                        </p>
-                    </div>
-                </div>
-
-                <div className="mt-8 space-y-3">
-                    {/* Main Action Buttons */}
-                    <div className="space-y-3">
-                        {/* Info melding als geen key is ingevoerd */}
-                        {!inputApiKey.trim() && (
-                            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg p-3 text-center">
-                                <p className="text-amber-700 dark:text-amber-300 text-sm">
-                                    ⚠️ Voer eerst je API key in om deze op te kunnen slaan
-                                </p>
-                            </div>
-                        )}
-                        
-                        {/* Database Opslag Knop */}
-                        <button 
-                            onClick={() => {
-                                // Sla op in database als dat is gekozen, anders lokaal
-                                onSave(inputApiKey.trim());
-                            }}
-                            disabled={isValidating || !inputApiKey.trim()}
-                            className="w-full px-4 py-2 bg-cyan-500 text-white rounded-md font-semibold hover:bg-cyan-600 disabled:bg-slate-400 dark:disabled:bg-slate-600 transition-colors disabled:cursor-not-allowed"
-                        >
-                            {isValidating ? 'Valideren...' : storagePreference === 'database' ? '🗄️ API Key in Database Opslaan' : '🌐 API Key Lokaal Opslaan'}
-                        </button>
-                        
-                        {/* Alternative Options - Alleen tonen als er een key is */}
-                        {inputApiKey.trim() && storagePreference === 'database' && (
-                            <button 
-                                onClick={() => {
-                                    // Force lokaal opslaan
-                                    onStoragePreferenceChange('local');
-                                    onSave(inputApiKey.trim());
-                                }}
-                                disabled={isValidating}
-                                className="w-full px-4 py-2 bg-blue-500 text-white rounded-md font-semibold hover:bg-blue-600 disabled:bg-slate-400 dark:disabled:bg-slate-600 transition-colors disabled:cursor-not-allowed"
-                            >
-                                🌐 Toch Lokaal Opslaan (Geen Database)
-                            </button>
-                        )}
-                        
-                        {/* Cancel Button */}
-                        <button 
-                            onClick={onClose} 
-                            className="w-full px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md font-semibold hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
-                        >
-                            ❌ Scherm Afsluiten
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const PowerPointOptionsModal: React.FC<{ 
     isOpen: boolean; 
@@ -960,16 +768,7 @@ const openEmailClientWithoutTo = (subject: string, body: string) => {
   window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
 };
 
-// Helper function to generate email content for transcript analysis
-const generateEmailContent = (type: string, content: string, timestamp?: string) => {
-  const stamp = timestamp || (() => {
-    const d = recordingStartMs ? new Date(recordingStartMs) : new Date();
-    return d.toLocaleString('nl-NL');
-  })();
-  const subject = `RecapSmart ${stamp} - ${type}`;
-  const body = `## ${type}\n\n${content}`;
-  return { subject, body };
-};
+
 
 // --- i18n ---
 import { translations } from './src/locales';
@@ -1102,9 +901,8 @@ export default function App() {
 
   
   // API Key state
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+
   const [apiKey, setApiKey] = useState<string>('');
-  const [hasDatabaseApiKey, setHasDatabaseApiKey] = useState(false);
   const [isValidatingApiKey, setIsValidatingApiKey] = useState(false);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   // Usage/tier info for settings
@@ -1133,6 +931,17 @@ export default function App() {
   const [pauseAccumulatedMs, setPauseAccumulatedMs] = useState<number>(0);
   const [pauseStartMs, setPauseStartMs] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
+
+  // Helper function to generate email content for transcript analysis
+  const generateEmailContent = (type: string, content: string, timestamp?: string) => {
+    const stamp = timestamp || (() => {
+      const d = recordingStartMs ? new Date(recordingStartMs) : new Date();
+      return d.toLocaleString('nl-NL');
+    })();
+    const subject = `RecapSmart ${stamp} - ${type}`;
+    const body = `## ${type}\n\n${content}`;
+    return { subject, body };
+  };
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
@@ -1210,7 +1019,7 @@ export default function App() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
-  const [apiKeyStoragePreference, setApiKeyStoragePreference] = useState<'local' | 'database'>('local');
+  // API key storage preference removed - all keys now stored in database only
   const [executiveSummaryData, setExecutiveSummaryData] = useState<ExecutiveSummaryData | null>(null);
   const [storytellingData, setStorytellingData] = useState<StorytellingData | null>(null);
   const [businessCaseData, setBusinessCaseData] = useState<BusinessCaseData | null>(null);
@@ -1381,73 +1190,10 @@ ${transcript.slice(0, 20000)}`;
       }, 5000);
   }, []);
 
-  // API Key hashing functie voor veilige database opslag
-  const hashApiKey = async (apiKey: string): Promise<string> => {
-      // Gebruik Web Crypto API voor veilige hashing
-      const encoder = new TextEncoder();
-      const data = encoder.encode(apiKey + 'recapsmart_salt_2024'); // Salt voor extra beveiliging
-      
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      
-      return hashHex;
-  };
 
-  // Encrypt/decrypt helpers voor DB-opslag van de plaintext key (client-side decryptable)
-  const base64FromArrayBuffer = (buf: ArrayBuffer): string => {
-    const bytes = new Uint8Array(buf);
-    let str = '';
-    for (let i = 0; i < bytes.byteLength; i++) str += String.fromCharCode(bytes[i]);
-    return btoa(str);
-  };
-  const arrayBufferFromBase64 = (b64: string): ArrayBuffer => {
-    const str = atob(b64);
-    const buf = new Uint8Array(str.length);
-    for (let i = 0; i < str.length; i++) buf[i] = str.charCodeAt(i);
-    return buf.buffer;
-  };
-  const deriveAesKeyForUser = async (uid: string): Promise<CryptoKey> => {
-    const encoder = new TextEncoder();
-    const passMaterial = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(uid + '|recapsmart_kek'),
-      'PBKDF2',
-      false,
-      ['deriveKey']
-    );
-    return crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        salt: encoder.encode('recapsmart_pbkdf2_salt_v1'),
-        iterations: 100000,
-        hash: 'SHA-256'
-      },
-      passMaterial,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt']
-    );
-  };
-  const encryptApiKeyForUser = async (uid: string, key: string): Promise<string> => {
-    const aesKey = await deriveAesKeyForUser(uid);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const enc = new TextEncoder().encode(key);
-    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, enc);
-    // Store as base64(iv + ciphertext)
-    const combined = new Uint8Array(iv.byteLength + ct.byteLength);
-    combined.set(iv, 0);
-    combined.set(new Uint8Array(ct), iv.byteLength);
-    return base64FromArrayBuffer(combined.buffer);
-  };
-  const decryptApiKeyForUser = async (uid: string, b64: string): Promise<string> => {
-    const aesKey = await deriveAesKeyForUser(uid);
-    const combined = new Uint8Array(arrayBufferFromBase64(b64));
-    const iv = combined.slice(0, 12);
-    const ct = combined.slice(12);
-    const ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, ct);
-    return new TextDecoder().decode(ptBuf);
-  };
+
+
+
   const [activeAdminTab, setActiveAdminTab] = useState<'waitlist' | 'users'>('waitlist');
   
   // Waitlist states
@@ -1515,11 +1261,10 @@ ${transcript.slice(0, 20000)}`;
 
   // --- PERSISTENCE & THEME ---
     useEffect(() => {
-        // Prefer env key if provided via .env.local (replaced at build time)
+        // Load environment API key if provided via .env.local or Netlify environment variables
         const envApiKey = process.env.GEMINI_API_KEY as string | undefined;
         if (envApiKey && envApiKey.trim().length > 0) {
             setApiKey(envApiKey.trim());
-            setHasDatabaseApiKey(false);
         }
 
         const savedLang = localStorage.getItem('uiLang') as any;
@@ -1615,7 +1360,7 @@ ${transcript.slice(0, 20000)}`;
         // Add timeout to prevent infinite loading
         const timeoutId = setTimeout(() => {
             if (authState.isLoading) {
-                console.log('Auth timeout, setting loading to false');
+                // Auth timeout, setting loading to false
                 setAuthState(prev => ({ ...prev, isLoading: false }));
             }
         }, 5000); // 5 second timeout
@@ -1713,9 +1458,7 @@ ${transcript.slice(0, 20000)}`;
     setVoiceInputPreview('');
     setPptTemplate(null);
     setShowPptOptions(false);
-    setShowApiKeyModal(false);
     setApiKeyError(null);
-    setHasDatabaseApiKey(false);
 
 
     if (audioURL) {
@@ -1754,8 +1497,8 @@ ${transcript.slice(0, 20000)}`;
   const submitMessage = useCallback(async (message: string) => {
     if (!message.trim() || isChatting) return;
 
-    if (!apiKey && !hasDatabaseApiKey) {
-        setShowApiKeyModal(true);
+    if (!apiKey) {
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         return;
     }
 
@@ -1796,7 +1539,7 @@ ${transcript.slice(0, 20000)}`;
         const errorMsg = `Chat error: ${err.message || 'Unknown error'}`;
         setChatHistory(prev => prev.map((msg, i) => i === prev.length - 1 ? { ...msg, text: errorMsg } : msg));
     } finally { setIsChatting(false); }
-  }, [isChatting, chatHistory, transcript, isTTSEnabled, speak, apiKey, hasDatabaseApiKey, authState.user]);
+  }, [isChatting, chatHistory, transcript, isTTSEnabled, speak, apiKey, authState.user]);
   
   const handleSendMessage = useCallback(async () => {
     // Check if user has access to chat
@@ -1808,14 +1551,14 @@ ${transcript.slice(0, 20000)}`;
     
     const message = chatInput.trim();
     if (message) {
-      if (!apiKey && !hasDatabaseApiKey) {
-        setShowApiKeyModal(true);
+      if (!apiKey) {
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         return;
       }
       setChatInput('');
       await submitMessage(message);
     }
-  }, [chatInput, submitMessage, apiKey, hasDatabaseApiKey, authState.isAdmin, userSubscription, displayToast]);
+  }, [chatInput, submitMessage, apiKey, authState.isAdmin, userSubscription, displayToast]);
   
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
@@ -1845,10 +1588,10 @@ ${transcript.slice(0, 20000)}`;
             // Als er final results zijn, verstuur het bericht
             if (finalTranscript.trim()) {
                 setVoiceInputPreview(''); // Clear preview
-                if (apiKey || hasDatabaseApiKey) {
+                if (apiKey) {
                     submitMessage(finalTranscript.trim());
                 } else {
-                    setShowApiKeyModal(true);
+                    displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
                 }
             }
         };
@@ -1878,7 +1621,7 @@ ${transcript.slice(0, 20000)}`;
 
         speechRecognitionRef.current = recognition;
     }
-  }, [language, t, submitMessage, apiKey, hasDatabaseApiKey]);
+  }, [language, t, submitMessage, apiKey]);
 
   const toggleListening = () => {
     if (!speechRecognitionRef.current) {
@@ -2671,7 +2414,7 @@ const handleGenerateAnalysis = async (type: ViewType) => {
     }
     
     if (!apiKey) {
-        setShowApiKeyModal(true);
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         return;
     }
     
@@ -2757,8 +2500,8 @@ const handleKeywordClick = async (keyword: string) => {
     setQuizQuestions([]);
     setPodcastScript('');
 
-    if (!apiKey && !hasDatabaseApiKey) {
-        setShowApiKeyModal(true);
+    if (!apiKey) {
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         setIsFetchingExplanation(false);
         return;
     }
@@ -2803,8 +2546,8 @@ const handleGenerateKeywordAnalysis = async () => {
         return;
     }
 
-    if (!apiKey && !hasDatabaseApiKey) {
-        setShowApiKeyModal(true);
+    if (!apiKey) {
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         return;
     }
     
@@ -2882,8 +2625,8 @@ const handleAnalyzeSentiment = async () => {
         return;
     }
     
-    if (!apiKey && !hasDatabaseApiKey) {
-        setShowApiKeyModal(true);
+    if (!apiKey) {
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         return;
     }
     
@@ -2969,7 +2712,7 @@ const handleGeneratePodcast = async () => {
         return;
     }
     if (!apiKey) {
-        setShowApiKeyModal(true);
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         return;
     }
     
@@ -3155,57 +2898,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
     return { fileName, slideCount: (pptx as any).slides.length };
 };
 
-  const handleSaveApiKey = async (newApiKey: string) => {
-    try {
-      // Valideer de API key
-      const ai = new GoogleGenAI({ apiKey: newApiKey });
-      await ai.models.generateContent({ 
-        model: 'gemini-2.5-flash', 
-        contents: 'Test' 
-      });
-      
-      if (apiKeyStoragePreference === 'database' && authState.user) {
-        // Veilige database opslag
-        try {
-          // Hash + encrypt voor opslag
-          const hashedApiKey = await hashApiKey(newApiKey);
-          const encryptedApiKey = await encryptApiKeyForUser(authState.user.uid, newApiKey);
-          
-          // Update gebruiker document met gehashte + versleutelde API key
-          await updateDoc(doc(db, 'users', authState.user.uid), {
-            hashedApiKey,
-            encryptedApiKey,
-            apiKeyLastUpdated: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          });
-          
-          // Houd key in-memory voor huidige sessie (geen localStorage)
-          setApiKey(newApiKey);
-          setHasDatabaseApiKey(true);
-          localStorage.removeItem('recapsmart_api_key');
-          displayToast('API key veilig opgeslagen in database!', 'success');
-        } catch (dbError) {
-          console.error('Database opslag mislukt:', dbError);
-                      displayToast('Database opslag mislukt, maar API key werkt wel. Opgeslagen in browser.', 'info');
-          // Fallback naar lokale opslag
-          setApiKey(newApiKey);
-          localStorage.setItem('recapsmart_api_key', newApiKey);
-        }
-      } else {
-        // Lokale opslag (browser)
-        setApiKey(newApiKey);
-        setHasDatabaseApiKey(false); // Reset database flag when using local storage
-        localStorage.setItem('recapsmart_api_key', newApiKey);
-                    displayToast('API key opgeslagen in browser!', 'success');
-      }
-      
-      setShowApiKeyModal(false);
-      setApiKeyError(null);
-    } catch (err: any) {
-      console.error('API key validatie mislukt:', err);
-      setApiKeyError('API key validatie mislukt. Controleer of de key correct is.');
-    }
-  };
+  // No user-provided API key handling; rely exclusively on environment configuration
 
   const handleAcceptCookies = () => {
     localStorage.setItem('cookie_consent', 'accepted');
@@ -3243,38 +2936,6 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
     setShowSettingsModal(false);
   };
 
-  // --- API KEY MANAGEMENT ---
-  const deleteApiKeyFromDatabase = async () => {
-    if (!authState.user) return;
-    await updateDoc(doc(db, 'users', authState.user.uid), {
-      hashedApiKey: deleteField(),
-      encryptedApiKey: deleteField(),
-      apiKeyLastUpdated: deleteField(),
-      updatedAt: serverTimestamp()
-    });
-    setHasDatabaseApiKey(false);
-    displayToast('API key verwijderd uit database.', 'success');
-  };
-
-  const deleteApiKeyFromLocal = () => {
-    localStorage.removeItem('recapsmart_api_key');
-    setApiKey('');
-    displayToast('Lokale API key verwijderd.', 'success');
-  };
-
-  const switchApiKeyStorage = (target: 'local' | 'database') => {
-    setApiKeyStoragePreference(target);
-    if (target === 'local') {
-      displayToast('Opslag ingesteld op Lokaal (browser).', 'info');
-    } else {
-      if (!authState.user) {
-        displayToast('Log in om sleutel in database op te slaan.', 'error');
-      } else {
-        displayToast('Opslag ingesteld op Database. Sla een nieuwe key op om te synchroniseren.', 'info');
-      }
-    }
-  };
-
   const getNextEmployeeNumber = (rules: AnonymizationRule[]): number => {
     const employeeRules = rules.filter(rule => 
       rule.replacementText.toLowerCase().includes('medewerker') || 
@@ -3285,18 +2946,18 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
   // Firebase Auth Functions
   const handleLogin = async (email: string, password: string) => {
     try {
-      console.log('Attempting login for:', email);
+      // Login attempt for user
       
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      console.log('Firebase Auth successful, user UID:', user.uid);
+      // Firebase Auth successful
       
       // Get user data from Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data() as User;
-        console.log('User data found:', userData);
+        // User data loaded from Firestore
         
         if (!userData.isActive) {
           throw new Error('Account is disabled. Contact administrator.');
@@ -3307,7 +2968,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
           lastLogin: serverTimestamp()
         });
         
-        console.log('Setting auth state for user:', userData.email);
+        // Setting auth state for user
         setAuthState({
           user: { ...userData, uid: user.uid },
           isLoading: false,
@@ -3315,41 +2976,10 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
         });
         setShowLoginModal(false);
         
-        // Controleer of gebruiker een API key heeft (lokaal of in database)
-        if (!apiKey) {
-          const localKey = localStorage.getItem('recapsmart_api_key');
-          if (localKey) {
-            setApiKey(localKey);
-            setHasDatabaseApiKey(false);
-            setApiKeyStoragePreference('local');
-            displayToast('Lokale API key geladen.', 'success');
-          } else if (userData.hashedApiKey || (userData as any).encryptedApiKey) {
-            // DB bevat sleutel. Probeer te decrypten naar lokale runtime-geheugen
-            try {
-              if ((userData as any).encryptedApiKey) {
-                const plaintext = await decryptApiKeyForUser(user.uid, (userData as any).encryptedApiKey);
-                setApiKey(plaintext);
-              } else {
-                // fallback: geen encrypted versie; markeer slechts presence
-                setApiKey('');
-              }
-              setHasDatabaseApiKey(true);
-              setApiKeyStoragePreference('database');
-              displayToast('API key geladen uit database. Klaar voor gebruik.', 'success');
-            } catch (e) {
-              console.error('Decrypt DB key failed', e);
-              setHasDatabaseApiKey(true);
-              setApiKey('');
-              setApiKeyStoragePreference('database');
-              displayToast('API key gevonden in database. Als iets faalt, vernieuw de key in Instellingen.', 'info');
-            }
-          } else {
-            // Toon API key setup modal
-            setTimeout(() => setShowApiKeyModal(true), 1000);
-          }
-        }
+        // Check if user needs to set up API key (only if no environment key is available)
+        // No user-provided API keys; rely on environment configuration only
       } else {
-        console.log('User document not found in Firestore, creating automatic document...');
+        // Creating automatic user document
         
         // Automatically create user document in Firestore
         const newUserData = {
@@ -3364,7 +2994,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
         
         try {
           await setDoc(doc(db, 'users', user.uid), newUserData);
-          console.log('Automatically created user document for:', email);
+          // User document created automatically
           
           // Set auth state with new user data
           setAuthState({
@@ -3403,7 +3033,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
 
   const handleCreateAccount = async (email: string, password: string) => {
     try {
-      console.log('Creating account for:', email);
+      // Creating new account
       
       // Check if user exists in database
       const usersRef = collection(db, 'users');
@@ -3421,11 +3051,11 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
         throw new Error('Account is disabled. Contact administrator.');
       }
       
-      console.log('User found in database:', userData);
+      // User found in database
       
       // Check if user already has a UID (means Firebase Auth account exists)
       if (userData.uid) {
-        console.log('User already has UID, checking if Firebase Auth account exists...');
+        // User already has UID, checking if Firebase Auth account exists
         try {
           // Try to sign in to see if account exists
           await signInWithEmailAndPassword(auth, email, 'dummy-password');
@@ -3434,29 +3064,29 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
         } catch (authError: any) {
           if (authError.code === 'auth/wrong-password') {
             // Account exists but wrong password - this is what we want
-            console.log('Firebase Auth account exists, cannot create new one');
+            // Firebase Auth account exists, cannot create new one
             throw new Error('Dit email adres is al in gebruik in Firebase. Probeer in te loggen in plaats van een account aan te maken.');
           } else if (authError.code === 'auth/user-not-found') {
             // Account doesn't exist - this is also fine
-            console.log('No Firebase Auth account found, will create new one...');
+            // No Firebase Auth account found, will create new one
           } else if (authError.code === 'auth/invalid-credential') {
             // Account might exist but is corrupted - try to create new one
-            console.log('Invalid credential error, will attempt to create new Firebase Auth account...');
+            // Invalid credential error, will attempt to create new Firebase Auth account
           } else {
             console.log('Unexpected auth error:', authError);
             throw authError;
           }
         }
       } else {
-        console.log('No UID found, safe to create new Firebase Auth account...');
+        // No UID found, safe to create new Firebase Auth account
       }
       
-      console.log('Creating Firebase Auth account...');
+      // Creating Firebase Auth account
       // Create Firebase auth account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      console.log('Firebase Auth account created, UID:', user.uid);
+      // Firebase Auth account created
       
       // Update user document with UID
       await updateDoc(doc(db, 'users', userDoc.id), {
@@ -3464,9 +3094,9 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
         updatedAt: serverTimestamp()
       });
       
-      console.log('User document updated with new UID:', user.uid);
+      // User document updated with new UID
       
-      console.log('User document updated with UID');
+      // User document updated with UID
       
       setAuthState({
         user: { ...userData, uid: user.uid },
@@ -3475,7 +3105,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
       });
       setShowLoginModal(false);
       
-      console.log('Account creation successful!');
+      // Account creation successful
     } catch (error: any) {
       console.error('Create account error:', error);
       
@@ -3967,7 +3597,7 @@ Het RecapSmart Team`;
 
   const checkApiKey = () => {
     if (!apiKey) {
-      setShowApiKeyModal(true);
+      displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
       return false;
     }
     return true;
@@ -3987,7 +3617,7 @@ Het RecapSmart Team`;
     }
     
     if (!apiKey) {
-        setShowApiKeyModal(true);
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         return;
     }
     
@@ -4129,11 +3759,11 @@ ${transcript}
     setTranscript(''); setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions(''); setPodcastScript('');
   
     try {
-              if (!apiKey) {
-            setShowApiKeyModal(true);
+        if (!apiKey) {
+            displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
             return;
         }
-        
+
         const ai = new GoogleGenAI({ apiKey: apiKey });
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       const base64Audio = await blobToBase64(audioBlob);
@@ -5419,11 +5049,11 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 pl-2">{t('chatWithTranscript')}</h3>
             <button 
                 onClick={() => setIsTTSEnabled(!isTTSEnabled)} 
-                disabled={!apiKey && !hasDatabaseApiKey}
-                className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md ${isTTSEnabled ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-500/20' : (!apiKey && !hasDatabaseApiKey) ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
+                disabled={!apiKey}
+                className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md ${isTTSEnabled ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-500/20' : (!apiKey) ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
             >
                 {isTTSEnabled ? <SpeakerIcon className="w-5 h-5" /> : <SpeakerOffIcon className="w-5 h-5" />}
-                <span>{isTTSEnabled ? t('readAnswers') : (!apiKey && !hasDatabaseApiKey ? t('setupApiKey') : t('readAnswers'))}</span>
+                <span>{isTTSEnabled ? t('readAnswers') : (!apiKey ? t('readAnswers') : t('readAnswers'))}</span>
             </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -5461,15 +5091,15 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                 />
                 <button 
                     onClick={toggleListening} 
-                    disabled={!apiKey && !hasDatabaseApiKey}
-                    className={`p-2 rounded-full transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : (!apiKey && !hasDatabaseApiKey) ? 'bg-slate-300 dark:bg-slate-600 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
-                    title={(!apiKey && !hasDatabaseApiKey) ? t('setupApiKey') : (isListening ? t('stopListening') : t('startListening'))}
+                    disabled={!apiKey}
+                    className={`p-2 rounded-full transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : (!apiKey) ? 'bg-slate-300 dark:bg-slate-600 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
+                    title={(!apiKey) ? t('setupApiKey') : (isListening ? t('stopListening') : t('startListening'))}
                 > 
                     <MicIcon className="w-5 h-5"/> 
                 </button>
                 <button 
                     onClick={handleSendMessage} 
-                    disabled={isChatting || (!chatInput.trim() && !voiceInputPreview.trim()) || (!apiKey && !hasDatabaseApiKey)} 
+                    disabled={isChatting || (!chatInput.trim() && !voiceInputPreview.trim()) || (!apiKey)} 
                     className="p-3 bg-cyan-500 rounded-lg text-white disabled:bg-slate-400 dark:disabled:bg-slate-600 transition-colors"
                 > 
                     <SendIcon className="w-5 h-5"/> 
@@ -5493,15 +5123,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
         />
       )}
       
-      <ApiKeySetupModal
-          isOpen={showApiKeyModal}
-          onClose={() => setShowApiKeyModal(false)}
-          onSave={handleSaveApiKey}
-          t={t}
-          storagePreference={apiKeyStoragePreference}
-          onStoragePreferenceChange={setApiKeyStoragePreference}
-          isLoggedIn={!!authState.user}
-      />
+
       
       <PowerPointOptionsModal
           isOpen={showPptOptions}
@@ -5579,7 +5201,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
           {authState.user && (
             <>
               {/* Nieuwe sessie knop */}
-              {!showInfoPage && status !== RecordingStatus.IDLE && (
+              {authState.user && status !== RecordingStatus.IDLE && (
                 <button 
                   onClick={() => {
                     setTranscript('');
@@ -5615,7 +5237,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                 </button>
               )}
               {/* Instellingen knop */}
-              {!showInfoPage && status !== RecordingStatus.IDLE && (
+              {authState.user && status !== RecordingStatus.IDLE && (
                <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white h-10 min-w-0 sm:min-w-[120px]">
                    <SettingsIcon className="w-5 h-5"/> 
                    <span>{t('settings')}</span>
@@ -5792,7 +5414,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
               <div>
                 <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('waitlistTitle')}</h4>
-                <p>RecapSmart is momenteel alleen beschikbaar voor uitgenodigd gebruikers. Dit zorgt ervoor dat we de beste service kunnen bieden en de app kunnen optimaliseren op basis van feedback van onze gebruikers.</p>
+                <p>RecapSmart is nu alleen toegankelijk voor genodigden. Dit zorgt ervoor dat we de beste service kunnen bieden en de app kunnen optimaliseren op basis van feedback van onze gebruikers.</p>
               </div>
               
               <div>
@@ -6674,7 +6296,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
         {(status === RecordingStatus.IDLE || status === RecordingStatus.ERROR) ? (
              <div className="w-full max-w-xl bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 space-y-6">
                 {/* API Key Waarschuwing */}
-                {!apiKey && !hasDatabaseApiKey && (
+                {!apiKey && (
                     <div className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
                         <AlertTriangleIcon className="w-6 h-6 text-amber-500" />
                         <div className="flex-1">
@@ -6687,16 +6309,11 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                                 <p className="text-green-600 dark:text-green-400">• {t('privacyItemWeStoreNothing')}</p>
                             </div>
                         </div>
-                        <button 
-                            onClick={() => setShowApiKeyModal(true)} 
-                            className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium"
-                        >
-                            {t('setupApiKey')}
-                        </button>
+                        
                     </div>
                 )}
                 
-                {(apiKey || hasDatabaseApiKey) && (
+                {apiKey && (
                     <div className="transition-opacity duration-500">
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
                             <span className="text-cyan-500 font-black tracking-wider text-sm block uppercase mb-2">{t('step1')}</span> {t('sessionLang')}
@@ -6719,7 +6336,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                     </div>
                 )}
                 
-                {(apiKey || hasDatabaseApiKey) && language && (
+                {apiKey && language && (
                     <div className="transition-opacity duration-500">
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
                             <span className="text-cyan-500 font-black tracking-wider text-sm block uppercase mb-2">{t('step2')}</span> {t('outputLanguage')}

@@ -15,6 +15,15 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  
+  // SEO-optimized page title and description
+  React.useEffect(() => {
+    document.title = 'FAQ - Veelgestelde Vragen | RecapSmart';
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Vind antwoorden op veelgestelde vragen over RecapSmart AI transcriptie, meeting analyse, en meer. Bekijk onze uitgebreide FAQ sectie.');
+    }
+  }, []);
 
   const toggleItem = (index: number) => {
     const newExpanded = new Set(expandedItems);

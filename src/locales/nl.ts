@@ -115,7 +115,7 @@ export const nl = {
   supportedFormatsNote: "Let op: PDF en RTF worden automatisch omgezet naar platte tekst. Resultaten kunnen variëren afhankelijk van de kwaliteit van het brondocument.",
   landingHeroSubtitle: "Transformeer je meetings, webinars en gesprekken in professionele documenten, export en inzichten met AI",
   waitlistTitle: "📋 Toegang op Uitnodiging",
-  waitlistLead: "RecapSmart is momenteel alleen beschikbaar voor uitgenodigd gebruikers. Meld je aan voor de wachtlijst!",
+  waitlistLead: "RecapSmart is nu alleen toegankelijk voor genodigden. Schrijf je in voor de wachtlijst!",
   emailPlaceholder: "jouw@email.nl",
   waitlistSignUp: "Aanmelden",
   waitlistMoreInfo: "Meer informatie over de wachtlijst",

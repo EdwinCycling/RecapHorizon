@@ -6,8 +6,10 @@ export default defineConfig(({ mode }) => {
     return {
       server: {
         port: 3000,
-        strictPort: false, // Dit zorgt ervoor dat Vite een andere poort probeert als 3000 bezet is
-        host: true // Dit zorgt ervoor dat de server toegankelijk is vanaf andere apparaten op je netwerk
+        strictPort: true, // Dit zorgt ervoor dat Vite altijd poort 3000 gebruikt en faalt als deze bezet is
+        host: true, // Dit zorgt ervoor dat de server toegankelijk is vanaf andere apparaten op je netwerk
+        open: false, // Open browser niet automatisch
+        cors: true // Enable CORS for development
       },
       define: {
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),

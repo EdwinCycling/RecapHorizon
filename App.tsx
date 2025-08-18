@@ -130,6 +130,45 @@ const SettingsIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+// New icons for sentiment, mindmap, and storytelling
+const SentimentIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+        <line x1="9" y1="9" x2="9.01" y2="9"/>
+        <line x1="15" y1="9" x2="15.01" y2="9"/>
+    </svg>
+);
+
+const MindmapIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M9 3H5a2 2 0 0 0-2 2v4"/>
+        <path d="M19 3h4v4"/>
+        <path d="M21 19h-4v4"/>
+        <path d="M3 19h4v4"/>
+        <path d="M9 3v18"/>
+        <path d="M15 3v18"/>
+        <path d="M3 9h18"/>
+        <path d="M3 15h18"/>
+    </svg>
+);
+
+const StorytellingIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <path d="M9 15h6"/>
+        <path d="M9 11h6"/>
+        <path d="M9 7h6"/>
+    </svg>
+);
+
+const BlogIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+    </svg>
+);
 
 const LoadingSpinner: React.FC<{ className?: string; text?: string }> = ({ className = "h-8 w-8", text }) => (
     <div className="flex items-center gap-3">
@@ -320,7 +359,7 @@ const LoginForm: React.FC<{
             onClick={() => setMode('login')}
             className="text-cyan-500 hover:text-cyan-600 transition-colors"
           >
-            Terug naar inloggen
+                            {t('backToLogin')}
           </button>
         )}
         
@@ -848,7 +887,7 @@ const PowerPointOptionsModal: React.FC<{
 
 
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'businessCase' | 'exec' | 'quiz';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz';
 type AnalysisType = ViewType | 'presentation';
 
 
@@ -923,11 +962,10 @@ const openEmailClientWithoutTo = (subject: string, body: string) => {
 
 // Helper function to generate email content for transcript analysis
 const generateEmailContent = (type: string, content: string, timestamp?: string) => {
-  const getStartStamp = () => {
+  const stamp = timestamp || (() => {
     const d = recordingStartMs ? new Date(recordingStartMs) : new Date();
     return d.toLocaleString('nl-NL');
-  };
-  const stamp = timestamp || getStartStamp();
+  })();
   const subject = `RecapSmart ${stamp} - ${type}`;
   const body = `## ${type}\n\n${content}`;
   return { subject, body };
@@ -1052,6 +1090,7 @@ export default function App() {
   const [presentationReport, setPresentationReport] = useState<string | null>(null);
   const [mindmapMermaid, setMindmapMermaid] = useState<string>('');
   const [mindmapSvg, setMindmapSvg] = useState<string>('');
+  const [blogData, setBlogData] = useState<string>('');
 
   useEffect(() => {
     // Defer mermaid import until used to avoid type resolution issues
@@ -1122,27 +1161,41 @@ export default function App() {
   });
 
   // Effect to load monthly tokens and sessions when user changes
-  useEffect(() => {
-    const fetchUsage = async () => {
-      if (!authState?.user) {
-        setMonthlyTokens(null);
-        setMonthlySessions(null);
-        return;
-      }
-      setIsLoadingUsage(true);
+  const fetchUsage = async () => {
+    if (!authState?.user) {
+      setMonthlyTokens(null);
+      setMonthlySessions(null);
+      return;
+    }
+    setIsLoadingUsage(true);
+    try {
+      const [tokens, sessions] = await Promise.all([
+        getUserMonthlyTokens(authState.user.uid),
+        getUserMonthlySessions(authState.user.uid)
+      ]);
+      setMonthlyTokens(tokens);
+      setMonthlySessions(sessions.sessions);
+    } catch (e) {
+      console.error('Usage load error', e);
+    } finally {
+      setIsLoadingUsage(false);
+    }
+  };
+
+  // Helper function to update tokens and refresh UI
+  const updateTokensAndRefresh = async (promptTokens: number, responseTokens: number) => {
+    if (authState.user) {
       try {
-        const [tokens, sessions] = await Promise.all([
-          getUserMonthlyTokens(authState.user.uid),
-          getUserMonthlySessions(authState.user.uid)
-        ]);
-        setMonthlyTokens(tokens);
-        setMonthlySessions(sessions.sessions);
-      } catch (e) {
-        console.error('Usage load error', e);
-      } finally {
-        setIsLoadingUsage(false);
+        await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
+        // Update the UI immediately after token update
+        await fetchUsage();
+      } catch (error) {
+        console.error('Error updating tokens:', error);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchUsage();
   }, [authState?.user]);
 
@@ -1207,12 +1260,8 @@ export default function App() {
       const responseTokens = tokenCounter.countResponseTokens(res.text);
       const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
       
-      console.log(`Token usage for quiz - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
-      try {
-        if (authState.user) {
-          await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-        }
-      } catch {}
+              // Token usage logging removed
+      await updateTokensAndRefresh(promptTokens, responseTokens);
 
       let text = res.text || '';
       text = text.replace(/```[a-z]*|```/gi, '').trim();
@@ -1258,6 +1307,7 @@ export default function App() {
         setMindmapSvg('');
         setQuizQuestions([]);
         setPodcastScript('');
+        setBlogData('');
       }
       setLoadingText(t('generating', { type: 'Business Case' }));
       const ai = new GoogleGenAI({ apiKey: apiKey });
@@ -1297,12 +1347,8 @@ ${transcript.slice(0, 20000)}`;
       const responseTokens = tokenCounter.countResponseTokens(res.text);
       const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
       
-      console.log(`Token usage for business case - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
-      try {
-        if (authState.user) {
-          await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-        }
-      } catch {}
+              // Token usage logging removed
+      await updateTokensAndRefresh(promptTokens, responseTokens);
 
       let text = res.text || '';
       text = text.replace(/```[a-z]*|```/gi, '').trim();
@@ -1501,7 +1547,6 @@ ${transcript.slice(0, 20000)}`;
                 document.documentElement.setAttribute('data-theme', 'light');
                 document.body.setAttribute('data-theme', 'light');
                 document.documentElement.style.colorScheme = 'light';
-                console.log('Removed dark class from document and body, set data-theme');
             }
         }
     }, []);
@@ -1582,21 +1627,18 @@ ${transcript.slice(0, 20000)}`;
     }, []);
 
     useEffect(() => {
-        console.log('Theme effect running, theme:', theme);
         if (theme === 'dark') {
             document.documentElement.classList.add('dark');
             document.body.classList.add('dark');
             document.documentElement.setAttribute('data-theme', 'dark');
             document.body.setAttribute('data-theme', 'dark');
             document.documentElement.style.colorScheme = 'dark';
-            console.log('Added dark class to document and body, set data-theme');
         } else {
             document.documentElement.classList.remove('dark');
             document.body.classList.remove('dark');
             document.documentElement.setAttribute('data-theme', 'light');
             document.body.setAttribute('data-theme', 'light');
             document.documentElement.style.colorScheme = 'light';
-            console.log('Removed dark class from document and body, set data-theme');
         }
         localStorage.setItem('theme', theme);
     }, [theme]);
@@ -1644,6 +1686,7 @@ ${transcript.slice(0, 20000)}`;
     setLearningDoc('');
     setFollowUpQuestions('');
     setPodcastScript('');
+    setBlogData('');
     setError(null);
     setDuration(0);
     setLanguage(null);
@@ -1743,12 +1786,8 @@ ${transcript.slice(0, 20000)}`;
         const responseTokens = tokenCounter.countResponseTokens(fullResponse);
         const totalTokens = tokenCounter.getTotalTokens(message, fullResponse);
         
-        console.log(`Token usage for chat - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
-        try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
+        // Token usage logging removed
+        await updateTokensAndRefresh(promptTokens, responseTokens);
         
         if (isTTSEnabled) speak(fullResponse);
 
@@ -1997,6 +2036,7 @@ ${transcript.slice(0, 20000)}`;
     setLearningDoc('');
     setFollowUpQuestions('');
     setPodcastScript('');
+    setBlogData('');
     setChatHistory([]);
     setKeywordAnalysis(null);
     setSentimentAnalysisResult(null);
@@ -2569,7 +2609,7 @@ ${transcript.slice(0, 20000)}`;
                 }
     
                 setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
-                setPodcastScript(''); setChatHistory([]);
+                setPodcastScript(''); setBlogData(''); setChatHistory([]);
                 setKeywordAnalysis(null);
                 setSentimentAnalysisResult(null);
                 setMindmapMermaid('');
@@ -2643,6 +2683,7 @@ const handleGenerateAnalysis = async (type: ViewType) => {
     setFaq('');
     setLearningDoc('');
     setFollowUpQuestions('');
+    setBlogData('');
     setKeywordAnalysis([]);
     setSentimentAnalysisResult(null);
     setMindmapMermaid('');
@@ -2671,7 +2712,7 @@ const handleGenerateAnalysis = async (type: ViewType) => {
         const responseTokens = tokenCounter.countResponseTokens(response.text);
         const totalTokens = tokenCounter.getTotalTokens(fullPrompt, response.text);
         
-        console.log(`Token usage for ${type} - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+        // Token usage logging removed
         try {
           if (authState.user) {
             await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -2709,6 +2750,7 @@ const handleKeywordClick = async (keyword: string) => {
     setFaq('');
     setLearningDoc('');
     setFollowUpQuestions('');
+    setBlogData('');
     setSentimentAnalysisResult(null);
     setMindmapMermaid('');
     setMindmapSvg('');
@@ -2736,7 +2778,7 @@ const handleKeywordClick = async (keyword: string) => {
         const responseTokens = tokenCounter.countResponseTokens(response.text);
         const totalTokens = tokenCounter.getTotalTokens(prompt, response.text);
         
-        console.log(`Token usage for keyword explanation - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+        // Token usage logging removed
         try {
           if (authState.user) {
             await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -2814,7 +2856,7 @@ const handleGenerateKeywordAnalysis = async () => {
         const responseTokens = tokenCounter.countResponseTokens(response.text);
         const totalTokens = tokenCounter.getTotalTokens(prompt, response.text);
         
-        console.log(`Token usage for keyword analysis - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+        // Token usage logging removed
         try {
           if (authState.user) {
             await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -2853,6 +2895,7 @@ const handleAnalyzeSentiment = async () => {
     setFaq('');
     setLearningDoc('');
     setFollowUpQuestions('');
+    setBlogData('');
     setKeywordAnalysis([]);
     setMindmapMermaid('');
     setMindmapSvg('');
@@ -2892,7 +2935,7 @@ const handleAnalyzeSentiment = async () => {
         const responseTokens = tokenCounter.countResponseTokens(response.text);
         const totalTokens = tokenCounter.getTotalTokens(prompt, response.text);
         
-        console.log(`Token usage for sentiment analysis - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+        // Token usage logging removed
         try {
           if (authState.user) {
             await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -2938,6 +2981,7 @@ const handleGeneratePodcast = async () => {
     setFaq('');
     setLearningDoc('');
     setFollowUpQuestions('');
+    setBlogData('');
     setKeywordAnalysis([]);
     setSentimentAnalysisResult(null);
     setMindmapMermaid('');
@@ -3008,7 +3052,7 @@ ${transcript}
         const responseTokens = tokenCounter.countResponseTokens(response.text);
         const totalTokens = tokenCounter.getTotalTokens(prompt, response.text);
         
-        console.log(`Token usage for podcast - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+        // Token usage logging removed
         try {
           if (authState.user) {
             await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -3352,7 +3396,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
       } else if (error.code === 'auth/user-disabled') {
         throw new Error('Account is uitgeschakeld. Contact administrator.');
       } else {
-        throw new Error(`Inloggen mislukt: ${error.message}`);
+        throw new Error(t('loginFailed', { error: error.message }));
       }
     }
   };
@@ -4028,7 +4072,7 @@ ${transcript}
         const responseTokens = tokenCounter.countResponseTokens(contentResponse.text);
         const totalTokens = tokenCounter.getTotalTokens(prompt, contentResponse.text);
         
-        console.log(`Token usage for PowerPoint - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+        // Token usage logging removed
         try {
           if (authState.user) {
             await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -4109,7 +4153,7 @@ ${transcript}
       const responseTokens = tokenCounter.countResponseTokens(transcribeResponse.text);
       const totalTokens = tokenCounter.getTotalTokens([textPart, audioPart], transcribeResponse.text);
       
-      console.log(`Token usage - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+              // Token usage logging removed
       try {
         if (authState.user) {
           await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -4123,6 +4167,7 @@ ${transcript}
       setLearningDoc('');
       setFollowUpQuestions('');
       setPodcastScript('');
+      setBlogData('');
       setChatHistory([]);
       setKeywordAnalysis(null);
       setSentimentAnalysisResult(null);
@@ -4347,6 +4392,7 @@ ${transcript}
           setFaq('');
           setLearningDoc('');
           setFollowUpQuestions('');
+          setBlogData('');
           setKeywordAnalysis([]);
           setSentimentAnalysisResult(null);
           setMindmapMermaid('');
@@ -4365,7 +4411,7 @@ ${transcript}
         const responseTokens = tokenCounter.countResponseTokens(res.text);
         const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
         
-        console.log(`Token usage for executive summary - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+        // Token usage logging removed
         try {
           if (authState.user) {
             await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -4401,6 +4447,7 @@ ${transcript}
           setFaq('');
           setLearningDoc('');
           setFollowUpQuestions('');
+          setBlogData('');
           setKeywordAnalysis([]);
           setSentimentAnalysisResult(null);
           setMindmapMermaid('');
@@ -4419,7 +4466,7 @@ ${transcript}
         const responseTokens = tokenCounter.countResponseTokens(res.text);
         const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
         
-        console.log(`Token usage for storytelling - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+        // Token usage logging removed
         try {
           if (authState.user) {
             await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -4441,6 +4488,54 @@ ${transcript}
 
 
 
+    const handleGenerateBlog = async () => {
+      try {
+        // Don't reset other analysis data when generating blog
+        // This allows users to keep other analyses while generating blog content
+        setLoadingText(t('generating', { type: 'Blog' }));
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const sys = `Acteer als een ervaren content marketeer/blogschrijver.
+Analyseer het transcript grondig om de belangrijkste onderwerpen, discussiepunten, conclusies en inzichten te identificeren.
+Genereer een complete blogpost die de kernboodschap van het transcript effectief communiceert aan een breed publiek.
+
+BELANGRIJK: Begin DIRECT met de titel (H1), zonder inleiding of uitleg over hoe de blog is geschreven.
+
+Structuur van de Blogpost:
+# [Catchy Titel] - Begin direct met de titel
+[Direct de eerste alinea van de blog, zonder introductie over wat er behandeld wordt]
+Hoofdsecties (H2): Splits de belangrijkste onderwerpen van het transcript op in 2-4 logische secties, elk met een duidelijke kop.
+Alinea's: Elke sectie moet uit meerdere alinea's bestaan die de inhoud uitleggen.
+Opsommingen/Bullet Points (indien relevant): Gebruik waar passend opsommingen om informatie overzichtelijker te presenteren (bijv. kerninzichten, actiepunten, voordelen).
+Conclusie/Samenvatting: Een korte afsluiting die de belangrijkste takeaways herhaalt en de lezer aanzet tot nadenken of actie.
+Call to Action (Blogspecifiek): Bijv. "Laat je reactie achter", "Meer weten?", "Abonneer je op onze nieuwsbrief". (Optioneel, en generiek indien geen specifieke CTA af te leiden is uit de meeting.)
+Toon: De standaardtoon moet informatief, objectief en enigszins enthousiast/betrokken zijn. Het moet de lezer boeien.
+Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript erg kort is, een kortere, maar complete blogpost. Als het transcript extreem lang is, focus dan op de belangrijkste highlights binnen de gestelde lengte.`;
+        const prompt = `${sys}\n\nTranscript (NL or other):\n${transcript.slice(0, 20000)}`;
+        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        
+        // Track token usage
+        const promptTokens = tokenCounter.countPromptTokens(prompt);
+        const responseTokens = tokenCounter.countResponseTokens(res.text);
+        const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
+        
+        // Token usage logging removed
+        try {
+          if (authState.user) {
+            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
+          }
+        } catch {}
+
+        let text = res.text || '';
+        text = text.replace(/```[a-z]*|```/gi, '').trim();
+        setBlogData(text);
+        setActiveView('blog');
+      } catch (e: any) {
+        setError(`${t('generationFailed', { type: 'Blog' })}: ${e.message || t('unknownError')}`);
+      } finally {
+        setLoadingText('');
+      }
+    };
+
     const renderMindmapView = () => {
       if (!transcript.trim()) return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
       if (!mindmapMermaid) {
@@ -4450,19 +4545,20 @@ ${transcript}
               onClick={async () => {
                 try {
                   // Only reset other analysis data if we don't already have mindmap data
-                  if (!mindmapMermaid) {
-                    setStorytellingData(null);
-                    setExecutiveSummaryData(null);
-                    setBusinessCaseData(null);
-                    setSummary('');
-                    setFaq('');
-                    setLearningDoc('');
-                    setFollowUpQuestions('');
-                    setKeywordAnalysis([]);
-                    setSentimentAnalysisResult(null);
-                    setQuizQuestions([]);
-                    setPodcastScript('');
-                  }
+                                      if (!mindmapMermaid) {
+                      setStorytellingData(null);
+                      setExecutiveSummaryData(null);
+                      setBusinessCaseData(null);
+                      setSummary('');
+                      setFaq('');
+                      setLearningDoc('');
+                      setFollowUpQuestions('');
+                      setKeywordAnalysis([]);
+                      setSentimentAnalysisResult(null);
+                      setQuizQuestions([]);
+                      setPodcastScript('');
+                      setBlogData('');
+                    }
                   setLoadingText(t('generating', { type: 'Mindmap' }));
                   const ai = new GoogleGenAI({ apiKey: apiKey });
                   const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
@@ -4474,7 +4570,7 @@ ${transcript}
                   const responseTokens = tokenCounter.countResponseTokens(res.text);
                   const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
                   
-                  console.log(`Token usage for mindmap - Prompt: ${promptTokens}, Response: ${responseTokens}, Total: ${totalTokens}`);
+                  // Token usage logging removed
                   try {
                     if (authState.user) {
                       await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
@@ -4562,16 +4658,17 @@ ${transcript}
         { id: 'summary', type: 'view', icon: SummaryIcon, label: () => t('summary') },
         { id: 'exec', type: 'view', icon: SummaryIcon, label: () => t('executiveSummary') },
         { id: 'keyword', type: 'view', icon: TagIcon, label: () => t('keywordAnalysis')},
-        { id: 'sentiment', type: 'view', icon: SparklesIcon, label: () => t('sentimentAnalysis')},
+        { id: 'sentiment', type: 'view', icon: SentimentIcon, label: () => t('sentiment')},
         { id: 'faq', type: 'view', icon: FaqIcon, label: () => t('faq') },
         { id: 'quiz', type: 'view', icon: FaqIcon, label: () => t('quizQuestions') },
         { id: 'learning', type: 'view', icon: LearningIcon, label: () => t('keyLearnings') }, 
         { id: 'followUp', type: 'view', icon: FollowUpIcon, label: () => t('followUp') },
-        { id: 'mindmap', type: 'view', icon: SparklesIcon, label: () => t('mindmap') },
-        { id: 'storytelling', type: 'view', icon: SparklesIcon, label: () => t('storytelling') }
+        { id: 'mindmap', type: 'view', icon: MindmapIcon, label: () => t('mindmap') },
+        { id: 'storytelling', type: 'view', icon: StorytellingIcon, label: () => t('storytelling') },
+        { id: 'blog', type: 'view', icon: BlogIcon, label: () => t('blog') }
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, podcast: podcastScript, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '' };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, podcast: podcastScript, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '' };
 
     const handleTabClick = (view: ViewType) => {
         if (['summary', 'faq', 'learning', 'followUp'].includes(view)) handleGenerateAnalysis(view);
@@ -4581,6 +4678,7 @@ ${transcript}
         else if (view === 'podcast') handleGeneratePodcast();
         else if (view === 'sentiment') handleAnalyzeSentiment();
         else if (view === 'storytelling') handleGenerateStorytelling();
+        else if (view === 'blog') handleGenerateBlog();
         else if (view === 'businessCase') {
             // Initialize business case data if not exists
             if (!businessCaseData) {
@@ -4611,6 +4709,7 @@ ${transcript}
                   setSentimentAnalysisResult(null);
                   setQuizQuestions([]);
                   setPodcastScript('');
+                  setBlogData('');
                 }
                 const ai = new GoogleGenAI({ apiKey: apiKey });
                 // Using Gemini 2.5 Flash for mindmap generation
@@ -4906,6 +5005,38 @@ ${transcript}
             return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
         }
 
+        if (activeView === 'blog') {
+            if (loadingText && !blogData) {
+                return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[300px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
+            }
+            if (blogData) {
+                return (
+                    <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                         <div className="absolute top-4 right-4 flex gap-2">
+                             <button onClick={() => copyToClipboard(blogData)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
+                                 <CopyIcon className="w-5 h-5" />
+                             </button>
+                             <button onClick={() => downloadTextFile(blogData, `blog.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
+                                 ⬇️
+                             </button>
+                             <button onClick={() => {
+                                 const { subject, body } = generateEmailContent(t('blog'), blogData);
+                                 openEmailClientWithoutTo(subject, body);
+                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                                 ✉️
+                             </button>
+                         </div>
+                        <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                            <div className="prose prose-slate dark:prose-invert max-w-none">
+                                {renderMarkdown(blogData)}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+            return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
+        }
+
         if (activeView === 'sentiment') {
             if ((isAnalyzingSentiment || loadingText) && !sentimentAnalysisResult) {
                 return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[300px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText || t('analyzingSentiment')}...</div>;
@@ -4922,7 +5053,7 @@ ${transcript}
                                  ⬇️
                              </button>
                              <button onClick={() => {
-                                 const { subject, body } = generateEmailContent(t('sentimentAnalysis'), fullContent);
+                                 const { subject, body } = generateEmailContent(t('sentiment'), fullContent);
                                  openEmailClientWithoutTo(subject, body);
                              }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
                                  ✉️
@@ -5227,6 +5358,7 @@ ${transcript}
                  executiveSummaryData={executiveSummaryData}
                  storytellingData={storytellingData}
                  businessCaseData={businessCaseData}
+                 blogData={blogData}
                  quizQuestions={quizQuestions}
                  quizIncludeAnswers={quizIncludeAnswers}
                  startStamp={getStartStamp()}
@@ -5387,17 +5519,17 @@ ${transcript}
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-6">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">🍪 Cookie Beleid</h3>
+              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('cookiePolicyTitle')}</h3>
             </div>
             
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300 mb-6">
-              <p>Deze app gebruikt cookies om je ervaring te verbeteren. Door de app te gebruiken ga je akkoord met ons cookie beleid.</p>
+              <p>{t('cookiePolicyDescription')}</p>
               <div className="bg-gray-50 dark:bg-slate-700/50 p-3 rounded">
-                <p className="font-medium">Wat we opslaan:</p>
+                <p className="font-medium">{t('cookiePolicyWhatWeStore')}</p>
                 <ul className="text-xs text-slate-600 dark:text-cyan-400 mt-1 space-y-1">
-                  <li>• Je taal voorkeur</li>
-                  <li>• Je theme voorkeur (donker/licht)</li>
-                  <li>• API key (alleen lokaal op je apparaat)</li>
+                  <li>{t('cookiePolicyLanguagePreference')}</li>
+                  <li>{t('cookiePolicyThemePreference')}</li>
+                  <li>{t('cookiePolicyApiKey')}</li>
                 </ul>
               </div>
             </div>
@@ -5407,13 +5539,13 @@ ${transcript}
                 onClick={() => setShowCookieConsent(false)}
                 className="px-4 py-2 text-sm bg-gray-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
               >
-                Weigeren
+                {t('cookiePolicyDecline')}
               </button>
               <button 
                 onClick={handleAcceptCookies}
                 className="px-4 py-2 text-sm bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
               >
-                Accepteren
+                {t('cookiePolicyAccept')}
               </button>
             </div>
           </div>
@@ -5436,17 +5568,18 @@ ${transcript}
               <option value="de">DE</option>
               <option value="fr">FR</option>
               <option value="pt">PT</option>
+              <option value="es">ES</option>
             </select>
           </div>
                           <button onClick={toggleTheme} className="flex items-center justify-center h-9 w-9 bg-gray-200 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-opacity-80">
                   {theme === 'light' ? <MoonIcon className="w-5 h-5"/> : <SunIcon className="w-5 h-5"/>}
                 </button>
           
-          {/* App Controls - Alleen zichtbaar na inloggen */}
+          {/* App Controls - {t('appControls')} */}
           {authState.user && (
             <>
               {/* Nieuwe sessie knop */}
-              {!showInfoPage && (
+              {!showInfoPage && status !== RecordingStatus.IDLE && (
                 <button 
                   onClick={() => {
                     setTranscript('');
@@ -5455,6 +5588,7 @@ ${transcript}
                     setLearningDoc('');
                     setFollowUpQuestions('');
                     setPodcastScript('');
+                    setBlogData('');
                     setChatHistory([]);
                     setKeywordAnalysis(null);
                     setSentimentAnalysisResult(null);
@@ -5481,10 +5615,10 @@ ${transcript}
                 </button>
               )}
               {/* Instellingen knop */}
-              {!showInfoPage && (
+              {!showInfoPage && status !== RecordingStatus.IDLE && (
                <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white h-10 min-w-0 sm:min-w-[120px]">
                    <SettingsIcon className="w-5 h-5"/> 
-                   <span>Instellingen</span>
+                   <span>{t('settings')}</span>
                </button>
               )}
             </>
@@ -5497,7 +5631,7 @@ ${transcript}
               className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
             >
               <span>🔐</span>
-              <span>Inloggen</span>
+                                <span>{t('login')}</span>
             </button>
           ) : (
             <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-wrap">
@@ -5507,7 +5641,7 @@ ${transcript}
                 className="flex items-center justify-center gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white h-9 sm:h-10 min-w-0"
               >
                 <span>🚪</span>
-                <span>Uitloggen</span>
+                <span>{t('logout')}</span>
               </button>
             </div>
           )}
@@ -5517,46 +5651,55 @@ ${transcript}
       {/* Cookie Modal */}
       {showCookieModal && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-6 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">🍪 Cookie Beleid</h3>
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-start p-6 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('cookieInfoTitle')}</h3>
               <button 
                 onClick={() => setShowCookieModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               >
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
+            <div className="p-6 space-y-4 text-sm text-slate-700 dark:text-slate-300">
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Wat zijn cookies?</h4>
-                <p>Cookies zijn kleine tekstbestanden die op je apparaat worden opgeslagen wanneer je websites bezoekt. Ze helpen de website te onthouden wat je hebt gedaan en je voorkeuren te bewaren.</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('cookieInfoWhatAreCookies')}</h4>
+                <p>{t('cookieInfoWhatAreCookiesAnswer')}</p>
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Cookies die we gebruiken</h4>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('cookieInfoWhatWeUse')}</h4>
                 <div className="space-y-2">
                   <div className="bg-gray-50 dark:bg-slate-700/50 p-3 rounded">
-                    <p className="font-medium">Essentiële cookies</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">Deze cookies zijn noodzakelijk voor de werking van de app en kunnen niet worden uitgeschakeld.</p>
+                    <p className="font-medium">{t('cookieInfoEssentialCookies')}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{t('cookieInfoEssentialCookiesAnswer')}</p>
                   </div>
                   <div className="bg-gray-50 dark:bg-slate-700/50 p-3 rounded">
-                    <p className="font-medium">Analytics cookies</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">Deze cookies helpen ons begrijpen hoe gebruikers de app gebruiken, zodat we deze kunnen verbeteren.</p>
+                    <p className="font-medium">{t('cookieInfoAnalyticsCookies')}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{t('cookieInfoAnalyticsCookiesAnswer')}</p>
                   </div>
                 </div>
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Geen tracking van persoonlijke data</h4>
-                <p>We verzamelen geen persoonlijke informatie via cookies. Alle data wordt anoniem verzameld en gebruikt uitsluitend om de app te verbeteren.</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('cookieInfoNoTracking')}</h4>
+                <p>{t('cookieInfoNoTrackingAnswer')}</p>
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Cookie instellingen wijzigen</h4>
-                <p>Je kunt je cookie voorkeuren op elk moment wijzigen door je browser instellingen aan te passen. Let op dat het uitschakelen van cookies de functionaliteit van de app kan beïnvloeden.</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('cookieInfoSettings')}</h4>
+                <p>{t('cookieInfoSettingsAnswer')}</p>
               </div>
+            </div>
+            
+            <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+              <button 
+                onClick={() => setShowCookieModal(false)} 
+                className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
+              >
+                {t('close') || 'Close'}
+              </button>
             </div>
           </div>
         </div>
@@ -5565,59 +5708,68 @@ ${transcript}
       {/* Disclaimer Modal */}
       {showDisclaimerModal && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-6 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">⚠️ Disclaimer</h3>
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-start p-6 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('disclaimerTitle')}</h3>
               <button 
                 onClick={() => setShowDisclaimerModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               >
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
+            <div className="p-6 space-y-4 text-sm text-slate-700 dark:text-slate-300">
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">AI-Gegenereerde Content</h4>
-                <p>RecapSmart maakt gebruik van de nieuwste AI-technologie om transcripties, samenvattingen, analyses en andere content te genereren. Alle gegenereerde content is AI-gebaseerd en dient alleen ter ondersteuning van je werk.</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerAIContent')}</h4>
+                <p>{t('disclaimerAIContentAnswer')}</p>
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Geen Garantie op Nauwkeurigheid</h4>
-                <p>Hoewel we ons best doen om accurate resultaten te leveren, kunnen we geen garantie geven dat alle AI-gegenereerde content 100% nauwkeurig is. We raden aan om alle output te controleren en te verifiëren voordat je deze gebruikt voor belangrijke beslissingen.</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerAccuracy')}</h4>
+                <p>{t('disclaimerAccuracyAnswer')}</p>
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Gebruik op Eigen Risico</h4>
-                <p>Het gebruik van deze app en alle gegenereerde content gebeurt op eigen risico. We zijn niet aansprakelijk voor eventuele fouten, onjuistheden of gevolgen van het gebruik van de gegenereerde content.</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerOwnRisk')}</h4>
+                <p>{t('disclaimerOwnRiskAnswer')}</p>
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Google Gemini API</h4>
-                <p>De app integreert met AI-services. De kwaliteit en beschikbaarheid van deze services zijn afhankelijk van de voorwaarden van de AI-provider en kunnen variëren. We hebben geen controle over de onderliggende AI-modellen of hun output.</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerGoogleGemini')}</h4>
+                <p>{t('disclaimerGoogleGeminiAnswer')}</p>
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Privacy en Data - Volledige Lokale Opslag</h4>
-                <p><strong>Belangrijk:</strong> Je sessies worden NIET opgeslagen in onze database. Alle data blijft volledig lokaal op jouw apparaat.</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerPrivacy')}</h4>
+                <p><strong>Belangrijk:</strong> {t('disclaimerPrivacyAnswer')}</p>
                 <ul className="list-disc list-inside space-y-1 text-xs mt-2">
-                  <li>🎙️ <strong>Opnames:</strong> Alleen lokaal opgeslagen, wij kunnen ze niet zien</li>
-                  <li>📝 <strong>Transcripties:</strong> Blijven op jouw apparaat, niet in onze database</li>
-                  <li>🤖 <strong>AI Output:</strong> Alleen jij kunt je gegenereerde content zien</li>
-                  <li>🔑 <strong>API Key:</strong> Lokaal opgeslagen, wij hebben er geen toegang toe</li>
+                  <li>{t('disclaimerPrivacyBullet1')}</li>
+                  <li>{t('disclaimerPrivacyBullet2')}</li>
+                  <li>{t('disclaimerPrivacyBullet3')}</li>
+                  <li>{t('disclaimerPrivacyBullet4')}</li>
                 </ul>
-                <p className="mt-2 text-sm">We bewaren helemaal niets van jouw sessies. Jouw privacy staat voorop.</p>
+                <p className="mt-2 text-sm">{t('disclaimerPrivacyNote')}</p>
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Aanbevelingen</h4>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerRecommendations')}</h4>
                 <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>Controleer altijd de gegenereerde content op nauwkeurigheid</li>
-                  <li>Gebruik AI-output als ondersteuning, niet als vervanging voor professioneel oordeel</li>
-                  <li>Houd rekening met de beperkingen van AI-technologie</li>
-                  <li>Raadpleeg experts bij belangrijke beslissingen</li>
+                  <li>{t('disclaimerRecommendation1')}</li>
+                  <li>{t('disclaimerRecommendation2')}</li>
+                  <li>{t('disclaimerRecommendation3')}</li>
+                  <li>{t('disclaimerRecommendation4')}</li>
                 </ul>
               </div>
+            </div>
+            
+            <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+              <button 
+                onClick={() => setShowDisclaimerModal(false)} 
+                className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
+              >
+                {t('close') || 'Close'}
+              </button>
             </div>
           </div>
         </div>
@@ -5639,7 +5791,7 @@ ${transcript}
             
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Toegang op Uitnodiging</h4>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('waitlistTitle')}</h4>
                 <p>RecapSmart is momenteel alleen beschikbaar voor uitgenodigd gebruikers. Dit zorgt ervoor dat we de beste service kunnen bieden en de app kunnen optimaliseren op basis van feedback van onze gebruikers.</p>
               </div>
               
@@ -6118,7 +6270,7 @@ ${transcript}
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-4xl w-full m-4 p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">⚙️ Instellingen</h3>
+              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('settingsTitle')}</h3>
               <button 
                 onClick={() => setShowSettingsModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
@@ -6132,16 +6284,16 @@ ${transcript}
               <div className="p-4 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/60">
                 <div className="flex flex-wrap items-center gap-4 text-sm">
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 mr-2">Huidige tier:</span>
+                    <span className="text-slate-500 dark:text-slate-400 mr-2">{t('settingsCurrentTier')}</span>
                     <span className="font-semibold capitalize">{authState.isAdmin ? 'diamond' : String(userSubscription)}</span>
-                    <button onClick={() => { setShowSettingsModal(false); setShowPricingPage(true); }} className="ml-2 text-cyan-600 dark:text-cyan-400 underline">bekijk prijzen</button>
+                    <button onClick={() => { setShowSettingsModal(false); setShowPricingPage(true); }} className="ml-2 text-cyan-600 dark:text-cyan-400 underline">{t('settingsViewPricing')}</button>
                   </div>
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 mr-2">Tokens deze maand:</span>
+                    <span className="text-slate-500 dark:text-slate-400 mr-2">{t('settingsTokensThisMonth')}</span>
                     <span className="font-semibold">{monthlyTokens?.totalTokens ?? 0}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 mr-2">Sessies deze maand:</span>
+                    <span className="text-slate-500 dark:text-slate-400 mr-2">{t('settingsSessionsThisMonth')}</span>
                     <span className="font-semibold">{monthlySessions ?? 0}</span>
                   </div>
                 </div>
@@ -6152,12 +6304,12 @@ ${transcript}
               {/* Anonimisatie Regels Sectie */}
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Anonimisatie Regels</h4>
+                  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{t('settingsAnonymizationRules')}</h4>
                   <button 
                     onClick={addAnonymizationRule}
                     className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors text-sm"
                   >
-                    + Regel Toevoegen
+                    {t('settingsAddRule')}
                   </button>
                 </div>
                 
@@ -6167,26 +6319,26 @@ ${transcript}
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                           <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Originele Tekst
+                            {t('settingsOriginalText')}
                           </label>
                           <input
                             type="text"
                             value={rule.originalText}
                             onChange={(e) => updateAnonymizationRule(rule.id, 'originalText', e.target.value)}
-                            placeholder="Bijv. Jan, Company, etc."
+                            placeholder={t('settingsOriginalTextPlaceholder')}
                             className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                           />
                         </div>
                         
                         <div>
                           <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-                            Vervangende Tekst
+                            {t('settingsReplacementText')}
                           </label>
                           <input
                             type="text"
                             value={rule.replacementText}
                             onChange={(e) => updateAnonymizationRule(rule.id, 'replacementText', e.target.value)}
-                            placeholder="Bijv. medewerker, Company, etc."
+                            placeholder={t('settingsReplacementTextPlaceholder')}
                             className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                           />
                         </div>
@@ -6201,14 +6353,14 @@ ${transcript}
                               className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 focus:ring-2"
                             />
                             <label htmlFor={`exact-${rule.id}`} className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                              Exact
+                              {t('settingsExactMatch')}
                             </label>
                           </div>
                           
                           <button
                             onClick={() => deleteAnonymizationRule(rule.id)}
                             className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors"
-                            title="Verwijder regel"
+                            title={t('settingsDeleteRule')}
                           >
                             <XIcon className="w-4 h-4" />
                           </button>
@@ -6219,20 +6371,20 @@ ${transcript}
                   
                   {anonymizationRules.length === 0 && (
                     <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                      <p>Nog geen anonimisatie regels ingesteld.</p>
-                      <p className="text-sm mt-1">Voeg regels toe om tekst automatisch te anonimiseren.</p>
+                      <p>{t('settingsNoRules')}</p>
+                      <p className="text-sm mt-1">{t('settingsAddRule')} om tekst automatisch te anonimiseren.</p>
                     </div>
                   )}
                 </div>
                 
                 <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg">
-                  <h5 className="font-medium text-blue-800 dark:text-blue-300 mb-2">💡 Tips voor Anonimisatie</h5>
+                  <h5 className="font-medium text-blue-800 dark:text-blue-300 mb-2">{t('settingsAnonymizationTips')}</h5>
                   <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-                    <li>• <strong>Exact:</strong> Vervangt alleen volledige woorden (bijv. "Jan" → "medewerker")</li>
-                    <li>• <strong>Fuzzy:</strong> Intelligente naamherkenning - vindt namen die overeenkomen (bijv. "Jan" vindt "Jan", "Janneke", "Jan-Peter")</li>
-                    <li>• <strong>Medewerker nummering:</strong> Gebruik "medewerker" als vervangende tekst, nummers worden automatisch toegevoegd</li>
-                    <li>• <strong>Regel volgorde:</strong> Regels worden van boven naar beneden toegepast</li>
-                    <li>• <strong>Veilig:</strong> Fuzzy matching vervangt NOOIT delen van andere woorden (bijv. "jan" in "januari" blijft intact)</li>
+                    <li>{t('settingsTipExact')}</li>
+                    <li>{t('settingsTipFuzzy')}</li>
+                    <li>{t('settingsTipEmployeeNumbering')}</li>
+                    <li>{t('settingsTipRuleOrder')}</li>
+                    <li>{t('settingsTipSafe')}</li>
                   </ul>
                 </div>
               </div>
@@ -6243,13 +6395,13 @@ ${transcript}
                   onClick={() => setShowSettingsModal(false)}
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-700 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
                 >
-                  Annuleren
+                  {t('settingsCancel')}
                 </button>
                 <button
                   onClick={saveAnonymizationRules}
                   className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors font-medium"
                 >
-                  Opslaan
+                  {t('settingsSave')}
                 </button>
               </div>
             </div>
@@ -6291,7 +6443,7 @@ ${transcript}
       <main className="w-full max-w-6xl mx-auto px-3 sm:px-4 flex flex-col items-center gap-6 sm:gap-8 mt-20 sm:mt-12">
         {authState.isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <LoadingSpinner className="w-8 h-8" text="Laden..." />
+            <LoadingSpinner className="w-8 h-8" text={t('loading')} />
           </div>
         ) : showInfoPage || !authState.user ? (
           <div className="text-center py-16 w-full max-w-6xl mx-auto">
@@ -6318,9 +6470,9 @@ ${transcript}
               {/* Login + Uitnodiging Section */}
               <div className="max-w-5xl mx-auto w-full">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Inloggen (links, prominent) */}
+                                      {/* {t('loginLeftProminent')} */}
                   <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
-                    <h2 className="text-2xl font-semibold mb-4 text-slate-900 dark:text-slate-100">inloggen</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-slate-900 dark:text-slate-100">{t('login')}</h2>
                     <LoginForm 
                       onLogin={handleLogin}
                       onCreateAccount={handleCreateAccount}
@@ -6331,7 +6483,7 @@ ${transcript}
                   </div>
                   {/* Toegang op uitnodiging (rechts, minder prominent) */}
                   <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/20 p-6">
-                    <h2 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">toegang op uitnodiging</h2>
+                    <h2 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('waitlistTitle')}</h2>
                     <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">{t('waitlistLead')}</p>
                     <div className="flex gap-2">
                       <input
@@ -6374,7 +6526,7 @@ ${transcript}
                 <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
                   <img src="/images/hero-1.jpg" alt="Opnemen van meeting op laptop" className="w-full h-44 object-cover" />
                   <div className="p-5">
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">slimme opname</h3>
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('featureRecordingTitle')}</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featureRecordingDesc')}</p>
                   </div>
                 </div>
@@ -6491,7 +6643,7 @@ ${transcript}
           <>
             <div className="text-center">
                 <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-slate-100">{t('appTitle')}</h1>
-                <p className="text-lg text-slate-500 dark:text-slate-400 mt-2">{t('appDescription')}</p>
+
             </div>
         
             <div className="w-full max-w-6xl space-y-4 px-2">
@@ -6663,35 +6815,16 @@ ${transcript}
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto border border-slate-200 dark:border-slate-700">
               <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-slate-700">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Ons verhaal</h3>
-                <button onClick={() => setShowStoryModal(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('storyTitle')}</h3>
+                <button onClick={() => setShowStoryModal(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                   <XIcon className="w-5 h-5" />
                 </button>
               </div>
-                              <div className="p-5 space-y-4 text-slate-800 dark:text-slate-200 text-sm">
-Het Verhaal van RecapSmart: Voorbij de Chaos
-
-Herken je dat gevoel na een intensieve vergadering, een boeiende webinar of een belangrijk gesprek met je collega? Die wazige nasleep waarin je probeert te reconstrueren: "Wat hadden we nu precies besproken? Wat waren de concrete afspraken? En, o ja, waren er ook nog vervolgacties?" Het was deze gedeelde, universele frustratie – de alledaagse chaos van de communicatie – die een klein team van visionairs samenbracht. Ze noemden zichzelf later, heel toepasselijk, het "RecapSmart team".
-
-Hun eerste gedachte was simpel doch revolutionair: er moest een manier zijn om de essentie van elke conversatie vast te leggen en te structureren, los van het medium. Of het nu een rumoerige brainstormsessie was rond een koffietafel, een formele online vergadering of een ad-hoc telefoontje, ze wilden een programma dat ons zou helpen een meeting te kunnen opnemen en samen te vatten. Het begin was rudimentair, een ruwe diamant die vorm moest krijgen.
-
-Al snel groeide de ambitie verder dan alleen vergaderingen. De chaos was immers niet beperkt tot de boardroom. Stel je voor: je volgt een complex webinar, barstensvol waardevolle informatie. Wat als je die direct kon samenvatten en analyseren, zonder urenlang aantekeningen te maken? De behoefte aan een tool die niet alleen meetings kon samenvatten, maar ook een zojuist gevolgd webinar direct kon destilleren tot bruikbare inzichten, werd al snel de volgende mijlpaal.
-
-En dan de toegankelijkheid. Een krachtige tool is nutteloos als deze niet altijd en overal beschikbaar is. De visie breidde zich uit: niet alleen op je PC, maar vooral ook op je smartphone. De droom was glashelder: "Druk op een knop op je smartphone, leg 'm neer, en laat de conversatie volledig geautomatiseerd verwerken tot een gestructureerd overzicht." Het moest naadloos zijn, een intuïtieve extensie van je dagelijkse workflow.
-
-Wat het RecapSmart team echter direct duidelijk maakte, was dat hun focus absoluut niet lag op het vastleggen en bewaren van audio of video. Sterker nog, deze ruwe data wordt na verwerking direct verwijderd. Privacy en efficiëntie stonden voorop; het ging puur om het transformeren van de vluchtige gesproken taal in concrete, tastbare inzichten. Het was de essentie, de 'recap', die telde, niet de drager.
-
-Het ultieme doel was om, hand in hand met geavanceerde AI, het uiterste te halen uit de data. Afhankelijk van de opname en de behoeften van de gebruiker, moest RecapSmart hen gemakkelijk laten kiezen wat ze wilden zien. De ene keer een beknopte samenvatting, de andere keer een diepgaande sentimentanalyse, of een lijst met concrete follow-up acties. De gebruiker was de regisseur, AI de onzichtbare assistent die de data kneedde tot de gewenste output.
-
-Deze evolutie, van een simpele frustratie naar een ambitieuze visie, culmineerde in de creatie van een robuuste web-app. Dit maakte de belofte van 'overal en altijd toegankelijk' eindelijk waar. Ongeacht het apparaat of de locatie, RecapSmart stond paraat.
-
-Het RecapSmart team was realistisch. Ze wisten dat ze zeker niet de eerste tool waren die dit kon. De markt was al vol met diverse oplossingen. Maar waar veel concurrenten complex waren, een hoge drempel hadden en een prijskaartje van 15 tot 35 euro per maand per gebruiker met zich meebrachten, wilde RecapSmart iets anders. Het was een tool gebouwd vanuit de gebruiker, met de belofte van toegankelijkheid voor iedereen. De kosten werden zo laag mogelijk gehouden, om zo een laagdrempelig alternatief te bieden dat iedereen altijd kon gebruiken, zonder pijn in de portemonnee. Ze geloofden erin dat de kracht van inzicht niet voorbehouden moest zijn aan de elite, maar voor iedereen beschikbaar moest zijn.
-
-Vandaag de dag is het RecapSmart team trots op wat ze hebben gerealiseerd: een krachtige, intuïtieve en betaalbare oplossing die de chaos van communicatie omzet in heldere inzichten. Maar de reis is nog lang niet voorbij. Hun notitieboekjes zitten vol met nieuwe ideeën, en de drive om communicatie nog slimmer en efficiënter te maken, brandt feller dan ooit. De volgende stappen zijn al in gedachten, allemaal gericht op het verder empoweren van de gebruiker.
-RecapSmart: Voorbij de chaos, de essentie voorop.
+              <div className="p-5 space-y-4 text-slate-800 dark:text-slate-200 text-sm whitespace-pre-line">
+                {t('storyContent')}
               </div>
               <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                <button onClick={() => setShowStoryModal(false)} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white">Sluiten</button>
+                <button onClick={() => setShowStoryModal(false)} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">{t('storyClose')}</button>
               </div>
             </div>
           </div>
@@ -6701,16 +6834,16 @@ RecapSmart: Voorbij de chaos, de essentie voorop.
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-700">
               <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-slate-700">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Het team</h3>
-                <button onClick={() => setShowTeamModal(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('teamTitle')}</h3>
+                <button onClick={() => setShowTeamModal(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                   <XIcon className="w-5 h-5" />
                 </button>
               </div>
               <div className="p-5 text-slate-800 dark:text-slate-200 text-sm">
-                <p>We stellen het team hier binnenkort aan je voor. Interesse om mee te bouwen? Mail naar support@recapsmart.nl</p>
+                <p>{t('teamContent')}</p>
               </div>
               <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                <button onClick={() => setShowTeamModal(false)} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white">Sluiten</button>
+                <button onClick={() => setShowTeamModal(false)} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">{t('teamClose')}</button>
               </div>
             </div>
           </div>
@@ -6815,13 +6948,14 @@ RecapSmart: Voorbij de chaos, de essentie voorop.
       <PricingPage
         isOpen={showPricingPage}
         onClose={() => setShowPricingPage(false)}
-                        currentTier={authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription}
+        currentTier={authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription}
         isAdmin={authState.isAdmin}
         onUpgrade={(tier: SubscriptionTier) => {
           setUserSubscription(tier);
           setShowPricingPage(false);
           // TODO: Implement actual upgrade flow
         }}
+        t={t}
       />
     )}
 

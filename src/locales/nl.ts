@@ -25,7 +25,7 @@ export const nl = {
   summarizing: "Samenvatting wordt gemaakt...",
   processing: "Verwerken...",
   appTitle: "RecapSmart",
-  appDescription: "Neem op, upload, transcribeer en analyseer uw sessies met AI.",
+
   reset: "Reset",
   startNewSession: "Nieuwe Sessie",
   errorRecording: "Fout bij opstarten opname",
@@ -72,10 +72,11 @@ export const nl = {
   fileReadFailed: "Bestand lezen mislukt",
   selectLangToUpload: "Selecteer een taal voordat u een transcript uploadt.",
   keywordAnalysis: "Keyword Analyse",
-  sentimentAnalysis: "Sentiment Analyse",
+  sentiment: "Sentiment",
   showSentiment: "Toon Sentiment",
   hideSentiment: "Verberg Sentiment",
   analyzingSentiment: "Sentiment analyseren...",
+  blog: "Blog",
   startOrUpload: "Start Sessie",
   step1: "Stap 1",
   step2: "Stap 2",
@@ -200,12 +201,11 @@ export const nl = {
   saveApiKey: "API Key Opslaan",
   privacyNote: "Privacy Opmerking",
   apiKeyPrivacy: "Je API key wordt alleen lokaal opgeslagen op je apparaat en wordt nooit naar onze servers gestuurd.",
-  pricingTitle: "💙 Eerlijke Prijzen",
   pricingTagline: "De enige companion die je nodig hebt – bespaar uren per week",
-  pricingPerMonth: "per maand",
+  
   pricingMonthly: "Maandelijks",
   pricingPrice: "€2",
-  pricingMinTerm: "minimaal 6 maanden",
+  
   pricingCancelable: "daarna per maand opzegbaar (1 maand opzegtermijn)",
   pricingFreeTitle: "Gratis Modus",
   pricingFreeDesc: "Beperkte functionaliteit, 10 dagen toegang",
@@ -275,12 +275,8 @@ export const nl = {
   // Login form vertalingen
   email: "E-mail",
   password: "Wachtwoord",
-  backToLogin: "Terug naar inloggen",
   accountCreate: "Account Aanmaken",
   resetSend: "Reset Versturen",
-  loginFailed: "Inloggen mislukt",
-  // App controls vertalingen
-  appControls: "App Controls - Alleen zichtbaar na inloggen",
   // Privacy venster bullets
   privacyBullet1: "🎙️ Opnames blijven lokaal",
   privacyBullet2: "📝 Transcripties zijn privé",
@@ -375,4 +371,155 @@ export const nl = {
   faqTrialPeriodAnswer: "Ja, je kunt RecapSmart gratis gebruiken voor 1 maand. Dit geeft je een goed beeld van wat RecapSmart kan doen voordat je besluit te upgraden.",
   faqCancellation: "Kan ik op elk moment opzeggen?",
   faqCancellationAnswer: "Na de initiële 6 maanden kun je op elk moment opzeggen met 1 maand. Je behoudt toegang tot alle functies tot het einde van je abonnement.",
+  
+  // Story modal translations
+  storyTitle: "Ons verhaal",
+  storyContent: `Het Verhaal van RecapSmart: Voorbij de Chaos
+
+Herken je dat gevoel na een intensieve vergadering, een boeiende webinar of een belangrijk gesprek met je collega? Die wazige nasleep waarin je probeert te reconstrueren: "Wat hadden we nu precies besproken? Wat waren de concrete afspraken? En, o ja, waren er ook nog vervolgacties?" Het was deze gedeelde, universele frustratie – de alledaagse chaos van de communicatie – die een klein team van visionairs samenbracht. Ze noemden zichzelf later, heel toepasselijk, het "RecapSmart team".
+
+Hun eerste gedachte was simpel doch revolutionair: er moest een manier zijn om de essentie van elke conversatie vast te leggen en te structureren, los van het medium. Of het nu een rumoerige brainstormsessie was rond een koffietafel, een formele online vergadering of een ad-hoc telefoontje, ze wilden een programma dat ons zou helpen een meeting te kunnen opnemen en samen te vatten. Het begin was rudimentair, een ruwe diamant die vorm moest krijgen.
+
+Al snel groeide de ambitie verder dan alleen vergaderingen. De chaos was immers niet beperkt tot de boardroom. Stel je voor: je volgt een complex webinar, barstensvol waardevolle informatie. Wat als je die direct kon samenvatten en analyseren, zonder urenlang aantekeningen te maken? De behoefte aan een tool die niet alleen meetings kon samenvatten, maar ook een zojuist gevolgd webinar direct kon destilleren tot bruikbare inzichten, werd al snel de volgende mijlpaal.
+
+En dan de toegankelijkheid. Een krachtige tool is nutteloos als deze niet altijd en overal beschikbaar is. De visie breidde zich uit: niet alleen op je PC, maar vooral ook op je smartphone. De droom was glashelder: "Druk op een knop op je smartphone, leg 'm neer, en laat de conversatie volledig geautomatiseerd verwerken tot een gestructureerd overzicht." Het moest naadloos zijn, een intuïtieve extensie van je dagelijkse workflow.
+
+Wat het RecapSmart team echter direct duidelijk maakte, was dat hun focus absoluut niet lag op het vastleggen en bewaren van audio of video. Sterker nog, deze ruwe data wordt na verwerking direct verwijderd. Privacy en efficiëntie stonden voorop; het ging puur om het transformeren van de vluchtige gesproken taal in concrete, tastbare inzichten. Het was de essentie, de 'recap', die telde, niet de drager.
+
+Het ultieme doel was om, hand in hand met geavanceerde AI, het uiterste te halen uit de data. Afhankelijk van de opname en de behoeften van de gebruiker, moest RecapSmart hen gemakkelijk laten kiezen wat ze wilden zien. De ene keer een beknopte samenvatting, de andere keer een diepgaande sentimentanalyse, of een lijst met concrete follow-up acties. De gebruiker was de regisseur, AI de onzichtbare assistent die de data kneedde tot de gewenste output.
+
+Deze evolutie, van een simpele frustratie naar een ambitieuze visie, culmineerde in de creatie van een robuuste web-app. Dit maakte de belofte van 'overal en altijd toegankelijk' eindelijk waar. Ongeacht het apparaat of de locatie, RecapSmart stond paraat.
+
+Het RecapSmart team was realistisch. Ze wisten dat ze zeker niet de eerste tool waren die dit kon. De markt was al vol met diverse oplossingen. Maar waar veel concurrenten complex waren, een hoge drempel hadden en een prijskaartje van 15 tot 35 euro per maand per gebruiker met zich meebrachten, wilde RecapSmart iets anders. Het was een tool gebouwd vanuit de gebruiker, met de belofte van toegankelijkheid voor iedereen. De kosten werden zo laag mogelijk gehouden, om zo een laagdrempelig alternatief te bieden dat iedereen altijd kon gebruiken, zonder pijn in de portemonnee. Ze geloofden erin dat de kracht van inzicht niet voorbehouden moest zijn aan de elite, maar voor iedereen beschikbaar moest zijn.
+
+Vandaag de dag is het RecapSmart team trots op wat ze hebben gerealiseerd: een krachtige, intuïtieve en betaalbare oplossing die de chaos van communicatie omzet in heldere inzichten. Maar de reis is nog lang niet voorbij. Hun notitieboekjes zitten vol met nieuwe ideeën, en de drive om communicatie nog slimmer en efficiënter te maken, brandt feller dan ooit. De volgende stappen zijn al in gedachten, allemaal gericht op het verder empoweren van de gebruiker.
+
+RecapSmart: Voorbij de chaos, de essentie voorop.`,
+  storyClose: "Sluiten",
+  
+  // Team modal translations
+  teamTitle: "Het team",
+  teamContent: "We stellen het team hier binnenkort aan je voor. Interesse om mee te bouwen? Mail naar support@recapsmart.nl",
+  teamClose: "Sluiten",
+  
+  // Cookie modal translations
+  cookiePolicyTitle: "🍪 Cookie Beleid",
+  cookiePolicyDescription: "Deze app gebruikt cookies om je ervaring te verbeteren. Door de app te gebruiken ga je akkoord met ons cookie beleid.",
+  cookiePolicyWhatWeStore: "Wat we opslaan:",
+  cookiePolicyLanguagePreference: "• Je taal voorkeur",
+  cookiePolicyThemePreference: "• Je theme voorkeur (donker/licht)",
+  cookiePolicyApiKey: "• API key (alleen lokaal op je apparaat)",
+  cookiePolicyDecline: "Weigeren",
+  cookiePolicyAccept: "Accepteren",
+  
+  // Cookie info modal translations
+  cookieInfoTitle: "Cookie Informatie",
+  cookieInfoClose: "Sluiten",
+  cookieInfoWhatAreCookies: "Wat zijn cookies?",
+  cookieInfoWhatAreCookiesAnswer: "Cookies zijn kleine tekstbestanden die op je apparaat worden opgeslagen wanneer je websites bezoekt. Ze helpen de website te onthouden wat je hebt gedaan en je voorkeuren te bewaren.",
+  cookieInfoWhatWeUse: "Cookies die we gebruiken",
+  cookieInfoEssentialCookies: "Essentiële cookies",
+  cookieInfoEssentialCookiesAnswer: "Deze cookies zijn noodzakelijk voor de werking van de app en kunnen niet worden uitgeschakeld.",
+  cookieInfoAnalyticsCookies: "Analytics cookies",
+  cookieInfoAnalyticsCookiesAnswer: "Deze cookies helpen ons begrijpen hoe gebruikers de app gebruiken, zodat we deze kunnen verbeteren.",
+  cookieInfoNoTracking: "Geen tracking van persoonlijke data",
+  cookieInfoNoTrackingAnswer: "We verzamelen geen persoonlijke informatie via cookies. Alle data wordt anoniem verzameld en gebruikt uitsluitend om de app te verbeteren.",
+  cookieInfoSettings: "Cookie instellingen wijzigen",
+  cookieInfoSettingsAnswer: "Je kunt je cookie voorkeuren op elk moment wijzigen door je browser instellingen aan te passen. Let op dat het uitschakelen van cookies de functionaliteit van de app kan beïnvloeden.",
+  
+  // Disclaimer modal translations
+  disclaimerTitle: "⚠️ Disclaimer",
+  disclaimerClose: "Sluiten",
+  disclaimerAIContent: "AI-Gegenereerde Content",
+  disclaimerAIContentAnswer: "RecapSmart maakt gebruik van de nieuwste AI-technologie om transcripties, samenvattingen, analyses en andere content te genereren. Alle gegenereerde content is AI-gebaseerd en dient alleen ter ondersteuning van je werk.",
+  disclaimerAccuracy: "Geen Garantie op Nauwkeurigheid",
+  disclaimerAccuracyAnswer: "Hoewel we ons best doen om accurate resultaten te leveren, kunnen we geen garantie geven dat alle AI-gegenereerde content 100% nauwkeurig is. We raden aan om alle output te controleren en te verifiëren voordat je deze gebruikt voor belangrijke beslissingen.",
+  disclaimerOwnRisk: "Gebruik op Eigen Risico",
+  disclaimerOwnRiskAnswer: "Het gebruik van deze app en alle gegenereerde content gebeurt op eigen risico. We zijn niet aansprakelijk voor eventuele fouten, onjuistheden of gevolgen van het gebruik van de gegenereerde content.",
+  disclaimerGoogleGemini: "Google Gemini API",
+  disclaimerGoogleGeminiAnswer: "De app integreert met AI-services. De kwaliteit en beschikbaarheid van deze services zijn afhankelijk van de voorwaarden van de AI-provider en kunnen variëren. We hebben geen controle over de onderliggende AI-modellen of hun output.",
+  disclaimerPrivacy: "Privacy en Data - Volledige Lokale Opslag",
+  disclaimerPrivacyAnswer: "Belangrijk: Je sessies worden NIET opgeslagen in onze database. Alle data blijft volledig lokaal op jouw apparaat.",
+  disclaimerPrivacyBullet1: "🎙️ Opnames: Alleen lokaal opgeslagen, wij kunnen ze niet zien",
+  disclaimerPrivacyBullet2: "📝 Transcripties: Blijven op jouw apparaat, niet in onze database",
+  disclaimerPrivacyBullet3: "🤖 AI Output: Alleen jij kunt je gegenereerde content zien",
+  disclaimerPrivacyBullet4: "🔑 API Key: Lokaal opgeslagen, wij hebben er geen toegang toe",
+  disclaimerPrivacyNote: "We bewaren helemaal niets van jouw sessies. Jouw privacy staat voorop.",
+  disclaimerRecommendations: "Aanbevelingen",
+  disclaimerRecommendation1: "Controleer altijd de gegenereerde content op nauwkeurigheid",
+  disclaimerRecommendation2: "Gebruik AI-output als ondersteuning, niet als vervanging voor professioneel oordeel",
+  disclaimerRecommendation3: "Houd rekening met de beperkingen van AI-technologie",
+  disclaimerRecommendation4: "Raadpleeg experts bij belangrijke beslissingen",
+  
+  // Settings modal translations
+  settings: "Instellingen",
+  logout: "Uitloggen",
+
+  // Pricing page translations
+  pricingTitle: "RecapSmart Abonnementen",
+  pricingCurrentTier: "Je bent momenteel op de {tier} Tier",
+  pricingCurrentTierAdmin: "Je bent momenteel op de {tier} Tier (Admin)",
+  pricingComingSoon: "Coming Soon",
+  pricingPerMonth: "/maand",
+  pricingMinTerm: "Minimaal {months} maanden",
+  pricingPriceOnRequest: "Prijs op aanvraag",
+  pricingMinutesPerSession: "{minutes} minuten per sessie",
+  pricingSessionsPerDay: "{sessions} sessies per dag",
+  pricingUnlimited: "Onbeperkt",
+  pricingFileTypes: "Bestandstypes: {types}",
+  pricingOnlyTxt: "Alleen TXT",
+  pricingPremiumFeatures: "Premium Functionaliteiten",
+  pricingChatWithTranscript: "Chat met transcript",
+  pricingPodcastGeneration: "Podcast generatie",
+  pricingPowerPointExport: "PowerPoint export",
+  pricingBusinessCaseGenerator: "Business case generator",
+  pricingNoPremiumFeatures: "Geen premium functionaliteiten beschikbaar",
+  pricingCurrentTierButton: "Huidige Tier",
+  pricingAdminOnly: "Alleen voor Admins",
+  pricingStartFree: "Gratis Starten",
+  pricingContactEnterprise: "Contact over Enterprise",
+  pricingUpgradeTo: "Upgraden naar {tier}",
+  pricingAdditionalInfo: "Silver en Gold zijn maandelijks opzegbaar na de minimale termijn van 6 maanden.",
+  pricingGoldEnterprise: "Gold en Enterprise bieden toegang tot alle premium functionaliteiten.",
+  pricingDiamondAdmin: "Diamond Tier is exclusief voor admins en biedt alle functionaliteiten.",
+  pricingQuestions: "Heb je vragen over de abonnementen? Neem contact op via",
+  pricingSupportEmail: "support@recapsmart.nl",
+
+  // Settings page translations
+  settingsTitle: "⚙️ Instellingen",
+  settingsCurrentTier: "Huidige tier:",
+  settingsViewPricing: "bekijk prijzen",
+  settingsTokensThisMonth: "Tokens deze maand:",
+  settingsSessionsThisMonth: "Sessies deze maand:",
+  settingsAnonymizationRules: "Anonimisatie Regels",
+  settingsAddRule: "+ Regel Toevoegen",
+  settingsOriginalText: "Originele Tekst",
+  settingsOriginalTextPlaceholder: "Bijv. Jan, Company, etc.",
+  settingsReplacementText: "Vervangende Tekst",
+  settingsReplacementTextPlaceholder: "Bijv. medewerker, Company, etc.",
+  settingsExactMatch: "Exacte match",
+  settingsCaseSensitive: "Hoofdlettergevoelig",
+  settingsDeleteRule: "Verwijderen",
+  settingsNoRules: "Geen anonimisatie regels ingesteld. Stel eerst de regels in via het instellingen scherm.",
+  settingsApiKeyFound: "API key gevonden in database. Als iets faalt, vernieuw de key in Instellingen.",
+  
+  // Anonymization tips and buttons
+  settingsAnonymizationTips: "💡 Tips voor Anonimisatie",
+  settingsTipExact: "• Exact: Vervangt alleen volledige woorden (bijv. \"Jan\" → \"medewerker\")",
+  settingsTipFuzzy: "• Fuzzy: Intelligente naamherkenning - vindt namen die overeenkomen (bijv. \"Jan\" vindt \"Jan\", \"Janneke\", \"Jan-Peter\")",
+  settingsTipEmployeeNumbering: "• Medewerker nummering: Gebruik \"medewerker\" als vervangende tekst, nummers worden automatisch toegevoegd",
+  settingsTipRuleOrder: "• Regel volgorde: Regels worden van boven naar beneden toegepast",
+  settingsTipSafe: "• Veilig: Fuzzy matching vervangt NOOIT delen van andere woorden (bijv. \"jan\" in \"januari\" blijft intact)",
+  settingsCancel: "Annuleren",
+  settingsSave: "Opslaan",
+  
+  // Loading text
+  loading: "Laden...",
+  
+  // Login text
+  login: "Inloggen",
+  backToLogin: "Terug naar inloggen",
+  loginFailed: "Inloggen mislukt: {error}",
+  loginLeftProminent: "Inloggen (links, prominent)",
+  appControls: "Alleen zichtbaar na inloggen",
 };

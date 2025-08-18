@@ -14,7 +14,7 @@ import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, Sen
 
 
 
-type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase';
+type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog';
 
 interface RecapItem {
 	id: string;
@@ -40,6 +40,7 @@ interface RecapSmartPanelProps {
 	executiveSummaryData?: ExecutiveSummaryData | null;
 	storytellingData?: StorytellingData | null;
 	businessCaseData?: BusinessCaseData | null;
+	blogData?: string;
 	quizQuestions?: QuizQuestion[] | null;
 	quizIncludeAnswers?: boolean;
 
@@ -89,6 +90,7 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 	executiveSummaryData,
 	storytellingData,
 	businessCaseData,
+	blogData,
 	quizQuestions,
 	quizIncludeAnswers,
 	onNotify,
@@ -133,7 +135,7 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 	}, [keywordAnalysis, t, ensureItem]);
 	useEffect(() => {
 		const available = !!sentiment && !!sentiment.summary && !!sentiment.conclusion;
-		ensureItem('sentiment', t('sentimentAnalysis'), available);
+		ensureItem('sentiment', t('sentiment'), available);
 	}, [sentiment, t, ensureItem]);
 	useEffect(() => {
 		ensureItem('faq', t('faq'), !!faq && faq.trim().length > 0);
@@ -163,6 +165,10 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 	useEffect(() => {
 		ensureItem('businessCase', t('businessCase') || 'Zakelijke case', !!businessCaseData);
 	}, [businessCaseData, t, ensureItem]);
+
+	useEffect(() => {
+		ensureItem('blog', t('blog'), !!blogData && blogData.trim().length > 0);
+	}, [blogData, t, ensureItem]);
 
 	const hasAnyItem = items.length > 0;
 	const numEnabled = items.filter(i => i.enabled).length;
@@ -225,7 +231,7 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 					parts.push(`${t('sentimentConclusion')}`);
 					parts.push(sentiment.conclusion || '');
 				}
-				return { title: `## ${t('sentimentAnalysis')}`, text: parts.join('\n') };
+				return { title: `## ${t('sentiment')}`, text: parts.join('\n') };
 			}
 			case 'faq':
 				return { title: `## ${t('faq')}`, text: faq || '' };
@@ -268,8 +274,11 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 			case 'businessCase': {
 				return { title: `## ${t('businessCase') || 'Zakelijke case'}`, text: businessCaseData?.businessCase || '' };
 			}
+			case 'blog': {
+				return { title: `## ${t('blog')}`, text: blogData || '' };
+			}
 		}
-	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, quizQuestions, quizIncludeAnswers]);
+	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, quizQuestions, quizIncludeAnswers]);
 
 	const enabledItems = items.filter(i => i.enabled);
 
@@ -331,9 +340,13 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 
 	const handleMailComposed = useCallback(() => {
 		if (!composedText) return;
-		const subject = encodeURIComponent(`RecapSmart ${startStamp || new Date().toLocaleString('nl-NL')} - RecapSmart`);
-		const body = encodeURIComponent(composedText);
-		window.location.href = `mailto:?subject=${subject}&body=${body}`;
+		const subject = `RecapSmart ${startStamp || new Date().toLocaleString('nl-NL')} - RecapSmart`;
+		const body = composedText;
+		
+		// Open lokale mail client
+		const encodedSubject = encodeURIComponent(subject);
+		const encodedBody = encodeURIComponent(body);
+		window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
 	}, [composedText, startStamp]);
 
 	return (

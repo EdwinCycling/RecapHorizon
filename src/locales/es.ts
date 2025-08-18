@@ -25,7 +25,7 @@ export const es = {
   summarizing: "Resumiendo...",
   processing: "Procesando...",
   appTitle: "RecapSmart",
-  appDescription: "Graba, sube, transcribe y analiza tus sesiones con IA.",
+
   reset: "Reiniciar",
   startNewSession: "Iniciar Nueva Sesión",
   errorRecording: "Error al iniciar la grabación",
@@ -72,10 +72,11 @@ export const es = {
   fileReadFailed: "Falló la lectura del archivo",
   selectLangToUpload: "Por favor selecciona un idioma antes de subir una transcripción.",
   keywordAnalysis: "Análisis de Palabras Clave",
-  sentimentAnalysis: "Análisis de Sentimientos",
+  sentiment: "Sentimiento",
   showSentiment: "Mostrar Sentimientos",
   hideSentiment: "Ocultar Sentimientos",
   analyzingSentiment: "Analizando sentimientos...",
+  blog: "Blog",
   startOrUpload: "Iniciar Sesión",
   step1: "Paso 1",
   step2: "Paso 2",
@@ -200,12 +201,11 @@ export const es = {
   saveApiKey: "Guardar Clave API",
   privacyNote: "Nota de Privacidad",
   apiKeyPrivacy: "Tu clave API solo se almacena localmente en tu dispositivo y nunca se envía a nuestros servidores.",
-  pricingTitle: "💙 Precios Justos",
   pricingTagline: "El único compañero que necesitas — ahorra horas cada semana",
-  pricingPerMonth: "por mes",
+  
   pricingMonthly: "Mensual",
   pricingPrice: "€2",
-  pricingMinTerm: "mínimo 6 meses",
+  
   pricingCancelable: "después de eso, cancela cualquier mes (aviso de 1 mes)",
   pricingFreeTitle: "Modo Gratuito",
   pricingFreeDesc: "Funciones limitadas, acceso de 10 días",
@@ -275,12 +275,8 @@ export const es = {
   // Login form translations
   email: "Correo Electrónico",
   password: "Contraseña",
-  backToLogin: "Volver al inicio de sesión",
   accountCreate: "Crear Cuenta",
   resetSend: "Enviar Restablecimiento",
-  loginFailed: "Inicio de sesión fallido",
-  // App controls translations
-  appControls: "Controles de la App - Solo visible después del inicio de sesión",
   // Privacy window bullets
   privacyBullet1: "🎙️ Las grabaciones permanecen locales",
   privacyBullet2: "📝 Las transcripciones son privadas",
@@ -375,4 +371,155 @@ export const es = {
   faqTrialPeriodAnswer: "Sí, puedes usar RecapSmart gratis durante 1 mes. Esto te da una buena idea de lo que RecapSmart puede hacer antes de decidir actualizar.",
   faqCancellation: "¿Puedo cancelar en cualquier momento?",
   faqCancellationAnswer: "Después de los 6 meses iniciales, puedes cancelar en cualquier momento con 1 mes de aviso. Mantienes acceso a todas las funciones hasta el final de tu suscripción.",
+  
+  // Story modal translations
+  storyTitle: "Nuestra Historia",
+  storyContent: `La Historia de RecapSmart: Más Allá del Caos
+
+¿Reconoces esa sensación después de una reunión intensiva, un webinar atractivo o una conversación importante con tu colega? Esa resaca confusa donde intentas reconstruir: "¿Qué discutimos exactamente? ¿Cuáles fueron los acuerdos concretos? Y, oh sí, ¿también había acciones de seguimiento?" Fue esta frustración compartida y universal – el caos cotidiano de la comunicación – lo que reunió a un pequeño equipo de visionarios. Más tarde se llamaron a sí mismos, muy apropiadamente, el equipo "RecapSmart".
+
+Su primer pensamiento fue simple pero revolucionario: tenía que haber una manera de capturar y estructurar la esencia de cada conversación, independientemente del medio. Ya fuera una sesión de lluvia de ideas ruidosa alrededor de una mesa de café, una reunión online formal o una llamada telefónica ad-hoc, querían un programa que nos ayudara a poder grabar y resumir una reunión. El comienzo fue rudimentario, un diamante en bruto que necesitaba tomar forma.
+
+Pronto la ambición creció más allá de solo reuniones. El caos no estaba limitado a la sala de juntas después de todo. Imagina: estás siguiendo un webinar complejo, repleto de información valiosa. ¿Qué pasaría si pudieras resumir y analizar eso directamente, sin pasar horas tomando notas? La necesidad de una herramienta que pudiera no solo resumir reuniones, sino también destilar un webinar recién seguido directamente en insights utilizables, rápidamente se convirtió en el siguiente hito.
+
+Y luego la accesibilidad. Una herramienta poderosa es inútil si no está siempre y en todas partes disponible. La visión se expandió: no solo en tu PC, sino especialmente también en tu smartphone. El sueño era cristalino: "Presiona un botón en tu smartphone, déjalo, y deja que la conversación se procese completamente automatizada en una visión general estructurada." Tenía que ser perfecto, una extensión intuitiva de tu flujo de trabajo diario.
+
+Lo que el equipo RecapSmart dejó inmediatamente claro, sin embargo, era que su enfoque no estaba absolutamente en grabar y almacenar audio o video. De hecho, estos datos crudos se eliminan inmediatamente después del procesamiento. La privacidad y la eficiencia eran primordiales; se trataba puramente de transformar el lenguaje hablado fugaz en insights concretos y tangibles. Era la esencia, el 'recap', lo que importaba, no el portador.
+
+El objetivo último era, de la mano con la IA avanzada, sacar el máximo provecho de los datos. Dependiendo de la grabación y las necesidades del usuario, RecapSmart tenía que permitirles elegir fácilmente lo que querían ver. Una vez un resumen conciso, otra vez un análisis de sentimientos profundo, o una lista de acciones de seguimiento concretas. El usuario era el director, la IA el asistente invisible que amasaba los datos en la salida deseada.
+
+Esta evolución, de una simple frustración a una visión ambiciosa, culminó en la creación de una aplicación web robusta. Esto finalmente hizo realidad la promesa de 'en todas partes y siempre accesible'. Independientemente del dispositivo o la ubicación, RecapSmart estaba listo.
+
+El equipo RecapSmart era realista. Sabían que ciertamente no eran la primera herramienta que podía hacer esto. El mercado ya estaba lleno de varias soluciones. Pero donde muchos competidores eran complejos, tenían un umbral alto y venían con una etiqueta de precio de 15 a 35 euros por mes por usuario, RecapSmart quería algo diferente. Era una herramienta construida desde el usuario, con la promesa de accesibilidad para todos. Los costos se mantuvieron lo más bajos posible, para ofrecer una alternativa de bajo umbral que todos pudieran usar siempre, sin dolor en la billetera. Creían que el poder del insight no debería estar reservado para la élite, sino que debería estar disponible para todos.
+
+Hoy, el equipo RecapSmart está orgulloso de lo que han logrado: una solución poderosa, intuitiva y asequible que transforma el caos de la comunicación en insights claros. Pero el viaje está lejos de terminar. Sus cuadernos están llenos de nuevas ideas, y el impulso de hacer la comunicación aún más inteligente y eficiente arde más brillante que nunca. Los próximos pasos ya están en mente, todos dirigidos a empoderar aún más al usuario.
+
+RecapSmart: Más allá del caos, la esencia primero.`,
+  storyClose: "Cerrar",
+  
+  // Team modal translations
+  teamTitle: "El Equipo",
+  teamContent: "Presentaremos el equipo aquí pronto. ¿Interesado en construir juntos? Envía un correo a support@recapsmart.nl",
+  teamClose: "Cerrar",
+  
+  // Cookie modal translations
+  cookiePolicyTitle: "🍪 Política de Cookies",
+  cookiePolicyDescription: "Esta aplicación usa cookies para mejorar tu experiencia. Al usar la aplicación, aceptas nuestra política de cookies.",
+  cookiePolicyWhatWeStore: "Lo que almacenamos:",
+  cookiePolicyLanguagePreference: "• Tu preferencia de idioma",
+  cookiePolicyThemePreference: "• Tu preferencia de tema (oscuro/claro)",
+  cookiePolicyApiKey: "• Clave API (solo localmente en tu dispositivo)",
+  cookiePolicyDecline: "Rechazar",
+  cookiePolicyAccept: "Aceptar",
+  
+  // Cookie info modal translations
+  cookieInfoTitle: "Información de Cookies",
+  cookieInfoClose: "Cerrar",
+  cookieInfoWhatAreCookies: "¿Qué son las cookies?",
+  cookieInfoWhatAreCookiesAnswer: "Las cookies son pequeños archivos de texto que se almacenan en tu dispositivo cuando visitas sitios web. Ayudan al sitio web a recordar lo que has hecho y preservar tus preferencias.",
+  cookieInfoWhatWeUse: "Cookies que usamos",
+  cookieInfoEssentialCookies: "Cookies esenciales",
+  cookieInfoEssentialCookiesAnswer: "Estas cookies son necesarias para que la aplicación funcione y no se pueden desactivar.",
+  cookieInfoAnalyticsCookies: "Cookies de análisis",
+  cookieInfoAnalyticsCookiesAnswer: "Estas cookies nos ayudan a entender cómo los usuarios usan la aplicación para que podamos mejorarla.",
+  cookieInfoNoTracking: "Sin seguimiento de datos personales",
+  cookieInfoNoTrackingAnswer: "No recopilamos información personal a través de cookies. Todos los datos se recopilan de forma anónima y se usan únicamente para mejorar la aplicación.",
+  cookieInfoSettings: "Cambiar configuración de cookies",
+  cookieInfoSettingsAnswer: "Puedes cambiar tus preferencias de cookies en cualquier momento ajustando la configuración de tu navegador. Ten en cuenta que desactivar las cookies puede afectar la funcionalidad de la aplicación.",
+  
+  // Disclaimer modal translations
+  disclaimerTitle: "⚠️ Descargo de Responsabilidad",
+  disclaimerClose: "Cerrar",
+  disclaimerAIContent: "Contenido Generado por IA",
+  disclaimerAIContentAnswer: "RecapSmart usa la última tecnología de IA para generar transcripciones, resúmenes, análisis y otro contenido. Todo el contenido generado está basado en IA y sirve solo para apoyar tu trabajo.",
+  disclaimerAccuracy: "Sin Garantía de Precisión",
+  disclaimerAccuracyAnswer: "Aunque hacemos nuestro mejor esfuerzo para proporcionar resultados precisos, no podemos garantizar que todo el contenido generado por IA sea 100% preciso. Recomendamos verificar y verificar toda la salida antes de usarla para decisiones importantes.",
+  disclaimerOwnRisk: "Uso bajo tu Propio Riesgo",
+  disclaimerOwnRiskAnswer: "El uso de esta aplicación y todo el contenido generado es bajo tu propio riesgo. No somos responsables de ningún error, imprecisión o consecuencia del uso del contenido generado.",
+  disclaimerGoogleGemini: "API de Google Gemini",
+  disclaimerGoogleGeminiAnswer: "La aplicación se integra con servicios de IA. La calidad y disponibilidad de estos servicios dependen de los términos del proveedor de IA y pueden variar. No tenemos control sobre los modelos de IA subyacentes o su salida.",
+  disclaimerPrivacy: "Privacidad y Datos - Almacenamiento Local Completo",
+  disclaimerPrivacyAnswer: "Importante: Tus sesiones NO se almacenan en nuestra base de datos. Todos los datos permanecen completamente locales en tu dispositivo.",
+  disclaimerPrivacyBullet1: "🎙️ Grabaciones: Solo almacenadas localmente, no podemos verlas",
+  disclaimerPrivacyBullet2: "📝 Transcripciones: Permanecen en tu dispositivo, no en nuestra base de datos",
+  disclaimerPrivacyBullet3: "🤖 Salida de IA: Solo tú puedes ver tu contenido generado",
+  disclaimerPrivacyBullet4: "🔑 Clave API: Almacenada localmente, no tenemos acceso a ella",
+  disclaimerPrivacyNote: "No almacenamos absolutamente nada de tus sesiones. Tu privacidad es lo primero.",
+  disclaimerRecommendations: "Recomendaciones",
+  disclaimerRecommendation1: "Siempre verifica el contenido generado para precisión",
+  disclaimerRecommendation2: "Usa la salida de IA como apoyo, no como reemplazo del juicio profesional",
+  disclaimerRecommendation3: "Considera las limitaciones de la tecnología de IA",
+  disclaimerRecommendation4: "Consulta expertos para decisiones importantes",
+  
+  // Settings modal translations
+  settings: "Configuración",
+  logout: "Cerrar sesión",
+
+  // Pricing page translations
+  pricingTitle: "Suscripciones de RecapSmart",
+  pricingCurrentTier: "Actualmente estás en el Tier {tier}",
+  pricingCurrentTierAdmin: "Actualmente estás en el Tier {tier} (Admin)",
+  pricingComingSoon: "Próximamente",
+  pricingPerMonth: "/mes",
+  pricingMinTerm: "Mínimo {months} meses",
+  pricingPriceOnRequest: "Precio bajo consulta",
+  pricingMinutesPerSession: "{minutes} minutos por sesión",
+  pricingSessionsPerDay: "{sessions} sesiones por día",
+  pricingUnlimited: "Ilimitado",
+  pricingFileTypes: "Tipos de archivo: {types}",
+  pricingOnlyTxt: "Solo TXT",
+  pricingPremiumFeatures: "Funciones Premium",
+  pricingChatWithTranscript: "Chat con transcripción",
+  pricingPodcastGeneration: "Generación de podcast",
+  pricingPowerPointExport: "Exportación a PowerPoint",
+  pricingBusinessCaseGenerator: "Generador de caso de negocio",
+  pricingNoPremiumFeatures: "No hay funciones premium disponibles",
+  pricingCurrentTierButton: "Tier Actual",
+  pricingAdminOnly: "Solo para Admins",
+  pricingStartFree: "Comenzar Gratis",
+  pricingContactEnterprise: "Contacto para Enterprise",
+  pricingUpgradeTo: "Actualizar a {tier}",
+  pricingAdditionalInfo: "Silver y Gold son cancelables mensualmente después del plazo mínimo de 6 meses.",
+  pricingGoldEnterprise: "Gold y Enterprise proporcionan acceso a todas las funciones premium.",
+  pricingDiamondAdmin: "El Tier Diamond es exclusivo para admins y proporciona todas las funciones.",
+  pricingQuestions: "¿Tienes preguntas sobre las suscripciones? Contáctanos a través de",
+  pricingSupportEmail: "support@recapsmart.nl",
+
+  // Settings page translations
+  settingsTitle: "⚙️ Configuración",
+  settingsCurrentTier: "Tier actual:",
+  settingsViewPricing: "ver precios",
+  settingsTokensThisMonth: "Tokens este mes:",
+  settingsSessionsThisMonth: "Sesiones este mes:",
+  settingsAnonymizationRules: "Reglas de Anonimización",
+  settingsAddRule: "+ Agregar Regla",
+  settingsOriginalText: "Texto Original",
+  settingsOriginalTextPlaceholder: "ej. Jan, Company, etc.",
+  settingsReplacementText: "Texto de Reemplazo",
+  settingsReplacementTextPlaceholder: "ej. empleado, Company, etc.",
+  settingsExactMatch: "Coincidencia exacta",
+  settingsCaseSensitive: "Sensible a mayúsculas",
+  settingsDeleteRule: "Eliminar",
+  settingsNoRules: "No se han establecido reglas de anonimización. Establece las reglas primero a través de la pantalla de configuración.",
+  settingsApiKeyFound: "Clave API encontrada en la base de datos. Si algo falla, actualiza la clave en Configuración.",
+  
+  // Anonymization tips and buttons
+  settingsAnonymizationTips: "💡 Consejos para Anonimización",
+  settingsTipExact: "• Exacto: Reemplaza solo palabras completas (ej. \"Jan\" → \"empleado\")",
+  settingsTipFuzzy: "• Difuso: Reconocimiento inteligente de nombres - encuentra nombres que coinciden (ej. \"Jan\" encuentra \"Jan\", \"Janneke\", \"Jan-Peter\")",
+  settingsTipEmployeeNumbering: "• Numeración de empleados: Usa \"empleado\" como texto de reemplazo, los números se agregan automáticamente",
+  settingsTipRuleOrder: "• Orden de reglas: Las reglas se aplican de arriba hacia abajo",
+  settingsTipSafe: "• Seguro: La coincidencia difusa NUNCA reemplaza partes de otras palabras (ej. \"jan\" en \"enero\" permanece intacto)",
+  settingsCancel: "Cancelar",
+  settingsSave: "Guardar",
+  
+  // Loading text
+  loading: "Cargando...",
+  
+  // Login text
+  login: "Iniciar sesión",
+  backToLogin: "Volver al inicio de sesión",
+  loginFailed: "Error al iniciar sesión: {error}",
+  loginLeftProminent: "Iniciar sesión (izquierda, prominente)",
+  appControls: "Controles de la App - Solo visible después del inicio de sesión",
 };

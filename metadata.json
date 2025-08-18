@@ -1,6 +1,6 @@
 {
   "name": "RecapSmart",
-  "description": "An application to record, upload, transcribe, and analyze your sessions with AI.",
+  "description": "An AI-powered application to record, upload, transcribe, and analyze your sessions.",
   "requestFramePermissions": [
     "microphone",
     "display-capture"

@@ -8,15 +8,16 @@ interface PricingPageProps {
   onUpgrade: (tier: SubscriptionTier) => void;
   onClose: () => void;
   isAdmin?: boolean; // Add admin prop
+  t: (key: string, params?: any) => string; // Add translation function
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrade, onClose, isAdmin = false }) => {
+const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrade, onClose, isAdmin = false, t }) => {
   if (!isOpen) return null;
   
-  // Get tier comparison - admins see all tiers including DIAMOND
+  // Get tier comparison - admins see all tiers including DIAMOND, non-admins don't see DIAMOND
   const tierComparison = isAdmin 
     ? subscriptionService.getTierComparisonForAdmin()
-    : subscriptionService.getTierComparison();
+    : subscriptionService.getTierComparison().filter(tier => tier.tier !== SubscriptionTier.DIAMOND);
 
   const getTierIcon = (tier: SubscriptionTier) => {
     switch (tier) {
@@ -81,7 +82,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
       if (result) result += ', ';
       result += mimeTypes.join(', ');
     }
-    return result || 'Alleen TXT';
+    return result || t('pricingOnlyTxt');
   };
 
   return (
@@ -89,7 +90,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-3xl font-bold text-gray-800">RecapSmart Abonnementen</h2>
+          <h2 className="text-3xl font-bold text-gray-800">{t('pricingTitle')}</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -104,8 +105,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
             <div className="flex items-center">
               <span className="text-green-600 text-lg mr-2">✓</span>
               <span className="text-green-800">
-                Je bent momenteel op de <strong>{currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Tier</strong>
-                {isAdmin && currentTier === SubscriptionTier.DIAMOND && ' (Admin)'}
+                {isAdmin && currentTier === SubscriptionTier.DIAMOND 
+                  ? t('pricingCurrentTierAdmin', { tier: currentTier.charAt(0).toUpperCase() + currentTier.slice(1) })
+                  : t('pricingCurrentTier', { tier: currentTier.charAt(0).toUpperCase() + currentTier.slice(1) })
+                }
               </span>
             </div>
           </div>
@@ -127,21 +130,21 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                   {tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1)}
                 </h3>
                 {tier.tier === SubscriptionTier.DIAMOND ? (
-                  <div className="text-xl font-semibold text-cyan-600">Coming Soon</div>
+                  <div className="text-xl font-semibold text-cyan-600">{t('pricingComingSoon')}</div>
                 ) : tier.tier !== SubscriptionTier.ENTERPRISE ? (
                   <>
                     <div className="text-4xl font-bold text-gray-800">
                       €{tier.price}
-                      <span className="text-lg text-gray-600">/maand</span>
+                      <span className="text-lg text-gray-600">{t('pricingPerMonth')}</span>
                     </div>
                     {tier.minTerm > 0 && (
                       <div className="text-sm text-gray-600 mt-1">
-                        Minimaal {tier.minTerm} maanden
+                        {t('pricingMinTerm', { months: tier.minTerm })}
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="text-xl font-semibold text-gray-800">Prijs op aanvraag</div>
+                  <div className="text-xl font-semibold text-gray-800">{t('pricingPriceOnRequest')}</div>
                 )}
               </div>
 
@@ -150,7 +153,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                 <div className="flex items-center">
                   <span className="text-green-500 mr-2">✓</span>
                   <span className="text-gray-700">
-                    <strong>{tier.maxSessionDuration}</strong> minuten per sessie
+                    <strong>{tier.maxSessionDuration}</strong> {t('pricingMinutesPerSession', { minutes: tier.maxSessionDuration })}
                   </span>
                 </div>
                 
@@ -158,29 +161,29 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                   <span className="text-green-500 mr-2">✓</span>
                   <span className="text-gray-700">
                     {tier.maxSessionsPerDay === -1 ? (
-                      <strong>Onbeperkt</strong>
+                      <strong>{t('pricingUnlimited')}</strong>
                     ) : (
                       <strong>{tier.maxSessionsPerDay}</strong>
-                    )} sessies per dag
+                    )} {t('pricingSessionsPerDay', { sessions: tier.maxSessionsPerDay === -1 ? '' : tier.maxSessionsPerDay })}
                   </span>
                 </div>
                 
                 <div className="flex items-center">
                   <span className="text-green-500 mr-2">✓</span>
                   <span className="text-gray-700">
-                    Bestandstypes: <strong>{formatFileTypes(tier.allowedFileTypes)}</strong>
+                    {t('pricingFileTypes', { types: formatFileTypes(tier.allowedFileTypes) })}
                   </span>
                 </div>
 
                 {/* New: Premium Features */}
                 <div className="pt-3 border-t border-gray-200">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Premium Functionaliteiten</h4>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">{t('pricingPremiumFeatures')}</h4>
                   <div className="space-y-2">
                     {tier.features?.chat && (
                       <div className="flex items-center">
                         <span className="text-green-500 mr-2">✓</span>
                         <span className="text-sm text-gray-700">
-                          Chat met transcript
+                          {t('pricingChatWithTranscript')}
                         </span>
                       </div>
                     )}
@@ -188,7 +191,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                       <div className="flex items-center">
                         <span className="text-green-500 mr-2">✓</span>
                         <span className="text-sm text-gray-700">
-                          Podcast generatie
+                          {t('pricingPodcastGeneration')}
                         </span>
                       </div>
                     )}
@@ -196,7 +199,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                       <div className="flex items-center">
                         <span className="text-green-500 mr-2">✓</span>
                         <span className="text-sm text-gray-700">
-                          PowerPoint export
+                          {t('pricingPowerPointExport')}
                         </span>
                       </div>
                     )}
@@ -204,13 +207,13 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                       <div className="flex items-center">
                         <span className="text-green-500 mr-2">✓</span>
                         <span className="text-sm text-gray-700">
-                          Business case generator
+                          {t('pricingBusinessCaseGenerator')}
                         </span>
                       </div>
                     )}
                     {!tier.features?.chat && !tier.features?.podcast && !tier.features?.exportPpt && !tier.features?.businessCase && (
                       <div className="text-sm text-gray-400 italic">
-                        Geen premium functionaliteiten beschikbaar
+                        {t('pricingNoPremiumFeatures')}
                       </div>
                     )}
                   </div>
@@ -224,21 +227,21 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                     disabled
                     className="w-full py-3 px-6 bg-gray-300 text-gray-600 rounded-lg font-semibold cursor-not-allowed"
                   >
-                    Huidige Tier
+                    {t('pricingCurrentTierButton')}
                   </button>
                 ) : tier.tier === SubscriptionTier.DIAMOND ? (
                   <button
                     disabled
                     className="w-full py-3 px-6 bg-cyan-300 text-cyan-600 rounded-lg font-semibold cursor-not-allowed"
                   >
-                    Alleen voor Admins
+                    {t('pricingAdminOnly')}
                   </button>
                 ) : (
                   <button
                     onClick={() => onUpgrade(tier.tier)}
                     className={`w-full py-3 px-6 text-white rounded-lg font-semibold transition-colors ${getTierButtonColor(tier.tier)}`}
                   >
-                    {tier.tier === SubscriptionTier.FREE ? 'Gratis Starten' : (tier.tier === SubscriptionTier.ENTERPRISE ? 'Contact over Enterprise' : 'Upgraden naar ' + tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1))}
+                    {tier.tier === SubscriptionTier.FREE ? t('pricingStartFree') : (tier.tier === SubscriptionTier.ENTERPRISE ? t('pricingContactEnterprise') : t('pricingUpgradeTo', { tier: tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1) }))}
                   </button>
                 )}
               </div>
@@ -250,20 +253,20 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
         <div className="p-6 bg-gray-50 border-t">
           <div className="text-center text-gray-600">
             <p className="mb-2">
-              <strong>Silver en Gold</strong> zijn maandelijks opzegbaar na de minimale termijn van 6 maanden.
+              <strong>Silver en Gold</strong> {t('pricingAdditionalInfo')}
             </p>
             <p className="mb-2">
-              <strong>Gold en Enterprise</strong> bieden toegang tot alle premium functionaliteiten.
+              <strong>Gold en Enterprise</strong> {t('pricingGoldEnterprise')}
             </p>
             {isAdmin && (
               <p className="mb-2 text-cyan-600">
-                <strong>Diamond Tier</strong> is exclusief voor admins en biedt alle functionaliteiten.
+                <strong>Diamond Tier</strong> {t('pricingDiamondAdmin')}
               </p>
             )}
             <p>
-              Heb je vragen over de abonnementen? Neem contact op via{' '}
+              {t('pricingQuestions')}{' '}
               <a href="mailto:support@recapsmart.nl" className="text-blue-600 hover:underline">
-                support@recapsmart.nl
+                {t('pricingSupportEmail')}
               </a>
             </p>
           </div>

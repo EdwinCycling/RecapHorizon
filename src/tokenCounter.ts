@@ -41,7 +41,8 @@ export const countResponseTokens = (response: string): number => {
 export const getTotalTokens = (prompt: string | any, response: string): number => {
   const inputTokens = countPromptTokens(prompt);
   const outputTokens = countResponseTokens(response);
-  return inputTokens + outputTokens;
+  // Inkomende tokens (AI responses) zijn duurder, dus vermenigvuldig met 5
+  return inputTokens + (outputTokens * 5);
 };
 
 // Provide a default export with the functions grouped to match usage as `tokenCounter.*`

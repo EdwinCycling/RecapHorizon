@@ -146,7 +146,7 @@ export const getUserMonthlyTokens = async (userId: string): Promise<MonthlyToken
       month: currentMonth,
       inputTokens: data.monthlyInputTokens || 0,
       outputTokens: data.monthlyOutputTokens || 0,
-      totalTokens: (data.monthlyInputTokens || 0) + (data.monthlyOutputTokens || 0)
+      totalTokens: (data.monthlyInputTokens || 0) + ((data.monthlyOutputTokens || 0) * 5)
     };
   }
   // Reset for a new month

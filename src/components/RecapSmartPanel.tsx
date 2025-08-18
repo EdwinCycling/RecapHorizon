@@ -343,11 +343,30 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 		const subject = `RecapSmart ${startStamp || new Date().toLocaleString('nl-NL')} - RecapSmart`;
 		const body = composedText;
 		
-		// Open lokale mail client
-		const encodedSubject = encodeURIComponent(subject);
-		const encodedBody = encodeURIComponent(body);
-		window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
-	}, [composedText, startStamp]);
+
+		
+		try {
+			// Copy the full content to clipboard
+			navigator.clipboard.writeText(body);
+			
+			// Show helpful toast with instructions
+			if (onNotify) {
+				onNotify(
+					`Content copied to clipboard! 
+					
+To send via email:
+1. Open your email client
+2. Paste the content (Ctrl+V)
+3. Add subject: ${subject}
+4. Add recipient and send`,
+					'success'
+				);
+			}
+		} catch (error) {
+			console.error('Failed to copy to clipboard:', error);
+			if (onNotify) onNotify('Failed to copy content to clipboard. Please try again.', 'error');
+		}
+	}, [composedText, startStamp, onNotify]);
 
 	return (
 		<div className={`w-full mb-3 border ${borderColorClass} rounded-lg bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm`}>
@@ -391,7 +410,7 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 								<div className="flex flex-wrap items-center gap-2 mt-3">
 									<button onClick={handleExportPdf} className="px-3 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold">Exporteren naar PDF</button>
 									<button onClick={handleExportText} className="px-3 py-2 rounded-md bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold">Exporteren naar Tekst</button>
-									<button onClick={handleMailComposed} className="px-3 py-2 rounded-md bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold">Mail</button>
+									<button onClick={handleMailComposed} className="px-3 py-2 rounded-md bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold">Copy for Email</button>
 								</div>
 							)}
 						</>

@@ -757,15 +757,92 @@ interface AuthState {
 
 // Email helper functions
 const openEmailClient = (to: string, subject: string, body: string) => {
+  // Check if the content is too long for mailto URLs (typical limit is around 2000-8000 characters)
+  const maxBodyLength = 2000; // Conservative limit for mailto URLs
+  
+  let truncatedBody = body;
+  if (body.length > maxBodyLength) {
+    // Truncate and add indication that content was truncated
+    truncatedBody = body.substring(0, maxBodyLength) + '\n\n[Content was truncated due to length limitations. Please copy the full content from the application.]';
+  }
+  
   const encodedSubject = encodeURIComponent(subject);
-  const encodedBody = encodeURIComponent(body);
-  window.location.href = `mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`;
+  const encodedBody = encodeURIComponent(truncatedBody);
+  
+  // Create the mailto URL
+  const mailtoUrl = `mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`;
+  
+  // Check if the URL is too long (browsers typically have limits around 2000-8000 characters)
+  if (mailtoUrl.length > 4000) {
+    // URL is too long, use clipboard fallback
+    displayToast('Email content too long for mailto link. Content copied to clipboard instead.', 'info');
+    copyToClipboard(body);
+    return;
+  }
+  
+  try {
+    // Try to open the mailto link
+    window.location.href = mailtoUrl;
+    
+    // If the content was truncated, show a toast notification
+    if (body.length > maxBodyLength) {
+      // Use setTimeout to ensure this runs after the mailto attempt
+      setTimeout(() => {
+        displayToast('Email content was truncated due to length. Full content copied to clipboard.', 'info');
+        copyToClipboard(body);
+      }, 100);
+    }
+  } catch (error) {
+    console.error('Failed to open email client:', error);
+    // Fallback: copy content to clipboard and show message
+    displayToast('Could not open email client. Content copied to clipboard instead.', 'info');
+    copyToClipboard(body);
+  }
 };
 
 const openEmailClientWithoutTo = (subject: string, body: string) => {
+  // Check if the content is too long for mailto URLs (typical limit is around 2000-8000 characters)
+  const maxBodyLength = 2000; // Conservative limit for mailto URLs
+  
+  let truncatedBody = body;
+  if (body.length > maxBodyLength) {
+    // Truncate and add indication that content was truncated
+    truncatedBody = body.substring(0, maxBodyLength) + '\n\n[Content was truncated due to length limitations. Please copy the full content from the application.]';
+  }
+  
   const encodedSubject = encodeURIComponent(subject);
-  const encodedBody = encodeURIComponent(body);
-  window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
+  const encodedBody = encodeURIComponent(truncatedBody);
+  
+  // Create the mailto URL
+  const mailtoUrl = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
+  
+  // Check if the URL is too long (browsers typically have limits around 2000-8000 characters)
+  if (mailtoUrl.length > 4000) {
+    // URL is too long, use clipboard fallback
+    displayToast('Email content too long for mailto link. Content copied to clipboard instead.', 'info');
+    copyToClipboard(body);
+    return;
+  }
+  
+  try {
+    // Try to open the mailto link
+    window.location.href = mailtoUrl;
+    
+    // If the content was truncated, show a toast notification
+    if (body.length > maxBodyLength) {
+      // Use setTimeout to ensure this runs after the mailto attempt
+      setTimeout(() => {
+        displayToast('Email content was truncated due to length. Full content copied to clipboard.', 'info');
+        // Also copy the full content to clipboard as a fallback
+        copyToClipboard(body);
+      }, 100);
+    }
+  } catch (error) {
+    console.error('Failed to open email client:', error);
+    // Fallback: copy content to clipboard and show message
+    displayToast('Could not open email client. Content copied to clipboard instead.', 'info');
+    copyToClipboard(body);
+  }
 };
 
 
@@ -939,7 +1016,16 @@ export default function App() {
       return d.toLocaleString('nl-NL');
     })();
     const subject = `RecapSmart ${stamp} - ${type}`;
-    const body = `## ${type}\n\n${content}`;
+    
+    // Limit content length for email to prevent mailto URL issues
+    const maxContentLength = 1500; // Leave room for headers and truncation message
+    let emailContent = content;
+    
+    if (content.length > maxContentLength) {
+      emailContent = content.substring(0, maxContentLength) + '\n\n[Content was truncated due to length limitations. Please copy the full content from the application.]';
+    }
+    
+    const body = `## ${type}\n\n${emailContent}`;
     return { subject, body };
   };
   useEffect(() => {
@@ -1190,7 +1276,39 @@ ${transcript.slice(0, 20000)}`;
       }, 5000);
   }, []);
 
+  // Utility function for copying text to clipboard
+  const copyToClipboard = (text: string) => { 
+    try {
+      navigator.clipboard.writeText(text);
+      displayToast('Content copied to clipboard!', 'success');
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      displayToast('Failed to copy content to clipboard. Please try again.', 'error');
+    }
+  };
 
+  // Better alternative: Copy to clipboard with helpful instructions
+  const copyToClipboardForEmail = useCallback((subject: string, body: string) => {
+    try {
+      // Copy the full content to clipboard
+      copyToClipboard(body);
+      
+      // Show helpful toast with instructions
+      displayToast(
+        `Content copied to clipboard! 
+        
+To send via email:
+1. Open your email client
+2. Paste the content (Ctrl+V)
+3. Add subject: ${subject}
+4. Add recipient and send`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      displayToast('Failed to copy content to clipboard. Please try again.', 'error');
+    }
+  }, [copyToClipboard, displayToast]);
 
 
 
@@ -3285,6 +3403,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    displayToast('Users CSV file downloaded successfully!', 'success');
   };
 
   const exportWaitlistToCsv = () => {
@@ -3308,6 +3427,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    displayToast('Waitlist CSV file downloaded successfully!', 'success');
   };
 
   const updateUserTier = async (uid: string, tier: SubscriptionTier) => {
@@ -3827,7 +3947,6 @@ ${transcript}
     } finally { setLoadingText(''); }
   };
   
-  const copyToClipboard = (text: string) => { navigator.clipboard.writeText(text); };
   const downloadTextFile = (text: string, filename: string) => {
     try {
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -3839,8 +3958,10 @@ ${transcript}
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      displayToast(`File "${filename}" downloaded successfully!`, 'success');
     } catch (e) {
       console.error('Download failed', e);
+      displayToast('Failed to download file. Please try again.', 'error');
     }
   };
   
@@ -4247,8 +4368,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
             </button>
             <button onClick={() => {
                 const { subject, body } = generateEmailContent(t('mindmap'), `## ${t('mindmap')}\n\n${mindmapMermaid}`);
-                openEmailClientWithoutTo(subject, body);
-            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                copyToClipboardForEmail(subject, body);
+            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                 ✉️
             </button>
           </div>
@@ -4458,8 +4579,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                                 return parts.join('\n');
                             })();
                             const { subject, body } = generateEmailContent(t('executiveSummary'), content);
-                            openEmailClientWithoutTo(subject, body);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                            copyToClipboardForEmail(subject, body);
+                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                             ✉️
                         </button>
                     </div>
@@ -4496,8 +4617,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                         </button>
                         <button onClick={() => {
                             const { subject, body } = generateEmailContent(t('storytelling'), `## ${t('storytelling')}\n\n${storytellingData.story}`);
-                            openEmailClientWithoutTo(subject, body);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                            copyToClipboardForEmail(subject, body);
+                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                             ✉️
                         </button>
                     </div>
@@ -4575,7 +4696,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                                         return parts.join('\n');
                                     })();
                                     const { subject, body } = generateEmailContent(t('quizQuestions') || 'Quizvragen', content);
-                                    openEmailClientWithoutTo(subject, body);
+                                    copyToClipboardForEmail(subject, body);
                                 }} className="px-3 py-1.5 rounded bg-slate-600 text-white text-sm hover:bg-slate-700">Mail</button>
                             </div>
                         )}
@@ -4651,8 +4772,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                              </button>
                              <button onClick={() => {
                                  const { subject, body } = generateEmailContent(t('blog'), blogData);
-                                 openEmailClientWithoutTo(subject, body);
-                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                                 copyToClipboardForEmail(subject, body);
+                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                                  ✉️
                              </button>
                          </div>
@@ -4684,8 +4805,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                              </button>
                              <button onClick={() => {
                                  const { subject, body } = generateEmailContent(t('sentiment'), fullContent);
-                                 openEmailClientWithoutTo(subject, body);
-                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                                 copyToClipboardForEmail(subject, body);
+                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                                  ✉️
                              </button>
                          </div>
@@ -4751,8 +4872,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                                 return parts.join('\n');
                             })();
                             const { subject, body } = generateEmailContent(t('keywordAnalysis'), content);
-                            openEmailClientWithoutTo(subject, body);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                            copyToClipboardForEmail(subject, body);
+                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                             ✉️
                         </button>
                     </div>
@@ -4811,16 +4932,16 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                             ⬇️
                         </button>
                         <button onClick={() => {
-                            const subject = encodeURIComponent(`RecapSmart ${getStartStamp()} - ${t('storytelling')}`);
-                            const body = encodeURIComponent((() => {
+                            const content = (() => {
                                 const parts: string[] = [`## ${t('storytelling')}`, ''];
                                 if (storytellingData) {
                                     parts.push(storytellingData.story);
                                 }
                                 return parts.join('\n');
-                            })());
-                            window.location.href = `mailto:?subject=${subject}&body=${body}`;
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                            })();
+                            const { subject, body } = generateEmailContent(t('storytelling'), content);
+                            copyToClipboardForEmail(subject, body);
+                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                             ✉️
                         </button>
                     </div>
@@ -4917,8 +5038,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                                     </button>
                                     <button onClick={() => {
                                         const { subject, body } = generateEmailContent('Business Case', `## Business Case\n\n${businessCaseData.businessCase}`);
-                                        openEmailClientWithoutTo(subject, body);
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                                        copyToClipboardForEmail(subject, body);
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                                         ✉️
                                     </button>
                                 </div>
@@ -4958,8 +5079,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                         const found = allActions.find(a => a.id === activeView);
                         const fnName = found ? found.label() : activeView;
                         const { subject, body } = generateEmailContent(fnName, content || '');
-                        openEmailClientWithoutTo(subject, body);
-                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Mail">
+                        copyToClipboardForEmail(subject, body);
+                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                         ✉️
                     </button>
                 </div>

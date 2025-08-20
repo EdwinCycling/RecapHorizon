@@ -545,7 +545,8 @@ const PowerPointOptionsModal: React.FC<{
     t: (key: any, params?: any) => string; 
     currentTemplate: File | null;
     onTemplateChange: (file: File | null) => void;
-}> = ({ isOpen, onClose, onGenerate, t, currentTemplate, onTemplateChange }) => {
+    uiLang: string;
+}> = ({ isOpen, onClose, onGenerate, t, currentTemplate, onTemplateChange, uiLang }) => {
     const [maxSlides, setMaxSlides] = useState(10);
     const [language, setLanguage] = useState<'nl' | 'en'>('nl');
     const [useTemplate, setUseTemplate] = useState(false);
@@ -997,6 +998,14 @@ export default function App() {
       if (savedOutputLang) setOutputLang(savedOutputLang);
     }
   }, []);
+
+  // Ensure output language is loaded from localStorage on component mount
+  useEffect(() => {
+    const savedOutputLang = localStorage.getItem('outputLang');
+    if (savedOutputLang && !outputLang) {
+      setOutputLang(savedOutputLang);
+    }
+  }, [outputLang]);
   
   // Save language preferences when they change
   useEffect(() => {
@@ -1410,6 +1419,7 @@ To send via email:
   const [showWebPageHelp, setShowWebPageHelp] = useState(false);
   const [webPageUrl, setWebPageUrl] = useState('');
   const [isLoadingWebPage, setIsLoadingWebPage] = useState(false);
+  const [webPageError, setWebPageError] = useState<string | null>(null);
   // Storytelling and Blog inline option panels
   const [storyOptions, setStoryOptions] = useState<StorytellingOptions>({ targetAudience: '', mainGoal: '', toneStyle: '', length: '' });
   type BlogOptions = { targetAudience: string; mainGoal: string; tone: string; length: string };
@@ -2581,19 +2591,18 @@ To send via email:
 
     const handleWebPage = async (url: string) => {
         if (!language) {
-            setError(t("selectLangToUpload"));
+            setWebPageError(t("selectLangToUpload"));
             return;
         }
 
         if (!url.trim()) {
-            setError('Geen URL ingevoerd. Voer eerst een geldige URL in.');
+            setWebPageError('Geen URL ingevoerd. Voer eerst een geldige URL in.');
             return;
         }
 
 
 
-
-
+        setWebPageError(null);
         setError(null);
         setAnonymizationReport(null);
         setLoadingText('Webpagina laden en tekst extraheren...');
@@ -2659,6 +2668,7 @@ To send via email:
             setLoadingText('');
             setShowWebPageModal(false);
             setWebPageUrl('');
+            setWebPageError(null);
             displayToast('Webpagina succesvol geladen en verwerkt!', 'success');
         } catch (err: any) {
             console.error("Fout bij laden van webpagina:", err);
@@ -2672,7 +2682,7 @@ To send via email:
                 errorMessage = 'Er kon maar weinig tekst worden opgehaald van deze webpagina. Dit kan komen door beveiligingsinstellingen of omdat de pagina weinig tekst bevat.';
             }
             
-            setError(errorMessage);
+            setWebPageError(errorMessage);
             setStatus(RecordingStatus.ERROR);
             setLoadingText('');
         } finally {
@@ -3215,90 +3225,7 @@ ${transcript}
     }
 };
 
-const createAndDownloadPptx = async (data: PresentationData, templateFile: File | null) => {
-    const pptx = new PptxGenJS();
-    const isCustomTemplate = templateFile !== null;
-
-    if (isCustomTemplate && templateFile) {
-        await (pptx as any).load(templateFile);
-    } else {
-        pptx.layout = 'LAYOUT_16x9';
-        pptx.defineSlideMaster({
-            title: "MASTER_SLIDE",
-            background: { color: "0F172A" },
-            objects: [
-                { "placeholder": { options: { name: "title", type: "title", x: 0.5, y: 0.2, w: 9, h: 0.75, fontFace: "Helvetica", fontSize: 28, bold: true, color: "06B6D4" }, text: "Placeholder Title" } },
-                { "rect": { x: 0.5, y: 5.3, w: '90%', h: 0.01, fill: { color: '0891B2' } } },
-                { "text": { text: "RecapSmart", options: { x: 0.5, y: 5.35, w: '50%', h: 0.2, fontFace: "Helvetica", fontSize: 10, color: "94A3B8" } } },
-            ],
-            slideNumber: { x: 9.0, y: 5.35, fontFace: "Arial", fontSize: 10, color: "94A3B8", align: 'right' }
-        });
-        pptx.defineSlideMaster({
-            title: "TITLE_SLIDE_MASTER",
-            background: { color: "0F172A" },
-        });
-    }
-
-    const addContentSlide = (slideData: SlideContent, isTocSlide: boolean = false) => {
-        const slide = pptx.addSlide(isCustomTemplate ? {} : { masterName: "MASTER_SLIDE" });
-        
-        if (isCustomTemplate) {
-            slide.addText(slideData.title, { placeholder: 'title' });
-            const bodyText = isTocSlide ? slideData.points.map(p => `• ${p}`).join('\n\n') : slideData.points.join('\n');
-            slide.addText(bodyText, { placeholder: 'body', bullet: !isTocSlide });
-        } else {
-            slide.addText(slideData.title, { placeholder: "title" });
-            if (isTocSlide) {
-                slide.addText(slideData.points.map(p => `• ${p}`).join('\n\n'), { x: 0.75, y: 1.5, w: '85%', h: 3.5, fontFace: 'Arial', fontSize: 20, color: 'E2E8F0', lineSpacing: 36 });
-                return;
-            }
-            const textOptions: PptxGenJS.TextPropsOptions = { fontFace: 'Arial', fontSize: 14, color: 'E2E8F0', bullet: { type: 'bullet', indent: 30, style: 'hyphen' }, lineSpacing: 28 };
-            let textX: PptxGenJS.Coord = 0.5, textY: PptxGenJS.Coord = 1.1, textW: PptxGenJS.Coord = '90%', textH: PptxGenJS.Coord = '75%';
-            if (slideData.base64Image) {
-                const imgW: PptxGenJS.Coord = '40%', imgH: PptxGenJS.Coord = '60%';
-                textW = '48%';
-                textX = '52%';
-                slide.addImage({ data: `data:image/png;base64,${slideData.base64Image}`, x: '5%', y: '20%', w: imgW, h: imgH, sizing: { type: 'contain', w: imgW, h: imgH } });
-            }
-            slide.addText(slideData.points.join('\n'), { ...textOptions, x: textX, y: textY, w: textW, h: textH });
-        }
-    };
-
-    if (isCustomTemplate) {
-        const titleSlide = pptx.addSlide();
-        titleSlide.addText(data.titleSlide.title, { placeholder: 'title' });
-        if (data.titleSlide.subtitle) titleSlide.addText(data.titleSlide.subtitle, { placeholder: 'body' });
-    } else {
-        let titleSlide = pptx.addSlide({ masterName: "TITLE_SLIDE_MASTER" });
-        titleSlide.addText(data.titleSlide.title, { w: '100%', h: 1.5, y: 2.0, fontFace: 'Helvetica', fontSize: 44, color: 'FFFFFF', bold: true, align: 'center' });
-        if (data.titleSlide.subtitle) titleSlide.addText(data.titleSlide.subtitle, { w: '100%', h: 0.75, y: 3.5, fontFace: 'Arial', fontSize: 22, color: 'E2E8F0', align: 'center' });
-    }
-    
-    if (data.agenda?.length > 0) addContentSlide({ title: t('inhoudsopgave') || 'Agenda', points: data.agenda }, true);
-    addContentSlide(data.introduction);
-    data.mainContentSlides?.forEach(s => addContentSlide(s));
-    addContentSlide(data.projectStatus);
-    addContentSlide(data.learnings);
-    addContentSlide(data.improvements);
-
-    const todoItems = data.todoList.items.filter(item => item.task);
-    if(todoItems.length > 0) {
-        let todoSlide = pptx.addSlide(isCustomTemplate ? {} : { masterName: "MASTER_SLIDE" });
-        todoSlide.addText(data.todoList.title, { placeholder: 'title' });
-        const tableHeader = [
-            { text: t('taak') || "Task", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
-            { text: t('eigenaar') || "Owner", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
-            { text: t('deadline') || "Deadline", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
-        ];
-        // Op verzoek: kolommen 'Owner' en 'Deadline' leeg laten
-        const tableRows = todoItems.map(item => [{ text: item.task }, { text: '' }, { text: '' }]);
-        todoSlide.addTable([tableHeader, ...tableRows], { x: '5%', y: 1.1, w: '90%', colW: [5.4, 1.8, 1.8], autoPage: true, rowH: 0.4, fill: { color: '1E293B' }, color: 'E2E8F0', fontSize: 12, valign: 'middle', border: { type: 'solid', pt: 1, color: '0F172A' } });
-    }
-
-    const fileName = `RecapSmart_Presentation_${new Date().toISOString().split('T')[0]}.pptx`;
-    pptx.writeFile({ fileName });
-    return { fileName, slideCount: (pptx as any).slides.length };
-};
+// ... existing code ...
 
   // No user-provided API key handling; rely exclusively on environment configuration
 
@@ -4150,17 +4077,7 @@ ${transcript}
                 presentationData.todoList,
             ];
 
-            for (const slide of allSlideContents) {
-                if (slide.imagePrompt) {
-                    try {
-                        setLoadingText(t('generatingImageForSlide', { title: slide.title }));
-                        const imageResponse: any = await ai.models.generateImages({ model: 'imagen-3.0-generate-002', prompt: `${slide.imagePrompt}, ${presentationData.imageStylePrompt}`, config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '16:9' } });
-                        const candidate = imageResponse?.generatedImages?.[0] || imageResponse?.images?.[0] || null;
-                        const base64 = candidate?.image?.imageBytes || candidate?.inlineData?.data || candidate?.bytes || null;
-                        if (base64) (slide as any).base64Image = base64;
-                    } catch (imgErr) { console.warn(`Could not generate image for slide "${slide.title}":`, imgErr); }
-                }
-            }
+            // Image generation removed to save API credits
         }
         
         setLoadingText(t('finalizingPresentation'));
@@ -4172,6 +4089,86 @@ ${transcript}
         console.error("Fout bij genereren presentatie:", err);
         setError(`${t("presentationFailed")}: ${err.message || t("unknownError")}`);
     } finally { setLoadingText(''); }
+};
+
+  const createAndDownloadPptx = async (data: PresentationData, templateFile: File | null) => {
+    const pptx = new PptxGenJS();
+    const isCustomTemplate = templateFile !== null;
+
+    if (isCustomTemplate && templateFile) {
+        await (pptx as any).load(templateFile);
+    } else {
+        pptx.layout = 'LAYOUT_16x9';
+        pptx.defineSlideMaster({
+            title: "MASTER_SLIDE",
+            background: { color: "0F172A" },
+            objects: [
+                { "placeholder": { options: { name: "title", type: "title", x: 0.5, y: 0.2, w: 9, h: 0.75, fontFace: "Helvetica", fontSize: 28, bold: true, color: "06B6D4" }, text: "Placeholder Title" } },
+                { "rect": { x: 0.5, y: 5.3, w: '90%', h: 0.01, fill: { color: '0891B2' } } },
+                { "text": { text: "RecapSmart", options: { x: 0.5, y: 5.35, w: '50%', h: 0.2, fontFace: "Helvetica", fontSize: 10, color: "94A3B8" } } },
+            ],
+            slideNumber: { x: 9.0, y: 5.35, fontFace: "Arial", fontSize: 10, color: "94A3B8", align: 'right' }
+        });
+        pptx.defineSlideMaster({
+            title: "TITLE_SLIDE_MASTER",
+            background: { color: "0F172A" },
+        });
+    }
+
+    const addContentSlide = (slideData: SlideContent, isTocSlide: boolean = false) => {
+        const slide = pptx.addSlide(isCustomTemplate ? {} : { masterName: "MASTER_SLIDE" });
+        
+        if (isCustomTemplate) {
+            slide.addText(slideData.title, { placeholder: 'title' });
+            const bodyText = isTocSlide ? slideData.points.map(p => `• ${p}`).join('\n\n') : slideData.points.join('\n');
+            slide.addText(bodyText, { placeholder: 'body', bullet: !isTocSlide });
+        } else {
+            slide.addText(slideData.title, { placeholder: "title" });
+            if (isTocSlide) {
+                slide.addText(slideData.points.map(p => `• ${p}`).join('\n\n'), { x: 0.75, y: 1.5, w: '85%', h: 3.5, fontFace: 'Arial', fontSize: 20, color: 'E2E8F0', lineSpacing: 36 });
+                return;
+            }
+            const textOptions: PptxGenJS.TextPropsOptions = { fontFace: 'Arial', fontSize: 14, color: 'E2E8F0', bullet: { type: 'bullet', indent: 30, style: 'hyphen' }, lineSpacing: 28 };
+            let textX: PptxGenJS.Coord = 0.5, textY: PptxGenJS.Coord = 1.1, textW: PptxGenJS.Coord = '90%', textH: PptxGenJS.Coord = '75%';
+            // Image display removed - images are no longer generated
+            slide.addText(slideData.points.join('\n'), { ...textOptions, x: textX, y: textY, w: textW, h: textH });
+        }
+    };
+
+    if (isCustomTemplate) {
+        const titleSlide = pptx.addSlide();
+        titleSlide.addText(data.titleSlide.title, { placeholder: 'title' });
+        if (data.titleSlide.subtitle) titleSlide.addText(data.titleSlide.subtitle, { placeholder: 'body' });
+    } else {
+        let titleSlide = pptx.addSlide({ masterName: "TITLE_SLIDE_MASTER" });
+        titleSlide.addText(data.titleSlide.title, { w: '100%', h: 1.5, y: 2.0, fontFace: 'Helvetica', fontSize: 44, color: 'FFFFFF', bold: true, align: 'center' });
+        if (data.titleSlide.subtitle) titleSlide.addText(data.titleSlide.subtitle, { w: '100%', h: 0.75, y: 3.5, fontFace: 'Arial', fontSize: 22, color: 'E2E8F0', align: 'center' });
+    }
+    
+    if (data.agenda?.length > 0) addContentSlide({ title: t('inhoudsopgave') || 'Agenda', points: data.agenda }, true);
+    addContentSlide(data.introduction);
+    data.mainContentSlides?.forEach(s => addContentSlide(s));
+    addContentSlide(data.projectStatus);
+    addContentSlide(data.learnings);
+    addContentSlide(data.improvements);
+
+    const todoItems = data.todoList.items.filter(item => item.task);
+    if(todoItems.length > 0) {
+        let todoSlide = pptx.addSlide(isCustomTemplate ? {} : { masterName: "MASTER_SLIDE" });
+        todoSlide.addText(data.todoList.title, { placeholder: 'title' });
+        const tableHeader = [
+            { text: t('taak') || "Task", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
+            { text: t('eigenaar') || "Owner", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
+            { text: t('deadline') || "Deadline", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
+        ];
+        // Op verzoek: kolommen 'Owner' en 'Deadline' leeg laten
+        const tableRows = todoItems.map(item => [{ text: item.task }, { text: '' }, { text: '' }]);
+        todoSlide.addTable([tableHeader, ...tableRows], { x: '5%', y: 1.1, w: '90%', colW: [5.4, 1.8, 1.8], autoPage: true, rowH: 0.4, fill: { color: '1E293B' }, color: 'E2E8F0', fontSize: 12, valign: 'middle', border: { type: 'solid', pt: 1, color: '0F172A' } });
+    }
+
+    const fileName = `RecapSmart_Presentation_${new Date().toISOString().split('T')[0]}.pptx`;
+    pptx.writeFile({ fileName });
+    return { fileName, slideCount: (pptx as any).slides.length };
 };
   
   const handleTranscribe = async () => {
@@ -5714,6 +5711,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
           t={t}
           currentTemplate={pptTemplate}
           onTemplateChange={setPptTemplate}
+          uiLang={uiLang}
       />
 
       
@@ -6598,7 +6596,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('webPageTitle')}</h3>
-              <button onClick={() => setShowWebPageModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <button onClick={() => { setShowWebPageModal(false); setWebPageError(null); }} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
@@ -6611,18 +6609,16 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                   onChange={(e) => setWebPageUrl(e.target.value)}
                   value={webPageUrl}
                 />
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => setShowWebPageHelp(true)}
-                    className="text-sm text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 underline"
-                  >
-                    {t('help')}
-                  </button>
-                </div>
+
+                {webPageError && (
+                  <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">{webPageError}</p>
+                  </div>
+                )}
               </div>
               <div className="flex justify-end gap-3">
                 <button 
-                  onClick={() => setShowWebPageModal(false)} 
+                  onClick={() => { setShowWebPageModal(false); setWebPageError(null); }} 
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
                 >
                   {t('cancel')}
@@ -7221,7 +7217,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                               className="ml-2 text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
                               title="Help bij sessie taal selectie"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                             </button>
@@ -7247,7 +7243,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                               className="ml-2 text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
                               title="Help bij output taal selectie"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                             </button>

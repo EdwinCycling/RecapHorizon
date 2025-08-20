@@ -29,6 +29,7 @@ export enum SessionType {
 export interface TierLimits {
   maxSessionDuration: number; // in minutes
   maxSessionsPerDay: number;
+  maxTranscriptLength: number; // in characters
   allowedFileTypes: string[];
 }
 
@@ -104,6 +105,14 @@ export interface StorytellingData {
   story: string;
 }
 
+// Storytelling options interface
+export interface StorytellingOptions {
+  targetAudience: string;
+  mainGoal: string;
+  toneStyle: string;
+  length: string;
+}
+
 // Business Case interface
 export interface BusinessCaseData {
   businessCaseType: string;
@@ -145,8 +154,8 @@ export interface TokenUsage {
 // User preferences
 export interface UserPreferences {
   userId: string;
-  sessionLanguage: 'nl' | 'en' | 'pt' | 'de' | 'fr';
-  outputLanguage: 'nl' | 'en' | 'pt' | 'de' | 'fr';
+  sessionLanguage: string; // Now supports all language codes
+  outputLanguage: string; // Now supports all language codes
   createdAt: Date;
   updatedAt: Date;
 }

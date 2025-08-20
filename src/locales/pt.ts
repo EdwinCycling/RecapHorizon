@@ -15,6 +15,8 @@ export const pt = {
   spanish: "Espanhol",
   startRecording: "Iniciar Gravação",
   uploadTranscript: "Carregar Transcrição",
+  pasteTranscript: "Colar Transcrição",
+  pasteHelp: "Ajuda para Colar",
   waitingPermission: "A aguardar permissão de gravação do ecrã...",
   pause: "Pausar",
   stop: "Parar",
@@ -78,6 +80,7 @@ export const pt = {
   analyzingSentiment: "A analisar sentimento...",
   blog: "Blog",
   startOrUpload: "Iniciar Sessão",
+  analyse: "Analisar",
   step1: "Passo 1",
   step2: "Passo 2",
   step3: "Passo 3",
@@ -125,7 +128,7 @@ export const pt = {
   loginNow: "Iniciar sessão",
   featuresTitle: "Perfeito Para:",
   featureRecordingTitle: "Gravação Inteligente",
-  featureRecordingDesc: "Grave reuniões com microfone e áudio do sistema. Suporte completo em vários idiomas.",
+  featureRecordingDesc: "Grave reuniões com microfone e áudio do sistema. Suporte completo para 64 idiomas.",
   featureAIAnalysisTitle: "📝 Análise por IA",
   featureAIAnalysisDesc: "Gere resumos, FAQs, aprendizados e perguntas de seguimento automaticamente com a mais recente tecnologia de IA.",
   featurePresentationsTitle: "📊 Export",
@@ -315,7 +318,7 @@ export const pt = {
   faqCategoryPricing: "Preços e Assinatura",
   faqStatsFeatures: "Recursos",
   faqStatsPrivacy: "Privacidade",
-  faqStatsAvailable: "Disponível",
+  faqStatsAvailable: "Disponível - 64 idiomas",
   // FAQ Questions and Answers
   faqWhatIsRecapSmart: "O que é o RecapSmart e como funciona?",
   faqWhatIsRecapSmartAnswer: "O RecapSmart é uma ferramenta alimentada por IA que grava, transcreve e analisa automaticamente suas reuniões, webinars e conversas. Funciona usando seu microfone e áudio do sistema para capturar tudo, após o que a IA processa o conteúdo em resumos, pontos de ação e insights. Todos os dados permanecem locais em seu dispositivo para privacidade completa.",
@@ -331,7 +334,97 @@ export const pt = {
   faqAIAccuracyAnswer: "Os resumos da IA são muito precisos e levam em conta o contexto da sua conversa. Eles identificam automaticamente pontos importantes, decisões e itens de ação. A qualidade melhora à medida que a transcrição se torna mais clara.",
   faqAIQuestions: "Posso fazer perguntas à IA sobre minha transcrição?",
   faqAIQuestionsAnswer: "Sim! Você pode conversar com sua transcrição fazendo perguntas. A IA entende o contexto e fornece respostas detalhadas. Você também pode usar a fala para fazer perguntas.",
+  
+  // Session options popup
+  sessionOptionsTitle: "Iniciar Nova Sessão",
+  sessionOptionsSubtitle: "Escolha como você quer iniciar sua sessão:",
+  sessionOptionAudio: "Gravação de Áudio",
+  sessionOptionAudioDesc: "Grave áudio ao vivo (microfone + áudio do sistema) que será transcrito automaticamente. Perfeito para reuniões, webinários e conversas.",
+  sessionOptionFile: "Fazer Upload de Arquivo",
+  sessionOptionFileDesc: "Faça upload de uma transcrição ou documento existente para análise. Os formatos suportados dependem da sua assinatura:",
+  sessionOptionFileFormats: "• GRÁTIS: Apenas arquivos TXT\n• SILVER/GOLD: TXT, PDF, RTF, HTML, Markdown\n• Todos os níveis suportam análise de conteúdo enviado",
+  sessionOptionPaste: "Colar Texto",
+  sessionOptionPasteDesc: "Cole texto diretamente da sua área de transferência para análise instantânea. Perfeito para transcrições existentes, documentos ou qualquer conteúdo de texto.",
+  sessionOptionsNote: "Todas as três opções geram as mesmas análises de IA: resumos, FAQ, questionários, mapas mentais e mais.",
+  
   faqStorage: "Onde minhas gravações são armazenadas?",
+  
+  // Storytelling questions popup
+  storytellingQuestionsTitle: "Opções de Storytelling",
+  storytellingQuestionsSubtitle: "Personalize sua história respondendo estas perguntas opcionais:",
+  
+  // Target audience
+  storytellingTargetAudience: "Público-Alvo",
+  storytellingTargetAudienceQuestion: "Para quem é destinada esta história?",
+  storytellingTargetAudiencePlaceholder: "Selecione público-alvo ou digite personalizado...",
+  storytellingTargetAudienceOptions: {
+    internalTeam: "Membros da equipe interna",
+    management: "Alta direção",
+    customers: "Clientes/parceiros potenciais",
+    investors: "Investidores",
+    newEmployees: "Novos funcionários",
+    generalPublic: "Público amplo",
+    academics: "Acadêmicos/pesquisadores",
+    competitors: "Concorrentes",
+    localCommunity: "Comunidade local",
+    alumni: "Alumni ou ex-funcionários",
+    internationalStakeholders: "Partes interessadas internacionais",
+    specificInterestGroups: "Grupos de interesse específicos"
+  },
+  
+  // Main goal
+  storytellingMainGoal: "Objetivo Principal",
+  storytellingMainGoalQuestion: "Qual é o objetivo principal desta história?",
+  storytellingMainGoalPlaceholder: "Selecione objetivo principal ou digite personalizado...",
+  storytellingMainGoalOptions: {
+    inform: "Informar",
+    motivate: "Motivar/Inspirar",
+    convince: "Convencer",
+    celebrate: "Celebrar",
+    explain: "Explicar",
+    educate: "Educar",
+    warn: "Avisar",
+    engage: "Envolver",
+    promote: "Promover",
+    reflect: "Refletir",
+    predict: "Prever",
+    commemorate: "Comemorar"
+  },
+  
+  // Tone and style
+  storytellingToneStyle: "Tom e Estilo",
+  storytellingToneStyleQuestion: "Que tom ou estilo a história deve ter?",
+  storytellingToneStylePlaceholder: "Selecione tom ou digite personalizado...",
+  storytellingToneStyleOptions: {
+    formal: "Formal e factual",
+    informal: "Informal e motivador",
+    inspiring: "Inspirador e visionário",
+    critical: "Crítico e analítico",
+    humorous: "Humorístico",
+    empathetic: "Empático e de apoio",
+    neutral: "Neutro e objetivo",
+    dynamic: "Dinâmico e energético",
+    warm: "Quente e pessoal",
+    technical: "Técnico e detalhado",
+    narrative: "Narrativo e narrativo",
+    cultureSensitive: "Sensível à cultura e adaptativo"
+  },
+  
+  // Length
+  storytellingLength: "Comprimento Desejado",
+  storytellingLengthQuestion: "Quão longa deve ser aproximadamente a história?",
+  storytellingLengthPlaceholder: "Selecione comprimento",
+  storytellingLengthOptions: {
+    short: "Curta",
+    medium: "Média", 
+    long: "Longa"
+  },
+  
+  // General
+  storytellingOptional: "Todas as perguntas são opcionais",
+  storytellingGenerate: "Gerar História",
+  storytellingCancel: "Cancelar",
+  help: "Ajuda",
   faqStorageAnswer: "Todas as gravações permanecem locais em seu dispositivo. Não armazenamos nada em nossos servidores. Sua privacidade vem em primeiro lugar - não podemos ver, armazenar ou usar suas sessões.",
   faqAnonymization: "Como funciona a anonimização?",
   faqAnonymizationAnswer: "O RecapSmart pode substituir automaticamente nomes e informações sensíveis por pseudônimos. Você pode configurar regras de anonimização para sua organização. Isso é ideal para conformidade e privacidade.",
@@ -371,6 +464,20 @@ export const pt = {
   faqTrialPeriodAnswer: "Sim, você pode usar o RecapSmart gratuitamente por 1 mês. Isso lhe dá uma boa ideia do que o RecapSmart pode fazer antes de decidir fazer upgrade.",
   faqCancellation: "Posso cancelar a qualquer momento?",
   faqCancellationAnswer: "Após os 6 meses iniciais, você pode cancelar a qualquer momento com 1 mês de aviso. Você mantém acesso a todos os recursos até o final da sua assinatura.",
+  
+  // Novos itens FAQ
+  faq64Languages: "Quantos idiomas o RecapSmart suporta?",
+  faq64LanguagesAnswer: "O RecapSmart suporta 64 idiomas diferentes para transcrição e análise. Você pode falar em qualquer idioma suportado e gerar resultados em outro idioma.",
+  
+  faqMultilingual: "Posso analisar uma conversa francesa e obter resultados alemães?",
+  faqMultilingualAnswer: "Sim! Você pode, por exemplo, gravar uma apresentação francesa, fazer a análise em alemão e usar o aplicativo em espanhol. O RecapSmart é totalmente multilíngue e flexível.",
+  
+  faqTeamsTranscript: "Como importo uma transcrição do Microsoft Teams?",
+  faqTeamsTranscriptAnswer: "Simples: 1) Baixe sua gravação do Teams, 2) Abra o arquivo de transcrição, 3) Selecione e copie todo o texto, 4) Cole o texto no RecapSmart em 'Colar transcrição'. RecapSmart processa imediatamente para análise.",
+  
+  // Web page functionality FAQ
+  faqWebPageImport: "Posso importar texto diretamente de uma página web?",
+  faqWebPageImportAnswer: "Sim! Você pode digitar uma URL para importar texto diretamente de uma página web. RecapSmart obtém automaticamente todo o texto e o prepara para análise. Isso é útil para artigos, posts de blog, artigos de notícias e outro conteúdo web.",
   
   // Story modal translations
   storyTitle: "Nossa História",
@@ -414,6 +521,21 @@ RecapSmart: Além do caos, a essência primeiro.`,
   // Cookie info modal translations
   cookieInfoTitle: "Informações sobre Cookies",
   cookieInfoClose: "Fechar",
+  
+  // Paste transcript modal translations
+  pasteTranscriptTitle: "Colar Transcrição",
+  pasteTranscriptDescription: "Cole sua transcrição ou conteúdo de texto abaixo. Você pode copiar texto de qualquer fonte e colá-lo aqui para análise instantânea.",
+  pasteTranscriptPlaceholder: "Cole seu texto aqui... (Ctrl+V ou clique direito → Colar)",
+  processTranscript: "Processar Transcrição",
+  pasteHelpTitle: "Como Colar Texto",
+  pasteHelpDescription: "Siga estes passos simples para colar texto para análise:",
+  pasteHelpStep1: "Copie texto de qualquer fonte (documento, site web, e-mail, etc.)",
+  pasteHelpStep2: "Clique no botão 'Colar Transcrição' acima",
+  pasteHelpStep3: "Cole seu texto (Ctrl+V) e clique em 'Processar Transcrição'",
+  
+  // Coming soon modal translations
+  comingSoonTitle: "🚀 Em Breve!",
+  comingSoonDescription: "Esta funcionalidade ainda não está disponível, mas chegará em breve!",
   cookieInfoWhatAreCookies: "O que são cookies?",
   cookieInfoWhatAreCookiesAnswer: "Cookies são pequenos arquivos de texto que são armazenados no seu dispositivo quando você visita sites. Eles ajudam o site a lembrar o que você fez e preservar suas preferências.",
   cookieInfoWhatWeUse: "Cookies que usamos",
@@ -442,7 +564,7 @@ RecapSmart: Além do caos, a essência primeiro.`,
   disclaimerPrivacyBullet1: "🎙️ Gravações: Apenas armazenadas localmente, não podemos vê-las",
   disclaimerPrivacyBullet2: "📝 Transcrições: Permanecem no seu dispositivo, não em nosso banco de dados",
   disclaimerPrivacyBullet3: "🤖 Saída de IA: Apenas você pode ver seu conteúdo gerado",
-  disclaimerPrivacyBullet4: "🔑 Chave API: Armazenada localmente, não temos acesso a ela",
+
   disclaimerPrivacyNote: "Não armazenamos absolutamente nada das suas sessões. Sua privacidade vem primeiro.",
   disclaimerRecommendations: "Recomendações",
   disclaimerRecommendation1: "Sempre verifique o conteúdo gerado para precisão",
@@ -464,6 +586,7 @@ RecapSmart: Além do caos, a essência primeiro.`,
   pricingPriceOnRequest: "Preço sob consulta",
   pricingMinutesPerSession: "{minutes} minutos por sessão",
   pricingSessionsPerDay: "{sessions} sessões por dia",
+  pricingTranscriptLength: "{length}k caracteres de transcrição",
   pricingUnlimited: "Ilimitado",
   pricingFileTypes: "Tipos de arquivo: {types}",
   pricingOnlyTxt: "Apenas TXT",
@@ -471,7 +594,8 @@ RecapSmart: Além do caos, a essência primeiro.`,
   pricingChatWithTranscript: "Chat com transcrição",
   pricingPodcastGeneration: "Geração de podcast",
   pricingPowerPointExport: "Exportação para PowerPoint",
-  pricingBusinessCaseGenerator: "Gerador de caso de negócio",
+  pricingBusinessCaseGenerator: "Gerador de Caso de Negócio",
+  pricingWebPageImport: "Importação de Página Web",
   pricingNoPremiumFeatures: "Nenhum recurso premium disponível",
   pricingCurrentTierButton: "Tier Atual",
   pricingAdminOnly: "Apenas para Admins",
@@ -521,4 +645,17 @@ RecapSmart: Além do caos, a essência primeiro.`,
   loginFailed: "Falha no login: {error}",
   loginLeftProminent: "Entrar (esquerda, proeminente)",
   appControls: "Apenas visível após o login",
+
+
+  
+  // Web page functionality
+  webPageTitle: "Importar Página Web",
+  webPageUrlPlaceholder: "https://exemplo.com/artigo",
+  processWebPage: "Processar Página Web",
+  webPageHelpTitle: "Ajuda da Página Web",
+  webPageHelpDescription: "Aprenda como importar páginas web no RecapSmart:",
+  webPageHelpStep1: "Copie a URL da página web que você quer analisar",
+  webPageHelpStep2: "Cole a URL no campo de entrada acima",
+  webPageHelpStep3: "Clique em 'Processar Página Web' para importar o texto",
+  webPageHelpStep4: "RecapSmart extrai automaticamente todo o texto e o prepara para análise",
 };

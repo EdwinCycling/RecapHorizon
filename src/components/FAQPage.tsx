@@ -183,6 +183,28 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
       category: 'pricing',
       question: t('faqCancellation'),
       answer: t('faqCancellationAnswer')
+    },
+
+    // Nieuwe FAQ items
+    {
+      category: 'core',
+      question: t('faq64Languages'),
+      answer: t('faq64LanguagesAnswer')
+    },
+    {
+      category: 'core',
+      question: t('faqMultilingual'),
+      answer: t('faqMultilingualAnswer')
+    },
+    {
+      category: 'technical',
+      question: t('faqTeamsTranscript'),
+      answer: t('faqTeamsTranscriptAnswer')
+    },
+    {
+      category: 'core',
+      question: t('faqWebPageImport'),
+      answer: t('faqWebPageImportAnswer')
     }
   ];
 
@@ -325,6 +347,16 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
             <div className="text-4xl font-bold text-cyan-500 mb-2">24/7</div>
             <div className="text-slate-600 dark:text-slate-400">{t('faqStatsAvailable')}</div>
           </div>
+        </div>
+
+        {/* Close Button */}
+        <div className="mt-12 flex justify-center">
+          <button 
+            onClick={onClose} 
+            className="px-6 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors"
+          >
+            {t('close') || 'Close'}
+          </button>
         </div>
         </div>
       </div>

@@ -78,6 +78,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, message, onUpgrade,
               <ul className="text-sm text-gray-700 space-y-1 mb-4">
                 <li>• 60 minuten per sessie</li>
                 <li>• 3 sessies per dag</li>
+                <li>• 15.000 karakters transcript</li>
                 <li>• Alle bestandstypes</li>
                 <li className="text-gray-500">• Basis functionaliteiten</li>
               </ul>
@@ -99,6 +100,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, message, onUpgrade,
               <ul className="text-sm text-gray-700 space-y-1 mb-4">
                 <li>• 90 minuten per sessie</li>
                 <li>• Onbeperkte sessies</li>
+                <li>• 30.000 karakters transcript</li>
                 <li>• Alle bestandstypes</li>
                 <li className="text-green-600 font-semibold">• Alle premium functionaliteiten</li>
               </ul>

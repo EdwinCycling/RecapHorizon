@@ -5,26 +5,31 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
   [SubscriptionTier.FREE]: {
     maxSessionDuration: 15,
     maxSessionsPerDay: 1,
+    maxTranscriptLength: 5000,
     allowedFileTypes: ['.txt', 'text/plain']
   },
   [SubscriptionTier.SILVER]: {
     maxSessionDuration: 60,
     maxSessionsPerDay: 3,
+    maxTranscriptLength: 15000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown']
   },
   [SubscriptionTier.GOLD]: {
     maxSessionDuration: 90,
     maxSessionsPerDay: -1, // unlimited
+    maxTranscriptLength: 30000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown']
   },
   [SubscriptionTier.ENTERPRISE]: {
     maxSessionDuration: 90,
     maxSessionsPerDay: -1,
+    maxTranscriptLength: 50000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown']
   },
   [SubscriptionTier.DIAMOND]: {
     maxSessionDuration: 120,
     maxSessionsPerDay: -1,
+    maxTranscriptLength: -1, // unlimited
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown']
   }
 };
@@ -74,31 +79,36 @@ export const TIER_FEATURES = {
     chat: false,
     podcast: false,
     exportPpt: false,
-    businessCase: false
+    businessCase: false,
+    webPage: false
   },
   [SubscriptionTier.SILVER]: {
     chat: false,
     podcast: false,
     exportPpt: false,
-    businessCase: false
+    businessCase: false,
+    webPage: false
   },
   [SubscriptionTier.GOLD]: {
     chat: true,
     podcast: true,
     exportPpt: true,
-    businessCase: true
+    businessCase: true,
+    webPage: true
   },
   [SubscriptionTier.ENTERPRISE]: {
     chat: true,
     podcast: true,
     exportPpt: true,
-    businessCase: true
+    businessCase: true,
+    webPage: true
   },
   [SubscriptionTier.DIAMOND]: {
     chat: true,
     podcast: true,
     exportPpt: true,
-    businessCase: true
+    businessCase: true,
+    webPage: true
   }
 };
 
@@ -137,6 +147,13 @@ export class SubscriptionService {
     return durationMinutes <= limits.maxSessionDuration;
   }
 
+  // Check if transcript length is within limits
+  public isTranscriptLengthAllowed(tier: SubscriptionTier, transcriptLength: number): boolean {
+    const limits = this.getTierLimits(tier);
+    if (limits.maxTranscriptLength === -1) return true; // unlimited
+    return transcriptLength <= limits.maxTranscriptLength;
+  }
+
   // Check if user can start a new session today
   public canStartNewSession(tier: SubscriptionTier, sessionsToday: number): boolean {
     const limits = this.getTierLimits(tier);
@@ -155,6 +172,13 @@ export class SubscriptionService {
   public getRemainingSessionDuration(tier: SubscriptionTier, currentDuration: number): number {
     const limits = this.getTierLimits(tier);
     return Math.max(0, limits.maxSessionDuration - currentDuration);
+  }
+
+  // Get remaining transcript length
+  public getRemainingTranscriptLength(tier: SubscriptionTier, currentLength: number): number {
+    const limits = this.getTierLimits(tier);
+    if (limits.maxTranscriptLength === -1) return -1; // unlimited
+    return Math.max(0, limits.maxTranscriptLength - currentLength);
   }
 
   // Validate session start
@@ -182,13 +206,30 @@ export class SubscriptionService {
     return { allowed: true };
   }
 
+  // Validate transcript length
+  public validateTranscriptLength(tier: SubscriptionTier, transcriptLength: number): { allowed: boolean; reason?: string } {
+    if (!this.isTranscriptLengthAllowed(tier, transcriptLength)) {
+      const limits = this.getTierLimits(tier);
+      const maxLength = limits.maxTranscriptLength;
+      const currentLength = transcriptLength;
+      const remaining = this.getRemainingTranscriptLength(tier, currentLength);
+      
+      return {
+        allowed: false,
+        reason: `Je transcript is ${currentLength.toLocaleString()} karakters lang, maar je huidige abonnement ondersteunt maximaal ${maxLength.toLocaleString()} karakters. Upgrade naar een hogere tier voor langere transcripten.`
+      };
+    }
+
+    return { allowed: true };
+  }
+
   // Check if a specific feature is available for a tier
   public isFeatureAvailable(tier: SubscriptionTier, feature: keyof typeof TIER_FEATURES[SubscriptionTier]): boolean {
     return TIER_FEATURES[tier][feature];
   }
 
   // Get upgrade message for a specific limit
-  public getUpgradeMessage(tier: SubscriptionTier, limitType: 'duration' | 'sessions' | 'fileType'): string {
+  public getUpgradeMessage(tier: SubscriptionTier, limitType: 'duration' | 'sessions' | 'fileType' | 'transcriptLength'): string {
     const currentLimits = this.getTierLimits(tier);
     
     switch (limitType) {
@@ -198,6 +239,8 @@ export class SubscriptionService {
         return `Je hebt je dagelijkse limiet van ${currentLimits.maxSessionsPerDay} sessie(s) bereikt. Upgrade naar Silver (3 sessies) of Gold (onbeperkt) voor meer sessies.`;
       case 'fileType':
         return `Je huidige abonnement ondersteunt alleen TXT-bestanden. Upgrade naar Silver of Gold om alle bestandstypes te uploaden.`;
+      case 'transcriptLength':
+        return `Je transcript is te lang voor je huidige abonnement. Upgrade naar Silver (15.000 karakters), Gold (30.000 karakters) of Enterprise (50.000 karakters) voor langere transcripten.`;
       default:
         return 'Upgrade je abonnement voor meer functionaliteiten.';
     }
@@ -214,6 +257,8 @@ export class SubscriptionService {
         return 'PowerPoint export is beschikbaar vanaf Gold tier. Upgrade je abonnement om presentaties te exporteren.';
       case 'businessCase':
         return 'Business case generatie is beschikbaar vanaf Gold tier. Upgrade je abonnement om business cases te genereren.';
+      case 'webPage':
+        return 'Web pagina import is beschikbaar vanaf Gold tier. Upgrade je abonnement om direct tekst van webpagina\'s te importeren.';
       default:
         return 'Deze functionaliteit is beschikbaar vanaf Gold tier. Upgrade je abonnement voor meer mogelijkheden.';
     }

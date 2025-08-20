@@ -1,0 +1,249 @@
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/firebase.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'types.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'vite.config.ts', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/App.tsx b/App.tsx[m
+[1mindex 2484dfc..725cb01 100644[m
+[1m--- a/App.tsx[m
+[1m+++ b/App.tsx[m
+[36m@@ -1,9 +1,11 @@[m
+ import React, { useState, useRef, useEffect, useCallback } from 'react';[m
+[31m-import { RecordingStatus, type SpeechRecognition } from './types';[m
+[32m+[m[32mimport { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData } from './types';[m
+ import { GoogleGenAI, Chat, Type } from "@google/genai";[m
+[32m+[m[32m// Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation[m
+ // Mermaid is ESM-only; import dynamically to avoid type issues[m
+ let mermaid: any;[m
+ import PptxGenJS from 'pptxgenjs';[m
+[32m+[m[32mimport RecapSmartPanel from './src/components/RecapSmartPanel';[m
+ import { [m
+   signInWithEmailAndPassword, [m
+   createUserWithEmailAndPassword, [m
+[36m@@ -28,7 +30,7 @@[m [mimport {[m
+   deleteField,[m
+   increment[m
+ } from 'firebase/firestore';[m
+[31m-import { auth, db } from './src/firebase';[m
+[32m+[m[32mimport { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, type MonthlyTokensUsage } from './src/firebase';[m
+ [m
+ // --- ICONS ---[m
+ [m
+[36m@@ -83,6 +85,9 @@[m [mconst SendIcon: React.FC<{ className?: string }> = ({ className }) => ([m
+ const PresentationIcon: React.FC<{ className?: string }> = ({ className }) => ([m
+     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="M7 21h10"/><path d="M12 16v5"/></svg>[m
+ );[m
+[32m+[m[32mconst BusinessCaseIcon: React.FC<{ className?: string }> = ({ className }) => ([m
+[32m+[m[32m    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2H2a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h20a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-9"/><path d="M12 2v7h7"/><path d="M8 13h8"/><path d="M8 17h6"/><path d="M8 9h4"/></svg>[m
+[32m+[m[32m);[m
+ const AnonymizeIcon: React.FC<{ className?: string }> = ({ className }) => ([m
+     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="3"/><path d="M12 13a7.3 7.3 0 0 0-4 2.5"/></svg>[m
+ );[m
+[36m@@ -104,7 +109,7 @@[m [mconst XIcon: React.FC<{ className?: string }> = ({ className }) => ([m
+     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>[m
+ );[m
+ const TagIcon: React.FC<{ className?: string }> = ({ className }) => ([m
+[31m-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.432 0l6.586-6.586a2.426 2.426 0 0 0 0-3.432L12.586 2.586z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>[m
+[32m+[m[32m    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 1 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.432 0l6.586-6.586a2.426 2.426 0 0 0 0-3.432L12.586 2.586z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>[m
+ );[m
+ const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => ([m
+     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 3-1.9 1.9-1.9-1.9-1.9 1.9-1.9-1.9L3 3m18 0-1.9 1.9-1.9-1.9-1.9 1.9-1.9-1.9L12 3m0 18 1.9-1.9 1.9 1.9 1.9-1.9 1.9 1.9L21 21M3 21l1.9-1.9 1.9 1.9 1.9-1.9 1.9 1.9L12 21m9-9-1.9-1.9-1.9 1.9-1.9-1.9-1.9 1.9L12 12m-9 0 1.9-1.9 1.9 1.9 1.9-1.9 1.9 1.9L12 12"/></svg>[m
+[36m@@ -453,7 +458,6 @@[m [mconst KeywordExplanationModal: React.FC<{ keyword: string; explanation: string |[m
+         </div>[m
+     );[m
+ };[m
+[31m-[m
+ const ApiKeySetupModal: React.FC<{ [m
+     isOpen: boolean; [m
+     onClose: () => void; [m
+[36m@@ -839,14 +843,12 @@[m [mconst PowerPointOptionsModal: React.FC<{[m
+ };[m
+ [m
+ [m
+[32m+[m
+ // --- TYPES ---[m
+[31m-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap';[m
+[32m+[m[32mtype ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'businessCase' | 'exec' | 'quiz';[m
+ type AnalysisType = ViewType | 'presentation';[m
+[31m-type ChatRole = 'user' | 'model';[m
+[31m-interface ChatMessage {[m
+[31m-  role: ChatRole;[m
+[31m-  text: string;[m
+[31m-}[m
+[32m+[m
+[32m+[m
+ interface SlideContent {[m
+     title: string;[m
+     points: string[];[m
+[36m@@ -869,15 +871,12 @@[m [minterface PresentationData {[m
+     todoList: { title: string; items: TodoItem[]; imagePrompt?: string; };[m
+     imageStylePrompt: string;[m
+ }[m
+[31m-interface KeywordTopic {[m
+[31m-    topic: string;[m
+[31m-    keywords: string[];[m
+[31m-}[m
+[31m-interface SentimentAnalysisResult {[m
+[31m-  taggedText: string;[m
+[31m-  summary: string;[m
+[31m-  conclusion: string;[m
+[31m-}[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+ [m
+ interface AnonymizationRule {[m
+   id: number;[m
+[36m@@ -897,6 +896,7 @@[m [minterface User {[m
+   updatedAt: Date;[m
+   hashedApiKey?: string;[m
+   apiKeyLastUpdated?: Date;[m
+[32m+[m[32m  subscriptionTier?: SubscriptionTier | string;[m
+ }[m
+ [m
+ interface AuthState {[m
+[36m@@ -907,384 +907,14 @@[m [minterface AuthState {[m
+ [m
+ [m
+ // --- i18n ---[m
+[31m-const translations = {[m
+[31m-    nl: {[m
+[31m-        cookieTitle: "Cookies voor Analytics",[m
+[31m-        cookiePoint1: "Alleen essentiële cookies",[m
+[31m-        cookiePoint2: "Geen tracking van persoonlijke data",[m
+[31m-        cookiePoint3: "Helpt ons de app te verbeteren",[m
+[31m-        accept: "Accepteren",[m
+[31m-        decline: "Weigeren",[m
+[31m-        sessionLang: "Selecteer Sessie Taal",[m
+[31m-        dutch: "Nederlands",[m
+[31m-        english: "English",[m
+[31m-        portuguese: "Portugees",[m
+[31m-        german: "Duits",[m
+[31m-        french: "Frans",[m
+[31m-        startRecording: "Start Opname",[m
+[31m-        uploadTranscript: "Upload Transcript",[m
+[31m-        waitingPermission: "Wachten op schermopname toestemming...",[m
+[31m-        pause: "Pauze",[m
+[31m-        stop: "Stop",[m
+[31m-        resume: "Hervat",[m
+[31m-        recordingStopped: "Opname gestopt. Klaar om te transcriberen.",[m
+[31m-        transcribeSession: "Transcribeer Sessie",[m
+[31m-        transcribing: "Transcriptie bezig...",[m
+[31m-        summarizing: "Samenvatting wordt gemaakt...",[m
+[31m-        processing: "Verwerken...",[m
+[31m-        appTitle: "RecapSmart",[m
+[31m-        appDescription: "Neem op, upload, transcribeer en analyseer uw sessies met AI.",[m
+[31m-        reset: "Reset",[m
+[31m-        startNewSession: "Nieuwe Sessie",[m
+[31m-        errorRecording: "Fout bij opstarten opname",[m
+[31m-        permissionDenied: "Toestemming voor scherm- en/of microfoonopname is geweigerd. Om op te nemen, moet u de pagina herladen en toestemming verlenen wanneer de browser daarom vraagt. Als u geen prompt ziet, controleer dan de site-instellingen van uw browser om de toestemming te deblokkeren.",[m
+[31m-        noDevices: "Geen geschikte opnameapparaten (scherm, microfoon) gevonden. Zorg ervoor dat ze zijn aangesloten en ingeschakeld.",[m
+[31m-        unknownError: "Er is een onbekende fout opgetreden.",[m
+[31m-        anonymizing: "Transcript wordt geanonimiseerd...",[m
+[31m-        anonymizationComplete: "Anonimisering voltooid.",[m
+[31m-        termsReplaced: "{count} termen vervangen.",[m
+[31m-        nothingToReplace: "Geen te vervangen termen gevonden.",[m
+[31m-        anonymizeSuccess: "Anonimisering voltooid. {report} vervangen.",[m
+[31m-        anonymizeNothing: "Anonimisering voltooid. Geen te vervangen termen gevonden.",[m
+[31m-        selectLangFirst: "Selecteer een taal voordat u de opname start.",[m
+[31m-        noAudioToTranscribe: "Geen audio opgenomen om te transcriberen.",[m
+[31m-        apiKeyMissing: "API_KEY ontbreekt.",[m
+[31m-        aiError: "AI-verwerking mislukt",[m
+[31m-        transcriptEmpty: "De transcriptie is leeg, dus er kan geen analyse worden gemaakt.",[m
+[31m-        generating: "Genereren van {type}...",[m
+[31m-        generationFailed: "AI {type} generatie mislukt",[m
+[31m-        transcript: "Transcript",[m
+[31m-        transcriptAnonymized: "Transcript (A)",[m
+[31m-        summary: "Samenvatting",[m
+[31m-        faq: "FAQ",[m
+[31m-        keyLearnings: "Key Learnings",[m
+[31m-        followUp: "Follow-up",[m
+[31m-        chat: "Chat",[m
+[31m-        podcast: "Podcast",[m
+[31m-        anonymize: "Anoniem",[m
+[31m-        makePodcast: "Maak Podcast",[m
+[31m-        exportPPT: "Export PPT",[m
+[31m-        copyContent: "Kopieer inhoud",[m
+[31m-        noContent: "Nog geen inhoud gegenereerd.",[m
+[31m-        chatWithTranscript: "Chat met Transcript",[m
+[31m-        readAnswers: "Lees antwoorden voor",[m
+[31m-        mindmap: "Mindmap",[m
+[31m-        askAQuestion: "Stel een vraag over de transcriptie...",[m
+[31m-        generatingPresentation: "Presentatie wordt gemaakt...",[m
+[31m-        generatingImageForSlide: "Afbeelding genereren voor slide: \"{title}\"...",[m
+[31m-        finalizingPresentation: "Presentatie afronden...",[m
+[31m-        presentationFailed: "Genereren van presentatie mislukt",[m
+[31m-        speechRecognitionUnsupported: "Spraakherkenning wordt niet ondersteund in deze browser.",[m
+[31m-        podcastGenerating: "Podcastscript wordt gemaakt...",[m
+[31m-        podcastFailed: "Genereren van podcast mislukt",[m
+[31m-        fileReadFailed: "Bestand lezen mislukt",[m
+[31m-        selectLangToUpload: "Selecteer een taal voordat u een transcript uploadt.",[m
+[31m-        keywordAnalysis: "Keyword Analyse",[m
+[31m-        sentimentAnalysis: "Sentiment Analyse",[m
+[31m-        showSentiment: "Toon Sentiment",[m
+[31m-        hideSentiment: "Verberg Sentiment",[m
+[31m-        analyzingSentiment: "Sentiment analyseren...",[m
+[31m-        startOrUpload: "Start Sessie",[m
+[31m-        step1: "Stap 1",[m
+[31m-        step2: "Stap 2",[m
+[31m-        presentationSuccess: "Presentatie '{fileName}' met {slideCount} slides succesvol aangemaakt en opgeslagen in uw Downloads map.",[m
+[31m-        podcastReady: "Podcast is klaar om af te spelen",[m
+[31m-        rewindPodcast: "Herstart podcast",[m
+[31m-        downloadScript: "Download script",[m
+[31m-        play: "Afspelen",[m
+[31m-        podcastDownloadNote: "Let op: browsers ondersteunen het direct downloaden van de audio niet. Dit downloadt het door AI gegenereerde script.",[m
+[31m-        inhoudsopgave: "Inhoudsopgave",[m
+[31m-        taak: "Taak",[m
+[31m-        eigenaar: "Eigenaar",[m
+[31m-        deadline: "Deadline",[m
+[31m-        sentimentSummary: "Sentiment Samenvatting",[m
+[31m-        sentimentConclusion: "Algemene Conclusie",[m
+[31m-        sentimentOverall: "Algehele Sentimentanalyse",[m
+[31m-        keywordExplanation: "Uitleg voor '{keyword}'",[m
+[31m-        fetchingExplanation: "Uitleg ophalen...",[m
+[31m-        close: "Sluiten",[m
+[31m-        uploadTemplate: "Upload Sjabloon",[m
+[31m-        templateUploaded: "Sjabloon: {name}",[m
+[31m-        clearTemplate: "Wis sjabloon",[m
+[31m-        pptTemplateNote: "Opmerking: AI-afbeeldingen zijn uitgeschakeld bij gebruik van een aangepast sjabloon.",[m
+[31m-        listenAlongTitle: "Luister mee met podcasts en YouTube",[m
+[31m-        listenAlongBody: "Gebruik RecapSmart om mee te luisteren met podcasts en YouTube-video's. Handig voor extra uitleg en om meer uit een uitzending te halen: zet systeemgeluid aan, speel de video of podcast af en laat RecapSmart automatisch transcriberen en samenvatten.",[m
+[31m-        landingHeroSubtitle: "Transformeer je meetings, webinars en gesprekken in professionele documenten, presentaties en inzichten met AI",[m
+[31m-        waitlistTitle: "📋 Toegang op Uitnodiging",[m
+[31m-        waitlistLead: "RecapSmart is momenteel alleen beschikbaar voor uitgenodigde gebruikers. Meld je aan voor de wachtlijst!",[m
+[31m-        emailPlaceholder: "jouw@email.nl",[m
+[31m-        waitlistSignUp: "Aanmelden",[m
+[31m-        waitlistMoreInfo: "Meer informatie over de wachtlijst",[m
+[31m-        haveAccessLead: "Heb je al toegang? Log dan in om te beginnen",[m
+[31m-        loginNow: "Inloggen",[m
+[31m-        featuresTitle: "Perfect Voor:",[m
+[31m-        featureRecordingTitle: "🎙️ Slimme Opname",[m
+[31m-        featureRecordingDesc: "Neem meetings, webinars en gesprekken op met je microfoon en systeem audio. Automatische transcriptie in Nederlands of Engels.",[m
+[31m-        featureAIAnalysisTitle: "📝 AI Analyse",[m
+[31m-        featureAIAnalysisDesc: "Genereer samenvattingen, FAQ's, leerpunten en vervolgvragen automatisch met Google Gemini AI.",[m
+[31m-        featurePresentationsTitle: "📊 Presentaties",[m
+[31m-        featurePresentationsDesc: "Maak professionele PowerPoint presentaties met AI gegenereerde content en afbeeldingen.",[m
+[31m-        featureChatTitle: "💬 Chat & Vragen",[m
+[31m-        featureChatDesc: "Stel vragen over je transcriptie en krijg gedetailleerde antwoorden. Ondersteuning voor voice input.",[m
+[31m-        featurePodcastTitle: "🎧 Podcast Scripts",[m
+[31m-        featurePodcastDesc: "Genereer podcast scripts en content op basis van je meetings. Perfect voor content creators.",[m
+[31m-        featurePrivacyTitle: "🔒 Privacy & Anonimisatie",[m
+[31m-        featurePrivacyDesc: "Automatische anonimisatie van namen en gevoelige informatie. Instelbare regels voor jouw organisatie.",[m
+[31m-        privacyTitle: "🔒 Volledige Privacy Garantie",[m
+[31m-        privacyLead: "Belangrijk: Je sessies worden NIET opgeslagen in onze database. Alle data blijft volledig lokaal op jouw apparaat.",[m
+[31m-        privacyItemRecordings: "🎙️ Opnames blijven lokaal",[m
+[31m-        privacyItemTranscripts: "📝 Transcripties zijn privé",[m
+[31m-        privacyItemAIOutput: "🤖 AI output alleen voor jou",[m
+[31m-        privacyItemApiKeyLocal: "🔑 API key lokaal opgeslagen",[m
+[31m-        privacyItemNoServers: "🌐 Geen data naar onze servers",[m
+[31m-        privacyItemWeStoreNothing: "✅ Wij bewaren helemaal niets",[m
+[31m-        privacyFootnote: "Jouw privacy staat voorop. We kunnen jouw sessies niet zien, opslaan of gebruiken.",[m
+[31m-        useCasesTitle: "💼 Perfect Voor:",[m
+[31m-        useCasesMgmtTitle: "Management & Leiderschap",[m
+[31m-        useCasesMgmt1: "Projectmanagers en teamleiders",[m
+[31m-        useCasesMgmt2: "Product owners en productmanagers",[m
+[31m-        useCasesMgmt3: "Executives en CEO's (voor strategische meetings en rapportages)",[m
+[31m-        useCasesMgmt4: "Salesmanagers en accountmanagers (voor klantgesprekken en pitches)"

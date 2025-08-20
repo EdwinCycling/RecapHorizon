@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import jsPDF from 'jspdf';
 import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData } from '../../types';
+import { getBcp47Code } from '../languages';
 
 
 
@@ -43,6 +44,7 @@ interface RecapSmartPanelProps {
 	blogData?: string;
 	quizQuestions?: QuizQuestion[] | null;
 	quizIncludeAnswers?: boolean;
+	outputLanguage?: string; // Output language for BCP47 display
 
 	// Notifications
 	onNotify?: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -93,6 +95,7 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 	blogData,
 	quizQuestions,
 	quizIncludeAnswers,
+	outputLanguage,
 	onNotify,
 	startStamp,
 }) => {
@@ -375,7 +378,9 @@ To send via email:
 				className="w-full flex items-center justify-between px-3 py-2 text-left"
 			>
 				<div className="flex items-center gap-2">
-					<span className="text-base font-bold text-slate-800 dark:text-slate-100">RecapSmart</span>
+					<span className="text-base font-bold text-slate-800 dark:text-slate-100">
+						RecapSmart{outputLanguage ? ` (${getBcp47Code(outputLanguage)})` : ''}
+					</span>
 					<span className="text-xs text-slate-500 dark:text-slate-400">{!hasAnyItem ? '(geen items)' : numEnabled === 0 ? '(selecteer items)' : `(${numEnabled} geselecteerd)`}</span>
 				</div>
 				<ChevronIcon className="w-5 h-5 text-slate-600 dark:text-slate-300" direction={isOpen ? 'up' : 'down'} />

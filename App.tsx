@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'; 
-import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData } from './types';
+import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions } from './types';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
 // Mermaid is ESM-only; import dynamically to avoid type issues
 let mermaid: any;
 import PptxGenJS from 'pptxgenjs';
 import RecapSmartPanel from './src/components/RecapSmartPanel';
+import LanguageSelector from './src/components/LanguageSelector';
+import SessionOptionsModal from './src/components/SessionOptionsModal';
+// Removed StorytellingQuestionsModal; inline panels are rendered under tabs
+import { getGeminiCode, getBcp47Code, getTotalLanguageCount } from './src/languages';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -77,6 +81,9 @@ const DownloadIcon: React.FC<{ className?: string }> = ({ className }) => (
 const UploadIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
 );
+const ClipboardIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+);
 const AlertTriangleIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
 );
@@ -85,6 +92,9 @@ const ResetIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 const SummaryIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 11-6 6v3h9l6-6-3-3Z"/><path d="m22 6-3-3-1.41 1.41 3 3L22 6Z"/><path d="m14 10 3 3"/></svg>
+);
+const ExecutiveSummaryIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="m14 2 6 6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/><circle cx="18" cy="18" r="3"/><path d="m20.2 20.2L22 22"/></svg>
 );
 const FaqIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
@@ -112,6 +122,10 @@ const PresentationIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 const BusinessCaseIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2H2a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h20a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-9"/><path d="M12 2v7h7"/><path d="M8 13h8"/><path d="M8 17h6"/><path d="M8 9h4"/></svg>
+);
+
+const QuestionMarkIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
 );
 const AnonymizeIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="3"/><path d="M12 13a7.3 7.3 0 0 0-4 2.5"/></svg>
@@ -458,7 +472,7 @@ const PodcastPlayer: React.FC<{ script: string; language: 'nl' | 'en'; t: (key: 
                 window.speechSynthesis.cancel();
             }
             const utterance = new SpeechSynthesisUtterance(script);
-            utterance.lang = language === 'nl' ? 'nl-NL' : 'en-US';
+            utterance.lang = getBcp47Code(language || 'en');
             utterance.rate = 1;
             utterance.pitch = 1;
             utterance.onend = () => setPlaybackState('idle');
@@ -523,18 +537,6 @@ const KeywordExplanationModal: React.FC<{ keyword: string; explanation: string |
         </div>
     );
 };
-// ApiKeySetupModal component removed - users cannot input their own API keys
-// ApiKeySetupModal state and function removed
-
-// ApiKeySetupModal instructions section removed
-
-// ApiKeySetupModal input section removed
-
-// ApiKeySetupModal storage info section removed
-
-// ApiKeySetupModal privacy note section removed
-
-                
 
 const PowerPointOptionsModal: React.FC<{ 
     isOpen: boolean; 
@@ -548,7 +550,6 @@ const PowerPointOptionsModal: React.FC<{
     const [language, setLanguage] = useState<'nl' | 'en'>('nl');
     const [useTemplate, setUseTemplate] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    // ... existing code ...
 
     useEffect(() => {
         if (isOpen) {
@@ -646,29 +647,14 @@ const PowerPointOptionsModal: React.FC<{
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             {t('presentationLanguage')}
                         </label>
-                        <div className="flex gap-3">
-                            <label className="flex items-center">
-                                <input 
-                                    type="radio" 
-                                    name="language" 
-                                    value="nl" 
-                                    checked={language === 'nl'} 
-                                    onChange={(e) => setLanguage(e.target.value as 'nl' | 'en')}
-                                    className="mr-2 text-cyan-500 focus:ring-cyan-500"
-                                />
-                                {t('dutch')}
-                            </label>
-                            <label className="flex items-center">
-                                <input 
-                                    type="radio" 
-                                    name="language" 
-                                    value="en" 
-                                    checked={language === 'en'} 
-                                    onChange={(e) => setLanguage(e.target.value as 'nl' | 'en')}
-                                    className="mr-2 text-cyan-500 focus:ring-cyan-500"
-                                />
-                                {t('english')}
-                            </label>
+                        <div className="flex justify-center">
+                            <LanguageSelector
+                                value={language || ''}
+                                onChange={setLanguage}
+                                placeholder={t('presentationLanguage')}
+                                appLanguage={uiLang}
+                                className="w-full max-w-xs"
+                            />
                         </div>
                     </div>
                 </div>
@@ -692,12 +678,9 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 
-
-
 // --- TYPES ---
 type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz';
 type AnalysisType = ViewType | 'presentation';
-
 
 interface SlideContent {
     title: string;
@@ -721,12 +704,6 @@ interface PresentationData {
     todoList: { title: string; items: TodoItem[]; imagePrompt?: string; };
     imageStylePrompt: string;
 }
-
-
-
-
-
-
 
 interface AnonymizationRule {
   id: number;
@@ -845,8 +822,6 @@ const openEmailClientWithoutTo = (subject: string, body: string) => {
   }
 };
 
-
-
 // --- i18n ---
 import { translations } from './src/locales';
 import { subscriptionService } from './src/subscriptionService';
@@ -854,9 +829,6 @@ import { tokenCounter } from './src/tokenCounter';
 import UpgradeModal from './src/components/UpgradeModal';
 import PricingPage from './src/components/PricingPage';
 import FAQPage from './src/components/FAQPage';
-
-
- 
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -872,9 +844,15 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 export default function App() {
   const [status, setStatus] = useState<RecordingStatus>(RecordingStatus.IDLE);
   // `language` is for the content (what's spoken), `uiLang` is for the app chrome
-  const [language, setLanguage] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es' | null>(null);
-  const [outputLang, setOutputLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'>('en');
-  const [uiLang, setUiLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'>('en');
+  const [language, setLanguage] = useState<string | null>(null);
+  const [outputLang, setOutputLang] = useState<string>('en');
+  const [uiLang, setUiLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedLang = window.localStorage.getItem('uiLang') as 'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es' | null;
+      if (savedLang) return savedLang;
+    }
+    return 'en';
+  });
   
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -1002,7 +980,39 @@ export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showSystemAudioHelp, setShowSystemAudioHelp] = useState(false);
+  const [showStep1Help, setShowStep1Help] = useState(false);
+  const [showStep2Help, setShowStep2Help] = useState(false);
   const [showFormatsInfo, setShowFormatsInfo] = useState(false);
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [showPasteHelp, setShowPasteHelp] = useState(false);
+  const [pastedText, setPastedText] = useState('');
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+  
+  // Load saved language preferences
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedSessionLang = window.localStorage.getItem('sessionLang');
+      const savedOutputLang = window.localStorage.getItem('outputLang');
+      if (savedSessionLang) setLanguage(savedSessionLang);
+      if (savedOutputLang) setOutputLang(savedOutputLang);
+    }
+  }, []);
+  
+  // Save language preferences when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('uiLang', uiLang);
+    }
+  }, [uiLang]);
+  
+  // Save session and output language when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (language) window.localStorage.setItem('sessionLang', language);
+      if (outputLang) window.localStorage.setItem('outputLang', outputLang);
+    }
+  }, [language, outputLang]);
+  
   // Recording time tracking
   const [recordingStartMs, setRecordingStartMs] = useState<number | null>(null);
   const [pauseAccumulatedMs, setPauseAccumulatedMs] = useState<number>(0);
@@ -1124,6 +1134,15 @@ export default function App() {
   };
 
   const handleGenerateQuiz = async () => {
+    // Check transcript length based on user tier
+    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    if (!transcriptValidation.allowed) {
+      setQuizError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+      setTimeout(() => setShowPricingPage(true), 2000);
+      return;
+    }
+    
     try {
       // Only reset other analysis data if we don't already have quiz data
       if (!quizQuestions || quizQuestions.length === 0) {
@@ -1147,7 +1166,7 @@ export default function App() {
       // Using Gemini 2.5 Flash - Google's latest and most advanced AI model
       // This model provides excellent reasoning, coding, and text generation capabilities
       const sys = `You generate MCQs based on a transcript. Return ONLY a JSON array of objects with keys: question (string), options (array of {label, text}), correct_answer_label, correct_answer_text. Ensure exactly one correct answer per question. Labels are A, B, C, D but limited to requested count.`;
-      const prompt = `${sys}\n\nConstraints: number_of_questions=${quizNumQuestions}, number_of_options=${quizNumOptions}.\nTranscript:\n${transcript.slice(0, 18000)}`;
+      const prompt = `${sys}\n\nConstraints: number_of_questions=${quizNumQuestions}, number_of_options=${quizNumOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
       const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
       
       // Track token usage
@@ -1179,7 +1198,16 @@ export default function App() {
     // Check if user has access to business case generation
     const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren, kijk op de prijs pagina voor meer informatie', 'error');
+        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+    }
+    
+    // Check transcript length based on user tier
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    if (!transcriptValidation.allowed) {
+        displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
     
@@ -1233,7 +1261,7 @@ Business Case Type: ${businessCaseTypeDescriptions[type as keyof typeof business
 Internet verificatie (grounding): ${useInternet ? 'Ja - vul aan met actuele marktdata en relevante trends van internet' : 'Nee - gebruik alleen de transcript informatie'}
 
 Transcript:
-${transcript.slice(0, 20000)}`;
+${getTranscriptSlice(transcript, 20000)}`;
 
       const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
       
@@ -1276,6 +1304,17 @@ ${transcript.slice(0, 20000)}`;
       }, 5000);
   }, []);
 
+  const handleSessionOptionUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Inline panels; no-op kept if referenced
+  const handleOpenStorytellingQuestions = () => {
+    setActiveView('storytelling');
+  };
+
   // Utility function for copying text to clipboard
   const copyToClipboard = (text: string) => { 
     try {
@@ -1285,6 +1324,20 @@ ${transcript.slice(0, 20000)}`;
       console.error('Failed to copy to clipboard:', error);
       displayToast('Failed to copy content to clipboard. Please try again.', 'error');
     }
+  };
+
+  // Utility function to get transcript slice based on user tier
+  const getTranscriptSlice = (transcript: string, maxLength: number): string => {
+    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const tierLimits = subscriptionService.getTierLimits(effectiveTier);
+    
+    if (tierLimits.maxTranscriptLength === -1) {
+      // Unlimited - return full transcript
+      return transcript;
+    }
+    
+    // Return transcript up to the tier limit
+    return transcript.slice(0, tierLimits.maxTranscriptLength);
   };
 
   // Better alternative: Copy to clipboard with helpful instructions
@@ -1352,6 +1405,66 @@ To send via email:
   const [dailyUploadCount, setDailyUploadCount] = useState<number>(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPricingPage, setShowPricingPage] = useState(false);
+  const [showSessionOptionsModal, setShowSessionOptionsModal] = useState(false);
+  const [showWebPageModal, setShowWebPageModal] = useState(false);
+  const [showWebPageHelp, setShowWebPageHelp] = useState(false);
+  const [webPageUrl, setWebPageUrl] = useState('');
+  const [isLoadingWebPage, setIsLoadingWebPage] = useState(false);
+  // Storytelling and Blog inline option panels
+  const [storyOptions, setStoryOptions] = useState<StorytellingOptions>({ targetAudience: '', mainGoal: '', toneStyle: '', length: '' });
+  type BlogOptions = { targetAudience: string; mainGoal: string; tone: string; length: string };
+  const [blogOptions, setBlogOptions] = useState<BlogOptions>({ targetAudience: '', mainGoal: '', tone: '', length: '' });
+
+  // Deep translation helper for nested keys like 'storytellingTargetAudienceOptions.internalTeam'
+  const td = (path: string): string => {
+    const get = (lang: 'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'): string | null => {
+      const segs = path.split('.');
+      let cur: any = translations[lang];
+      for (const s of segs) cur = cur?.[s];
+      return typeof cur === 'string' ? cur : null;
+    };
+    return get(uiLang) || get('en') || path;
+  };
+
+  // Blog suggestion labels per UI language
+  const blogLabels = {
+    nl: {
+      targetAudience: ['', 'Breder Publiek', 'Brancheprofessionals', 'Potentiële Klanten', 'Ontwikkelaars', 'Onderwijspersoneel', 'Beleidsmakers', 'Studenten', 'Mediacreatieven', 'Investeerders', 'Senioren', 'Jongeren', 'Culturele gemeenschappen'],
+      mainGoal: ['', 'Informeren', 'Overtuigen', 'Betrokkenheid Creëren', 'Lead Genereren', 'Thought Leadership', 'Educatie', 'Inspiratie', 'Waarschuwing', 'Netwerken', 'Branding', 'Reflectie', 'Voorspelling'],
+      tone: ['', 'Informerend', 'Conversational', 'Formeel', 'Enthousiast', 'Expert', 'Verhalend', 'Empathisch', 'Humoristisch', 'Visionair', 'Kritisch', 'Cultuurgevoelig', 'Optimistisch'],
+      length: ['', 'Kort (±300 woorden)', 'Gemiddeld (±500 woorden)', 'Lang (±750 woorden)']
+    },
+    en: {
+      targetAudience: ['', 'Broader Public', 'Industry Professionals', 'Prospective Customers', 'Developers', 'Educational Staff', 'Policy Makers', 'Students', 'Media Creatives', 'Investors', 'Seniors', 'Youth', 'Cultural Communities'],
+      mainGoal: ['', 'Inform', 'Persuade', 'Create Engagement', 'Generate Leads', 'Thought Leadership', 'Education', 'Inspiration', 'Warning', 'Networking', 'Branding', 'Reflection', 'Prediction'],
+      tone: ['', 'Informative', 'Conversational', 'Formal', 'Enthusiastic', 'Expert', 'Narrative', 'Empathetic', 'Humorous', 'Visionary', 'Critical', 'Culture-Sensitive', 'Optimistic'],
+      length: ['', 'Short (~300 words)', 'Medium (~500 words)', 'Long (~750 words)']
+    },
+    de: {
+      targetAudience: ['', 'Breiteres Publikum', 'Branchenprofis', 'Potenzielle Kunden', 'Entwickler', 'Bildungspersonal', 'Entscheidungsträger', 'Studenten', 'Medienschaffende', 'Investoren', 'Senioren', 'Jugendliche', 'Kulturelle Gemeinschaften'],
+      mainGoal: ['', 'Informieren', 'Überzeugen', 'Engagement schaffen', 'Leads generieren', 'Thought Leadership', 'Bildung', 'Inspiration', 'Warnung', 'Netzwerken', 'Markenbildung', 'Reflexion', 'Vorhersage'],
+      tone: ['', 'Informativ', 'Konversationell', 'Formell', 'Enthusiastisch', 'Experte', 'Erzählend', 'Einfühlsam', 'Humorvoll', 'Visionär', 'Kritisch', 'Kultursensibel', 'Optimistisch'],
+      length: ['', 'Kurz (~300 Wörter)', 'Mittel (~500 Wörter)', 'Lang (~750 Wörter)']
+    },
+    fr: {
+      targetAudience: ['', 'Public élargi', 'Professionnels du secteur', 'Clients potentiels', 'Développeurs', 'Personnel éducatif', 'Décideurs politiques', 'Étudiants', 'Créateurs de médias', 'Investisseurs', 'Seniors', 'Jeunes', 'Communautés culturelles'],
+      mainGoal: ['', 'Informer', 'Convaincre', 'Créer de l\'engagement', 'Générer des leads', 'Leadership d\'opinion', 'Éducation', 'Inspiration', 'Avertissement', 'Réseautage', 'Image de marque', 'Réflexion', 'Prédiction'],
+      tone: ['', 'Informatif', 'Conversationnel', 'Formel', 'Enthousiaste', 'Expert', 'Narratif', 'Empathique', 'Humoristique', 'Visionnaire', 'Critique', 'Sensible à la culture', 'Optimiste'],
+      length: ['', 'Court (~300 mots)', 'Moyen (~500 mots)', 'Long (~750 mots)']
+    },
+    es: {
+      targetAudience: ['', 'Público amplio', 'Profesionales del sector', 'Clientes potenciales', 'Desarrolladores', 'Personal educativo', 'Formuladores de políticas', 'Estudiantes', 'Creadores de medios', 'Inversores', 'Personas mayores', 'Jóvenes', 'Comunidades culturales'],
+      mainGoal: ['', 'Informar', 'Persuadir', 'Crear engagement', 'Generar leads', 'Liderazgo de pensamiento', 'Educación', 'Inspiración', 'Advertencia', 'Networking', 'Branding', 'Reflexión', 'Predicción'],
+      tone: ['', 'Informativo', 'Conversacional', 'Formal', 'Entusiasmado', 'Experto', 'Narrativo', 'Empático', 'Humorístico', 'Visionario', 'Crítico', 'Sensible a la cultura', 'Optimista'],
+      length: ['', 'Corto (~300 palabras)', 'Medio (~500 palabras)', 'Largo (~750 palabras)']
+    },
+    pt: {
+      targetAudience: ['', 'Público amplo', 'Profissionais do setor', 'Clientes potenciais', 'Desenvolvedores', 'Pessoal educacional', 'Formuladores de políticas', 'Estudantes', 'Criadores de mídia', 'Investidores', 'Idosos', 'Jovens', 'Comunidades culturais'],
+      mainGoal: ['', 'Informar', 'Convencer', 'Criar engajamento', 'Gerar leads', 'Liderança de pensamento', 'Educação', 'Inspiração', 'Aviso', 'Networking', 'Branding', 'Reflexão', 'Predição'],
+      tone: ['', 'Informativo', 'Conversacional', 'Formal', 'Entusiasmado', 'Especialista', 'Narrativo', 'Empático', 'Humorístico', 'Visionário', 'Crítico', 'Sensível à cultura', 'Otimista'],
+      length: ['', 'Curto (~300 palavras)', 'Médio (~500 palavras)', 'Longo (~750 palavras)']
+    }
+  } as const;
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -1441,6 +1554,13 @@ To send via email:
                             isAdmin: userData.isAdmin
                         });
                         
+                        // Load user subscription tier
+                        const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
+                        setUserSubscription(tier);
+                        
+                        // Ensure user is redirected to start session screen after auth
+                        setShowInfoPage(false);
+                        
                         // Load users if admin
                         if (userData.isAdmin) {
                             // Bypass admin guard immediately after auth state change to avoid stale state race
@@ -1470,6 +1590,7 @@ To send via email:
                     isLoading: false,
                     isAdmin: false
                 });
+                setUserSubscription(SubscriptionTier.FREE);
                 setDailyAudioCount(0);
                 setDailyUploadCount(0);
             }
@@ -1604,7 +1725,7 @@ To send via email:
     }
     const cleanText = text.replace(/[*#_`]/g, '');
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = language === 'nl' ? 'nl-NL' : 'en-US';
+    utterance.lang = getBcp47Code(language || 'en');
     utterance.onerror = (e: SpeechSynthesisErrorEvent) => {
         console.error('Chat TTS SpeechSynthesis Error:', e.error);
     };
@@ -1617,6 +1738,15 @@ To send via email:
 
     if (!apiKey) {
         displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        return;
+    }
+    
+    // Check transcript length based on user tier for chat
+    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    if (!transcriptValidation.allowed) {
+        displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
 
@@ -1663,7 +1793,8 @@ To send via email:
     // Check if user has access to chat
     const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'chat')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren, kijk op de prijs pagina voor meer informatie', 'error');
+        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
     
@@ -1686,7 +1817,7 @@ To send via email:
         // that is less prone to browser-specific timeout errors like 'no-speech'.
         recognition.continuous = false;
         recognition.interimResults = true; // Enable interim results for preview
-        recognition.lang = language === 'nl' ? 'nl-NL' : 'en-US';
+        recognition.lang = getBcp47Code(language || 'en');
 
         recognition.onresult = (event: any) => {
             let finalTranscript = '';
@@ -2381,7 +2512,173 @@ To send via email:
             setLoadingText('');
         }
     };
-    
+
+    const handlePasteTranscript = async (pastedText: string) => {
+        if (!language) {
+            setError(t("selectLangToUpload"));
+            return;
+        }
+
+        if (!pastedText.trim()) {
+            setError('Geen tekst geplakt. Plak eerst tekst uit je klembord.');
+            return;
+        }
+
+        // Preflight subscription checks for paste
+        const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+        
+        // Enforce daily session limits before processing
+        const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
+        const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
+        if (!canStart.allowed) {
+            setShowUpgradeModal(true);
+            setError(canStart.reason || 'Dagelijkse sessielimiet bereikt.');
+            return;
+        }
+
+        setError(null);
+        setAnonymizationReport(null);
+        setLoadingText('Geplakte tekst verwerken...');
+
+        try {
+            setTranscript(pastedText);
+            // Reset all analysis data when new transcript is loaded
+            setSummary('');
+            setFaq('');
+            setLearningDoc('');
+            setFollowUpQuestions('');
+            setPodcastScript('');
+            setChatHistory([]);
+            setKeywordAnalysis(null);
+            setSentimentAnalysisResult(null);
+            setMindmapMermaid('');
+            setMindmapSvg('');
+            setExecutiveSummaryData(null);
+            setStorytellingData(null);
+            setBusinessCaseData(null);
+            setQuizQuestions(null);
+            setStatus(RecordingStatus.FINISHED);
+            // Increment usage counters on successful finish
+            try {
+              if (authState.user) {
+                await incrementUserDailyUsage(authState.user.uid, 'upload');
+                await incrementUserMonthlySessions(authState.user.uid);
+                setDailyUploadCount(prev => prev + 1);
+              }
+            } catch (e) {
+              console.warn('Kon sessionCount niet updaten:', e);
+            }
+            setActiveView('transcript');
+            setLoadingText('');
+            setShowPasteModal(false);
+        } catch (err: any) {
+            console.error("Fout bij verwerken van geplakte tekst:", err);
+            setError(`${t("fileReadFailed")}: ${err.message || t("unknownError")}`);
+            setStatus(RecordingStatus.ERROR);
+            setLoadingText('');
+        }
+    };
+
+    const handleWebPage = async (url: string) => {
+        if (!language) {
+            setError(t("selectLangToUpload"));
+            return;
+        }
+
+        if (!url.trim()) {
+            setError('Geen URL ingevoerd. Voer eerst een geldige URL in.');
+            return;
+        }
+
+
+
+
+
+        setError(null);
+        setAnonymizationReport(null);
+        setLoadingText('Webpagina laden en tekst extraheren...');
+        setIsLoadingWebPage(true);
+
+        try {
+            // Use a CORS proxy to fetch the web page content
+            const corsProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+            const response = await fetch(corsProxyUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const proxyData = await response.json();
+            if (!proxyData.contents) {
+                throw new Error('Kon geen inhoud ophalen van de webpagina via de proxy.');
+            }
+            
+            const html = proxyData.contents;
+            
+            // Extract text content from HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Remove script and style elements
+            const scripts = doc.querySelectorAll('script, style, nav, header, footer, aside');
+            scripts.forEach(el => el.remove());
+            
+            // Extract text content
+            const textContent = doc.body?.textContent || '';
+            const cleanText = textContent
+                .replace(/\s+/g, ' ')
+                .replace(/\n+/g, '\n')
+                .trim();
+            
+            if (cleanText.length < 100) {
+                throw new Error('Er kon maar weinig tekst worden opgehaald van deze webpagina. Dit kan komen door beveiligingsinstellingen of omdat de pagina weinig tekst bevat.');
+            }
+
+
+
+            setTranscript(cleanText);
+            // Reset all analysis data when new transcript is loaded
+            setSummary('');
+            setFaq('');
+            setLearningDoc('');
+            setFollowUpQuestions('');
+            setPodcastScript('');
+            setChatHistory([]);
+            setKeywordAnalysis(null);
+            setSentimentAnalysisResult(null);
+            setMindmapMermaid('');
+            setMindmapSvg('');
+            setExecutiveSummaryData(null);
+            setStorytellingData(null);
+            setBusinessCaseData(null);
+            setQuizQuestions(null);
+            setStatus(RecordingStatus.FINISHED);
+            
+
+            
+            setActiveView('transcript');
+            setLoadingText('');
+            setShowWebPageModal(false);
+            setWebPageUrl('');
+            displayToast('Webpagina succesvol geladen en verwerkt!', 'success');
+        } catch (err: any) {
+            console.error("Fout bij laden van webpagina:", err);
+            let errorMessage = 'Er is een fout opgetreden bij het laden van de webpagina.';
+            
+            if (err.message.includes('HTTP error')) {
+                errorMessage = 'De webpagina kon niet worden geladen. Controleer of de URL correct is en probeer het opnieuw.';
+            } else if (err.message.includes('beveiligingsinstellingen')) {
+                errorMessage = 'De webpagina kon niet worden geladen vanwege beveiligingsinstellingen. Probeer een andere URL of neem contact op met de eigenaar van de website.';
+            } else if (err.message.includes('weinig tekst')) {
+                errorMessage = 'Er kon maar weinig tekst worden opgehaald van deze webpagina. Dit kan komen door beveiligingsinstellingen of omdat de pagina weinig tekst bevat.';
+            }
+            
+            setError(errorMessage);
+            setStatus(RecordingStatus.ERROR);
+            setLoadingText('');
+        } finally {
+            setIsLoadingWebPage(false);
+        }
+    };
 
 
     const handleAnonymizeTranscript = async () => {
@@ -2491,32 +2788,21 @@ To send via email:
         }, 10);
     };
 
-  const getAnalysisPrompt = (type: ViewType, lang: 'nl' | 'en' | 'pt' | 'de' | 'fr'): string => {
+  const getAnalysisPrompt = (type: ViewType, inputLang: string, outputLang: string): string => {
+    const inputLanguage = getGeminiCode(inputLang);
+    const outputLanguage = getGeminiCode(outputLang);
+    
     switch (type) {
         case 'summary':
-            if (lang === 'nl') return `Vat de volgende tekst uitgebreid samen. Begin de samenvatting met een pakkende en relevante titel in het Nederlands, gevolgd door een nieuwe regel. De samenvatting moet alle belangrijke punten en hoofdideeën behandelen, de informatie condenseren tot een beknopt en gemakkelijk te begrijpen formaat en relevante details bevatten. Sluit af met citaten, actiepunten en beslissingen indien aanwezig.`;
-            if (lang === 'de') return `Fasse den folgenden Text umfassend zusammen. Beginne mit einem prägnanten, relevanten Titel auf Deutsch, gefolgt von einer neuen Zeile. Decke alle wichtigen Punkte und Hauptideen ab und fasse sie klar und strukturiert zusammen. Schließe mit Zitaten, Handlungspunkten und Entscheidungen (falls vorhanden).`;
-            if (lang === 'fr') return `Faites un résumé complet du texte ci-dessous. Commencez par un titre accrocheur et pertinent en français, suivi d'une nouvelle ligne. Couvrez tous les points clés et idées principales de manière claire et concise. Terminez par des citations, des actions et des décisions le cas échéant.`;
-            if (lang === 'pt') return `Faça um resumo completo do texto abaixo. Comece com um título cativante e relevante em português, seguido de uma nova linha. Cubra todos os pontos-chave e ideias principais de forma clara e concisa. Termine com citações, pontos de ação e decisões, se houver.`;
-            return `Provide a comprehensive summary of the given text. Start with a catchy and relevant title in English, followed by a new line. Cover all key points and main ideas in a concise format. End with quotes, action points, and decisions if any are present.`;
+            return `You are a professional summarizer. Summarize the following **${inputLanguage}** transcript in **${outputLanguage}**.
+
+Provide a comprehensive summary of the given text. Start with a catchy and relevant title in ${outputLanguage}, followed by a new line. Cover all key points and main ideas in a concise format. End with quotes, action points, and decisions if any are present.`;
         case 'faq':
-            if (lang === 'nl') return `Maak van het onderstaande transcript 10 FAQ-items (vraag + antwoord). Geef een belangrijkheidsbeoordeling van 1-5 sterren (halve sterren toegestaan, ★½). Plaats de sterren voor elke vraag. Houd vragen kort, antwoorden beknopt en feitelijk. Sorteer van meest naar minst belangrijk. Formaat:\n★★★★★ Vraag?\nAntwoord: …`;
-            if (lang === 'de') return `Erstelle aus dem untenstehenden Transkript 10 FAQ-Punkte (Frage + Antwort). Bewerte die Wichtigkeit mit 1–5 Sternen (halbe Sterne erlaubt, ★½). Setze die Sterne vor jede Frage. Fragen kurz, Antworten knapp und sachlich. Sortiere nach Wichtigkeit.`;
-            if (lang === 'fr') return `À partir de la transcription ci-dessous, créez 10 FAQ (question + réponse). Indiquez l'importance avec 1 à 5 étoiles (demi-étoiles autorisées, ★½). Placez les étoiles avant chaque question. Questions courtes, réponses factuelles et concises.`;
-            if (lang === 'pt') return `A partir da transcrição abaixo, crie 10 itens de FAQ (pergunta + resposta). Classifique a importância com 1–5 estrelas (permita meia estrela, ★½). Coloque as estrelas antes de cada pergunta. Mantenha perguntas curtas e respostas objetivas.`;
-            return `From the transcript below, create 10 FAQ items (question + answer). Rank importance 1–5 stars, allow half-stars (★½). Put the stars before each question. Keep questions short, answers concise and factual. Order from most to least important.`;
+            return `From the **${inputLanguage}** transcript below, create 10 FAQ items (question + answer) in **${outputLanguage}**. Rank importance 1–5 stars, allow half-stars (★½). Put the stars before each question. Keep questions short, answers concise and factual. Order from most to least important.`;
         case 'learning':
-            if (lang === 'nl') return `Maak van de onderstaande tekst een gestructureerd leerdocument met: Belangrijkste leerpunten, beoordeeld met 1-5 sterren (halve sterren toegestaan, ★½) voor belangrijkheid. Korte uitleg voor elk leerpunt. Gebruik duidelijke koppen en opsommingstekens. Sorteer van meest naar minst belangrijk.`;
-            if (lang === 'de') return `Erstelle aus dem folgenden Text ein strukturiertes Lerndokument mit: wichtigsten Lernpunkten, bewertet mit 1–5 Sternen (halbe Sterne erlaubt, ★½). Kurze Erklärungen. Klare Überschriften und Aufzählungen. Sortiere von wichtig nach weniger wichtig.`;
-            if (lang === 'fr') return `À partir du texte ci-dessous, créez un document d'apprentissage structuré : points clés, classés de 1 à 5 étoiles (demi-étoiles autorisées, ★½). Brèves explications. Utilisez des titres clairs et des listes à puces. Classez du plus important au moins important.`;
-            if (lang === 'pt') return `Com base no texto abaixo, crie um documento de aprendizagem estruturado: principais aprendizados, classificados de 1 a 5 estrelas (permitir meia estrela, ★½). Breves explicações. Use títulos claros e listas. Ordene do mais importante ao menos importante.`;
-            return `From the text below, create a structured learning document with: Key takeaways, ranked 1–5 stars (allow half-stars, ★½). Short explanations. Use clear headings and bullet points. Order from most to least important.`;
+            return `From the **${inputLanguage}** text below, create a structured learning document in **${outputLanguage}** with: Key takeaways, ranked 1–5 stars (allow half-stars, ★½). Short explanations. Use clear headings and bullet points. Order from most to least important.`;
         case 'followUp':
-            if (lang === 'nl') return `Genereer op basis van het onderstaande transcript 10 relevante vervolgvragen die in een volgende meeting gesteld kunnen worden om dieper op de onderwerpen in te gaan of openstaande punten te verhelderen. Formatteer de output als een genummerde lijst.`;
-            if (lang === 'de') return `Erzeuge auf Basis des Transkripts 10 relevante Nachfragen für ein Folgemeeting. Als nummerierte Liste ausgeben.`;
-            if (lang === 'fr') return `Générez 10 questions de suivi pertinentes à poser lors d'une réunion ultérieure. Format : liste numérotée.`;
-            if (lang === 'pt') return `Gere 10 perguntas de seguimento relevantes com base na transcrição abaixo. Formato: lista numerada.`;
-            return `Based on the transcript below, generate 10 relevant follow-up questions as a numbered list.`;
+            return `Based on the **${inputLanguage}** transcript below, generate 10 relevant follow-up questions in **${outputLanguage}** as a numbered list.`;
         default: return '';
     }
 };
@@ -2533,6 +2819,16 @@ const handleGenerateAnalysis = async (type: ViewType) => {
     
     if (!apiKey) {
         displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        return;
+    }
+    
+    // Check transcript length based on user tier
+    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    if (!transcriptValidation.allowed) {
+        const errorMsg = transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.';
+        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+        setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
     
@@ -2555,15 +2851,10 @@ const handleGenerateAnalysis = async (type: ViewType) => {
     setLoadingText(t('generating', { type }));
     
     try {
-        const prompt = getAnalysisPrompt(type, language!);
+        const prompt = getAnalysisPrompt(type, language!, outputLang || language!);
         if (!prompt) throw new Error('Invalid analysis type');
 
-        const intro = (outputLang || language) === 'nl' ? 'Hier is de tekst:'
-          : (outputLang || language) === 'de' ? 'Hier ist der Text:'
-          : (outputLang || language) === 'fr' ? 'Voici le texte:'
-          : (outputLang || language) === 'pt' ? 'Aqui está o texto:'
-          : 'Here is the text:';
-        const fullPrompt = `${prompt}\n\n${intro}\n\n${transcript}`;
+        const fullPrompt = `${prompt}\n\nHere is the text:\n\n${transcript}`;
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fullPrompt });
@@ -2623,15 +2914,22 @@ const handleKeywordClick = async (keyword: string) => {
         setIsFetchingExplanation(false);
         return;
     }
+    
+    // Check transcript length based on user tier
+    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    if (!transcriptValidation.allowed) {
+        displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        setIsFetchingExplanation(false);
+        return;
+    }
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const prompt = language === 'en'
-          ? `Provide a short and clear explanation of the term '${keyword}' in the context of the following transcript. Return only the explanation, no extra titles or formatting. Keep it concise. Transcript: --- ${transcript} ---`
-          : language === 'nl' ? `Geef een korte en duidelijke uitleg van de term '${keyword}' in de context van de volgende transcriptie. Geef alleen de uitleg terug, zonder extra titels of opmaak. Houd het beknopt. Transcript: --- ${transcript} ---`
-          : language === 'de' ? `Geben Sie eine kurze, klare Erklärung des Begriffs '${keyword}' im Kontext des folgenden Transkripts. Nur die Erklärung zurückgeben. Transkript: --- ${transcript} ---`
-          : language === 'fr' ? `Fournissez une explication courte et claire du terme '${keyword}' dans le contexte de la transcription suivante. Retournez uniquement l'explication. Transcription : --- ${transcript} ---`
-          : `Forneça uma explicação curta e clara do termo '${keyword}' no contexto da transcrição a seguir. Retorne apenas a explicação. Transcrição: --- ${transcript} ---`;
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        const prompt = `Provide a short and clear explanation of the term '${keyword}' in the context of the following **${inputLanguage}** transcript. Return the explanation in **${outputLanguage}**, no extra titles or formatting. Keep it concise. Transcript: --- ${transcript} ---`;
         const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
         // Track token usage
@@ -2669,6 +2967,14 @@ const handleGenerateKeywordAnalysis = async () => {
         return;
     }
     
+    // Check transcript length based on user tier
+    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    if (!transcriptValidation.allowed) {
+        setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement');
+        return;
+    }
+    
     // Reset other analysis data when generating new keyword analysis
     setStorytellingData(null);
     setExecutiveSummaryData(null);
@@ -2687,12 +2993,9 @@ const handleGenerateKeywordAnalysis = async () => {
     setError(null);
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const prompt = language === 'en'
-          ? `Analyze the following transcript. Identify the most frequent and important keywords. Group these into 5-7 relevant topics. For each topic, provide a short descriptive name and a list of associated keywords. Return JSON only. Transcript: --- ${transcript} ---`
-          : language === 'nl' ? `Analyseer de volgende transcriptie. Identificeer de meest voorkomende en belangrijke trefwoorden. Groepeer deze trefwoorden in 5-7 relevante onderwerpen. Geef voor elk onderwerp een korte, beschrijvende naam en een lijst met de bijbehorende trefwoorden. Geef alleen het JSON-object terug. Transcript: --- ${transcript} ---`
-          : language === 'de' ? `Analysiere das folgende Transkript. Identifiziere die häufigsten und wichtigsten Schlagwörter. Gruppe sie in 5–7 relevante Themen. Gib nur JSON zurück. Transkript: --- ${transcript} ---`
-          : language === 'fr' ? `Analysez la transcription suivante. Identifiez les mots-clés les plus fréquents et importants. Regroupez-les en 5 à 7 thèmes pertinents. Retournez uniquement du JSON. Transcription : --- ${transcript} ---`
-          : `Analise a transcrição a seguir. Identifique as palavras‑chave mais frequentes e importantes. Agrupe em 5–7 tópicos relevantes e retorne somente JSON. Transcrição: --- ${transcript} ---`;
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        const prompt = `Analyze the following **${inputLanguage}** transcript in **${outputLanguage}**. Identify the most frequent and important keywords. Group these into 5-7 relevant topics. For each topic, provide a short descriptive name and a list of associated keywords. Return JSON only. Transcript: --- ${transcript} ---`;
 
         const schema = {
             type: Type.ARRAY,
@@ -2748,6 +3051,14 @@ const handleAnalyzeSentiment = async () => {
         return;
     }
     
+    // Check transcript length based on user tier
+    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    if (!transcriptValidation.allowed) {
+        setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement');
+        return;
+    }
+    
     // Reset other analysis data when generating new sentiment analysis
     setStorytellingData(null);
     setExecutiveSummaryData(null);
@@ -2769,12 +3080,9 @@ const handleAnalyzeSentiment = async () => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const prompt = (outputLang || language) === 'en'
-          ? `Analyze the sentiment of the following transcript. Return a JSON object with: 1. 'summary': a short factual summary of the sentiments found (e.g., "The conversation was predominantly positive with some negative points about X."). 2. 'conclusion': an overall conclusion about the general tone and atmosphere of the conversation. Do NOT include the full transcript with tags. Transcript: --- ${transcript} ---`
-          : (outputLang || language) === 'nl' ? `Analyseer het sentiment van de volgende transcriptie. Geef een JSON-object terug met: 1. 'summary': een korte, feitelijke samenvatting van de gevonden sentimenten (bijv. "Het gesprek was overwegend positief met enkele negatieve punten over X."). 2. 'conclusion': een algemene conclusie over de algehele toon en sfeer van het gesprek. Geef NIET de volledige transcriptie met tags terug. Transcript: --- ${transcript} ---`
-          : (outputLang || language) === 'de' ? `Analysiere die Stimmung (Sentiment) des folgenden Transkripts. Gib ein JSON-Objekt mit 'summary' und 'conclusion' zurück. Gib NICHT den vollständigen Text mit Tags zurück. Transkript: --- ${transcript} ---`
-          : (outputLang || language) === 'fr' ? `Analysez le sentiment de la transcription suivante. Retournez un objet JSON avec 'summary' et 'conclusion'. Ne PAS inclure le texte complet avec des tags. Transcription : --- ${transcript} ---`
-          : `Analise o sentimento da transcrição a seguir. Retorne um JSON com 'summary' e 'conclusion'. NÃO inclua o texto completo com tags. Transcrição: --- ${transcript} ---`;
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        const prompt = `Analyze the sentiment of the following **${inputLanguage}** transcript in **${outputLanguage}**. Return a JSON object with: 1. 'summary': a short factual summary of the sentiments found (e.g., "The conversation was predominantly positive with some negative points about X."). 2. 'conclusion': an overall conclusion about the general tone and atmosphere of the conversation. Do NOT include the full transcript with tags. Transcript: --- ${transcript} ---`;
 
         const schema = {
             type: Type.OBJECT,
@@ -2819,7 +3127,8 @@ const handleGeneratePodcast = async () => {
     // Check if user has access to podcast generation
     const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'podcast')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren, kijk op de prijs pagina voor meer informatie', 'error');
+        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
     
@@ -2831,6 +3140,14 @@ const handleGeneratePodcast = async () => {
     }
     if (!apiKey) {
         displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        return;
+    }
+    
+    // Check transcript length based on user tier
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    if (!transcriptValidation.allowed) {
+        displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
     
@@ -2854,8 +3171,9 @@ const handleGeneratePodcast = async () => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const prompt = (outputLang || language) === 'en'
-            ? `You are a podcast scriptwriter for the 'RecapSmart Podcast', hosted by 'Albert'. Use the transcript below to create an engaging, natural-sounding script that can be spoken aloud directly.
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        const prompt = `You are a podcast scriptwriter for the 'RecapSmart Podcast', hosted by 'Albert'. Use the **${inputLanguage}** transcript below to create an engaging, natural-sounding script in **${outputLanguage}** that can be spoken aloud directly.
 
 Structure:
 1.  [INTRO]: Welcome listeners and introduce the main topic of today concisely.
@@ -2863,45 +3181,11 @@ Structure:
 3.  [CLOSING]: Summarize the key points. Give concrete, actionable tips or action items. End with a friendly sign-off.
 
 Important:
-- Write as a continuous, natural spoken narrative.
+- Write as a continuous, natural spoken narrative in ${outputLanguage}.
 - Do not include headings like "[INTRO]" in the output.
 - Output only the text Albert will speak, with no extra formatting.
 
 Here is the transcript:
----
-${transcript}
----`
-            : (outputLang || language) === 'nl' ? `Je bent een podcast scriptschrijver voor de 'RecapSmart Podcast', gepresenteerd door 'Albert'. Gebruik de volgende transcriptie om een levendig en boeiend podcastscript te maken dat direct kan worden uitgesproken.
-
-**Script Structuur:**
-1.  **[INTRO]:** Albert heet de luisteraars welkom en introduceert het hoofdonderwerp van vandaag op een pakkende manier.
-2.  **[DE KERN]:** Duik dieper in de materie. Gebruik de belangrijkste discussies, bevindingen en inzichten uit de transcriptie om een boeiend verhaal of een duidelijke analyse te vormen.
-3.  **[DE AFSLUITING]:** Vat de belangrijkste punten samen. Geef concrete, bruikbare tips of actiepunten mee aan de luisteraar. Sluit af met een krachtige quote uit de discussie en een vriendelijke afscheidsgroet.
-
-**Belangrijk:**
-- Schrijf de tekst als een doorlopend, natuurlijk sprekend verhaal.
-- Gebruik geen headings zoals "[INTRO]". De structuur moet impliciet zijn in de flow van de tekst.
-- De output moet alleen de tekst zijn die Albert zal uitspreken, zonder extra opmaak of instructies.
-
-Hier is de transcriptie:
----
-${transcript}
----`
-            : (outputLang || language) === 'de' ? `Du bist ein Podcast-Texter für den 'RecapSmart Podcast'. Verwandle das Transkript unten in ein flüssig sprechbares Skript in natürlichem Deutsch. Schreibe ohne Überschriften, nur den gesprochenen Text.
-
-Transkript:
----
-${transcript}
----`
-            : (outputLang || language) === 'fr' ? `Vous êtes rédacteur de scripts pour le 'RecapSmart Podcast'. Transformez la transcription ci-dessous en un script oral naturel en français. Pas de titres, uniquement le texte prononcé.
-
-Transcription :
----
-${transcript}
----`
-            : `Você é um roteirista de podcast para o 'RecapSmart Podcast'. Transforme a transcrição abaixo em um roteiro natural em português. Sem títulos, apenas o texto falado.
-
-Transcrição:
 ---
 ${transcript}
 ---`;
@@ -3092,7 +3376,14 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
           isLoading: false,
           isAdmin: userData.isAdmin
         });
+        
+        // Load user subscription tier
+        const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
+        setUserSubscription(tier);
         setShowLoginModal(false);
+        
+        // Navigate to start session screen after login
+        setShowInfoPage(false);
         
         // Check if user needs to set up API key (only if no environment key is available)
         // No user-provided API keys; rely on environment configuration only
@@ -3120,10 +3411,16 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
             isLoading: false,
             isAdmin: false
           });
+          
+          // Set default subscription tier for new user
+          setUserSubscription(SubscriptionTier.FREE);
           setShowLoginModal(false);
           
+          // Navigate to start session screen after account creation
+          setShowInfoPage(false);
+          
           // Show success message
-                      displayToast(`Welkom ${email}! Je account is automatisch aangemaakt.`, 'success');
+          displayToast(`Welkom ${email}! Je account is automatisch aangemaakt.`, 'success');
         } catch (createError) {
           console.error('Error creating automatic user document:', createError);
           throw new Error('Kon gebruikersaccount niet aanmaken. Probeer het opnieuw of contact administrator.');
@@ -3221,6 +3518,10 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
         isLoading: false,
         isAdmin: userData.isAdmin
       });
+      
+      // Load user subscription tier
+      const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
+      setUserSubscription(tier);
       setShowLoginModal(false);
       
       // Account creation successful
@@ -3263,6 +3564,7 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
         isLoading: false,
         isAdmin: false
       });
+      setUserSubscription(SubscriptionTier.FREE);
       reset();
     } catch (error: any) {
       console.error('Logout error:', error);
@@ -3441,6 +3743,12 @@ const createAndDownloadPptx = async (data: PresentationData, templateFile: File 
         subscriptionTier: tier,
         updatedAt: serverTimestamp()
       });
+      
+      // Update local state if updating current user's tier
+      if (uid === authState.user?.uid) {
+        setUserSubscription(tier);
+      }
+      
       await loadUsers();
       displayToast('Tier bijgewerkt', 'success');
     } catch (e) {
@@ -3727,7 +4035,8 @@ Het RecapSmart Team`;
     // Check if user has access to PowerPoint export
     const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'exportPpt')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren, kijk op de prijs pagina voor meer informatie', 'error');
+        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
     
@@ -3750,7 +4059,7 @@ Het RecapSmart Team`;
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const prompt = `Je bent een AI-expert in het creëren van professionele, gestructureerde en visueel aantrekkelijke zakelijke presentaties op basis van een meeting-transcript. Je taak is om de volgende content te genereren en te structureren in een JSON-object dat voldoet aan het verstrekte schema.
 
-**Taal:** ${options.language === 'nl' ? 'Nederlands' : 'Engels'} - Alle titels en content moeten in deze taal zijn.
+**Taal:** ${getGeminiCode(options.language)} - Alle titels en content moeten in deze taal zijn.
 
 **Maximum aantal slides:** ${options.maxSlides} - Houd de presentatie binnen deze limiet.
 
@@ -3888,11 +4197,8 @@ ${transcript}
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       const base64Audio = await blobToBase64(audioBlob);
   
-      const transcribePrompt = language === 'nl' ? 'Transcribeer deze audio-opname nauwkeurig. De gesproken taal is Nederlands.'
-        : language === 'de' ? 'Transkribiere diese Audioaufnahme genau. Die gesprochene Sprache ist Deutsch.'
-        : language === 'fr' ? `Transcrivez avec précision cet enregistrement audio. La langue parlée est le français.`
-        : language === 'pt' ? `Transcreva esta gravação de áudio com precisão. O idioma falado é o português.`
-        : 'Transcribe this audio recording accurately. The spoken language is English.';
+              const inputLanguage = getGeminiCode(language || 'en');
+        const transcribePrompt = `Transcribe this audio recording accurately. The spoken language is ${inputLanguage}.`;
       const audioPart = { inlineData: { mimeType: 'audio/webm', data: base64Audio } };
       const textPart = { text: transcribePrompt };
       
@@ -4134,6 +4440,15 @@ ${transcript}
 
   const renderAnalysisView = () => {
     const handleGenerateExecutiveSummary = async () => {
+      // Check transcript length based on user tier
+      const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+      if (!transcriptValidation.allowed) {
+        setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+      }
+      
       try {
         // Only reset other analysis data if we don't already have executive summary data
         if (!executiveSummaryData) {
@@ -4154,7 +4469,7 @@ ${transcript}
         setLoadingText(t('generating', { type: 'Executive summary' }));
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const sys = `Act as a seasoned McKinsey-style business analyst creating an extremely concise one-slide Executive Summary in OSC-R-B-C format (Objective, Situation, Complication, Resolution, Benefits, Call to Action). Use at most 1-3 short sentences per section. If a section is not explicitly present, output "[Niet expliciet besproken]". Return ONLY valid JSON with keys: objective, situation, complication, resolution, benefits, call_to_action.`;
-        const prompt = `${sys}\n\nTranscript (NL or other):\n${transcript.slice(0, 20000)}`;
+        const prompt = `${sys}\n\nTranscript (NL or other):\n${getTranscriptSlice(transcript, 20000)}`;
         const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
         // Track token usage
@@ -4188,7 +4503,16 @@ ${transcript}
       }
     };
 
-    const handleGenerateStorytelling = async () => {
+    async function handleGenerateStorytelling(options?: StorytellingOptions) {
+      // Check transcript length based on user tier
+      const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+      if (!transcriptValidation.allowed) {
+        setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+      }
+      
       try {
         // Only reset other analysis data if we don't already have storytelling data
         if (!storytellingData) {
@@ -4208,8 +4532,28 @@ ${transcript}
         }
         setLoadingText(t('generating', { type: 'Storytelling' }));
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const sys = `Je krijgt een transcript van een meeting/webinar/podcast. Zet dit om in een verhalende tekst die leest als een verhaal. Gebruik storytelling-elementen: gebruik geen namen van personages, beschrijf de setting, bouw spanning op rond de dilemma's of vragen, en eindig met een duidelijke uitkomst of cliffhanger. Schrijf in een stijl die toegankelijk en levendig is, alsof het een journalistiek artikel of kort verhaal is. Gebruik citaten uit het transcript als dialoogfragmenten. Focus op emotie, conflict, en de belangrijkste inzichten die naar boven kwamen. Maak het leesbaar voor een breed publiek, zonder dat het saai of te technisch wordt.`;
-        const prompt = `${sys}\n\nTranscript (NL or other):\n${transcript.slice(0, 20000)}`;
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        
+        // Build custom prompt based on user options
+        let customInstructions = '';
+        if (options) {
+          if (options.targetAudience) {
+            customInstructions += `\n- Doelgroep: ${options.targetAudience}`;
+          }
+          if (options.mainGoal) {
+            customInstructions += `\n- Hoofddoel: ${options.mainGoal}`;
+          }
+          if (options.toneStyle) {
+            customInstructions += `\n- Toon/Stijl: ${options.toneStyle}`;
+          }
+          if (options.length) {
+            customInstructions += `\n- Gewenste lengte: ${options.length}`;
+          }
+        }
+        
+        const sys = `You receive a **${inputLanguage}** transcript from a meeting/webinar/podcast. Transform this into a narrative text in **${outputLanguage}** that reads like a story. Use storytelling elements: don't use character names, describe the setting, build tension around dilemmas or questions, and end with a clear outcome or cliffhanger. Write in an accessible and vivid style, as if it were a journalistic article or short story. Use quotes from the transcript as dialogue fragments. Focus on emotion, conflict, and the key insights that emerged. Make it readable for a broad audience, without being boring or too technical.${customInstructions}`;
+        const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
         const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
         // Track token usage
@@ -4235,33 +4579,47 @@ ${transcript}
       } finally {
         setLoadingText('');
       }
-    };
+    }
+
+    // Expose for modal callback without relying on local identifier binding during initial render
+    if (typeof window !== 'undefined') {
+      (window as any).handleGenerateStorytelling = handleGenerateStorytelling;
+    }
 
 
 
     const handleGenerateBlog = async () => {
+      // Check transcript length based on user tier
+      const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+      if (!transcriptValidation.allowed) {
+        setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+      }
+      
       try {
         // Don't reset other analysis data when generating blog
         // This allows users to keep other analyses while generating blog content
         setLoadingText(t('generating', { type: 'Blog' }));
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const sys = `Acteer als een ervaren content marketeer/blogschrijver.
-Analyseer het transcript grondig om de belangrijkste onderwerpen, discussiepunten, conclusies en inzichten te identificeren.
-Genereer een complete blogpost die de kernboodschap van het transcript effectief communiceert aan een breed publiek.
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        const sys = `Act as an experienced content marketer/blog writer. Analyze the **${inputLanguage}** transcript thoroughly to identify key topics, discussion points, conclusions and insights. Generate a complete blog post in **${outputLanguage}** that effectively communicates the core message of the transcript to a broad audience.
 
-BELANGRIJK: Begin DIRECT met de titel (H1), zonder inleiding of uitleg over hoe de blog is geschreven.
+IMPORTANT: Start DIRECTLY with the title (H1), without introduction or explanation about how the blog was written.
 
-Structuur van de Blogpost:
-# [Catchy Titel] - Begin direct met de titel
-[Direct de eerste alinea van de blog, zonder introductie over wat er behandeld wordt]
-Hoofdsecties (H2): Splits de belangrijkste onderwerpen van het transcript op in 2-4 logische secties, elk met een duidelijke kop.
-Alinea's: Elke sectie moet uit meerdere alinea's bestaan die de inhoud uitleggen.
-Opsommingen/Bullet Points (indien relevant): Gebruik waar passend opsommingen om informatie overzichtelijker te presenteren (bijv. kerninzichten, actiepunten, voordelen).
-Conclusie/Samenvatting: Een korte afsluiting die de belangrijkste takeaways herhaalt en de lezer aanzet tot nadenken of actie.
-Call to Action (Blogspecifiek): Bijv. "Laat je reactie achter", "Meer weten?", "Abonneer je op onze nieuwsbrief". (Optioneel, en generiek indien geen specifieke CTA af te leiden is uit de meeting.)
-Toon: De standaardtoon moet informatief, objectief en enigszins enthousiast/betrokken zijn. Het moet de lezer boeien.
-Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript erg kort is, een kortere, maar complete blogpost. Als het transcript extreem lang is, focus dan op de belangrijkste highlights binnen de gestelde lengte.`;
-        const prompt = `${sys}\n\nTranscript (NL or other):\n${transcript.slice(0, 20000)}`;
+Blog Post Structure:
+# [Catchy Title] - Start directly with the title
+[Directly the first paragraph of the blog, without introduction about what will be covered]
+Main sections (H2): Split the main topics from the transcript into 2-4 logical sections, each with a clear heading.
+Paragraphs: Each section should consist of multiple paragraphs explaining the content.
+Bullets/Bullet Points (if relevant): Use bulleted lists where appropriate to present information more clearly (e.g. key insights, action items, benefits).
+Conclusion/Summary: A short conclusion that repeats the main takeaways and encourages the reader to think or take action.
+Call to Action (Blog-specific): E.g. "Leave your comment", "Want to know more?", "Subscribe to our newsletter". (Optional, and generic if no specific CTA can be derived from the meeting.)
+Tone: The standard tone should be informative, objective and somewhat enthusiastic/engaged. It should captivate the reader.
+Length: Standard length: approx. 500 words (or 4000 characters). If the transcript is very short, a shorter but complete blog post. If the transcript is extremely long, focus on the most important highlights within the specified length.`;
+        const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
         const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
         // Track token usage
@@ -4294,6 +4652,15 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
           <div className="flex items-center justify-center p-8">
             <button
               onClick={async () => {
+                // Check transcript length based on user tier
+                const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+                const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+                if (!transcriptValidation.allowed) {
+                  setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+                  setTimeout(() => setShowPricingPage(true), 2000);
+                  return;
+                }
+                
                 try {
                   // Only reset other analysis data if we don't already have mindmap data
                                       if (!mindmapMermaid) {
@@ -4313,7 +4680,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                   setLoadingText(t('generating', { type: 'Mindmap' }));
                   const ai = new GoogleGenAI({ apiKey: apiKey });
                   const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
-                  const prompt = `${sys}\n\nTranscript:\n${transcript.slice(0, 12000)}`;
+                  const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 12000)}`;
                   const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
                   
                   // Track token usage
@@ -4389,25 +4756,27 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
         { id: 'presentation', type: 'action', icon: PresentationIcon, label: () => t('exportPPT'), onClick: () => {
             // Check if user has access to PowerPoint export
             const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
-            if (!subscriptionService.isFeatureAvailable(effectiveTier, 'exportPpt')) {
-                displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren, kijk op de prijs pagina voor meer informatie', 'error');
-                return;
-            }
+                if (!subscriptionService.isFeatureAvailable(effectiveTier, 'exportPpt')) {
+        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+    }
             setShowPptOptions(true);
         }, disabled: () => isProcessing || !transcript.trim() },
         { id: 'businessCase', type: 'action', icon: BusinessCaseIcon, label: () => t('businessCase'), onClick: () => {
             // Check if user has access to business case generation
             const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
-            if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
-                displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren, kijk op de prijs pagina voor meer informatie', 'error');
-                return;
-            }
+                if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
+        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+    }
             setActiveView('businessCase');
         }, disabled: () => isProcessing || !transcript.trim() },
     ];
     const analysisActions: any[] = [
         { id: 'summary', type: 'view', icon: SummaryIcon, label: () => t('summary') },
-        { id: 'exec', type: 'view', icon: SummaryIcon, label: () => t('executiveSummary') },
+        { id: 'exec', type: 'view', icon: ExecutiveSummaryIcon, label: () => t('executiveSummary') },
         { id: 'keyword', type: 'view', icon: TagIcon, label: () => t('keywordAnalysis')},
         { id: 'sentiment', type: 'view', icon: SentimentIcon, label: () => t('sentiment')},
         { id: 'faq', type: 'view', icon: FaqIcon, label: () => t('faq') },
@@ -4428,8 +4797,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
         else if (view === 'keyword') handleGenerateKeywordAnalysis();
         else if (view === 'podcast') handleGeneratePodcast();
         else if (view === 'sentiment') handleAnalyzeSentiment();
-        else if (view === 'storytelling') handleGenerateStorytelling();
-        else if (view === 'blog') handleGenerateBlog();
+        else if (view === 'storytelling') handleOpenStorytellingQuestions();
+        else if (view === 'blog') setActiveView('blog');
         else if (view === 'businessCase') {
             // Initialize business case data if not exists
             if (!businessCaseData) {
@@ -4594,40 +4963,96 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
             );
         }
         if (activeView === 'storytelling') {
-            if (!storytellingData && loadingText) {
-                return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[300px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
-            }
-            if (!storytellingData) {
-                return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
-            }
             return (
-                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
-                    <div className="absolute top-4 right-4 flex gap-2">
-                        <button onClick={() => {
-                            const txt = `## ${t('storytelling')}\n\n${storytellingData.story}`;
-                            copyToClipboard(txt);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                            <CopyIcon className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => {
-                            const txt = `## ${t('storytelling')}\n\n${storytellingData.story}`;
-                            downloadTextFile(txt, 'storytelling.txt');
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
-                            ⬇️
-                        </button>
-                        <button onClick={() => {
-                            const { subject, body } = generateEmailContent(t('storytelling'), `## ${t('storytelling')}\n\n${storytellingData.story}`);
-                            copyToClipboardForEmail(subject, body);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
-                            ✉️
-                        </button>
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                    {/* Inline options */}
+                    <div className="mb-4 p-3 rounded border border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40">
+                        <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-3">{t('storytellingOptional')}</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('storytellingTargetAudience')}</label>
+                                <select value={storyOptions.targetAudience} onChange={(e) => setStoryOptions(s => ({ ...s, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    <option value="">-</option>
+                                    <option value={td('storytellingTargetAudienceOptions.internalTeam')}>{td('storytellingTargetAudienceOptions.internalTeam')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.management')}>{td('storytellingTargetAudienceOptions.management')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.customers')}>{td('storytellingTargetAudienceOptions.customers')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.investors')}>{td('storytellingTargetAudienceOptions.investors')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.newEmployees')}>{td('storytellingTargetAudienceOptions.newEmployees')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.generalPublic')}>{td('storytellingTargetAudienceOptions.generalPublic')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.academics')}>{td('storytellingTargetAudienceOptions.academics')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.competitors')}>{td('storytellingTargetAudienceOptions.competitors')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.localCommunity')}>{td('storytellingTargetAudienceOptions.localCommunity')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.alumni')}>{td('storytellingTargetAudienceOptions.alumni')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.internationalStakeholders')}>{td('storytellingTargetAudienceOptions.internationalStakeholders')}</option>
+                                    <option value={td('storytellingTargetAudienceOptions.specificInterestGroups')}>{td('storytellingTargetAudienceOptions.specificInterestGroups')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('storytellingMainGoal')}</label>
+                                <select value={storyOptions.mainGoal} onChange={(e) => setStoryOptions(s => ({ ...s, mainGoal: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    <option value="">-</option>
+                                    <option value={td('storytellingMainGoalOptions.inform')}>{td('storytellingMainGoalOptions.inform')}</option>
+                                    <option value={td('storytellingMainGoalOptions.motivate')}>{td('storytellingMainGoalOptions.motivate')}</option>
+                                    <option value={td('storytellingMainGoalOptions.convince')}>{td('storytellingMainGoalOptions.convince')}</option>
+                                    <option value={td('storytellingMainGoalOptions.celebrate')}>{td('storytellingMainGoalOptions.celebrate')}</option>
+                                    <option value={td('storytellingMainGoalOptions.explain')}>{td('storytellingMainGoalOptions.explain')}</option>
+                                    <option value={td('storytellingMainGoalOptions.educate')}>{td('storytellingMainGoalOptions.educate')}</option>
+                                    <option value={td('storytellingMainGoalOptions.warn')}>{td('storytellingMainGoalOptions.warn')}</option>
+                                    <option value={td('storytellingMainGoalOptions.engage')}>{td('storytellingMainGoalOptions.engage')}</option>
+                                    <option value={td('storytellingMainGoalOptions.promote')}>{td('storytellingMainGoalOptions.promote')}</option>
+                                    <option value={td('storytellingMainGoalOptions.reflect')}>{td('storytellingMainGoalOptions.reflect')}</option>
+                                    <option value={td('storytellingMainGoalOptions.predict')}>{td('storytellingMainGoalOptions.predict')}</option>
+                                    <option value={td('storytellingMainGoalOptions.commemorate')}>{td('storytellingMainGoalOptions.commemorate')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('storytellingToneStyle')}</label>
+                                <select value={storyOptions.toneStyle} onChange={(e) => setStoryOptions(s => ({ ...s, toneStyle: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    <option value="">-</option>
+                                    <option value={td('storytellingToneStyleOptions.formal')}>{td('storytellingToneStyleOptions.formal')}</option>
+                                    <option value={td('storytellingToneStyleOptions.informal')}>{td('storytellingToneStyleOptions.informal')}</option>
+                                    <option value={td('storytellingToneStyleOptions.inspiring')}>{td('storytellingToneStyleOptions.inspiring')}</option>
+                                    <option value={td('storytellingToneStyleOptions.critical')}>{td('storytellingToneStyleOptions.critical')}</option>
+                                    <option value={td('storytellingToneStyleOptions.humorous')}>{td('storytellingToneStyleOptions.humorous')}</option>
+                                    <option value={td('storytellingToneStyleOptions.empathetic')}>{td('storytellingToneStyleOptions.empathetic')}</option>
+                                    <option value={td('storytellingToneStyleOptions.neutral')}>{td('storytellingToneStyleOptions.neutral')}</option>
+                                    <option value={td('storytellingToneStyleOptions.dynamic')}>{td('storytellingToneStyleOptions.dynamic')}</option>
+                                    <option value={td('storytellingToneStyleOptions.warm')}>{td('storytellingToneStyleOptions.warm')}</option>
+                                    <option value={td('storytellingToneStyleOptions.technical')}>{td('storytellingToneStyleOptions.technical')}</option>
+                                    <option value={td('storytellingToneStyleOptions.narrative')}>{td('storytellingToneStyleOptions.narrative')}</option>
+                                    <option value={td('storytellingToneStyleOptions.cultureSensitive')}>{td('storytellingToneStyleOptions.cultureSensitive')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('storytellingLength')}</label>
+                                <select value={storyOptions.length} onChange={(e) => setStoryOptions(s => ({ ...s, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    <option value="">-</option>
+                                    <option value={td('storytellingLengthOptions.short')}>{td('storytellingLengthOptions.short')}</option>
+                                    <option value={td('storytellingLengthOptions.medium')}>{td('storytellingLengthOptions.medium')}</option>
+                                    <option value={td('storytellingLengthOptions.long')}>{td('storytellingLengthOptions.long')}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mt-2">
+                            <button onClick={() => handleGenerateStorytelling(storyOptions)} disabled={!transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">{t('storytellingGenerate')}</button>
+                        </div>
                     </div>
-                    <div className="overflow-y-auto max-h-[calc(70vh-120px)] space-y-6">
-                        <div>
+
+                    {/* Output */}
+                    {storytellingData ? (
+                        <div className="relative">
+                            <div className="absolute top-0 right-0 flex gap-2">
+                                <button onClick={() => copyToClipboard(storytellingData.story)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
+                                    <CopyIcon className="w-5 h-5" />
+                                </button>
+                                <button onClick={() => downloadTextFile(storytellingData.story, 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">⬇️</button>
+                            </div>
                             <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{t('storytelling')}</h4>
                             <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{storytellingData.story}</p>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="text-slate-500 dark:text-slate-400">{t('noContent')}</div>
+                    )}
                 </div>
             );
         }
@@ -4757,35 +5182,63 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
         }
 
         if (activeView === 'blog') {
-            if (loadingText && !blogData) {
-                return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[300px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
-            }
-            if (blogData) {
-                return (
-                    <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                         <div className="absolute top-4 right-4 flex gap-2">
-                             <button onClick={() => copyToClipboard(blogData)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                                 <CopyIcon className="w-5 h-5" />
-                             </button>
-                             <button onClick={() => downloadTextFile(blogData, `blog.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
-                                 ⬇️
-                             </button>
-                             <button onClick={() => {
-                                 const { subject, body } = generateEmailContent(t('blog'), blogData);
-                                 copyToClipboardForEmail(subject, body);
-                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
-                                 ✉️
-                             </button>
-                         </div>
-                        <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+            const L = blogLabels[uiLang] || blogLabels.en;
+            return (
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                    {/* Inline Blog Options (optional) */}
+                    <div className="mb-4 p-3 rounded border border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40">
+                        <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-3">{td('storytellingOptional')}</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Doelgroep Blogpost:</label>
+                                <select value={blogOptions.targetAudience} onChange={(e) => setBlogOptions(b => ({ ...b, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    {L.targetAudience.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Hoofddoel van de Blogpost:</label>
+                                <select value={blogOptions.mainGoal} onChange={(e) => setBlogOptions(b => ({ ...b, mainGoal: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    {L.mainGoal.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Gewenste Toon:</label>
+                                <select value={blogOptions.tone} onChange={(e) => setBlogOptions(b => ({ ...b, tone: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    {L.tone.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Gewenste Lengte (ongeveer):</label>
+                                <select value={blogOptions.length} onChange={(e) => setBlogOptions(b => ({ ...b, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    {L.length.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mt-2">
+                            <button onClick={() => handleGenerateBlog(blogOptions)} disabled={!transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">Genereren</button>
+                        </div>
+                    </div>
+
+                    {/* Output */}
+                    {loadingText && !blogData ? (
+                        <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[200px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>
+                    ) : blogData ? (
+                        <div className="relative">
+                            <div className="absolute top-0 right-0 flex gap-2">
+                                <button onClick={() => copyToClipboard(blogData)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
+                                    <CopyIcon className="w-5 h-5" />
+                                </button>
+                                <button onClick={() => downloadTextFile(blogData, 'blog.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">⬇️</button>
+                            </div>
                             <div className="prose prose-slate dark:prose-invert max-w-none">
                                 {renderMarkdown(blogData)}
                             </div>
                         </div>
-                    </div>
-                );
-            }
-            return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
+                    ) : (
+                        <div className="text-slate-500 dark:text-slate-400">{t('noContent')}</div>
+                    )}
+                </div>
+            );
         }
 
         if (activeView === 'sentiment') {
@@ -5113,11 +5566,19 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                  quizQuestions={quizQuestions}
                  quizIncludeAnswers={quizIncludeAnswers}
                  startStamp={getStartStamp()}
+                 outputLanguage={outputLang}
                  onNotify={(msg, type) => displayToast(msg, type)}
                  onGenerateQuiz={async ({ numQuestions, numOptions }) => {
+                    // Check transcript length based on user tier
+                    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+                    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+                    if (!transcriptValidation.allowed) {
+                      throw new Error(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+                    }
+                    
                     const ai = new GoogleGenAI({ apiKey: apiKey });
                     const sys = `You generate MCQs based on a transcript. Return ONLY a JSON array of objects with keys: question (string), options (array of {label, text}), correct_answer_label, correct_answer_text. Generate between 1 and 5 questions as requested. Ensure exactly one correct answer per question. Labels should be A, B, C, D but only up to the requested number of options.`;
-                    const prompt = `${sys}\n\nConstraints: number_of_questions=${numQuestions}, number_of_options=${numOptions}.\nTranscript:\n${transcript.slice(0, 18000)}`;
+                    const prompt = `${sys}\n\nConstraints: number_of_questions=${numQuestions}, number_of_options=${numOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
                     const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
                     let text = res.text || '';
                     text = text.replace(/```[a-z]*|```/gi, '').trim();
@@ -5317,75 +5778,163 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                   {theme === 'light' ? <MoonIcon className="w-5 h-5"/> : <SunIcon className="w-5 h-5"/>}
                 </button>
           
-          {/* App Controls - {t('appControls')} */}
-          {authState.user && (
+          {/* Conditional Buttons based on state */}
+          {authState.user ? (
             <>
-              {/* Nieuwe sessie knop */}
-              {authState.user && status !== RecordingStatus.IDLE && (
-                <button 
-                  onClick={() => {
-                    setTranscript('');
-                    setSummary('');
-                    setFaq('');
-                    setLearningDoc('');
-                    setFollowUpQuestions('');
-                    setPodcastScript('');
-                    setBlogData('');
-                    setChatHistory([]);
-                    setKeywordAnalysis(null);
-                    setSentimentAnalysisResult(null);
-                    setMindmapMermaid('');
-                    setMindmapSvg('');
-                    setExecutiveSummaryData(null);
-                    setStorytellingData(null);
-                    setBusinessCaseData(null);
-                    setQuizQuestions(null);
-                    setActiveView('transcript');
-                    setStatus(RecordingStatus.IDLE);
-                    setError(null);
-                    setAnonymizationReport(null);
-                    setPresentationReport(null);
-                    setPptTemplate(null);
-                    setLoadingText('');
-                    setIsAnonymized(false);
-                    chatInstanceRef.current = null;
-                  }} 
-                  className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white h-10 min-w-0 sm:min-w-[120px]"
-                >
-                  <ResetIcon className="w-5 h-5"/> 
-                  <span>{t('startNewSession')}</span>
-                </button>
+              {/* Info Page - Logged in */}
+              {showInfoPage && (
+                <>
+                  {/* If user has transcript, show "New session" and "Analyse" */}
+                  {status !== RecordingStatus.IDLE && status !== RecordingStatus.ERROR ? (
+                    <>
+                      <button 
+                        onClick={() => {
+                          setTranscript('');
+                          setSummary('');
+                          setFaq('');
+                          setLearningDoc('');
+                          setFollowUpQuestions('');
+                          setPodcastScript('');
+                          setBlogData('');
+                          setChatHistory([]);
+                          setKeywordAnalysis(null);
+                          setSentimentAnalysisResult(null);
+                          setMindmapMermaid('');
+                          setMindmapSvg('');
+                          setExecutiveSummaryData(null);
+                          setStorytellingData(null);
+                          setBusinessCaseData(null);
+                          setQuizQuestions(null);
+                          setActiveView('transcript');
+                          setStatus(RecordingStatus.IDLE);
+                          setError(null);
+                          setAnonymizationReport(null);
+                          setPresentationReport(null);
+                          setPptTemplate(null);
+                          setLoadingText('');
+                          setIsAnonymized(false);
+                          chatInstanceRef.current = null;
+                        }} 
+                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[120px]"
+                      >
+                        <ResetIcon className="w-5 h-5"/> 
+                        <span>{t('startNewSession')}</span>
+                      </button>
+                      <button 
+                        onClick={() => setShowInfoPage(false)} 
+                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
+                      >
+                        <span>📊</span>
+                        <span>{t('analyse')}</span>
+                      </button>
+                    </>
+                  ) : (
+                    /* If user has no transcript, show "Start session" */
+                    <button 
+                      onClick={() => setShowInfoPage(false)} 
+                      className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[120px]"
+                    >
+                      <span>🎯</span>
+                      <span>{t('startOrUpload')}</span>
+                    </button>
+                  )}
+                  
+                  {/* Settings button - always visible when logged in */}
+                  <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                    <SettingsIcon className="w-5 h-5"/> 
+                    <span>{t('settings')}</span>
+                  </button>
+                </>
               )}
-              {/* Instellingen knop */}
-              {authState.user && status !== RecordingStatus.IDLE && (
-               <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white h-10 min-w-0 sm:min-w-[120px]">
-                   <SettingsIcon className="w-5 h-5"/> 
-                   <span>{t('settings')}</span>
-               </button>
+              
+              {/* Start Page - Logged in */}
+              {!showInfoPage && status === RecordingStatus.IDLE && (
+                <>
+                  {/* If user has transcript, show "Analyse" button */}
+                  {transcript && (
+                    <button 
+                      onClick={() => setStatus(RecordingStatus.FINISHED)} 
+                      className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
+                    >
+                      <span>📊</span>
+                      <span>{t('analyse')}</span>
+                    </button>
+                  )}
+                  
+                  {/* Settings button */}
+                  <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                    <SettingsIcon className="w-5 h-5"/> 
+                    <span>{t('settings')}</span>
+                  </button>
+                </>
+              )}
+              
+              {/* Analyse Page - Logged in */}
+              {!showInfoPage && status === RecordingStatus.FINISHED && (
+                <>
+                  {/* Start new session button */}
+                  <button 
+                    onClick={() => {
+                      setTranscript('');
+                      setSummary('');
+                      setFaq('');
+                      setLearningDoc('');
+                      setFollowUpQuestions('');
+                      setPodcastScript('');
+                      setBlogData('');
+                      setChatHistory([]);
+                      setKeywordAnalysis(null);
+                      setSentimentAnalysisResult(null);
+                      setMindmapMermaid('');
+                      setMindmapSvg('');
+                      setExecutiveSummaryData(null);
+                      setStorytellingData(null);
+                      setBusinessCaseData(null);
+                      setQuizQuestions(null);
+                      setActiveView('transcript');
+                      setStatus(RecordingStatus.IDLE);
+                      setError(null);
+                      setAnonymizationReport(null);
+                      setPresentationReport(null);
+                      setPptTemplate(null);
+                      setLoadingText('');
+                      setIsAnonymized(false);
+                      chatInstanceRef.current = null;
+                    }} 
+                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[120px]"
+                  >
+                    <ResetIcon className="w-5 h-5"/> 
+                    <span>{t('startNewSession')}</span>
+                  </button>
+                  
+                  {/* Settings button */}
+                  <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                    <SettingsIcon className="w-5 h-5"/> 
+                    <span>{t('settings')}</span>
+                  </button>
+                </>
               )}
             </>
-          )}
-          
-          {/* Auth Buttons */}
-          {!authState.user ? (
+          ) : (
+            /* Not logged in - only show login button */
             <button 
               onClick={() => setShowLoginModal(true)} 
               className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
             >
               <span>🔐</span>
-                                <span>{t('login')}</span>
+              <span>{t('login')}</span>
             </button>
-          ) : (
-            <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-wrap">
-              {/* Admin moved to footer */}
-              <button 
-                onClick={handleLogout} 
-                className="flex items-center justify-center gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white h-9 sm:h-10 min-w-0"
-              >
-                <span>🚪</span>
-                <span>{t('logout')}</span>
-              </button>
-            </div>
+          )}
+          
+          {/* Logout button for logged in users */}
+          {authState.user && (
+            <button 
+              onClick={handleLogout} 
+              className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
+            >
+              <span>🚪</span>
+              <span>{t('logout')}</span>
+            </button>
           )}
         </div>
       </header>
@@ -5478,8 +6027,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
               </div>
               
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerGoogleGemini')}</h4>
-                <p>{t('disclaimerGoogleGeminiAnswer')}</p>
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">AI Intelligence</h4>
+                <p>The app integrates with AI services. The quality and availability of these services depend on the AI provider's terms and may vary. We have no control over the underlying AI models or their output.</p>
               </div>
               
               <div>
@@ -5487,9 +6036,8 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                 <p><strong>Belangrijk:</strong> {t('disclaimerPrivacyAnswer')}</p>
                 <ul className="list-disc list-inside space-y-1 text-xs mt-2">
                   <li>{t('disclaimerPrivacyBullet1')}</li>
-                  <li>{t('disclaimerPrivacyBullet2')}</li>
-                  <li>{t('disclaimerPrivacyBullet3')}</li>
-                  <li>{t('disclaimerPrivacyBullet4')}</li>
+                                  <li>{t('disclaimerPrivacyBullet2')}</li>
+                <li>{t('disclaimerPrivacyBullet3')}</li>
                 </ul>
                 <p className="mt-2 text-sm">{t('disclaimerPrivacyNote')}</p>
               </div>
@@ -5556,10 +6104,9 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                 <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">🔒 {t('privacyTitle')}</h4>
                 <p><strong>Belangrijk:</strong> Wanneer je de app gebruikt, worden je sessies NIET opgeslagen in onze database.</p>
                 <ul className="list-disc list-inside space-y-1 text-xs mt-2">
-                  <li>🎙️ <strong>Opnames:</strong> Blijven volledig lokaal op jouw apparaat</li>
-                  <li>📝 <strong>Transcripties:</strong> Wij kunnen ze niet zien of opslaan</li>
-                  <li>🤖 <strong>AI Output:</strong> Alleen jij hebt toegang tot je content</li>
-                  <li>🔑 <strong>API Key:</strong> Lokaal opgeslagen, wij hebben er geen toegang toe</li>
+                  <li><strong>Opnames:</strong> Blijven volledig lokaal op jouw apparaat</li>
+                  <li><strong>Transcripties:</strong> Wij kunnen ze niet zien of opslaan</li>
+                  <li><strong>AI Output:</strong> Alleen jij hebt toegang tot je content</li>
                 </ul>
                 <p className="mt-2 text-sm">We bewaren helemaal niets van jouw sessies. Jouw privacy staat voorop.</p>
               </div>
@@ -5929,9 +6476,9 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                                   <button className="px-2 py-1 text-xs bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors">
                                     Wijzig Tier
                                   </button>
-                                  <div className="hidden group-hover:block absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-lg z-10">
+                                  <div className="hidden group-hover:block absolute bottom-full left-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-lg z-20 min-w-[120px]">
                                     {Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.DIAMOND).map(t => (
-                                      <button key={t} onClick={() => updateUserTier(user.uid, t as SubscriptionTier)} className="block w-full text-left px-3 py-1 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 capitalize">{String(t)}</button>
+                                      <button key={t} onClick={() => updateUserTier(user.uid, t as SubscriptionTier)} className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 capitalize text-slate-800 dark:text-slate-200 border-b border-gray-100 dark:border-slate-700 last:border-b-0">{String(t)}</button>
                                     ))}
                                   </div>
                                 </div>
@@ -5971,7 +6518,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
               <div className="mt-4 flex items-center justify-between">
                 {/* Link verwijderd */}
                 <button onClick={() => setShowSystemAudioHelp(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">
-                  Begrepen
+                  Sluiten
                 </button>
               </div>
             </div>
@@ -6001,6 +6548,238 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
               <p className="text-xs text-slate-500 dark:text-slate-400">{t('supportedFormatsNote')}</p>
               <div className="pt-2 flex justify-end">
                 <button onClick={() => setShowFormatsInfo(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paste transcript modal */}
+      {showPasteModal && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('pasteTranscriptTitle')}</h3>
+              <button onClick={() => setShowPasteModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-slate-700 dark:text-slate-300">{t('pasteTranscriptDescription')}</p>
+              <textarea
+                placeholder={t('pasteTranscriptPlaceholder')}
+                className="w-full h-64 p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+                onChange={(e) => setPastedText(e.target.value)}
+                value={pastedText}
+              />
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setShowPasteModal(false)} 
+                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
+                >
+                  {t('cancel')}
+                </button>
+                <button 
+                  onClick={() => handlePasteTranscript(pastedText)} 
+                  disabled={!pastedText.trim()}
+                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-semibold disabled:cursor-not-allowed"
+                >
+                  {t('processTranscript')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Web page modal */}
+      {showWebPageModal && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('webPageTitle')}</h3>
+              <button onClick={() => setShowWebPageModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  placeholder={t('webPageUrlPlaceholder')}
+                  className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  onChange={(e) => setWebPageUrl(e.target.value)}
+                  value={webPageUrl}
+                />
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setShowWebPageHelp(true)}
+                    className="text-sm text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 underline"
+                  >
+                    {t('help')}
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setShowWebPageModal(false)} 
+                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
+                >
+                  {t('cancel')}
+                </button>
+                <button 
+                  onClick={() => handleWebPage(webPageUrl)} 
+                  disabled={!webPageUrl.trim() || isLoadingWebPage}
+                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-semibold disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isLoadingWebPage ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      {t('loading')}
+                    </>
+                  ) : (
+                    t('processWebPage')
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 1 Help Modal */}
+      {showStep1Help && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">💡 {t('step1')} - {t('sessionLang')}</h3>
+              <button 
+                onClick={() => setShowStep1Help(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
+              <p className="text-lg leading-relaxed">
+                De taal selecteren voor het bron document/opname helpt AI om het beter te begrijpen.
+              </p>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={() => setShowStep1Help(false)} 
+                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-colors"
+              >
+                Sluiten
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2 Help Modal */}
+      {showStep2Help && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">💡 {t('step2')} - {t('outputLanguage')}</h3>
+              <button 
+                onClick={() => setShowStep2Help(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
+              <p className="text-lg leading-relaxed">
+                De taal selecteren voor het bron document/opname helpt AI om het beter te begrijpen.
+              </p>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={() => setShowStep2Help(false)} 
+                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-colors"
+              >
+                Sluiten
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Web page help modal */}
+      {showWebPageHelp && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-xl w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('webPageHelpTitle')}</h3>
+              <button onClick={() => setShowWebPageHelp(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <p>{t('webPageHelpDescription')}</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>{t('webPageHelpStep1')}</li>
+                <li>{t('webPageHelpStep2')}</li>
+                <li>{t('webPageHelpStep3')}</li>
+                <li>{t('webPageHelpStep4')}</li>
+              </ul>
+              <div className="pt-2 flex justify-end">
+                <button onClick={() => setShowWebPageHelp(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paste help modal */}
+      {showPasteHelp && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-xl w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('pasteHelpTitle')}</h3>
+              <button onClick={() => setShowPasteHelp(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <p>{t('pasteHelpDescription')}</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>{t('pasteHelpStep1')}</li>
+                <li>{t('pasteHelpStep2')}</li>
+                <li>{t('pasteHelpStep3')}</li>
+              </ul>
+              <div className="pt-2 flex justify-end">
+                <button onClick={() => setShowPasteHelp(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Coming Soon Modal */}
+      {showComingSoonModal && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-md w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('comingSoonTitle')}</h3>
+              <button onClick={() => setShowComingSoonModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <p>{t('comingSoonDescription')}</p>
+              <div className="pt-2 flex justify-end">
+                <button onClick={() => setShowComingSoonModal(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
               </div>
             </div>
           </div>
@@ -6423,10 +7202,10 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                             <p className="font-semibold mb-1">{t('setupApiKey')}</p>
                             <p className="text-sm mb-2">{t('haveAccessLead')}</p>
                             <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded p-2 text-sm">
-                                <p className="text-green-700 dark:text-green-300 font-medium">✅ {t('privacyTitle')}</p>
-                                <p className="text-green-600 dark:text-green-400">• {t('privacyItemApiKeyLocal')}</p>
-                                <p className="text-green-600 dark:text-green-400">• {t('privacyItemNoServers')}</p>
-                                <p className="text-green-600 dark:text-green-400">• {t('privacyItemWeStoreNothing')}</p>
+                                <p className="text-green-700 dark:text-green-300 font-medium">{t('privacyTitle')}</p>
+                                <p className="text-green-600 dark:text-green-400">{t('privacyItemApiKeyLocal')}</p>
+                                <p className="text-green-600 dark:text-green-400">{t('privacyItemNoServers')}</p>
+                                <p className="text-green-600 dark:text-green-400">{t('privacyItemWeStoreNothing')}</p>
                             </div>
                         </div>
                         
@@ -6436,22 +7215,25 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                 {apiKey && (
                     <div className="transition-opacity duration-500">
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
-                            <span className="text-cyan-500 font-black tracking-wider text-sm block uppercase mb-2">{t('step1')}</span> {t('sessionLang')}
+                            <span className="text-cyan-500 font-black tracking-wider text-sm uppercase mr-2">{t('step1')}</span> {t('sessionLang')}
+                            <button 
+                              onClick={() => setShowStep1Help(true)}
+                              className="ml-2 text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                              title="Help bij sessie taal selectie"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
                         </h2>
                         <div className="flex justify-center mt-4">
-                          <select
+                          <LanguageSelector
                             value={language ?? ''}
-                            onChange={(e) => setLanguage(e.target.value as any)}
-                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 border-2 border-cyan-200 dark:border-cyan-600 focus:border-cyan-400 dark:focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all duration-200 hover:shadow-lg hover:scale-105 font-medium"
-                          >
-                            <option value="" disabled>{t('sessionLang')}</option>
-                            <option value="nl">{t('dutch')}</option>
-                            <option value="en">{t('english')}</option>
-                            <option value="de">{t('german')}</option>
-                            <option value="fr">{t('french')}</option>
-                            <option value="pt">{t('portuguese')}</option>
-                            <option value="es">{t('spanish')}</option>
-                          </select>
+                            onChange={setLanguage}
+                            placeholder={t('sessionLang')}
+                            appLanguage={uiLang}
+                            className="w-full max-w-md"
+                          />
                         </div>
                     </div>
                 )}
@@ -6459,27 +7241,39 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                 {apiKey && language && (
                     <div className="transition-opacity duration-500">
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
-                            <span className="text-cyan-500 font-black tracking-wider text-sm block uppercase mb-2">{t('step2')}</span> {t('outputLanguage')}
+                            <span className="text-cyan-500 font-black tracking-wider text-sm uppercase mr-2">{t('step2')}</span> {t('outputLanguage')}
+                            <button 
+                              onClick={() => setShowStep2Help(true)}
+                              className="ml-2 text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                              title="Help bij output taal selectie"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
                         </h2>
                         <div className="flex justify-center mt-4">
-                          <select
+                          <LanguageSelector
                             value={outputLang}
-                            onChange={(e) => setOutputLang(e.target.value as any)}
-                            className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 border-2 border-cyan-200 dark:border-cyan-600 focus:border-cyan-400 dark:focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all duration-200 hover:shadow-lg hover:scale-105 font-medium"
-                          >
-                            <option value="nl">{t('dutch')}</option>
-                            <option value="en">{t('english')}</option>
-                            <option value="de">{t('german')}</option>
-                            <option value="fr">{t('french')}</option>
-                            <option value="pt">{t('portuguese')}</option>
-                            <option value="es">{t('spanish')}</option>
-                          </select>
+                            onChange={setOutputLang}
+                            placeholder={t('outputLanguage')}
+                            appLanguage={uiLang}
+                            className="w-full max-w-md"
+                          />
                         </div>
-                        <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100 mt-6">
-                            <span className="text-cyan-500 font-black tracking-wider text-sm block uppercase mb-2">{t('step3')}</span> {t('startOrUpload')}
+                        <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100 mt-6 flex items-center justify-center gap-2">
+                            <span className="text-cyan-500 font-black tracking-wider text-sm uppercase">{t('step3')}</span> 
+                            <span>{t('startOrUpload')}</span>
+                            <button 
+                              onClick={() => setShowSessionOptionsModal(true)}
+                              className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                              title="Meer informatie over sessie opties"
+                            >
+                              <QuestionMarkIcon className="w-4 h-4" />
+                            </button>
                         </h2>
-                <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
-                    <div className="w-full sm:flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+                    <div className="w-full">
                         <button onClick={startRecording} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 text-white hover:from-green-600 hover:to-emerald-700 dark:hover:from-green-700 dark:hover:to-emerald-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
                             <MicIcon className="w-6 h-6" />
                             <span className="text-lg font-semibold">{t('startRecording')}</span>
@@ -6492,7 +7286,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                         </div>
                     </div>
                     
-                    <div className="w-full sm:flex-1">
+                    <div className="w-full">
                         <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(authState.isAdmin ? '.txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown')}/>
                         <button onClick={() => fileInputRef.current?.click()} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
                             <UploadIcon className="w-6 h-6" />
@@ -6501,7 +7295,35 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                         {/* Supported formats info link - positioned under upload transcript button */}
                         <div className="mt-3 text-center">
                             <button onClick={() => setShowFormatsInfo(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                {t('supportedFormatsLink')}
+                                📄 {t('supportedFormatsLink')}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="w-full">
+                        <button onClick={() => setShowPasteModal(true)} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 dark:from-purple-600 dark:to-pink-700 text-white hover:from-purple-600 hover:to-pink-700 dark:hover:from-purple-700 dark:hover:to-pink-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <ClipboardIcon className="w-6 h-6" />
+                            <span className="text-lg font-semibold">{t('pasteTranscript')}</span>
+                        </button>
+                        {/* Paste help link - positioned under paste transcript button */}
+                        <div className="mt-3 text-center">
+                            <button onClick={() => setShowPasteHelp(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                📋 {t('pasteHelp')}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="w-full">
+                        <button onClick={() => setShowWebPageModal(true)} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 dark:from-orange-600 dark:to-red-700 text-white hover:from-orange-600 hover:to-red-700 dark:hover:from-orange-700 dark:hover:to-red-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0 9c-5 0-9-4-9-9m9 9c5 0 9-4 9-9m-9 9V3m0 9c0-5 4-9 9-9m-9 9c0 5-4 9-9 9" />
+                            </svg>
+                            <span className="text-lg font-semibold">{t('sessionOptionWebPage')}</span>
+                        </button>
+                        {/* Web page help link - positioned under web page button */}
+                        <div className="mt-3 text-center">
+                            <button onClick={() => setShowWebPageHelp(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                🌐 {t('help')}
                             </button>
                         </div>
                     </div>
@@ -6660,7 +7482,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
                   Admin
                 </button>
               )}
-              <span className="text-xs opacity-75">v0.81808</span>
+              <span className="text-xs opacity-75">v.0.80820</span>
             </div>
           </div>
         </footer>
@@ -6680,6 +7502,19 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
       />
     )}
 
+    {/* Session Options Modal */}
+    <SessionOptionsModal
+      isOpen={showSessionOptionsModal}
+      onClose={() => setShowSessionOptionsModal(false)}
+      onStartRecording={startRecording}
+      onUploadFile={handleSessionOptionUpload}
+      onPasteText={() => setShowPasteModal(true)}
+      onWebPage={() => setShowWebPageModal(true)}
+      t={t}
+    />
+
+    {/* Storytelling Questions Modal removed in favor of inline panel */}
+
     {/* Pricing Page */}
     {showPricingPage && (
       <PricingPage
@@ -6692,6 +7527,7 @@ Lengte: Standaard lengte: ca. 500 woorden (of 4000 tekens). Als het transcript e
           setShowPricingPage(false);
           // TODO: Implement actual upgrade flow
         }}
+        showComingSoonModal={() => setShowComingSoonModal(true)}
         t={t}
       />
     )}

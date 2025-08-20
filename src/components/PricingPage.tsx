@@ -9,9 +9,10 @@ interface PricingPageProps {
   onClose: () => void;
   isAdmin?: boolean; // Add admin prop
   t: (key: string, params?: any) => string; // Add translation function
+  showComingSoonModal: () => void; // Add function to show coming soon modal
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrade, onClose, isAdmin = false, t }) => {
+const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrade, onClose, isAdmin = false, t, showComingSoonModal }) => {
   if (!isOpen) return null;
   
   // Get tier comparison - admins see all tiers including DIAMOND, non-admins don't see DIAMOND
@@ -156,7 +157,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                 <div className="flex items-center">
                   <span className="text-green-500 mr-2">✓</span>
                   <span className="text-gray-700">
-                    <strong>{tier.maxSessionDuration}</strong> {t('pricingMinutesPerSession', { minutes: tier.maxSessionDuration })}
+                    {t('pricingMinutesPerSession', { minutes: tier.maxSessionDuration })}
                   </span>
                 </div>
                 
@@ -164,10 +165,21 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                   <span className="text-green-500 mr-2">✓</span>
                   <span className="text-gray-700">
                     {tier.maxSessionsPerDay === -1 ? (
-                      <strong>{t('pricingUnlimited')}</strong>
+                      t('pricingUnlimited')
                     ) : (
-                      <strong>{tier.maxSessionsPerDay}</strong>
-                    )} {t('pricingSessionsPerDay', { sessions: tier.maxSessionsPerDay === -1 ? '' : tier.maxSessionsPerDay })}
+                      t('pricingSessionsPerDay', { sessions: tier.maxSessionsPerDay })
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>
+                  <span className="text-gray-700">
+                    {tier.maxTranscriptLength === -1 ? (
+                      t('pricingUnlimited')
+                    ) : (
+                      t('pricingTranscriptLength', { length: (tier.maxTranscriptLength / 1000).toFixed(1) })
+                    )}
                   </span>
                 </div>
                 
@@ -214,7 +226,15 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                         </span>
                       </div>
                     )}
-                    {!tier.features?.chat && !tier.features?.podcast && !tier.features?.exportPpt && !tier.features?.businessCase && (
+                    {tier.features?.webPage && (
+                      <div className="flex items-center">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span className="text-sm text-gray-700">
+                          {t('pricingWebPageImport')}
+                        </span>
+                      </div>
+                    )}
+                    {!tier.features?.chat && !tier.features?.podcast && !tier.features?.exportPpt && !tier.features?.businessCase && !tier.features?.webPage && (
                       <div className="text-sm text-gray-400 italic">
                         {t('pricingNoPremiumFeatures')}
                       </div>
@@ -241,7 +261,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                   </button>
                 ) : (
                   <button
-                    onClick={() => onUpgrade(tier.tier)}
+                    onClick={() => showComingSoonModal()}
                     className={`w-full py-3 px-6 text-white rounded-lg font-semibold transition-colors ${getTierButtonColor(tier.tier)}`}
                   >
                     {tier.tier === SubscriptionTier.FREE ? t('pricingStartFree') : (tier.tier === SubscriptionTier.ENTERPRISE ? t('pricingContactEnterprise') : t('pricingUpgradeTo', { tier: tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1) }))}
@@ -256,16 +276,11 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
         <div className="p-6 bg-gray-50 border-t">
           <div className="text-center text-gray-600">
             <p className="mb-2">
-              <strong>Silver en Gold</strong> {t('pricingAdditionalInfo')}
+              {t('pricingAdditionalInfo')}
             </p>
             <p className="mb-2">
-              <strong>Gold en Enterprise</strong> {t('pricingGoldEnterprise')}
+              {t('pricingGoldEnterprise')}
             </p>
-            {isAdmin && (
-              <p className="mb-2 text-cyan-600">
-                <strong>Diamond Tier</strong> {t('pricingDiamondAdmin')}
-              </p>
-            )}
             <p>
               {t('pricingQuestions')}{' '}
               <a href="mailto:support@recapsmart.nl" className="text-blue-600 hover:underline">
@@ -273,6 +288,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
               </a>
             </p>
           </div>
+        </div>
+
+        {/* Close Button */}
+        <div className="p-6 border-t border-gray-200 flex justify-end">
+          <button 
+            onClick={onClose} 
+            className="px-6 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors"
+          >
+            {t('close') || 'Close'}
+          </button>
         </div>
       </div>
     </div>

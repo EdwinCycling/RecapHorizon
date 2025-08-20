@@ -15,6 +15,8 @@ export const de = {
   spanish: "Spanisch",
   startRecording: "Aufnahme starten",
   uploadTranscript: "Transkript hochladen",
+  pasteTranscript: "Transkript einfügen",
+  pasteHelp: "Einfügen-Hilfe",
   waitingPermission: "Warte auf Bildschirmaufnahme-Berechtigung...",
   pause: "Pause",
   stop: "Stopp",
@@ -78,6 +80,7 @@ export const de = {
   analyzingSentiment: "Analysiere Sentiment...",
   blog: "Blog",
   startOrUpload: "Sitzung starten",
+  analyse: "Analysieren",
   step1: "Schritt 1",
   step2: "Schritt 2",
   step3: "Schritt 3",
@@ -125,7 +128,7 @@ export const de = {
   loginNow: "Anmelden",
   featuresTitle: "Perfekt Für:",
   featureRecordingTitle: "Intelligente Aufnahme",
-  featureRecordingDesc: "Nehmen Sie Meetings, Webinare und Gespräche mit Ihrem Mikrofon und Systemaudio auf. Vollständige Unterstützung in mehreren Sprachen.",
+  featureRecordingDesc: "Nehmen Sie Meetings, Webinare und Gespräche mit Ihrem Mikrofon und Systemaudio auf. Vollständige Unterstützung für 64 Sprachen.",
   featureAIAnalysisTitle: "📝 KI-Analyse",
   featureAIAnalysisDesc: "Generieren Sie automatisch Zusammenfassungen, FAQs, Schlüsselerkenntnisse und Nachfragen mit der neuesten KI-Technologie.",
   featurePresentationsTitle: "📊 Export",
@@ -315,7 +318,7 @@ export const de = {
   faqCategoryPricing: "Preise & Abonnement",
   faqStatsFeatures: "Funktionen",
   faqStatsPrivacy: "Datenschutz",
-  faqStatsAvailable: "Verfügbar",
+  faqStatsAvailable: "Verfügbar - 64 Sprachen",
   // FAQ Questions and Answers
   faqWhatIsRecapSmart: "Was ist RecapSmart und wie funktioniert es?",
   faqWhatIsRecapSmartAnswer: "RecapSmart ist ein KI-gestütztes Tool, das Ihre Meetings, Webinare und Gespräche automatisch aufzeichnet, transkribiert und analysiert. Es funktioniert, indem es Ihr Mikrofon und Systemaudio verwendet, um alles zu erfassen, woraufhin die KI den Inhalt in Zusammenfassungen, Aktionspunkte und Erkenntnisse verarbeitet. Alle Daten bleiben lokal auf Ihrem Gerät für vollständige Privatsphäre.",
@@ -331,7 +334,110 @@ export const de = {
   faqAIAccuracyAnswer: "Die KI-Zusammenfassungen sind sehr genau und berücksichtigen den Kontext Ihres Gesprächs. Sie identifizieren automatisch wichtige Punkte, Entscheidungen und Aktionspunkte. Die Qualität verbessert sich, je klarer die Transkription wird.",
   faqAIQuestions: "Kann ich der KI Fragen zu meiner Transkription stellen?",
   faqAIQuestionsAnswer: "Ja! Sie können mit Ihrer Transkription chatten, indem Sie Fragen stellen. Die KI versteht den Kontext und gibt detaillierte Antworten. Sie können auch Sprache verwenden, um Fragen zu stellen.",
-  faqStorage: "Wo werden meine Aufnahmen gespeichert?",
+  
+  // Session options
+  sessionOptionsTitle: "Wähle deine Sitzungsoption",
+  sessionOptionsSubtitle: "Wähle aus, wie du dein Transkript eingeben möchtest",
+  sessionOptionAudio: "Audio-Aufnahme",
+  sessionOptionAudioDesc: "Nimm dein Meeting oder deine Präsentation mit Mikrofon und/oder Bildschirmaufnahme auf",
+  sessionOptionFile: "Datei hochladen",
+  sessionOptionFileDesc: "Lade ein bestehendes Transkript oder eine Audio-/Videodatei hoch",
+  sessionOptionFileFormats: "Unterstützte Formate:\nTXT, PDF, RTF, HTML, MD",
+  sessionOptionPaste: "Text einfügen",
+  sessionOptionPasteDesc: "Füge Text aus deiner Zwischenablage oder einem anderen Dokument ein",
+  sessionOptionWebPage: "Webseite",
+  sessionOptionWebPageDesc: "Gib eine URL ein, um Text direkt von einer Webseite zu importieren",
+  sessionOptionsNote: "Alle Optionen unterstützen die gleichen KI-Analysefunktionen. Wähle das aus, was am besten zu deiner Situation passt.",
+  
+  // Web page functionality
+  webPageTitle: "Webseite importieren",
+  webPageUrlPlaceholder: "https://beispiel.com/artikel",
+  processWebPage: "Webseite verarbeiten",
+  webPageHelpTitle: "Webseiten-Hilfe",
+  webPageHelpDescription: "Lerne, wie du Webseiten in RecapSmart importierst:",
+  webPageHelpStep1: "Kopiere die URL der Webseite, die du analysieren möchtest",
+  webPageHelpStep2: "Füge die URL in das Eingabefeld oben ein",
+  webPageHelpStep3: "Klicke auf 'Webseite verarbeiten', um den Text zu importieren",
+  webPageHelpStep4: "RecapSmart extrahiert automatisch allen Text und bereitet ihn für die Analyse vor",
+  
+  faqStorage: "Wo wurden meine Aufnahmen gespeichert?",
+  
+  // Storytelling questions popup
+  storytellingQuestionsTitle: "Storytelling Optionen",
+  storytellingQuestionsSubtitle: "Passen Sie Ihre Geschichte an, indem Sie diese optionalen Fragen beantworten:",
+  
+  // Target audience
+  storytellingTargetAudience: "Zielgruppe",
+  storytellingTargetAudienceQuestion: "Für wen ist diese Geschichte gedacht?",
+  storytellingTargetAudiencePlaceholder: "Zielgruppe auswählen oder benutzerdefiniert eingeben...",
+  storytellingTargetAudienceOptions: {
+    internalTeam: "Interne Teammitglieder",
+    management: "Höheres Management",
+    customers: "Potenzielle Kunden/Partner",
+    investors: "Investoren",
+    newEmployees: "Neue Mitarbeiter",
+    generalPublic: "Breitere Öffentlichkeit",
+    academics: "Akademiker/Forscher",
+    competitors: "Wettbewerber",
+    localCommunity: "Lokale Gemeinschaft",
+    alumni: "Alumni oder ehemalige Mitarbeiter",
+    internationalStakeholders: "Internationale Stakeholder",
+    specificInterestGroups: "Spezifische Interessengruppen"
+  },
+  
+  // Main goal
+  storytellingMainGoal: "Hauptziel",
+  storytellingMainGoalQuestion: "Was ist das Hauptziel dieser Geschichte?",
+  storytellingMainGoalPlaceholder: "Hauptziel auswählen oder benutzerdefiniert eingeben...",
+  storytellingMainGoalOptions: {
+    inform: "Informieren",
+    motivate: "Motivieren/Inspirieren",
+    convince: "Überzeugen",
+    celebrate: "Feiern",
+    explain: "Erklären",
+    educate: "Ausbilden",
+    warn: "Warnen",
+    engage: "Einbeziehen",
+    promote: "Bewerben",
+    reflect: "Reflektieren",
+    predict: "Vorhersagen",
+    commemorate: "Gedenken"
+  },
+  
+  // Tone and style
+  storytellingToneStyle: "Ton und Stil",
+  storytellingToneStyleQuestion: "Welchen Ton oder Stil soll die Geschichte haben?",
+  storytellingToneStylePlaceholder: "Ton auswählen oder benutzerdefiniert eingeben...",
+  storytellingToneStyleOptions: {
+    formal: "Formell und sachlich",
+    informal: "Informell und motivierend",
+    inspiring: "Inspirierend und visionär",
+    critical: "Kritisch und analytisch",
+    humorous: "Humorvoll",
+    empathetic: "Einfühlsam und unterstützend",
+    neutral: "Neutral und objektiv",
+    dynamic: "Dynamisch und energisch",
+    warm: "Warm und persönlich",
+    technical: "Technisch und detailliert",
+    narrative: "Narrativ und erzählend",
+    cultureSensitive: "Kultursensibel und adaptiv"
+  },
+  
+  // Length
+  storytellingLength: "Gewünschte Länge",
+  storytellingLengthQuestion: "Wie lang soll die Geschichte ungefähr sein?",
+  storytellingLengthPlaceholder: "Länge auswählen",
+  storytellingLengthOptions: {
+    short: "Kurz",
+    medium: "Mittel", 
+    long: "Lang"
+  },
+  
+  // General
+  storytellingOptional: "Alle Fragen sind optional",
+  storytellingGenerate: "Geschichte generieren",
+  storytellingCancel: "Abbrechen",
+  help: "Hilfe",
   faqStorageAnswer: "Alle Aufnahmen bleiben lokal auf Ihrem Gerät. Wir speichern nichts auf unseren Servern. Ihre Privatsphäre steht an erster Stelle - wir können Ihre Sitzungen nicht sehen, speichern oder verwenden.",
   faqAnonymization: "Wie funktioniert die Anonymisierung?",
   faqAnonymizationAnswer: "RecapSmart kann automatisch Namen und sensible Informationen durch Pseudonyme ersetzen. Sie können Anonymisierungsregeln für Ihre Organisation konfigurieren. Dies ist ideal für Compliance und Datenschutz.",
@@ -371,6 +477,20 @@ export const de = {
   faqTrialPeriodAnswer: "Ja, Sie können RecapSmart 1 Monat lang kostenlos nutzen. Dies gibt Ihnen einen guten Eindruck davon, was RecapSmart kann, bevor Sie sich für ein Upgrade entscheiden.",
   faqCancellation: "Kann ich jederzeit kündigen?",
   faqCancellationAnswer: "Nach den ersten 6 Monaten können Sie jederzeit mit 1 Monat Kündigungsfrist kündigen. Sie behalten Zugang zu allen Funktionen bis zum Ende Ihres Abonnements.",
+  
+  // Neue FAQ-Items
+  faq64Languages: "Wie viele Sprachen unterstützt RecapSmart?",
+  faq64LanguagesAnswer: "RecapSmart unterstützt 64 verschiedene Sprachen für Transkription und Analyse. Sie können in jeder unterstützten Sprache sprechen und Ausgaben in einer anderen Sprache generieren.",
+  
+  faqMultilingual: "Kann ich ein französisches Gespräch analysieren und deutsche Ergebnisse erhalten?",
+  faqMultilingualAnswer: "Ja! Sie können zum Beispiel eine französische Präsentation aufnehmen, die Analyse auf Deutsch durchführen lassen und die App selbst auf Spanisch verwenden. RecapSmart ist vollständig mehrsprachig und flexibel.",
+  
+  faqTeamsTranscript: "Wie importiere ich ein Microsoft Teams-Transkript?",
+  faqTeamsTranscriptAnswer: "Einfach: 1) Laden Sie Ihre Teams-Aufnahme herunter, 2) Öffnen Sie die Transkriptdatei, 3) Wählen Sie den gesamten Text aus und kopieren Sie ihn, 4) Fügen Sie den Text in RecapSmart unter 'Transkript einfügen' ein. RecapSmart verarbeitet es sofort für die Analyse.",
+  
+  // Web page functionality FAQ
+  faqWebPageImport: "Kann ich Text direkt von einer Webseite importieren?",
+  faqWebPageImportAnswer: "Ja! Sie können eine URL eingeben, um Text direkt von einer Webseite zu importieren. RecapSmart holt automatisch allen Text ab und bereitet ihn für die Analyse vor. Dies ist nützlich für Artikel, Blog-Beiträge, Nachrichtenartikel und andere Webinhalte.",
   
   // Story modal translations
   storyTitle: "Unsere Geschichte",
@@ -414,6 +534,21 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   // Cookie info modal translations
   cookieInfoTitle: "Cookie-Informationen",
   cookieInfoClose: "Schließen",
+  
+  // Paste transcript modal translations
+  pasteTranscriptTitle: "Transkript Einfügen",
+  pasteTranscriptDescription: "Fügen Sie Ihr Transkript oder Textinhalt unten ein. Sie können Text aus jeder Quelle kopieren und hier einfügen für sofortige Analyse.",
+  pasteTranscriptPlaceholder: "Fügen Sie Ihren Text hier ein... (Strg+V oder Rechtsklick → Einfügen)",
+  processTranscript: "Transkript Verarbeiten",
+  pasteHelpTitle: "Wie Text Einfügen",
+  pasteHelpDescription: "Folgen Sie diesen einfachen Schritten, um Text für die Analyse einzufügen:",
+  pasteHelpStep1: "Kopieren Sie Text aus jeder Quelle (Dokument, Website, E-Mail, etc.)",
+  pasteHelpStep2: "Klicken Sie auf den 'Transkript Einfügen' Button oben",
+  pasteHelpStep3: "Fügen Sie Ihren Text ein (Strg+V) und klicken Sie auf 'Transkript Verarbeiten'",
+  
+  // Coming soon modal translations
+  comingSoonTitle: "🚀 Kommt Bald!",
+  comingSoonDescription: "Diese Funktion ist noch nicht verfügbar, aber kommt bald!",
   cookieInfoWhatAreCookies: "Was sind Cookies?",
   cookieInfoWhatAreCookiesAnswer: "Cookies sind kleine Textdateien, die auf Ihrem Gerät gespeichert werden, wenn Sie Websites besuchen. Sie helfen der Website, sich daran zu erinnern, was Sie getan haben, und Ihre Präferenzen zu bewahren.",
   cookieInfoWhatWeUse: "Cookies, die wir verwenden",
@@ -442,7 +577,7 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   disclaimerPrivacyBullet1: "🎙️ Aufnahmen: Nur lokal gespeichert, wir können sie nicht sehen",
   disclaimerPrivacyBullet2: "📝 Transkripte: Bleiben auf Ihrem Gerät, nicht in unserer Datenbank",
   disclaimerPrivacyBullet3: "🤖 KI-Ausgabe: Nur Sie können Ihren generierten Inhalt sehen",
-  disclaimerPrivacyBullet4: "🔑 API-Schlüssel: Lokal gespeichert, wir haben keinen Zugriff darauf",
+
   disclaimerPrivacyNote: "Wir speichern absolut nichts von Ihren Sitzungen. Ihr Datenschutz steht an erster Stelle.",
   disclaimerRecommendations: "Empfehlungen",
   disclaimerRecommendation1: "Überprüfen Sie immer generierte Inhalte auf Genauigkeit",
@@ -464,6 +599,7 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   pricingPriceOnRequest: "Preis auf Anfrage",
   pricingMinutesPerSession: "{minutes} Minuten pro Sitzung",
   pricingSessionsPerDay: "{sessions} Sitzungen pro Tag",
+  pricingTranscriptLength: "{length}k Zeichen Transkript",
   pricingUnlimited: "Unbegrenzt",
   pricingFileTypes: "Dateitypen: {types}",
   pricingOnlyTxt: "Nur TXT",
@@ -471,7 +607,8 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   pricingChatWithTranscript: "Chat mit Transkript",
   pricingPodcastGeneration: "Podcast-Generierung",
   pricingPowerPointExport: "PowerPoint-Export",
-  pricingBusinessCaseGenerator: "Business-Case-Generator",
+  pricingBusinessCaseGenerator: "Business Case Generator",
+  pricingWebPageImport: "Webseiten-Import",
   pricingNoPremiumFeatures: "Keine Premium-Funktionen verfügbar",
   pricingCurrentTierButton: "Aktueller Tier",
   pricingAdminOnly: "Nur für Admins",

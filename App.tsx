@@ -1,5 +1,14 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'; 
-import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions } from './types';
+import Footer from './src/components/Footer';
+import * as React from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useModalState } from './src/hooks/useModalState';
+import Modal from './src/components/Modal';
+import CookieModal from './src/components/CookieModal';
+import DisclaimerModal from './src/components/DisclaimerModal';
+import WaitlistModal from './src/components/WaitlistModal';
+import LoginModal from './src/components/LoginModal';
+import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
+import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions } from './types';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
 // Mermaid is ESM-only; import dynamically to avoid type issues
@@ -10,6 +19,7 @@ import LanguageSelector from './src/components/LanguageSelector';
 import SessionOptionsModal from './src/components/SessionOptionsModal';
 // Removed StorytellingQuestionsModal; inline panels are rendered under tabs
 import { getGeminiCode, getBcp47Code, getTotalLanguageCount } from './src/languages';
+import { useTabCache } from './src/hooks/useTabCache';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -207,6 +217,14 @@ const BlogIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+const ExplainIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <path d="M12 17h.01"/>
+    </svg>
+);
+
 const LoadingSpinner: React.FC<{ className?: string; text?: string }> = ({ className = "h-8 w-8", text }) => (
     <div className="flex items-center gap-3">
         <svg className={`animate-spin text-cyan-500 ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -332,7 +350,6 @@ const LoginForm: React.FC<{
           )}
         </div>
       )}
-
       {mode === 'create' && (
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -395,8 +412,7 @@ const LoginForm: React.FC<{
             type="button"
             onClick={() => setMode('login')}
             className="text-cyan-500 hover:text-cyan-600 transition-colors"
-          >
-                            {t('backToLogin')}
+          >                            {t('backToLogin')}
           </button>
         )}
         
@@ -451,7 +467,6 @@ const LoadingOverlay: React.FC<{ text: string }> = ({ text }) => (
       </div>
     </div>
 );
-
 const PodcastPlayer: React.FC<{ script: string; language: 'nl' | 'en'; t: (key: any, params?: any) => string; }> = ({ script, language, t }) => {
     const [playbackState, setPlaybackState] = useState<'idle' | 'playing' | 'paused'>('idle');
     const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -541,7 +556,15 @@ const KeywordExplanationModal: React.FC<{ keyword: string; explanation: string |
 const PowerPointOptionsModal: React.FC<{ 
     isOpen: boolean; 
     onClose: () => void; 
-    onGenerate: (options: { maxSlides: number; language: 'nl' | 'en'; useTemplate: boolean; templateFile?: File | null }) => void; 
+    onGenerate: (options: { 
+        maxSlides: number; 
+        language: 'nl' | 'en'; 
+        useTemplate: boolean; 
+        templateFile?: File | null;
+        targetAudience: string;
+        mainGoal: string;
+        toneStyle: string;
+    }) => void; 
     t: (key: any, params?: any) => string; 
     currentTemplate: File | null;
     onTemplateChange: (file: File | null) => void;
@@ -550,6 +573,9 @@ const PowerPointOptionsModal: React.FC<{
     const [maxSlides, setMaxSlides] = useState(10);
     const [language, setLanguage] = useState<'nl' | 'en'>('nl');
     const [useTemplate, setUseTemplate] = useState(false);
+    const [targetAudience, setTargetAudience] = useState('Interne teamleden');
+    const [mainGoal, setMainGoal] = useState('Informeren en updates geven');
+    const [toneStyle, setToneStyle] = useState('Informerend en neutraal');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -557,11 +583,22 @@ const PowerPointOptionsModal: React.FC<{
             setMaxSlides(10);
             setLanguage('nl');
             setUseTemplate(false);
+            setTargetAudience('Interne teamleden');
+            setMainGoal('Informeren en updates geven');
+            setToneStyle('Informerend en neutraal');
         }
     }, [isOpen]);
 
     const handleGenerate = () => {
-        onGenerate({ maxSlides, language, useTemplate, templateFile: useTemplate ? currentTemplate : null });
+        onGenerate({ 
+            maxSlides, 
+            language, 
+            useTemplate, 
+            templateFile: useTemplate ? currentTemplate : null,
+            targetAudience,
+            mainGoal,
+            toneStyle
+        });
         onClose();
     };
 
@@ -658,6 +695,63 @@ const PowerPointOptionsModal: React.FC<{
                             />
                         </div>
                     </div>
+
+                    {/* Target Audience */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {t('targetAudience')}
+                        </label>
+                        <select 
+                            value={targetAudience} 
+                            onChange={(e) => setTargetAudience(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                        >
+                            <option value="Interne teamleden">{t('internalTeamMembers')}</option>
+                            <option value="Senior management / EXCO">{t('seniorManagement')}</option>
+                            <option value="Potentiële klanten">{t('potentialCustomers')}</option>
+                            <option value="Investeerders">{t('investors')}</option>
+                            <option value="Technische experts">{t('technicalExperts')}</option>
+                            <option value="Algemeen publiek">{t('generalPublic')}</option>
+                        </select>
+                    </div>
+
+                    {/* Main Goal */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {t('mainGoal')}
+                        </label>
+                        <select 
+                            value={mainGoal} 
+                            onChange={(e) => setMainGoal(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                        >
+                            <option value="Informeren en updates geven">{t('informAndUpdate')}</option>
+                            <option value="Overtuigen tot een besluit">{t('convinceToDecide')}</option>
+                            <option value="Trainen en kennis delen">{t('trainAndShare')}</option>
+                            <option value="Probleem presenteren en oplossing voorstellen">{t('presentProblemAndSolution')}</option>
+                            <option value="Voortgang rapporteren">{t('reportProgress')}</option>
+                            <option value="Brainstormen en ideeën genereren">{t('brainstormAndGenerate')}</option>
+                        </select>
+                    </div>
+
+                    {/* Tone/Style */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {t('toneStyle')}
+                        </label>
+                        <select 
+                            value={toneStyle} 
+                            onChange={(e) => setToneStyle(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                        >
+                            <option value="Informerend en neutraal">{t('informativeAndNeutral')}</option>
+                            <option value="Formeel en feitelijk">{t('formalAndFactual')}</option>
+                            <option value="Enthousiast en motiverend">{t('enthusiasticAndMotivating')}</option>
+                            <option value="Kritisch en analytisch">{t('criticalAndAnalytical')}</option>
+                            <option value="Bondig en to-the-point">{t('conciseAndToThePoint')}</option>
+                            <option value="Storytelling-gericht">{t('storytellingOriented')}</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div className="mt-8 flex justify-end gap-3">
@@ -678,9 +772,8 @@ const PowerPointOptionsModal: React.FC<{
         </div>
     );
 };
-
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -717,8 +810,7 @@ interface User {
   uid: string;
   email: string;
   isActive: boolean;
-  isAdmin: boolean;
-  lastLogin: Date | null;
+    lastLogin: Date | null;
   sessionCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -730,8 +822,9 @@ interface User {
 interface AuthState {
   user: User | null;
   isLoading: boolean;
-  isAdmin: boolean;
-}
+  }
+
+// Utility function for copying text to clipboard
 
 // Email helper functions
 const openEmailClient = (to: string, subject: string, body: string) => {
@@ -753,7 +846,7 @@ const openEmailClient = (to: string, subject: string, body: string) => {
   // Check if the URL is too long (browsers typically have limits around 2000-8000 characters)
   if (mailtoUrl.length > 4000) {
     // URL is too long, use clipboard fallback
-    displayToast('Email content too long for mailto link. Content copied to clipboard instead.', 'info');
+    displayToast('Email content too long for mailto link. Content copied to clipboard instead.', 'success');
     copyToClipboard(body);
     return;
   }
@@ -766,14 +859,14 @@ const openEmailClient = (to: string, subject: string, body: string) => {
     if (body.length > maxBodyLength) {
       // Use setTimeout to ensure this runs after the mailto attempt
       setTimeout(() => {
-        displayToast('Email content was truncated due to length. Full content copied to clipboard.', 'info');
+        displayToast('Email content was truncated due to length. Full content copied to clipboard.', 'success');
         copyToClipboard(body);
       }, 100);
     }
   } catch (error) {
     console.error('Failed to open email client:', error);
     // Fallback: copy content to clipboard and show message
-    displayToast('Could not open email client. Content copied to clipboard instead.', 'info');
+    displayToast('Could not open email client. Content copied to clipboard instead.', 'error');
     copyToClipboard(body);
   }
 };
@@ -797,7 +890,7 @@ const openEmailClientWithoutTo = (subject: string, body: string) => {
   // Check if the URL is too long (browsers typically have limits around 2000-8000 characters)
   if (mailtoUrl.length > 4000) {
     // URL is too long, use clipboard fallback
-    displayToast('Email content too long for mailto link. Content copied to clipboard instead.', 'info');
+    displayToast('Email content too long for mailto link. Content copied to clipboard instead.', 'success');
     copyToClipboard(body);
     return;
   }
@@ -810,7 +903,7 @@ const openEmailClientWithoutTo = (subject: string, body: string) => {
     if (body.length > maxBodyLength) {
       // Use setTimeout to ensure this runs after the mailto attempt
       setTimeout(() => {
-        displayToast('Email content was truncated due to length. Full content copied to clipboard.', 'info');
+        displayToast('Email content was truncated due to length. Full content copied to clipboard.', 'success');
         // Also copy the full content to clipboard as a fallback
         copyToClipboard(body);
       }, 100);
@@ -818,7 +911,7 @@ const openEmailClientWithoutTo = (subject: string, body: string) => {
   } catch (error) {
     console.error('Failed to open email client:', error);
     // Fallback: copy content to clipboard and show message
-    displayToast('Could not open email client. Content copied to clipboard instead.', 'info');
+    displayToast('Could not open email client. Content copied to clipboard instead.', 'error');
     copyToClipboard(body);
   }
 };
@@ -913,6 +1006,7 @@ export default function App() {
   useEffect(() => { isListeningRef.current = isListening }, [isListening]);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [showInfoPage, setShowInfoPage] = useState(false);
+  const { getCachedTabContent, resetTabCache, isTabCached } = useTabCache();
 
   // Ensure audio context is resumed on user gesture on iOS
   useEffect(() => {
@@ -974,20 +1068,25 @@ export default function App() {
     return true;
   });
 
-  // Modal states
-  const [showCookieModal, setShowCookieModal] = useState(false);
-  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [showSystemAudioHelp, setShowSystemAudioHelp] = useState(false);
-  const [showStep1Help, setShowStep1Help] = useState(false);
-  const [showStep2Help, setShowStep2Help] = useState(false);
-  const [showFormatsInfo, setShowFormatsInfo] = useState(false);
-  const [showPasteModal, setShowPasteModal] = useState(false);
-  const [showPasteHelp, setShowPasteHelp] = useState(false);
+  // Modal states using useModalState
+  const cookieModal = useModalState();
+  const disclaimerModal = useModalState();
+  const settingsModal = useModalState();
+  const loginModal = useModalState();
+    const systemAudioHelp = useModalState();
+  const step1Help = useModalState();
+  const step2Help = useModalState();
+  const formatsInfo = useModalState();
+  const pasteModal = useModalState();
+  const pasteHelp = useModalState();
+  const waitlistModal = useModalState();
+  const storyModal = useModalState();
+  const teamModal = useModalState();
+  const upgradeModal = useModalState();
+  const sessionOptionsModal = useModalState();
+  const webPageModal = useModalState();
   const [pastedText, setPastedText] = useState('');
-  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+  const comingSoonModal = useModalState();
   
   // Load saved language preferences
   useEffect(() => {
@@ -1021,7 +1120,40 @@ export default function App() {
       if (outputLang) window.localStorage.setItem('outputLang', outputLang);
     }
   }, [language, outputLang]);
+
+  // Load saved language preferences
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedSessionLang = window.localStorage.getItem('sessionLang');
+      const savedOutputLang = window.localStorage.getItem('outputLang');
+      if (savedSessionLang) setLanguage(savedSessionLang);
+      if (savedOutputLang) setOutputLang(savedOutputLang);
+    }
+  }, []);
+
+  // Ensure output language is loaded from localStorage on component mount
+  useEffect(() => {
+    const savedOutputLang = localStorage.getItem('outputLang');
+    if (savedOutputLang && !outputLang) {
+      setOutputLang(savedOutputLang);
+    }
+  }, [outputLang]);
   
+  // Save language preferences when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('uiLang', uiLang);
+    }
+  }, [uiLang]);
+  
+  // Save session and output language when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (language) window.localStorage.setItem('sessionLang', language);
+      if (outputLang) window.localStorage.setItem('outputLang', outputLang);
+    }
+  }, [language, outputLang]);
+
   // Recording time tracking
   const [recordingStartMs, setRecordingStartMs] = useState<number | null>(null);
   const [pauseAccumulatedMs, setPauseAccumulatedMs] = useState<number>(0);
@@ -1071,8 +1203,17 @@ export default function App() {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isLoading: true,
-    isAdmin: false
-  });
+      });
+
+  // Effect to ensure language preferences are loaded after authentication
+  useEffect(() => {
+    if (authState.user && typeof window !== 'undefined' && window.localStorage) {
+      const savedSessionLang = window.localStorage.getItem('sessionLang');
+      const savedOutputLang = window.localStorage.getItem('outputLang');
+      if (savedSessionLang && !language) setLanguage(savedSessionLang);
+      if (savedOutputLang && !outputLang) setOutputLang(savedOutputLang);
+    }
+  }, [authState.user, language, outputLang]);
 
   // Effect to load monthly tokens and sessions when user changes
   const fetchUsage = async () => {
@@ -1113,13 +1254,7 @@ export default function App() {
     fetchUsage();
   }, [authState?.user]);
 
-  // Admin state
-  const [users, setUsers] = useState<User[]>([]);
-  const [userSortKey, setUserSortKey] = useState<'email' | 'status' | 'admin' | 'lastLogin' | 'sessions' | 'tier'>('email');
-  const [userSortAsc, setUserSortAsc] = useState<boolean>(true);
-  const [waitlistSortKey, setWaitlistSortKey] = useState<'email' | 'createdAt'>('createdAt');
-  const [waitlistSortAsc, setWaitlistSortAsc] = useState<boolean>(false);
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
+              const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -1128,6 +1263,13 @@ export default function App() {
   const [executiveSummaryData, setExecutiveSummaryData] = useState<ExecutiveSummaryData | null>(null);
   const [storytellingData, setStorytellingData] = useState<StorytellingData | null>(null);
   const [businessCaseData, setBusinessCaseData] = useState<BusinessCaseData | null>(null);
+  // Explain state
+  const [explainData, setExplainData] = useState<ExplainData | null>(null);
+  const [explainOptions, setExplainOptions] = useState<ExplainOptions>({ 
+    complexityLevel: 'Algemeen publiek (duidelijke taal)', 
+    focusArea: 'Algemeen overzicht', 
+    format: 'Korte paragraaf' 
+  });
   // Quiz state
   
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[] | null>(null);
@@ -1144,7 +1286,7 @@ export default function App() {
 
   const handleGenerateQuiz = async () => {
     // Check transcript length based on user tier
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
     if (!transcriptValidation.allowed) {
       setQuizError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
@@ -1153,21 +1295,7 @@ export default function App() {
     }
     
     try {
-      // Only reset other analysis data if we don't already have quiz data
-      if (!quizQuestions || quizQuestions.length === 0) {
-        setStorytellingData(null);
-        setExecutiveSummaryData(null);
-        setBusinessCaseData(null);
-        setSummary('');
-        setFaq('');
-        setLearningDoc('');
-        setFollowUpQuestions('');
-        setKeywordAnalysis([]);
-        setSentimentAnalysisResult(null);
-        setMindmapMermaid('');
-        setMindmapSvg('');
-        setPodcastScript('');
-      }
+      // Don't reset other analysis data when generating quiz
       setIsGeneratingQuiz(true);
       setQuizError(null);
       setLoadingText('Quiz genereren...');
@@ -1205,7 +1333,7 @@ export default function App() {
 
   const handleGenerateBusinessCase = async (businessCaseType?: string, useInternetVerification?: boolean) => {
     // Check if user has access to business case generation
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
         displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -1225,22 +1353,7 @@ export default function App() {
       const type = businessCaseType || businessCaseData?.businessCaseType || 'Kostenbesparing';
       const useInternet = useInternetVerification !== undefined ? useInternetVerification : (businessCaseData?.useInternetVerification || false);
       
-      // Only reset other analysis data if we don't already have business case data
-      if (!businessCaseData) {
-        setStorytellingData(null);
-        setExecutiveSummaryData(null);
-        setSummary('');
-        setFaq('');
-        setLearningDoc('');
-        setFollowUpQuestions('');
-        setKeywordAnalysis([]);
-        setSentimentAnalysisResult(null);
-        setMindmapMermaid('');
-        setMindmapSvg('');
-        setQuizQuestions([]);
-        setPodcastScript('');
-        setBlogData('');
-      }
+      // Don't reset other analysis data when generating business case
       setLoadingText(t('generating', { type: 'Business Case' }));
       const ai = new GoogleGenAI({ apiKey: apiKey });
       
@@ -1265,10 +1378,8 @@ export default function App() {
       Schrijf helder, zakelijk en overtuigend. Maximaal 600 woorden.`;
       
       const prompt = `${sys}
-
 Business Case Type: ${businessCaseTypeDescriptions[type as keyof typeof businessCaseTypeDescriptions] || type}
 Internet verificatie (grounding): ${useInternet ? 'Ja - vul aan met actuele marktdata en relevante trends van internet' : 'Nee - gebruik alleen de transcript informatie'}
-
 Transcript:
 ${getTranscriptSlice(transcript, 20000)}`;
 
@@ -1324,11 +1435,17 @@ ${getTranscriptSlice(transcript, 20000)}`;
     setActiveView('storytelling');
   };
 
-  // Utility function for copying text to clipboard
-  const copyToClipboard = (text: string) => { 
+  // Clipboard utility from utils
+  // Use imported copyToClipboard and displayToast
+
+  // Utility function for copying content for email
+  const copyToClipboardForEmail = (subject: string, body: string) => {
     try {
-      navigator.clipboard.writeText(text);
-      displayToast('Content copied to clipboard!', 'success');
+      copyToClipboard(body);
+      displayToast(
+        `Content copied to clipboard! \n\nTo send via email:\n1. Open your email client\n2. Paste the content (Ctrl+V or Cmd+V)\n3. Add a subject and recipient\n4. Send!`,
+        'success'
+      );
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
       displayToast('Failed to copy content to clipboard. Please try again.', 'error');
@@ -1337,7 +1454,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
 
   // Utility function to get transcript slice based on user tier
   const getTranscriptSlice = (transcript: string, maxLength: number): string => {
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     const tierLimits = subscriptionService.getTierLimits(effectiveTier);
     
     if (tierLimits.maxTranscriptLength === -1) {
@@ -1345,37 +1462,11 @@ ${getTranscriptSlice(transcript, 20000)}`;
       return transcript;
     }
     
-    // Return transcript up to the tier limit
-    return transcript.slice(0, tierLimits.maxTranscriptLength);
+    // Otherwise, truncate to the smaller of the tier limit and maxLength
+    const limit = Math.min(tierLimits.maxTranscriptLength, maxLength);
+    return transcript.slice(0, limit);
   };
 
-  // Better alternative: Copy to clipboard with helpful instructions
-  const copyToClipboardForEmail = useCallback((subject: string, body: string) => {
-    try {
-      // Copy the full content to clipboard
-      copyToClipboard(body);
-      
-      // Show helpful toast with instructions
-      displayToast(
-        `Content copied to clipboard! 
-        
-To send via email:
-1. Open your email client
-2. Paste the content (Ctrl+V)
-3. Add subject: ${subject}
-4. Add recipient and send`,
-        'success'
-      );
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-      displayToast('Failed to copy content to clipboard. Please try again.', 'error');
-    }
-  }, [copyToClipboard, displayToast]);
-
-
-
-  const [activeAdminTab, setActiveAdminTab] = useState<'waitlist' | 'users'>('waitlist');
-  
   // Waitlist states
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [waitlistEmail, setWaitlistEmail] = useState('');
@@ -1398,7 +1489,6 @@ To send via email:
     }
     return 1;
   });
-
   // Anonymization state
   const [isAnonymized, setIsAnonymized] = useState(false);
   const [anonymizationReport, setAnonymizationReport] = useState<string | null>(null);
@@ -1420,6 +1510,7 @@ To send via email:
   const [webPageUrl, setWebPageUrl] = useState('');
   const [isLoadingWebPage, setIsLoadingWebPage] = useState(false);
   const [webPageError, setWebPageError] = useState<string | null>(null);
+
   // Storytelling and Blog inline option panels
   const [storyOptions, setStoryOptions] = useState<StorytellingOptions>({ targetAudience: '', mainGoal: '', toneStyle: '', length: '' });
   type BlogOptions = { targetAudience: string; mainGoal: string; tone: string; length: string };
@@ -1440,7 +1531,7 @@ To send via email:
   const blogLabels = {
     nl: {
       targetAudience: ['', 'Breder Publiek', 'Brancheprofessionals', 'Potentiële Klanten', 'Ontwikkelaars', 'Onderwijspersoneel', 'Beleidsmakers', 'Studenten', 'Mediacreatieven', 'Investeerders', 'Senioren', 'Jongeren', 'Culturele gemeenschappen'],
-      mainGoal: ['', 'Informeren', 'Overtuigen', 'Betrokkenheid Creëren', 'Lead Genereren', 'Thought Leadership', 'Educatie', 'Inspiratie', 'Waarschuwing', 'Netwerken', 'Branding', 'Reflectie', 'Voorspelling'],
+      mainGoal: ['', 'Informeren', 'Overtuigen', 'Betrokkenheid Creëren', 'Lead Genereren', 'Thought Leadership', 'Educatie', 'Inspiration', 'Waarschuwing', 'Netwerken', 'Branding', 'Reflectie', 'Voorspelling'],
       tone: ['', 'Informerend', 'Conversational', 'Formeel', 'Enthousiast', 'Expert', 'Verhalend', 'Empathisch', 'Humoristisch', 'Visionair', 'Kritisch', 'Cultuurgevoelig', 'Optimistisch'],
       length: ['', 'Kort (±300 woorden)', 'Gemiddeld (±500 woorden)', 'Lang (±750 woorden)']
     },
@@ -1537,17 +1628,7 @@ To send via email:
         }
     }, []);
 
-    useEffect(() => {
-        if (uiLang) localStorage.setItem('uiLang', uiLang);
-    }, [uiLang]);
-
-    useEffect(() => {
-        if (language) localStorage.setItem('sessionLang', language);
-    }, [language]);
-
-    useEffect(() => {
-        if (outputLang) localStorage.setItem('outputLang', outputLang);
-    }, [outputLang]);
+    // Language preferences are already handled in the main useEffect hooks above
 
     // Firebase Auth State Listener
     useEffect(() => {
@@ -1561,8 +1642,7 @@ To send via email:
                         setAuthState({
                             user: { ...userData, uid: firebaseUser.uid },
                             isLoading: false,
-                            isAdmin: userData.isAdmin
-                        });
+                                                    });
                         
                         // Load user subscription tier
                         const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
@@ -1571,13 +1651,7 @@ To send via email:
                         // Ensure user is redirected to start session screen after auth
                         setShowInfoPage(false);
                         
-                        // Load users if admin
-                        if (userData.isAdmin) {
-                            // Bypass admin guard immediately after auth state change to avoid stale state race
-                            await loadUsers({ bypassAdminCheck: true });
-                            await loadWaitlist({ bypassAdminCheck: true });
-                        }
-
+                        
                         // Load daily usage counters
                         try {
                           const usage = await getUserDailyUsage(firebaseUser.uid);
@@ -1590,16 +1664,14 @@ To send via email:
                     setAuthState({
                         user: null,
                         isLoading: false,
-                        isAdmin: false
-                    });
+                                            });
                 }
             } else {
                 // User is signed out
                 setAuthState({
                     user: null,
                     isLoading: false,
-                    isAdmin: false
-                });
+                                    });
                 setUserSubscription(SubscriptionTier.FREE);
                 setDailyAudioCount(0);
                 setDailyUploadCount(0);
@@ -1637,17 +1709,7 @@ To send via email:
         localStorage.setItem('theme', theme);
     }, [theme]);
 
-    useEffect(() => {
-        localStorage.setItem('uiLang', uiLang);
-    }, [uiLang]);
-
-    // Effect voor admin panel beveiliging
-    useEffect(() => {
-        if (showAdminPanel && (!authState.user || !authState.isAdmin)) {
-            setShowAdminPanel(false);
-            displayToast('Admin toegang ingetrokken. Panel gesloten.', 'info');
-        }
-    }, [authState.user, authState.isAdmin, showAdminPanel]);
+    // UI language is already handled in the main useEffect hook above
 
   const cleanupStreams = useCallback(() => {
     if (animationFrameIdRef.current) {
@@ -1752,7 +1814,7 @@ To send via email:
     }
     
     // Check transcript length based on user tier for chat
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
     if (!transcriptValidation.allowed) {
         displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
@@ -1801,7 +1863,7 @@ To send via email:
   
   const handleSendMessage = useCallback(async () => {
     // Check if user has access to chat
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'chat')) {
         displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -2021,7 +2083,7 @@ To send via email:
     }
 
     // Admins are always DIAMOND
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     // Check subscription limits using total daily sessions across types
     const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
     const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
@@ -2245,7 +2307,6 @@ To send via email:
       setPauseStartMs(null);
     }
   };
-
     // Text extraction functions
     const extractTextFromPDF = async (file: File): Promise<string> => {
         return new Promise(async (resolve, reject) => {
@@ -2367,7 +2428,6 @@ To send via email:
             reader.readAsText(file);
         });
     };
-
     const extractTextFromMarkdown = async (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -2413,7 +2473,7 @@ To send via email:
         }
 
         // Preflight subscription checks for upload
-        const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+        const effectiveTier = userSubscription;
         const fileType = (file.type || '').toLowerCase();
         const fileName = (file.name || '').toLowerCase();
         const isTxt = fileType === 'text/plain' || fileName.endsWith('.txt');
@@ -2535,7 +2595,7 @@ To send via email:
         }
 
         // Preflight subscription checks for paste
-        const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+        const effectiveTier = userSubscription;
         
         // Enforce daily session limits before processing
         const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
@@ -2580,7 +2640,7 @@ To send via email:
             }
             setActiveView('transcript');
             setLoadingText('');
-            setShowPasteModal(false);
+            pasteModal.close();
         } catch (err: any) {
             console.error("Fout bij verwerken van geplakte tekst:", err);
             setError(`${t("fileReadFailed")}: ${err.message || t("unknownError")}`);
@@ -2689,13 +2749,11 @@ To send via email:
             setIsLoadingWebPage(false);
         }
     };
-
-
     const handleAnonymizeTranscript = async () => {
         // Controleer of er anonimisatie regels zijn ingesteld
         if (anonymizationRules.length === 0 || anonymizationRules.every(rule => !rule.originalText.trim())) {
             setError('Geen anonimisatie regels ingesteld. Stel eerst de regels in via het instellingen scherm.');
-            setShowSettingsModal(true);
+            settingsModal.open();
             return;
         }
 
@@ -2833,7 +2891,7 @@ const handleGenerateAnalysis = async (type: ViewType) => {
     }
     
     // Check transcript length based on user tier
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
     if (!transcriptValidation.allowed) {
         const errorMsg = transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.';
@@ -2841,22 +2899,6 @@ const handleGenerateAnalysis = async (type: ViewType) => {
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
-    
-    // Reset other analysis data when generating new analysis
-    setStorytellingData(null);
-    setExecutiveSummaryData(null);
-    setBusinessCaseData(null);
-    setSummary('');
-    setFaq('');
-    setLearningDoc('');
-    setFollowUpQuestions('');
-    setBlogData('');
-    setKeywordAnalysis([]);
-    setSentimentAnalysisResult(null);
-    setMindmapMermaid('');
-    setMindmapSvg('');
-    setQuizQuestions([]);
-    setPodcastScript('');
     
     setLoadingText(t('generating', { type }));
     
@@ -2904,20 +2946,7 @@ const handleKeywordClick = async (keyword: string) => {
     setIsFetchingExplanation(true);
     setKeywordExplanation(null);
     
-    // Reset other analysis data when generating new keyword explanation
-    setStorytellingData(null);
-    setExecutiveSummaryData(null);
-    setBusinessCaseData(null);
-    setSummary('');
-    setFaq('');
-    setLearningDoc('');
-    setFollowUpQuestions('');
-    setBlogData('');
-    setSentimentAnalysisResult(null);
-    setMindmapMermaid('');
-    setMindmapSvg('');
-    setQuizQuestions([]);
-    setPodcastScript('');
+    // Don't reset other analysis data when generating keyword explanation
 
     if (!apiKey) {
         displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
@@ -2926,7 +2955,7 @@ const handleKeywordClick = async (keyword: string) => {
     }
     
     // Check transcript length based on user tier
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
     if (!transcriptValidation.allowed) {
         displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
@@ -2964,7 +2993,9 @@ const handleKeywordClick = async (keyword: string) => {
 };
 const handleGenerateKeywordAnalysis = async () => {
     setActiveView('keyword');
-    if (keywordAnalysis) return;
+    if (keywordAnalysis && keywordAnalysis.length > 0) return;
+    // Reset current keyword data to show loader properly
+    setKeywordAnalysis(null);
 
     if (!transcript.trim()) {
         setKeywordAnalysis([]);
@@ -2978,27 +3009,14 @@ const handleGenerateKeywordAnalysis = async () => {
     }
     
     // Check transcript length based on user tier
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
     if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement');
         return;
     }
     
-    // Reset other analysis data when generating new keyword analysis
-    setStorytellingData(null);
-    setExecutiveSummaryData(null);
-    setBusinessCaseData(null);
-    setSummary('');
-    setFaq('');
-    setLearningDoc('');
-    setFollowUpQuestions('');
-    setSentimentAnalysisResult(null);
-    setMindmapMermaid('');
-    setMindmapSvg('');
-    setQuizQuestions([]);
-    setPodcastScript('');
-    
+    // Don't reset other analysis data when generating keyword analysis
     setLoadingText(t('generating', { type: t('keywordAnalysis') }));
     setError(null);
     try {
@@ -3062,27 +3080,14 @@ const handleAnalyzeSentiment = async () => {
     }
     
     // Check transcript length based on user tier
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
     if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement');
         return;
     }
     
-    // Reset other analysis data when generating new sentiment analysis
-    setStorytellingData(null);
-    setExecutiveSummaryData(null);
-    setBusinessCaseData(null);
-    setSummary('');
-    setFaq('');
-    setLearningDoc('');
-    setFollowUpQuestions('');
-    setBlogData('');
-    setKeywordAnalysis([]);
-    setMindmapMermaid('');
-    setMindmapSvg('');
-    setQuizQuestions([]);
-    setPodcastScript('');
+    // Don't reset other analysis data when generating sentiment analysis
     
     setIsAnalyzingSentiment(true);
     setLoadingText(t('analyzingSentiment'));
@@ -3135,7 +3140,7 @@ const handleAnalyzeSentiment = async () => {
 
 const handleGeneratePodcast = async () => {
     // Check if user has access to podcast generation
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'podcast')) {
         displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -3161,20 +3166,7 @@ const handleGeneratePodcast = async () => {
         return;
     }
     
-    // Reset other analysis data when generating new podcast script
-    setStorytellingData(null);
-    setExecutiveSummaryData(null);
-    setBusinessCaseData(null);
-    setSummary('');
-    setFaq('');
-    setLearningDoc('');
-    setFollowUpQuestions('');
-    setBlogData('');
-    setKeywordAnalysis([]);
-    setSentimentAnalysisResult(null);
-    setMindmapMermaid('');
-    setMindmapSvg('');
-    setQuizQuestions([]);
+    // Don't reset other analysis data when generating podcast script
     
     setLoadingText(t('podcastGenerating'));
     setError(null);
@@ -3184,17 +3176,14 @@ const handleGeneratePodcast = async () => {
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `You are a podcast scriptwriter for the 'RecapSmart Podcast', hosted by 'Albert'. Use the **${inputLanguage}** transcript below to create an engaging, natural-sounding script in **${outputLanguage}** that can be spoken aloud directly.
-
 Structure:
 1.  [INTRO]: Welcome listeners and introduce the main topic of today concisely.
 2.  [CORE]: Go deeper using the key discussions, findings and insights from the transcript to form a compelling story or clear analysis.
 3.  [CLOSING]: Summarize the key points. Give concrete, actionable tips or action items. End with a friendly sign-off.
-
 Important:
 - Write as a continuous, natural spoken narrative in ${outputLanguage}.
 - Do not include headings like "[INTRO]" in the output.
 - Output only the text Albert will speak, with no extra formatting.
-
 Here is the transcript:
 ---
 ${transcript}
@@ -3262,7 +3251,7 @@ ${transcript}
 
   const saveAnonymizationRules = () => {
     localStorage.setItem('anonymization_rules', JSON.stringify(anonymizationRules));
-    setShowSettingsModal(false);
+    settingsModal.close();
   };
 
   const getNextEmployeeNumber = (rules: AnonymizationRule[]): number => {
@@ -3301,13 +3290,12 @@ ${transcript}
         setAuthState({
           user: { ...userData, uid: user.uid },
           isLoading: false,
-          isAdmin: userData.isAdmin
-        });
+                  });
         
         // Load user subscription tier
         const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
         setUserSubscription(tier);
-        setShowLoginModal(false);
+        loginModal.close();
         
         // Navigate to start session screen after login
         setShowInfoPage(false);
@@ -3321,8 +3309,7 @@ ${transcript}
         const newUserData = {
           email: email,
           isActive: true,
-          isAdmin: false, // Default to non-admin for security
-          lastLogin: serverTimestamp(),
+                    lastLogin: serverTimestamp(),
           sessionCount: 0,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
@@ -3336,12 +3323,11 @@ ${transcript}
           setAuthState({
             user: { ...newUserData, uid: user.uid },
             isLoading: false,
-            isAdmin: false
-          });
+                      });
           
           // Set default subscription tier for new user
           setUserSubscription(SubscriptionTier.FREE);
-          setShowLoginModal(false);
+          loginModal.close();
           
           // Navigate to start session screen after account creation
           setShowInfoPage(false);
@@ -3378,8 +3364,8 @@ ${transcript}
       // Creating new account
       
       // Check if user exists in database
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', email));
+      const Ref = collection(db, 'users');
+      const q = query(Ref, where('email', '==', email));
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
@@ -3443,13 +3429,12 @@ ${transcript}
       setAuthState({
         user: { ...userData, uid: user.uid },
         isLoading: false,
-        isAdmin: userData.isAdmin
-      });
+              });
       
       // Load user subscription tier
       const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
       setUserSubscription(tier);
-      setShowLoginModal(false);
+      loginModal.close();
       
       // Account creation successful
     } catch (error: any) {
@@ -3489,8 +3474,7 @@ ${transcript}
       setAuthState({
         user: null,
         isLoading: false,
-        isAdmin: false
-      });
+              });
       setUserSubscription(SubscriptionTier.FREE);
       reset();
     } catch (error: any) {
@@ -3501,26 +3485,25 @@ ${transcript}
   const loadUsers = async (options?: { bypassAdminCheck?: boolean }) => {
     const bypass = options?.bypassAdminCheck === true;
     // Controleer of gebruiker admin is
-    if (!bypass && (!authState.user || !authState.isAdmin)) {
+    if (!bypass && (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND)) {
       console.error('Unauthorized access to loadUsers');
       displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
       return;
     }
 
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, orderBy('createdAt', 'desc'));
+      const Ref = collection(db, 'users');
+      const q = query(Ref, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       
-      const usersData: User[] = [];
+      const Data: User[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        usersData.push({
+        Data.push({
           uid: doc.id,
           email: data.email,
           isActive: data.isActive,
-          isAdmin: data.isAdmin,
-          lastLogin: data.lastLogin?.toDate() || null,
+                    lastLogin: data.lastLogin?.toDate() || null,
           sessionCount: data.sessionCount || 0,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
@@ -3530,16 +3513,16 @@ ${transcript}
         });
       });
       
-      setUsers(usersData);
+      (Data);
     } catch (error: any) {
-      console.error('Load users error:', error);
+      console.error('Load  error:', error);
               displayToast('Fout bij laden van gebruikers.', 'error');
     }
   };
 
   const addUser = async (email: string) => {
     // Controleer of gebruiker admin is
-    if (!authState.user || !authState.isAdmin) {
+    if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to addUser');
       displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
       return;
@@ -3550,7 +3533,6 @@ ${transcript}
       await setDoc(userRef, {
         email,
         isActive: true,
-        isAdmin: false,
         lastLogin: null,
         sessionCount: 0,
         createdAt: serverTimestamp(),
@@ -3570,7 +3552,7 @@ ${transcript}
 
   const toggleUserStatus = async (uid: string, isActive: boolean) => {
     // Controleer of gebruiker admin is
-    if (!authState.user || !authState.isAdmin) {
+    if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to toggleUserStatus');
       displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
       return;
@@ -3585,152 +3567,6 @@ ${transcript}
               displayToast(`Gebruiker status succesvol bijgewerkt!`, 'success');
     } catch (error: any) {
       console.error('Toggle user status error:', error);
-              displayToast('Fout bij bijwerken van gebruiker status.', 'error');
-    }
-  };
-
-  const resetUserPassword = async (email: string) => {
-    // Controleer of gebruiker admin is
-    if (!authState.user || !authState.isAdmin) {
-      console.error('Unauthorized access to resetUserPassword');
-      displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
-      return false;
-    }
-
-    try {
-      await sendPasswordResetEmail(auth, email);
-              displayToast(`Wachtwoord reset email verzonden naar ${email}`, 'success');
-      return true;
-    } catch (error: any) {
-      console.error('Reset password error:', error);
-              displayToast('Fout bij verzenden van wachtwoord reset email.', 'error');
-      throw error;
-    }
-  };
-
-  const exportUsersToCsv = () => {
-    const rows = [
-      ['email', 'status', 'admin', 'tier', 'lastLogin', 'sessions']
-    ];
-    users.forEach(u => {
-      rows.push([
-        u.email,
-        u.isActive ? 'actief' : 'uitgeschakeld',
-        u.isAdmin ? 'ja' : 'nee',
-        String(u.subscriptionTier || 'free'),
-        u.lastLogin ? new Date(u.lastLogin).toISOString() : '',
-        String(u.sessionCount || 0)
-      ]);
-    });
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `users_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    displayToast('Users CSV file downloaded successfully!', 'success');
-  };
-
-  const exportWaitlistToCsv = () => {
-    const rows = [
-      ['email', 'createdAt', 'tier']
-    ];
-    waitlist.forEach((w: any) => {
-      rows.push([
-        w.email,
-        w.createdAt?.toDate?.() ? w.createdAt.toDate().toISOString() : '',
-        'Wachtend'
-      ]);
-    });
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `waitlist_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    displayToast('Waitlist CSV file downloaded successfully!', 'success');
-  };
-
-  const updateUserTier = async (uid: string, tier: SubscriptionTier) => {
-    if (!authState.user || !authState.isAdmin) {
-      console.error('Unauthorized access to updateUserTier');
-      displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
-      return;
-    }
-    try {
-      await updateDoc(doc(db, 'users', uid), {
-        subscriptionTier: tier,
-        updatedAt: serverTimestamp()
-      });
-      
-      // Update local state if updating current user's tier
-      if (uid === authState.user?.uid) {
-        setUserSubscription(tier);
-      }
-      
-      await loadUsers();
-      displayToast('Tier bijgewerkt', 'success');
-    } catch (e) {
-      console.error('Update tier error:', e);
-      displayToast('Fout bij wijzigen van tier.', 'error');
-    }
-  };
-
-  // Sync users between Firebase Auth and Firestore
-      const syncUsersWithFirebase = async () => {
-        // Controleer of gebruiker admin is
-        if (!authState.user || !authState.isAdmin) {
-          console.error('Unauthorized access to syncUsersWithFirebase');
-          displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
-          return;
-        }
-
-        try {
-            console.log('Starting user synchronization...');
-            
-            // Get all users from Firestore
-            const usersRef = collection(db, 'users');
-            const querySnapshot = await getDocs(usersRef);
-            
-            let syncCount = 0;
-            
-            for (const docSnapshot of querySnapshot.docs) {
-                const userData = docSnapshot.data();
-                const uid = docSnapshot.id;
-                
-                // Check if user has a UID field
-                if (!userData.uid) {
-                    console.log(`User ${userData.email} missing UID, updating...`);
-                    
-                    try {
-                        await updateDoc(doc(db, 'users', uid), {
-                            uid: uid,
-                            updatedAt: serverTimestamp()
-                        });
-                        syncCount++;
-                    } catch (updateError) {
-                        console.error(`Error updating UID for ${userData.email}:`, updateError);
-                    }
-                }
-            }
-            
-            if (syncCount > 0) {
-                console.log(`Synchronized ${syncCount} users`);
-                await loadUsers(); // Refresh user list
-            } else {
-                console.log('All users are already synchronized');
-            }
-            
-            return syncCount;
-        } catch (error: any) {
             console.error('User synchronization error:', error);
             throw error;
         }
@@ -3757,7 +3593,7 @@ ${transcript}
   const loadWaitlist = async (options?: { bypassAdminCheck?: boolean }) => {
     const bypass = options?.bypassAdminCheck === true;
     // Controleer of gebruiker admin is voor wachtlijst beheer
-    if (!bypass && (!authState.user || !authState.isAdmin)) {
+    if (!bypass && (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND)) {
       console.error('Unauthorized access to loadWaitlist');
       return;
     }
@@ -3770,15 +3606,21 @@ ${transcript}
         ...doc.data()
       }));
       setWaitlist(waitlistData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading waitlist:', error);
-              displayToast('Fout bij laden van wachtlijst.', 'error');
+      let msg = 'Fout bij laden van wachtlijst.';
+      if (error.code === 'permission-denied' || error.message?.includes('insufficient permissions')) {
+        msg = 'Fout: onvoldoende rechten om de wachtlijst te laden.';
+      } else if (error.message) {
+        msg += ` (${error.message})`;
+      }
+      displayToast(msg, 'error');
     }
   };
 
   const activateWaitlistUsers = async () => {
     // Controleer of gebruiker admin is
-    if (!authState.user || !authState.isAdmin) {
+    if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to activateWaitlistUsers');
       displayToast('Geen toegang tot wachtlijst beheer. Admin rechten vereist.', 'error');
       return;
@@ -3793,11 +3635,10 @@ ${transcript}
       for (const userId of selectedWaitlistUsers) {
         const userData = waitlist.find(w => w.id === userId);
         if (userData) {
-          // Add to users collection
+          // Add to  collection
           await addDoc(collection(db, 'users'), {
             email: userData.email,
             isActive: true,
-            isAdmin: false,
             lastLogin: null,
             sessionCount: 0,
             createdAt: serverTimestamp(),
@@ -3815,14 +3656,13 @@ ${transcript}
       setSelectedWaitlistUsers([]);
               displayToast(`${selectedWaitlistUsers.length} gebruiker(s) succesvol geactiveerd!`, 'success');
     } catch (error) {
-      console.error('Error activating users:', error);
+      console.error('Error activating :', error);
               displayToast('Fout bij activeren van gebruikers.', 'error');
     }
   };
-
   const removeFromWaitlist = async (userId: string) => {
     // Controleer of gebruiker admin is
-    if (!authState.user || !authState.isAdmin) {
+    if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to removeFromWaitlist');
       displayToast('Geen toegang tot wachtlijst beheer. Admin rechten vereist.', 'error');
       return;
@@ -3840,7 +3680,7 @@ ${transcript}
   // Email invitation functions
   const sendInvitationEmail = async (email: string) => {
     // Controleer of gebruiker admin is
-    if (!authState.user || !authState.isAdmin) {
+    if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to sendInvitationEmail');
       displayToast('Geen toegang tot email functies. Admin rechten vereist.', 'error');
       return;
@@ -3869,7 +3709,7 @@ Het RecapSmart Team`;
 
   const sendInvitationEmails = async (userIds: string[]) => {
     // Controleer of gebruiker admin is
-    if (!authState.user || !authState.isAdmin) {
+    if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to sendInvitationEmails');
       displayToast('Geen toegang tot email functies. Admin rechten vereist.', 'error');
       return;
@@ -3958,9 +3798,17 @@ Het RecapSmart Team`;
     return true;
   };
 
-  const handleGeneratePresentationWithOptions = async (options: { maxSlides: number; language: 'nl' | 'en'; useTemplate: boolean; templateFile?: File | null }) => {
+  const handleGeneratePresentationWithOptions = async (options: { 
+    maxSlides: number; 
+    language: 'nl' | 'en'; 
+    useTemplate: boolean; 
+    templateFile?: File | null;
+    targetAudience: string;
+    mainGoal: string;
+    toneStyle: string;
+  }) => {
     // Check if user has access to PowerPoint export
-    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+    const effectiveTier = userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'exportPpt')) {
         displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -3990,6 +3838,12 @@ Het RecapSmart Team`;
 
 **Maximum aantal slides:** ${options.maxSlides} - Houd de presentatie binnen deze limiet.
 
+**Doelgroep:** ${options.targetAudience} - Pas de presentatie aan voor deze specifieke doelgroep.
+
+**Hoofddoel:** ${options.mainGoal} - Structureer de presentatie om dit doel te bereiken.
+
+**Toon/Stijl:** ${options.toneStyle} - Gebruik deze toon en stijl door de hele presentatie.
+
 **Structuur van de Presentatie (verwijderde slides: Status & Datum, Aanwezigen):**
 
 1.  **Titelslide:** Een pakkende hoofdtitel en een informatieve ondertitel.
@@ -4004,7 +3858,7 @@ Het RecapSmart Team`;
     *   Genereer een algemene \`imageStylePrompt\`: een consistente, professionele en speelse visuele stijl.
     *   Genereer voor *elke* inhoudelijke slide een unieke, creatieve \`imagePrompt\` in het Engels die abstract, conceptueel of metaforisch past bij de inhoud.
 
-**BELANGRIJK:** Houd alle titels en bullet points relatief kort en bondig. Zorg voor volledige, correcte data voor de to-do lijst. Respecteer de taal en het maximum aantal slides.
+**BELANGRIJK:** Houd alle titels en bullet points relatief kort en bondig. Zorg voor volledige, correcte data voor de to-do lijst. Respecteer de taal en het maximum aantal slides. Pas de inhoud aan op basis van de doelgroep, het hoofddoel en de gewenste toon/stijl.
 
 Analyseer de volgende transcriptie en produceer het JSON-object.
 
@@ -4170,7 +4024,6 @@ ${transcript}
     pptx.writeFile({ fileName });
     return { fileName, slideCount: (pptx as any).slides.length };
 };
-  
   const handleTranscribe = async () => {
     if (!audioChunksRef.current.length) {
       setError(t("noAudioToTranscribe"));
@@ -4438,7 +4291,7 @@ ${transcript}
   const renderAnalysisView = () => {
     const handleGenerateExecutiveSummary = async () => {
       // Check transcript length based on user tier
-      const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+      const effectiveTier = userSubscription;
       const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
       if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
@@ -4447,22 +4300,7 @@ ${transcript}
       }
       
       try {
-        // Only reset other analysis data if we don't already have executive summary data
-        if (!executiveSummaryData) {
-          setStorytellingData(null);
-          setBusinessCaseData(null);
-          setSummary('');
-          setFaq('');
-          setLearningDoc('');
-          setFollowUpQuestions('');
-          setBlogData('');
-          setKeywordAnalysis([]);
-          setSentimentAnalysisResult(null);
-          setMindmapMermaid('');
-          setMindmapSvg('');
-          setQuizQuestions([]);
-          setPodcastScript('');
-        }
+        // Don't reset other analysis data when generating executive summary
         setLoadingText(t('generating', { type: 'Executive summary' }));
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const sys = `Act as a seasoned McKinsey-style business analyst creating an extremely concise one-slide Executive Summary in OSC-R-B-C format (Objective, Situation, Complication, Resolution, Benefits, Call to Action). Use at most 1-3 short sentences per section. If a section is not explicitly present, output "[Niet expliciet besproken]". Return ONLY valid JSON with keys: objective, situation, complication, resolution, benefits, call_to_action.`;
@@ -4499,10 +4337,9 @@ ${transcript}
         setLoadingText('');
       }
     };
-
     async function handleGenerateStorytelling(options?: StorytellingOptions) {
       // Check transcript length based on user tier
-      const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+      const effectiveTier = userSubscription;
       const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
       if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
@@ -4511,22 +4348,7 @@ ${transcript}
       }
       
       try {
-        // Only reset other analysis data if we don't already have storytelling data
-        if (!storytellingData) {
-          setExecutiveSummaryData(null);
-          setBusinessCaseData(null);
-          setSummary('');
-          setFaq('');
-          setLearningDoc('');
-          setFollowUpQuestions('');
-          setBlogData('');
-          setKeywordAnalysis([]);
-          setSentimentAnalysisResult(null);
-          setMindmapMermaid('');
-          setMindmapSvg('');
-          setQuizQuestions([]);
-          setPodcastScript('');
-        }
+        // Don't reset other analysis data when generating storytelling
         setLoadingText(t('generating', { type: 'Storytelling' }));
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const inputLanguage = getGeminiCode(language || 'en');
@@ -4587,7 +4409,7 @@ ${transcript}
 
     const handleGenerateBlog = async () => {
       // Check transcript length based on user tier
-      const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+      const effectiveTier = userSubscription;
       const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
       if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
@@ -4597,15 +4419,13 @@ ${transcript}
       
       try {
         // Don't reset other analysis data when generating blog
-        // This allows users to keep other analyses while generating blog content
+        // This allows  to keep other analyses while generating blog content
         setLoadingText(t('generating', { type: 'Blog' }));
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const sys = `Act as an experienced content marketer/blog writer. Analyze the **${inputLanguage}** transcript thoroughly to identify key topics, discussion points, conclusions and insights. Generate a complete blog post in **${outputLanguage}** that effectively communicates the core message of the transcript to a broad audience.
-
 IMPORTANT: Start DIRECTLY with the title (H1), without introduction or explanation about how the blog was written.
-
 Blog Post Structure:
 # [Catchy Title] - Start directly with the title
 [Directly the first paragraph of the blog, without introduction about what will be covered]
@@ -4642,6 +4462,79 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
       }
     };
 
+    const handleGenerateExplain = async (options: ExplainOptions) => {
+      // Check transcript length based on user tier
+      const effectiveTier = userSubscription;
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+      if (!transcriptValidation.allowed) {
+        setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+      }
+      
+      try {
+        setLoadingText(t('generating', { type: 'Explain' }));
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        
+        const complexityInstructions = {
+          'Beginner (basisconcepten)': 'Use basic concepts and simple language. Avoid jargon.',
+          'Algemeen publiek (duidelijke taal)': 'Use clear, accessible language. Explain technical terms.',
+          'Teamleden (specifieke context)': 'Use team-specific context and terminology.',
+          'Expert (technisch/diepgaand)': 'Use technical language and deep analysis.',
+          'Kind van 5 (extreem eenvoudig)': 'Use extremely simple language. Explain everything as if to a 5-year-old.',
+          '5-Year-Old (extremely simple)': 'Use extremely simple language. Explain everything as if to a 5-year-old.'
+        };
+        
+        const formatInstructions = {
+          'Korte paragraaf': 'Write in short, clear paragraphs.',
+          'Opsomming (bullet points)': 'Use bullet points and lists for clarity.',
+          'Vraag & Antwoord stijl': 'Structure as questions and answers.',
+          'Stap-voor-stap handleiding': 'Provide step-by-step instructions.'
+        };
+        
+        const sys = `Act as an expert educator. Analyze the **${inputLanguage}** transcript and create a clear explanation in **${outputLanguage}** based on the specified requirements.
+
+Requirements:
+- Complexity Level: ${complexityInstructions[options.complexityLevel as keyof typeof complexityInstructions] || 'Use clear, accessible language'}
+- Focus Area: ${options.focusArea}
+- Format: ${formatInstructions[options.format as keyof typeof formatInstructions] || 'Write in clear paragraphs'}
+
+IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanation about how it was written.`;
+        
+        const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
+        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        
+        // Track token usage
+        const promptTokens = tokenCounter.countPromptTokens(prompt);
+        const responseTokens = tokenCounter.countResponseTokens(res.text);
+        const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
+        
+        try {
+          if (authState.user) {
+            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
+          }
+        } catch {}
+
+        let text = res.text || '';
+        text = text.replace(/```[a-z]*|```/gi, '').trim();
+        
+        setExplainData({
+          complexityLevel: options.complexityLevel,
+          focusArea: options.focusArea,
+          format: options.format,
+          explanation: text
+        });
+        
+        setActiveView('explain');
+      } catch (e: any) {
+        setError(`${t('generationFailed', { type: 'Explain' })}: ${e.message || t('unknownError')}`);
+      } finally {
+        setLoadingText('');
+      }
+    };
+
     const renderMindmapView = () => {
       if (!transcript.trim()) return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
       if (!mindmapMermaid) {
@@ -4650,7 +4543,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
             <button
               onClick={async () => {
                 // Check transcript length based on user tier
-                const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+                const effectiveTier = userSubscription;
                 const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
                 if (!transcriptValidation.allowed) {
                   setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
@@ -4752,7 +4645,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
         { id: 'podcast', type: 'view', icon: PodcastIcon, label: () => t('podcast') },
         { id: 'presentation', type: 'action', icon: PresentationIcon, label: () => t('exportPPT'), onClick: () => {
             // Check if user has access to PowerPoint export
-            const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+            const effectiveTier = userSubscription;
                 if (!subscriptionService.isFeatureAvailable(effectiveTier, 'exportPpt')) {
         displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -4762,7 +4655,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
         }, disabled: () => isProcessing || !transcript.trim() },
         { id: 'businessCase', type: 'action', icon: BusinessCaseIcon, label: () => t('businessCase'), onClick: () => {
             // Check if user has access to business case generation
-            const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+            const effectiveTier = userSubscription;
                 if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
         displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -4782,21 +4675,47 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
         { id: 'followUp', type: 'view', icon: FollowUpIcon, label: () => t('followUp') },
         { id: 'mindmap', type: 'view', icon: MindmapIcon, label: () => t('mindmap') },
         { id: 'storytelling', type: 'view', icon: StorytellingIcon, label: () => t('storytelling') },
-        { id: 'blog', type: 'view', icon: BlogIcon, label: () => t('blog') }
+        { id: 'blog', type: 'view', icon: BlogIcon, label: () => t('blog') },
+        { id: 'explain', type: 'view', icon: ExplainIcon, label: () => t('explain') }
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, podcast: podcastScript, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '' };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, podcast: podcastScript, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '' };
 
     const handleTabClick = (view: ViewType) => {
-        if (['summary', 'faq', 'learning', 'followUp'].includes(view)) handleGenerateAnalysis(view);
-        else if (view === 'exec') handleGenerateExecutiveSummary();
-        else if (view === 'quiz') setActiveView('quiz');
-        else if (view === 'keyword') handleGenerateKeywordAnalysis();
-        else if (view === 'podcast') handleGeneratePodcast();
-        else if (view === 'sentiment') handleAnalyzeSentiment();
-        else if (view === 'storytelling') handleOpenStorytellingQuestions();
-        else if (view === 'blog') setActiveView('blog');
-        else if (view === 'businessCase') {
+        // Check if content already exists for each tab type to avoid regeneration
+        if (view === 'summary' && summary) { setActiveView('summary'); return; }
+        if (view === 'faq' && faq) { setActiveView('faq'); return; }
+        if (view === 'learning' && learningDoc) { setActiveView('learning'); return; }
+        if (view === 'followUp' && followUpQuestions) { setActiveView('followUp'); return; }
+        if (view === 'exec' && executiveSummaryData) { setActiveView('exec'); return; }
+        if (view === 'keyword' && keywordAnalysis && keywordAnalysis.length > 0) { setActiveView('keyword'); return; }
+        if (view === 'podcast' && podcastScript && podcastScript.trim()) { setActiveView('podcast'); return; }
+        if (view === 'sentiment' && sentimentAnalysisResult) { setActiveView('sentiment'); return; }
+        if (view === 'storytelling' && storytellingData?.story) { setActiveView('storytelling'); return; }
+        if (view === 'blog' && blogData) { setActiveView('blog'); return; }
+        if (view === 'mindmap' && mindmapMermaid) { setActiveView('mindmap'); return; }
+        if (view === 'quiz' && quizQuestions) { setActiveView('quiz'); return; }
+        if (view === 'businessCase' && businessCaseData?.businessCase) { setActiveView('businessCase'); return; }
+        if (view === 'explain' && explainData?.explanation) { setActiveView('explain'); return; }
+
+        // If content doesn't exist, generate it
+        if (['summary', 'faq', 'learning', 'followUp'].includes(view)) {
+            handleGenerateAnalysis(view);
+        } else if (view === 'exec') {
+            handleGenerateExecutiveSummary();
+        } else if (view === 'quiz') {
+            setActiveView('quiz');
+        } else if (view === 'keyword') {
+            handleGenerateKeywordAnalysis();
+        } else if (view === 'podcast') {
+            handleGeneratePodcast();
+        } else if (view === 'sentiment') {
+            handleAnalyzeSentiment();
+        } else if (view === 'storytelling') {
+            handleOpenStorytellingQuestions();
+        } else if (view === 'blog') {
+            handleGenerateBlog();
+        } else if (view === 'businessCase') {
             // Initialize business case data if not exists
             if (!businessCaseData) {
                 setBusinessCaseData({
@@ -4806,28 +4725,22 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                 });
             }
             setActiveView('businessCase');
-        }
-        else setActiveView(view);
-        if (view === 'mindmap' && !mindmapMermaid) {
-            // auto-generate on opening tab
+        } else if (view === 'explain') {
+            // Initialize explain data if not exists
+            if (!explainData) {
+                setExplainData({
+                    complexityLevel: explainOptions.complexityLevel,
+                    focusArea: explainOptions.focusArea,
+                    format: explainOptions.format,
+                    explanation: ''
+                });
+            }
+            setActiveView('explain');
+        } else if (view === 'mindmap') {
+            // Generate mindmap if it doesn't exist
             (async () => {
               try {
                 setLoadingText(t('generating', { type: 'Mindmap' }));
-                // Only reset other analysis data if we don't already have mindmap data
-                if (!mindmapMermaid) {
-                  setStorytellingData(null);
-                  setExecutiveSummaryData(null);
-                  setBusinessCaseData(null);
-                  setSummary('');
-                  setFaq('');
-                  setLearningDoc('');
-                  setFollowUpQuestions('');
-                  setKeywordAnalysis([]);
-                  setSentimentAnalysisResult(null);
-                  setQuizQuestions([]);
-                  setPodcastScript('');
-                  setBlogData('');
-                }
                 const ai = new GoogleGenAI({ apiKey: apiKey });
                 // Using Gemini 2.5 Flash for mindmap generation
                 const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
@@ -4847,16 +4760,17 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                 setError(`${t('generationFailed', { type: 'Mindmap' })}: ${e.message || t('unknownError')}`);
               } finally { setLoadingText(''); }
             })();
+        } else {
+            setActiveView(view);
         }
     };
-    
     const renderContent = () => {
         if (activeView !== 'transcript' && activeView !== 'chat' && activeView !== 'podcast' && activeView !== 'sentiment' && loadingText && !analysisContent[activeView] && !keywordAnalysis) {
             return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
         }
         if (activeView === 'chat') {
             // Check if user has access to chat
-            const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+            const effectiveTier = userSubscription;
             if (!subscriptionService.isFeatureAvailable(effectiveTier, 'chat')) {
                 return (
                     <div className="flex items-center justify-center p-8 min-h-[300px]">
@@ -5148,7 +5062,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
         
         if (activeView === 'podcast') {
             // Check if user has access to podcast generation
-            const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+            const effectiveTier = userSubscription;
             if (!subscriptionService.isFeatureAvailable(effectiveTier, 'podcast')) {
                 return (
                     <div className="flex items-center justify-center p-8 min-h-[300px]">
@@ -5177,7 +5091,6 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
             }
             return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
         }
-
         if (activeView === 'blog') {
             const L = blogLabels[uiLang] || blogLabels.en;
             return (
@@ -5212,7 +5125,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                             </div>
                         </div>
                         <div className="mt-2">
-                            <button onClick={() => handleGenerateBlog(blogOptions)} disabled={!transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">Genereren</button>
+                            <button onClick={handleGenerateBlog} disabled={!transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">Genereren</button>
                         </div>
                     </div>
 
@@ -5511,10 +5424,77 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
             );
         }
 
+        if (activeView === 'explain') {
+            return (
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                    {/* Inline Explain Options */}
+                    <div className="mb-4 p-3 rounded border border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40">
+                        <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-3">{t('explainOptional')}</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('explainComplexityLevel')}</label>
+                                <select value={explainOptions.complexityLevel} onChange={(e) => setExplainOptions(s => ({ ...s, complexityLevel: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    <option value="Beginner (basisconcepten)">{t('explainComplexityBeginner')}</option>
+                                    <option value="Algemeen publiek (duidelijke taal)">{t('explainComplexityGeneral')}</option>
+                                    <option value="Teamleden (specifieke context)">{t('explainComplexityTeam')}</option>
+                                    <option value="Expert (technisch/diepgaand)">{t('explainComplexityExpert')}</option>
+                                    <option value="Kind van 5 (extreem eenvoudig)">{t('explainComplexityChild')}</option>
+                                    <option value="5-Year-Old (extremely simple)">{t('explainComplexityChildEn')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('explainFocusArea')}</label>
+                                <select value={explainOptions.focusArea} onChange={(e) => setExplainOptions(s => ({ ...s, focusArea: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    <option value="Hoofdbesluiten">{t('explainFocusDecisions')}</option>
+                                    <option value="Complexe concepten">{t('explainFocusConcepts')}</option>
+                                    <option value="Actiepunten">{t('explainFocusActions')}</option>
+                                    <option value="Besproken problemen">{t('explainFocusProblems')}</option>
+                                    <option value="Voorgestelde oplossingen">{t('explainFocusSolutions')}</option>
+                                    <option value="Algemeen overzicht">{t('explainFocusOverview')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('explainFormat')}</label>
+                                <select value={explainOptions.format} onChange={(e) => setExplainOptions(s => ({ ...s, format: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    <option value="Korte paragraaf">{t('explainFormatParagraph')}</option>
+                                    <option value="Opsomming (bullet points)">{t('explainFormatBullets')}</option>
+                                    <option value="Vraag & Antwoord stijl">{t('explainFormatQa')}</option>
+                                    <option value="Stap-voor-stap handleiding">{t('explainFormatStepByStep')}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mt-2">
+                            <button onClick={() => handleGenerateExplain(explainOptions)} disabled={!transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">{t('explainGenerate')}</button>
+                        </div>
+                    </div>
 
+                    {/* Output */}
+                    {loadingText && !explainData?.explanation ? (
+                        <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[200px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>
+                    ) : explainData?.explanation ? (
+                        <div className="relative">
+                            <div className="absolute top-0 right-0 flex gap-2">
+                                <button onClick={() => copyToClipboard(explainData.explanation)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
+                                    <CopyIcon className="w-5 h-5" />
+                                </button>
+                                <button onClick={() => downloadTextFile(explainData.explanation, 'explain.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">⬇️</button>
+                                <button onClick={() => {
+                                    const { subject, body } = generateEmailContent(t('explain'), explainData.explanation);
+                                    copyToClipboardForEmail(subject, body);
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">✉️</button>
+                            </div>
+                            <div className="prose prose-slate dark:prose-invert max-w-none">
+                                {renderMarkdown(explainData.explanation)}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-slate-500 dark:text-slate-400">{t('noContent')}</div>
+                    )}
+                </div>
+            );
+        }
 
         const content = analysisContent[activeView];
-        
         return (
             <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
                 <div className="absolute top-4 right-4 flex gap-2">
@@ -5542,7 +5522,6 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
             </div>
         );
     };
-
     return (
         <div className={`w-full max-w-6xl mx-auto bg-transparent rounded-lg transition-all duration-300 ${isAnonymized ? 'ring-2 ring-green-400/80 shadow-lg shadow-green-500/10' : ''}`}>
              <RecapSmartPanel
@@ -5560,6 +5539,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                  storytellingData={storytellingData}
                  businessCaseData={businessCaseData}
                  blogData={blogData}
+                 explainData={explainData}
                  quizQuestions={quizQuestions}
                  quizIncludeAnswers={quizIncludeAnswers}
                  startStamp={getStartStamp()}
@@ -5567,7 +5547,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                  onNotify={(msg, type) => displayToast(msg, type)}
                  onGenerateQuiz={async ({ numQuestions, numOptions }) => {
                     // Check transcript length based on user tier
-                    const effectiveTier = authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription;
+                    const effectiveTier = userSubscription;
                     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
                     if (!transcriptValidation.allowed) {
                       throw new Error(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
@@ -5838,7 +5818,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                   )}
                   
                   {/* Settings button - always visible when logged in */}
-                  <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                  <button onClick={() => settingsModal.open()} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
                     <SettingsIcon className="w-5 h-5"/> 
                     <span>{t('settings')}</span>
                   </button>
@@ -5860,13 +5840,12 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                   )}
                   
                   {/* Settings button */}
-                  <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                  <button onClick={() => settingsModal.open()} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
                     <SettingsIcon className="w-5 h-5"/> 
                     <span>{t('settings')}</span>
                   </button>
                 </>
               )}
-              
               {/* Analyse Page - Logged in */}
               {!showInfoPage && status === RecordingStatus.FINISHED && (
                 <>
@@ -5906,7 +5885,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                   </button>
                   
                   {/* Settings button */}
-                  <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                  <button onClick={() => settingsModal.open()} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
                     <SettingsIcon className="w-5 h-5"/> 
                     <span>{t('settings')}</span>
                   </button>
@@ -5916,7 +5895,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
           ) : (
             /* Not logged in - only show login button */
             <button 
-              onClick={() => setShowLoginModal(true)} 
+              onClick={() => loginModal.open()} 
               className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
             >
               <span>🔐</span>
@@ -5924,7 +5903,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
             </button>
           )}
           
-          {/* Logout button for logged in users */}
+          {/* Logout button for logged in  */}
           {authState.user && (
             <button 
               onClick={handleLogout} 
@@ -5937,572 +5916,48 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
         </div>
       </header>
       
-      {/* Cookie Modal */}
-      {showCookieModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start p-6 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('cookieInfoTitle')}</h3>
-              <button 
-                onClick={() => setShowCookieModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4 text-sm text-slate-700 dark:text-slate-300">
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('cookieInfoWhatAreCookies')}</h4>
-                <p>{t('cookieInfoWhatAreCookiesAnswer')}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('cookieInfoWhatWeUse')}</h4>
-                <div className="space-y-2">
-                  <div className="bg-gray-50 dark:bg-slate-700/50 p-3 rounded">
-                    <p className="font-medium">{t('cookieInfoEssentialCookies')}</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">{t('cookieInfoEssentialCookiesAnswer')}</p>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-slate-700/50 p-3 rounded">
-                    <p className="font-medium">{t('cookieInfoAnalyticsCookies')}</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">{t('cookieInfoAnalyticsCookiesAnswer')}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('cookieInfoNoTracking')}</h4>
-                <p>{t('cookieInfoNoTrackingAnswer')}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('cookieInfoSettings')}</h4>
-                <p>{t('cookieInfoSettingsAnswer')}</p>
-              </div>
-            </div>
-            
-            <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-              <button 
-                onClick={() => setShowCookieModal(false)} 
-                className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
-              >
-                {t('close') || 'Close'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CookieModal isOpen={cookieModal.isOpen} onClose={cookieModal.close} t={t} />
 
-      {/* Disclaimer Modal */}
-      {showDisclaimerModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start p-6 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('disclaimerTitle')}</h3>
-              <button 
-                onClick={() => setShowDisclaimerModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4 text-sm text-slate-700 dark:text-slate-300">
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerAIContent')}</h4>
-                <p>{t('disclaimerAIContentAnswer')}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerAccuracy')}</h4>
-                <p>{t('disclaimerAccuracyAnswer')}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerOwnRisk')}</h4>
-                <p>{t('disclaimerOwnRiskAnswer')}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">AI Intelligence</h4>
-                <p>The app integrates with AI services. The quality and availability of these services depend on the AI provider's terms and may vary. We have no control over the underlying AI models or their output.</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerPrivacy')}</h4>
-                <p><strong>Belangrijk:</strong> {t('disclaimerPrivacyAnswer')}</p>
-                <ul className="list-disc list-inside space-y-1 text-xs mt-2">
-                  <li>{t('disclaimerPrivacyBullet1')}</li>
-                                  <li>{t('disclaimerPrivacyBullet2')}</li>
-                <li>{t('disclaimerPrivacyBullet3')}</li>
-                </ul>
-                <p className="mt-2 text-sm">{t('disclaimerPrivacyNote')}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('disclaimerRecommendations')}</h4>
-                <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>{t('disclaimerRecommendation1')}</li>
-                  <li>{t('disclaimerRecommendation2')}</li>
-                  <li>{t('disclaimerRecommendation3')}</li>
-                  <li>{t('disclaimerRecommendation4')}</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-              <button 
-                onClick={() => setShowDisclaimerModal(false)} 
-                className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
-              >
-                {t('close') || 'Close'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DisclaimerModal isOpen={disclaimerModal.isOpen} onClose={disclaimerModal.close} t={t} />
 
-      {/* Waitlist Modal */}
-      {showWaitlistModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-6 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">📋 Wachtlijst</h3>
-              <button 
-                onClick={() => setShowWaitlistModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">{t('waitlistTitle')}</h4>
-                <p>RecapSmart is nu alleen toegankelijk voor genodigden. Dit zorgt ervoor dat we de beste service kunnen bieden en de app kunnen optimaliseren op basis van feedback van onze gebruikers.</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Hoe werkt de wachtlijst?</h4>
-                <ol className="list-decimal list-inside space-y-2">
-                  <li>Meld je aan met je email adres</li>
-                  <li>We plaatsen je op de wachtlijst</li>
-                  <li>Zodra er plek is, ontvang je een uitnodiging</li>
-                  <li>Je kunt dan een account aanmaken en de app gebruiken</li>
-                </ol>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Wat gebeurt er met je data?</h4>
-                <p>Je email adres wordt alleen gebruikt om contact met je op te nemen wanneer je toegang krijgt. We delen je gegevens niet met derden.</p>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">🔒 {t('privacyTitle')}</h4>
-                <p><strong>Belangrijk:</strong> Wanneer je de app gebruikt, worden je sessies NIET opgeslagen in onze database.</p>
-                <ul className="list-disc list-inside space-y-1 text-xs mt-2">
-                  <li><strong>Opnames:</strong> Blijven volledig lokaal op jouw apparaat</li>
-                  <li><strong>Transcripties:</strong> Wij kunnen ze niet zien of opslaan</li>
-                  <li><strong>AI Output:</strong> Alleen jij hebt toegang tot je content</li>
-                </ul>
-                <p className="mt-2 text-sm">We bewaren helemaal niets van jouw sessies. Jouw privacy staat voorop.</p>
-              </div>
-              
-              <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Direct Aanmelden</h4>
-                <div className="flex gap-3">
-                  <input
-                    type="email"
-                    value={waitlistEmail}
-                    onChange={(e) => setWaitlistEmail(e.target.value)}
-                    placeholder="jouw@email.nl"
-                    className="flex-1 px-3 py-2 border border-blue-300 dark:border-blue-500 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                  <button
-                    onClick={() => {
-                      addToWaitlist(waitlistEmail);
-                      setShowWaitlistModal(false);
-                    }}
-                    disabled={!waitlistEmail.trim()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
-                  >
-                    Aanmelden
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <WaitlistModal isOpen={waitlistModal.isOpen} onClose={waitlistModal.close} t={t} waitlistEmail={waitlistEmail} setWaitlistEmail={setWaitlistEmail} addToWaitlist={addToWaitlist} />
 
-      {/* Login Modal */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-md w-full m-4 p-6">
-            <div className="flex justify-between items-start mb-6">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">🔐 {t('loginNow')}</h3>
-              <button 
-                onClick={() => setShowLoginModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <LoginForm 
-              onLogin={handleLogin}
-              onCreateAccount={handleCreateAccount}
-              onPasswordReset={handlePasswordReset}
-              onClose={() => setShowLoginModal(false)}
-              t={t}
-            />
-          </div>
-        </div>
-      )}
-      {/* Admin Panel - Gewone pagina in plaats van modal */}
-      {showAdminPanel && authState.user && authState.isAdmin && (
-        <div className="fixed inset-0 bg-white dark:bg-slate-900 z-[101] overflow-y-auto">
-          <div className="min-h-screen p-6">
-            <div className="max-w-6xl mx-auto">
-              <div className="flex justify-between items-start mb-6">
-                <h3 className="text-2xl font-bold text-cyan-500 dark:text-cyan-400">👑 {t('adminPanel')}</h3>
-                <button 
-                  onClick={() => setShowAdminPanel(false)}
-                  className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <span>← {t('backToStartSession')}</span>
-                </button>
-              </div>
-            
-            {/* Add User Section - Always visible */}
-            <div className="bg-gray-50 dark:bg-slate-700/50 p-6 rounded-lg mb-8">
-              <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('addUser')}</h4>
-              <div className="flex gap-3">
-                <input
-                  type="email"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="email@example.com"
-                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-lg"
-                />
-                <button
-                  onClick={() => addUser(newUserEmail)}
-                  disabled={!newUserEmail.trim()}
-                  className="px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:bg-slate-400 transition-colors font-semibold text-lg"
-                >
-                  {t('add')}
-                </button>
-              </div>
-              
-              {/* Sync Users Button */}
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-600">
-                <button
-                  onClick={syncUsersWithFirebase}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
-                  title="Synchroniseer gebruikers tussen Firebase Auth en Firestore"
-                >
-                  🔄 {t('syncUsers')}
-                </button>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-                  {t('syncUsersDesc')}
-                </p>
-              </div>
-            </div>
-
-            {/* Export Buttons - Prominently placed above tabs */}
-            <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-lg p-6 mb-8">
-              <h4 className="text-xl font-semibold text-emerald-800 dark:text-emerald-300 mb-4">📊 {t('exportFunctionality')}</h4>
-              <div className="flex gap-4 flex-wrap">
-                <button 
-                  onClick={exportWaitlistToCsv} 
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 text-lg"
-                >
-                  📋 {t('exportWaitlistToCsv')}
-                </button>
-                <button 
-                  onClick={exportUsersToCsv} 
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 text-lg"
-                >
-                  👥 {t('exportUsersToCsv')}
-                </button>
-              </div>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-3">
-                {t('exportFunctionalityDesc')}
-              </p>
-            </div>
-
-            {/* Tabs */}
-            <div className="border-b border-gray-200 dark:border-slate-700 mb-8">
-              <div className="flex space-x-8">
-                <button
-                  onClick={() => setActiveAdminTab('waitlist')}
-                  className={`py-3 px-2 border-b-2 font-medium text-lg transition-colors ${
-                    activeAdminTab === 'waitlist'
-                      ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
-                      : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
-                  }`}
-                >
-                  📋 Wachtlijst ({waitlist.length})
-                </button>
-                <button
-                  onClick={() => setActiveAdminTab('users')}
-                  className={`py-3 px-2 border-b-2 font-medium text-lg transition-colors ${
-                    activeAdminTab === 'users'
-                      ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
-                      : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
-                  }`}
-                >
-                  👥 Bestaande Gebruikers ({users.length})
-                </button>
-              </div>
-            </div>
-
-            {/* Tab Content */}
-            {activeAdminTab === 'waitlist' && (
-              <div>
-                <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-3">Wachtlijst Beheer</h4>
-                <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg p-4 mb-4">
-                  <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">
-                    Gebruikers op de wachtlijst kunnen worden geactiveerd om toegang te krijgen tot de app.
-                  </p>
-                  {selectedWaitlistUsers.length > 0 && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={activateWaitlistUsers}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        {selectedWaitlistUsers.length} Geselecteerde Gebruiker(s) Activeren
-                      </button>
-                      <button
-                        onClick={() => sendInvitationEmails(selectedWaitlistUsers)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        📧 Uitnodigingen Versturen
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-slate-700">
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400">
-                          <input
-                            type="checkbox"
-                            checked={waitlist.length > 0 && selectedWaitlistUsers.length === waitlist.length}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedWaitlistUsers(waitlist.map(w => w.id));
-                              } else {
-                                setSelectedWaitlistUsers([]);
-                              }
-                            }}
-                            className="rounded border-gray-300 dark:border-slate-600"
-                          />
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setWaitlistSortKey('email'); setWaitlistSortAsc(k => waitlistSortKey === 'email' ? !k : true); }}>
-                          Email {waitlistSortKey === 'email' && (waitlistSortAsc ? '↑' : '↓')}
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setWaitlistSortKey('createdAt'); setWaitlistSortAsc(k => waitlistSortKey === 'createdAt' ? !k : true); }}>
-                          Aangemeld Op {waitlistSortKey === 'createdAt' && (waitlistSortAsc ? '↑' : '↓')}
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400">Tier</th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400">Acties</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...waitlist].sort((a, b) => {
-                        const dir = waitlistSortAsc ? 1 : -1;
-                        if (waitlistSortKey === 'email') return a.email.localeCompare(b.email) * dir;
-                        if (waitlistSortKey === 'createdAt') {
-                          const aTime = a.createdAt?.toDate?.() ? a.createdAt.toDate().getTime() : 0;
-                          const bTime = b.createdAt?.toDate?.() ? b.createdAt.toDate().getTime() : 0;
-                          return (aTime - bTime) * dir;
-                        }
-                        return 0;
-                      }).map((waitlistUser) => (
-                        <tr key={waitlistUser.id} className="border-b border-gray-100 dark:border-slate-800">
-                          <td className="p-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedWaitlistUsers.includes(waitlistUser.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedWaitlistUsers([...selectedWaitlistUsers, waitlistUser.id]);
-                                } else {
-                                  setSelectedWaitlistUsers(selectedWaitlistUsers.filter(id => id !== waitlistUser.id));
-                                }
-                              }}
-                              className="rounded border-gray-300 dark:border-slate-600"
-                            />
-                          </td>
-                          <td className="p-2">{waitlistUser.email}</td>
-                          <td className="p-2 text-xs text-slate-500 dark:text-slate-400">
-                            {waitlistUser.createdAt?.toDate?.() ? 
-                              waitlistUser.createdAt.toDate().toLocaleDateString('nl-NL') : 
-                              'Onbekend'
-                            }
-                          </td>
-                          <td className="p-2 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="px-2 py-1 bg-gray-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full">
-                              Wachtend
-                            </span>
-                          </td>
-                          <td className="p-2">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => sendInvitationEmail(waitlistUser.email)}
-                                className="px-2 py-1 text-xs bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors"
-                                title="Stuur uitnodigingsmail"
-                              >
-                                📧
-                              </button>
-                              <button
-                                onClick={() => removeFromWaitlist(waitlistUser.id)}
-                                className="px-2 py-1 text-xs bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-500/30 transition-colors"
-                                title="Verwijderen"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {waitlist.length === 0 && (
-                        <tr>
-                          <td colSpan={5} className="p-4 text-center text-slate-500 dark:text-slate-400">
-                            Geen gebruikers op de wachtlijst
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {activeAdminTab === 'users' && (
-              <div>
-                <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-3">Gebruikers Beheer</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-slate-700">
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setUserSortKey('email'); setUserSortAsc(k => userSortKey === 'email' ? !k : true); }}>
-                          Email {userSortKey === 'email' && (userSortAsc ? '↑' : '↓')}
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setUserSortKey('status'); setUserSortAsc(k => userSortKey === 'status' ? !k : true); }}>
-                          Status {userSortKey === 'status' && (userSortAsc ? '↑' : '↓')}
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setUserSortKey('admin'); setUserSortAsc(k => userSortKey === 'admin' ? !k : true); }}>
-                          Admin {userSortKey === 'admin' && (userSortAsc ? '↑' : '↓')}
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setUserSortKey('tier'); setUserSortAsc(k => userSortKey === 'tier' ? !k : true); }}>
-                          Tier {userSortKey === 'tier' && (userSortAsc ? '↑' : '↓')}
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setUserSortKey('lastLogin'); setUserSortAsc(k => userSortKey === 'lastLogin' ? !k : true); }}>
-                          Laatste Login {userSortKey === 'lastLogin' && (userSortAsc ? '↑' : '↓')}
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setUserSortKey('sessions'); setUserSortAsc(k => userSortKey === 'sessions' ? !k : true); }}>
-                          Sessies {userSortKey === 'sessions' && (userSortAsc ? '↑' : '↓')}
-                        </th>
-                        <th className="text-left p-2 font-medium text-slate-600 dark:text-slate-400">Acties</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...users].sort((a, b) => {
-                        const dir = userSortAsc ? 1 : -1;
-                        if (userSortKey === 'email') return a.email.localeCompare(b.email) * dir;
-                        if (userSortKey === 'status') return ((a.isActive ? 1 : 0) - (b.isActive ? 1 : 0)) * dir;
-                        if (userSortKey === 'admin') return ((a.isAdmin ? 1 : 0) - (b.isAdmin ? 1 : 0)) * dir;
-                        if (userSortKey === 'tier') return (String(a.subscriptionTier || 'free').localeCompare(String(b.subscriptionTier || 'free'))) * dir;
-                        if (userSortKey === 'lastLogin') return (((a.lastLogin?.getTime?.() || 0) - (b.lastLogin?.getTime?.() || 0))) * dir;
-                        if (userSortKey === 'sessions') return ((a.sessionCount || 0) - (b.sessionCount || 0)) * dir;
-                        return 0;
-                      }).map((user) => (
-                        <tr key={user.uid} className="border-b border-gray-100 dark:text-slate-800">
-                          <td className="p-2">{user.email}</td>
-                          <td className="p-2">
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              user.isActive 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300' 
-                                : 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300'
-                            }`}>
-                              {user.isActive ? 'Actief' : 'Uitgeschakeld'}
-                            </span>
-                          </td>
-                          <td className="p-2">
-                            {user.isAdmin && (
-                              <span className="px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300 rounded-full text-xs">
-                                Admin
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-2 capitalize">{String(user.subscriptionTier || 'free')}</td>
-                          <td className="p-2 text-xs text-slate-500 dark:text-slate-400">
-                            {user.lastLogin
-                              ? (typeof (user.lastLogin as any)?.toDate === 'function'
-                                  ? (user.lastLogin as any).toDate().toLocaleDateString('nl-NL')
-                                  : new Date(user.lastLogin as any).toLocaleDateString('nl-NL'))
-                              : 'Nooit'}
-                          </td>
-                          <td className="p-2 text-center">{user.sessionCount}</td>
-                          <td className="p-2">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => toggleUserStatus(user.uid, !user.isActive)}
-                                className={`px-2 py-1 text-xs rounded ${
-                                  user.isActive 
-                                    ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-500/30' 
-                                    : 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-500/30'
-                                } transition-colors`}
-                              >
-                                {user.isActive ? 'Uitschakelen' : 'Activeren'}
-                              </button>
-                              <button
-                                onClick={() => resetUserPassword(user.email)}
-                                className="px-2 py-1 text-xs bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors"
-                              >
-                                Reset PW
-                              </button>
-                              {/* Tier wijzigen actie */}
-                              {!String(user.subscriptionTier || 'free').includes('enterprise') && (
-                                <div className="relative group">
-                                  <button className="px-2 py-1 text-xs bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors">
-                                    Wijzig Tier
-                                  </button>
-                                  <div className="hidden group-hover:block absolute bottom-full left-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-lg z-20 min-w-[120px]">
-                                    {Object.values(SubscriptionTier).filter(t => t !== SubscriptionTier.DIAMOND).map(t => (
-                                      <button key={t} onClick={() => updateUserTier(user.uid, t as SubscriptionTier)} className="block w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-slate-700 capitalize text-slate-800 dark:text-slate-200 border-b border-gray-100 dark:border-slate-700 last:border-b-0">{String(t)}</button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-2 text-right text-xs text-slate-500 dark:text-slate-400">&nbsp;</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      )}
+      <LoginModal
+  isOpen={loginModal.isOpen}
+  onClose={loginModal.close}
+  t={t}
+  handleLogin={async (email: string, password: string) => {
+    setLoadingText(t('loggingIn'));
+    setError(null);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      if (!user || !user.uid) {
+        throw new Error('Geen geldige gebruiker gevonden na inloggen.');
+      }
+      // Hier pas Firestore functies aanroepen met user.uid
+      // Voorbeeld: await getUserSubscriptionTier(user.uid);
+      // ...andere Firestore calls
+      // Zet eventueel app state naar "ingelogd"
+      // Sluit modal na succes
+      loginModal.close();
+    } catch (error: any) {
+      setError(error.message || t('generalError'));
+    } finally {
+      setLoadingText('');
+    }
+  }}
+  handleCreateAccount={handleCreateAccount}
+  handlePasswordReset={handlePasswordReset}
+/>
 
       {/* Settings Modal */}
-      {showSystemAudioHelp && (
+      {systemAudioHelp.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Systeem-audio inschakelen</h3>
-              <button onClick={() => setShowSystemAudioHelp(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <button onClick={systemAudioHelp.close} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
@@ -6515,7 +5970,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
               </div>
               <div className="mt-4 flex items-center justify-between">
                 {/* Link verwijderd */}
-                <button onClick={() => setShowSystemAudioHelp(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">
+                <button onClick={systemAudioHelp.close} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">
                   Sluiten
                 </button>
               </div>
@@ -6525,12 +5980,12 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
       )}
 
       {/* Supported formats modal */}
-      {showFormatsInfo && (
+      {formatsInfo.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('supportedFormatsTitle')}</h3>
-              <button onClick={() => setShowFormatsInfo(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <button onClick={formatsInfo.close} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
@@ -6545,7 +6000,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
               </ul>
               <p className="text-xs text-slate-500 dark:text-slate-400">{t('supportedFormatsNote')}</p>
               <div className="pt-2 flex justify-end">
-                <button onClick={() => setShowFormatsInfo(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+                <button onClick={formatsInfo.close} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
               </div>
             </div>
           </div>
@@ -6553,12 +6008,12 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
       )}
 
       {/* Paste transcript modal */}
-      {showPasteModal && (
+      {pasteModal.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('pasteTranscriptTitle')}</h3>
-              <button onClick={() => setShowPasteModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <button onClick={pasteModal.close} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
@@ -6572,7 +6027,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
               />
               <div className="flex justify-end gap-3">
                 <button 
-                  onClick={() => setShowPasteModal(false)} 
+                  onClick={pasteModal.close} 
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
                 >
                   {t('cancel')}
@@ -6644,13 +6099,13 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
       )}
 
       {/* Step 1 Help Modal */}
-      {showStep1Help && (
+      {step1Help.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-6">
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">💡 {t('step1')} - {t('sessionLang')}</h3>
               <button 
-                onClick={() => setShowStep1Help(false)}
+                onClick={step1Help.close}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -6667,7 +6122,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
             
             <div className="mt-6 flex justify-end">
               <button 
-                onClick={() => setShowStep1Help(false)} 
+                onClick={step1Help.close} 
                 className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-colors"
               >
                 Sluiten
@@ -6678,13 +6133,13 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
       )}
 
       {/* Step 2 Help Modal */}
-      {showStep2Help && (
+      {step2Help.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-6">
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">💡 {t('step2')} - {t('outputLanguage')}</h3>
               <button 
-                onClick={() => setShowStep2Help(false)}
+                onClick={step2Help.close}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -6701,7 +6156,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
             
             <div className="mt-6 flex justify-end">
               <button 
-                onClick={() => setShowStep2Help(false)} 
+                onClick={step2Help.close} 
                 className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-colors"
               >
                 Sluiten
@@ -6717,7 +6172,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('webPageHelpTitle')}</h3>
-              <button onClick={() => setShowWebPageHelp(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <button onClick={() => systemAudioHelp.close()} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
@@ -6730,20 +6185,19 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                 <li>{t('webPageHelpStep4')}</li>
               </ul>
               <div className="pt-2 flex justify-end">
-                <button onClick={() => setShowWebPageHelp(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+                <button onClick={() => systemAudioHelp.close()} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
               </div>
             </div>
           </div>
         </div>
       )}
-
       {/* Paste help modal */}
-      {showPasteHelp && (
+      {pasteHelp.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('pasteHelpTitle')}</h3>
-              <button onClick={() => setShowPasteHelp(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <button onClick={pasteHelp.close} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
@@ -6755,7 +6209,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                 <li>{t('pasteHelpStep3')}</li>
               </ul>
               <div className="pt-2 flex justify-end">
-                <button onClick={() => setShowPasteHelp(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+                <button onClick={pasteHelp.close} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
               </div>
             </div>
           </div>
@@ -6763,19 +6217,19 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
       )}
 
       {/* Coming Soon Modal */}
-      {showComingSoonModal && (
+      {comingSoonModal.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-md w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('comingSoonTitle')}</h3>
-              <button onClick={() => setShowComingSoonModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <button onClick={comingSoonModal.close} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4 space-y-3 text-sm text-slate-700 dark:text-slate-300">
               <p>{t('comingSoonDescription')}</p>
               <div className="pt-2 flex justify-end">
-                <button onClick={() => setShowComingSoonModal(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+                <button onClick={comingSoonModal.close} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
               </div>
             </div>
           </div>
@@ -6783,13 +6237,13 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
       )}
 
       {/* Settings Modal */}
-      {showSettingsModal && (
+      {settingsModal.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-4xl w-full m-4 p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('settingsTitle')}</h3>
               <button 
-                onClick={() => setShowSettingsModal(false)}
+                onClick={() => settingsModal.close()}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
               >
                 <XIcon className="w-5 h-5" />
@@ -6803,7 +6257,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                   <div>
                     <span className="text-slate-500 dark:text-slate-400 mr-2">{t('settingsCurrentTier')}</span>
                     <span className="font-semibold capitalize">{authState.isAdmin ? 'diamond' : String(userSubscription)}</span>
-                    <button onClick={() => { setShowSettingsModal(false); setShowPricingPage(true); }} className="ml-2 text-cyan-600 dark:text-cyan-400 underline">{t('settingsViewPricing')}</button>
+                    <button onClick={() => { settingsModal.close(); setShowPricingPage(true); }} className="ml-2 text-cyan-600 dark:text-cyan-400 underline">{t('settingsViewPricing')}</button>
                   </div>
                   <div>
                     <span className="text-slate-500 dark:text-slate-400 mr-2">{t('settingsTokensThisMonth')}</span>
@@ -6909,7 +6363,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
               {/* Actie Knoppen */}
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
                 <button
-                  onClick={() => setShowSettingsModal(false)}
+                  onClick={() => settingsModal.close()}
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-700 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
                 >
                   {t('settingsCancel')}
@@ -7084,7 +6538,6 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                 <p className="text-green-600 dark:text-green-400 text-center mt-6 text-xs">{t('privacyFootnote')}</p>
               </div>
             </div>
-
             {/* Use cases - clean bullets without icons; add supporting images */}
             <div className="bg-gradient-to-r from-slate-50 to-cyan-50 dark:from-slate-800 dark:to-slate-700 p-6 sm:p-8 rounded-2xl mb-16 mx-1">
               <h2 className="text-3xl font-semibold text-slate-800 dark:text-slate-200 mb-6 text-center">{t('useCasesTitle')}</h2>
@@ -7213,7 +6666,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
                             <span className="text-cyan-500 font-black tracking-wider text-sm uppercase mr-2">{t('step1')}</span> {t('sessionLang')}
                             <button 
-                              onClick={() => setShowStep1Help(true)}
+                              onClick={step1Help.open}
                               className="ml-2 text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
                               title="Help bij sessie taal selectie"
                             >
@@ -7234,12 +6687,12 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                     </div>
                 )}
                 
-                {apiKey && language && (
+                {apiKey && (
                     <div className="transition-opacity duration-500">
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
                             <span className="text-cyan-500 font-black tracking-wider text-sm uppercase mr-2">{t('step2')}</span> {t('outputLanguage')}
                             <button 
-                              onClick={() => setShowStep2Help(true)}
+                              onClick={step2Help.open}
                               className="ml-2 text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
                               title="Help bij output taal selectie"
                             >
@@ -7257,6 +6710,11 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                             className="w-full max-w-md"
                           />
                         </div>
+                    </div>
+                )}
+                
+                {apiKey && (
+                    <div className="transition-opacity duration-500">
                         <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100 mt-6 flex items-center justify-center gap-2">
                             <span className="text-cyan-500 font-black tracking-wider text-sm uppercase">{t('step3')}</span> 
                             <span>{t('startOrUpload')}</span>
@@ -7276,7 +6734,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                         </button>
                         {/* Listen along help link - positioned under start recording button */}
                         <div className="mt-3 text-center">
-                            <button onClick={() => setShowSystemAudioHelp(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                            <button onClick={() => systemAudioHelp.open()} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
                                 🔊 {t('listenAlongHelp')}
                             </button>
                         </div>
@@ -7290,20 +6748,20 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                         </button>
                         {/* Supported formats info link - positioned under upload transcript button */}
                         <div className="mt-3 text-center">
-                            <button onClick={() => setShowFormatsInfo(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                            <button onClick={formatsInfo.open} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
                                 📄 {t('supportedFormatsLink')}
                             </button>
                         </div>
                     </div>
 
                     <div className="w-full">
-                        <button onClick={() => setShowPasteModal(true)} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 dark:from-purple-600 dark:to-pink-700 text-white hover:from-purple-600 hover:to-pink-700 dark:hover:from-purple-700 dark:hover:to-pink-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <button onClick={() => pasteModal.open()} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 dark:from-purple-600 dark:to-pink-700 text-white hover:from-purple-600 hover:to-pink-700 dark:hover:from-purple-700 dark:hover:to-pink-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
                             <ClipboardIcon className="w-6 h-6" />
                             <span className="text-lg font-semibold">{t('pasteTranscript')}</span>
                         </button>
                         {/* Paste help link - positioned under paste transcript button */}
                         <div className="mt-3 text-center">
-                            <button onClick={() => setShowPasteHelp(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                            <button onClick={() => pasteHelp.open()} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
                                 📋 {t('pasteHelp')}
                             </button>
                         </div>
@@ -7366,12 +6824,12 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
         )}
 
         {/* Modals: Ons verhaal & Het team */}
-        {showStoryModal && (
+        {storyModal.isOpen && (
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto border border-slate-200 dark:border-slate-700">
               <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-slate-700">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('storyTitle')}</h3>
-                <button onClick={() => setShowStoryModal(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                <button onClick={storyModal.close} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                   <XIcon className="w-5 h-5" />
                 </button>
               </div>
@@ -7379,18 +6837,18 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                 {t('storyContent')}
               </div>
               <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                <button onClick={() => setShowStoryModal(false)} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">{t('storyClose')}</button>
+                <button onClick={storyModal.close} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">{t('storyClose')}</button>
               </div>
             </div>
           </div>
         )}
 
-        {showTeamModal && (
+        {teamModal.isOpen && (
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-700">
               <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-slate-700">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('teamTitle')}</h3>
-                <button onClick={() => setShowTeamModal(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                <button onClick={teamModal.close} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                   <XIcon className="w-5 h-5" />
                 </button>
               </div>
@@ -7398,132 +6856,68 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
                 <p>{t('teamContent')}</p>
               </div>
               <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                <button onClick={() => setShowTeamModal(false)} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">{t('teamClose')}</button>
+                <button onClick={teamModal.close} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">{t('teamClose')}</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Footer Links */}
-        <footer className="w-full mt-16 pt-8 border-t border-gray-200 dark:border-slate-700">
-          <div className="max-w-6xl mx-auto px-3 flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-3">
-              <a 
-                href="/cookies" 
-                className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors cursor-pointer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowCookieModal(true);
-                }}
-              >
-                {t('cookies')}
-              </a>
-              <span className="hidden sm:inline">•</span>
-              <a 
-                href="/ons-verhaal" 
-                className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-                onClick={(e) => { e.preventDefault(); setShowStoryModal(true); }}
-              >
-                {t('ourStory')}
-              </a>
-              <span className="hidden sm:inline">•</span>
-              <a 
-                href="/het-team" 
-                className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-                onClick={(e) => { e.preventDefault(); setShowTeamModal(true); }}
-              >
-                {t('theTeam')}
-              </a>
-              <span className="hidden sm:inline">•</span>
-              <a 
-                href="/faq" 
-                className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-                onClick={(e) => { e.preventDefault(); setShowFAQPage(true); }}
-              >
-                FAQ
-              </a>
-              <span className="hidden sm:inline">•</span>
-              <a 
-                href="/disclaimer" 
-                className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowDisclaimerModal(true);
-                }}
-              >
-                {t('disclaimer')}
-              </a>
-              <span className="hidden sm:inline">•</span>
-              <a 
-                href="/pricing" 
-                className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors cursor-pointer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowPricingPage(true);
-                }}
-              >
-                Pricing
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              {authState.isAdmin && (
-                <button 
-                  onClick={async () => {
-                    setShowAdminPanel(true);
-                    await loadUsers({ bypassAdminCheck: true });
-                    await loadWaitlist({ bypassAdminCheck: true });
-                  }} 
-                  className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all text-slate-700 dark:text-slate-200 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600"
-                >
-                  Admin
-                </button>
-              )}
-              <span className="text-xs opacity-75">v.0.80820</span>
-            </div>
-          </div>
-        </footer>
-      </main>
-    </div>
+        <Footer
+          t={t}
+          authState={authState}
+          setShowCookieModal={cookieModal.open}
+          setShowStoryModal={storyModal.open}
+          setShowTeamModal={teamModal.open}
+          setShowFAQPage={setShowFAQPage}
+          setShowDisclaimerModal={disclaimerModal.open}
+          setShowPricingPage={setShowPricingPage}
+        />
 
     {/* Upgrade Modal */}
-    {showUpgradeModal && (
-      <UpgradeModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        onUpgrade={(tier: SubscriptionTier) => {
-          setUserSubscription(tier);
-          setShowUpgradeModal(false);
-        }}
-        message={error || ''}
-      />
+    {upgradeModal.isOpen && (
+      <Modal
+        isOpen={upgradeModal.isOpen}
+        onClose={upgradeModal.close}
+        title={t('upgradeModalTitle')}
+      >
+        <UpgradeModal
+          onUpgrade={(tier: SubscriptionTier) => {
+            setUserSubscription(tier);
+            upgradeModal.close();
+          }}
+          message={error || ''}
+        />
+      </Modal>
     )}
-
     {/* Session Options Modal */}
-    <SessionOptionsModal
-      isOpen={showSessionOptionsModal}
-      onClose={() => setShowSessionOptionsModal(false)}
-      onStartRecording={startRecording}
-      onUploadFile={handleSessionOptionUpload}
-      onPasteText={() => setShowPasteModal(true)}
-      onWebPage={() => setShowWebPageModal(true)}
-      t={t}
-    />
-
+    {sessionOptionsModal.isOpen && (
+      <Modal
+        isOpen={sessionOptionsModal.isOpen}
+        onClose={sessionOptionsModal.close}
+        title={t('sessionOptionsModalTitle')}
+      >
+        <SessionOptionsModal
+          onStartRecording={startRecording}
+          onUploadFile={handleSessionOptionUpload}
+          onPasteText={() => pasteModal.open()}
+          onWebPage={() => webPageModal.open()}
+          t={t}
+        />
+      </Modal>
+    )}
     {/* Storytelling Questions Modal removed in favor of inline panel */}
-
     {/* Pricing Page */}
     {showPricingPage && (
       <PricingPage
         isOpen={showPricingPage}
         onClose={() => setShowPricingPage(false)}
-        currentTier={authState.isAdmin ? SubscriptionTier.DIAMOND : userSubscription}
-        isAdmin={authState.isAdmin}
-        onUpgrade={(tier: SubscriptionTier) => {
+        currentTier={userSubscription}
+                onUpgrade={(tier: SubscriptionTier) => {
           setUserSubscription(tier);
           setShowPricingPage(false);
           // TODO: Implement actual upgrade flow
         }}
-        showComingSoonModal={() => setShowComingSoonModal(true)}
+        showComingSoonModal={() => comingSoonModal.open()}
         t={t}
       />
     )}
@@ -7532,6 +6926,8 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
     {showFAQPage && (
       <FAQPage onClose={() => setShowFAQPage(false)} t={t} />
     )}
-    </>
-  );
+  </main>
+  </div>
+  </>
+); 
 }

@@ -7,18 +7,15 @@ interface PricingPageProps {
   currentTier: SubscriptionTier;
   onUpgrade: (tier: SubscriptionTier) => void;
   onClose: () => void;
-  isAdmin?: boolean; // Add admin prop
   t: (key: string, params?: any) => string; // Add translation function
   showComingSoonModal: () => void; // Add function to show coming soon modal
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrade, onClose, isAdmin = false, t, showComingSoonModal }) => {
+const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrade, onClose, t, showComingSoonModal }) => {
   if (!isOpen) return null;
   
-  // Get tier comparison - admins see all tiers including DIAMOND, non-admins don't see DIAMOND
-  const tierComparison = isAdmin 
-    ? subscriptionService.getTierComparisonForAdmin()
-    : subscriptionService.getTierComparison().filter(tier => tier.tier !== SubscriptionTier.DIAMOND);
+  // Get tier comparison - DIAMOND tier alleen tonen indien gewenst
+  const tierComparison = subscriptionService.getTierComparison();
 
   const getTierIcon = (tier: SubscriptionTier) => {
     switch (tier) {
@@ -109,7 +106,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
             <div className="flex items-center">
               <span className="text-green-600 text-lg mr-2">✓</span>
               <span className="text-green-800">
-                {isAdmin && currentTier === SubscriptionTier.DIAMOND 
+                {currentTier === SubscriptionTier.DIAMOND
                   ? t('pricingCurrentTierAdmin', { tier: currentTier.charAt(0).toUpperCase() + currentTier.slice(1) })
                   : t('pricingCurrentTier', { tier: currentTier.charAt(0).toUpperCase() + currentTier.slice(1) })
                 }
@@ -133,7 +130,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">
                   {tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1)}
                 </h3>
-                {tier.tier === SubscriptionTier.DIAMOND ? (
+                {(tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
                   <div className="text-xl font-semibold text-cyan-600">{t('pricingComingSoon')}</div>
                 ) : tier.tier !== SubscriptionTier.ENTERPRISE ? (
                   <>
@@ -252,7 +249,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                   >
                     {t('pricingCurrentTierButton')}
                   </button>
-                ) : tier.tier === SubscriptionTier.DIAMOND ? (
+                ) : (tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
                   <button
                     disabled
                     className="w-full py-3 px-6 bg-cyan-300 text-cyan-600 rounded-lg font-semibold cursor-not-allowed"

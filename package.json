@@ -10,8 +10,9 @@
   },
   "dependencies": {
     "@google/genai": "^1.13.0",
+    "@heroicons/react": "^2.2.0",
     "firebase": "^12.1.0",
-    "jspdf": "^2.5.2",
+    "jspdf": "^3.0.2",
     "mermaid": "^11.3.0",
     "pdfjs-dist": "^5.4.54",
     "pptxgenjs": "^3.12.0",

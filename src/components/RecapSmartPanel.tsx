@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
-import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData } from '../../types';
+import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, ExplainData } from '../../types';
 import { getBcp47Code } from '../languages';
 
 
@@ -15,7 +15,7 @@ import { getBcp47Code } from '../languages';
 
 
 
-type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog';
+type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain';
 
 interface RecapItem {
 	id: string;
@@ -42,6 +42,7 @@ interface RecapSmartPanelProps {
 	storytellingData?: StorytellingData | null;
 	businessCaseData?: BusinessCaseData | null;
 	blogData?: string;
+	explainData?: ExplainData | null;
 	quizQuestions?: QuizQuestion[] | null;
 	quizIncludeAnswers?: boolean;
 	outputLanguage?: string; // Output language for BCP47 display
@@ -93,88 +94,110 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 	storytellingData,
 	businessCaseData,
 	blogData,
+	explainData,
 	quizQuestions,
 	quizIncludeAnswers,
 	outputLanguage,
 	onNotify,
 	startStamp,
 }) => {
-	const [isOpen, setIsOpen] = useState<boolean>(false);
-	const [items, setItems] = useState<RecapItem[]>([]);
+	const [isOpen, setIsOpen] = useState<boolean>(true);
+	const [persistentItems, setPersistentItems] = useState<RecapItem[]>([]);
+	const [resultsCache, setResultsCache] = useState<{ [key in RecapItemType]?: string }>({});
 
-	// Reset panel whenever transcript changes (new session/transcript)
-	useEffect(() => {
-		setIsOpen(false);
-		setItems([]);
-	}, [transcript]);
+// Reset panel alleen bij een nieuwe sessie (startStamp)
+const previousStartStampRef = useRef<string | undefined>(startStamp);
 
-	// Helper: add item if content becomes available and item not present
-	const ensureItem = useCallback((type: RecapItemType, title: string, available: boolean) => {
-		setItems(prev => {
-			const exists = prev.some(i => i.type === type);
-			if (available && !exists) {
-				const newItem: RecapItem = {
-					id: `${type}`,
-					type,
-					title,
-					enabled: false,
-				};
-				return [...prev, newItem];
-			}
-			if (!available && exists) {
-				return prev.filter(i => i.type !== type);
-			}
-			return prev;
-		});
-	}, []);
+useEffect(() => {
+	// Alleen resetten bij significante startStamp verandering (niet elke seconde)
+	const shouldReset = (() => {
+		if (!previousStartStampRef.current) return true; // Eerste keer altijd resetten
 
-	// Watch content readiness
-	useEffect(() => {
-		ensureItem('summary', t('summary'), !!summary && summary.trim().length > 0);
-	}, [summary, t, ensureItem]);
-	useEffect(() => {
-		const available = !!keywordAnalysis && keywordAnalysis.length > 0;
-		ensureItem('keywords', t('keywordAnalysis'), available);
-	}, [keywordAnalysis, t, ensureItem]);
-	useEffect(() => {
-		const available = !!sentiment && !!sentiment.summary && !!sentiment.conclusion;
-		ensureItem('sentiment', t('sentiment'), available);
-	}, [sentiment, t, ensureItem]);
-	useEffect(() => {
-		ensureItem('faq', t('faq'), !!faq && faq.trim().length > 0);
-	}, [faq, t, ensureItem]);
-	useEffect(() => {
-		ensureItem('learnings', t('keyLearnings'), !!learnings && learnings.trim().length > 0);
-	}, [learnings, t, ensureItem]);
-	useEffect(() => {
-		ensureItem('followup', t('followUp'), !!followup && followup.trim().length > 0);
-	}, [followup, t, ensureItem]);
-	useEffect(() => {
-		const available = Array.isArray(chatHistory) && chatHistory.length > 0;
-		ensureItem('chat', t('chat'), available);
-	}, [chatHistory, t, ensureItem]);
-	useEffect(() => {
-		ensureItem('mindmap', t('mindmap'), !!mindmapText && mindmapText.trim().length > 0);
-	}, [mindmapText, t, ensureItem]);
-	useEffect(() => {
-		ensureItem('exec', t('executiveSummary') || 'Executive summary', !!executiveSummaryData);
-	}, [executiveSummaryData, t, ensureItem]);
-	useEffect(() => {
-		ensureItem('quiz', t('quizQuestions') || 'Quizvragen', !!quizQuestions && quizQuestions.length > 0);
-	}, [quizQuestions, t, ensureItem]);
-	useEffect(() => {
-		ensureItem('storytelling', t('storytelling'), !!storytellingData);
-	}, [storytellingData, t, ensureItem]);
-	useEffect(() => {
-		ensureItem('businessCase', t('businessCase') || 'Zakelijke case', !!businessCaseData);
-	}, [businessCaseData, t, ensureItem]);
+		// Parse timestamps en vergelijk alleen datum/tijd zonder seconden
+		const parseTime = (stamp: string) => {
+			const match = stamp.match(/(\d+)-(\d+)-(\d+),\s*(\d+):(\d+):(\d+)/);
+			if (!match) return null;
+
+			const [, day, month, year, hour, minute] = match;
+			return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+		};
+
+		const prevTime = parseTime(previousStartStampRef.current);
+		const currentTime = parseTime(startStamp);
+
+		if (!prevTime || !currentTime) return true; // Fallback naar oude gedrag
+
+		// Reset alleen als verschil groter is dan 1 minuut
+		const diffMinutes = Math.abs(currentTime.getTime() - prevTime.getTime()) / (1000 * 60);
+		return diffMinutes > 1;
+	})();
+
+	if (shouldReset) {
+		console.log('[RecapSmartPanel] Significant session change detected - resetting');
+		setPersistentItems([]);
+		processedContentRef.current.clear();
+		previousStartStampRef.current = startStamp;
+	}
+}, [startStamp]);
+
+	// Watch content readiness - voeg items toe wanneer nieuwe inhoud beschikbaar komt
+	const processedContentRef = useRef<Set<string>>(new Set());
 
 	useEffect(() => {
-		ensureItem('blog', t('blog'), !!blogData && blogData.trim().length > 0);
-	}, [blogData, t, ensureItem]);
+		const availableContent = new Set<string>();
 
-	const hasAnyItem = items.length > 0;
-	const numEnabled = items.filter(i => i.enabled).length;
+		// Check welke content beschikbaar is
+		if (!!summary && summary.trim().length > 0) availableContent.add('summary');
+		if (!!keywordAnalysis && keywordAnalysis.length > 0) availableContent.add('keywords');
+		if (!!sentiment && !!sentiment.summary && !!sentiment.conclusion) availableContent.add('sentiment');
+		if (!!faq && faq.trim().length > 0) availableContent.add('faq');
+		if (!!learnings && learnings.trim().length > 0) availableContent.add('learnings');
+		if (!!followup && followup.trim().length > 0) availableContent.add('followup');
+		if (Array.isArray(chatHistory) && chatHistory.length > 0) availableContent.add('chat');
+		if (!!mindmapText && mindmapText.trim().length > 0) availableContent.add('mindmap');
+		if (!!executiveSummaryData) availableContent.add('exec');
+		if (!!quizQuestions && quizQuestions.length > 0) availableContent.add('quiz');
+		if (!!storytellingData) availableContent.add('storytelling');
+		if (!!businessCaseData) availableContent.add('businessCase');
+		if (!!blogData && blogData.trim().length > 0) availableContent.add('blog');
+		if (!!explainData && explainData.explanation && explainData.explanation.trim().length > 0) availableContent.add('explain');
+
+		// Vind nieuwe content die nog niet is verwerkt
+		const newContent = Array.from(availableContent).filter(type => !processedContentRef.current.has(type));
+
+		if (newContent.length > 0) {
+			const itemsToAdd: RecapItem[] = [];
+
+			newContent.forEach(type => {
+				let title = '';
+				switch (type) {
+					case 'summary': title = t('summary'); break;
+					case 'keywords': title = t('keywordAnalysis'); break;
+					case 'sentiment': title = t('sentiment'); break;
+					case 'faq': title = t('faq'); break;
+					case 'learnings': title = t('keyLearnings'); break;
+					case 'followup': title = t('followUp'); break;
+					case 'chat': title = t('chat'); break;
+					case 'mindmap': title = t('mindmap'); break;
+					case 'exec': title = t('executiveSummary') || 'Executive summary'; break;
+					case 'quiz': title = t('quizQuestions') || 'Quizvragen'; break;
+					case 'storytelling': title = t('storytelling'); break;
+					case 'businessCase': title = t('businessCase') || 'Zakelijke case'; break;
+					case 'blog': title = t('blog'); break;
+					case 'explain': title = t('explain'); break;
+				}
+				itemsToAdd.push({ id: type, type: type as RecapItemType, title, enabled: false });
+			});
+
+			setPersistentItems(prev => [...prev, ...itemsToAdd]);
+
+			// Update welke content we hebben verwerkt
+			newContent.forEach(type => processedContentRef.current.add(type));
+		}
+	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData]);
+
+	const hasAnyItem = persistentItems.length > 0;
+	const numEnabled = persistentItems.filter(i => i.enabled).length;
 
 	const borderColorClass = useMemo(() => {
 		if (!hasAnyItem) return 'border-gray-300';
@@ -182,16 +205,31 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 		return 'border-green-500';
 	}, [hasAnyItem, numEnabled]);
 
-	const toggleItem = (id: string) => setItems(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
-	const moveItem = (index: number, direction: 'up' | 'down') => setItems(prev => {
-		const newArr = [...prev];
-		const target = direction === 'up' ? index - 1 : index + 1;
-		if (target < 0 || target >= newArr.length) return prev;
-		const tmp = newArr[target];
-		newArr[target] = newArr[index];
-		newArr[index] = tmp;
-		return newArr;
-	});
+	// Toggle item, maar als al in cache, voer niet opnieuw uit
+const toggleItem = (id: string) => {
+	const item = persistentItems.find(i => i.id === id);
+	if (!item) return;
+	console.log('[RecapSmartPanel] toggleItem:', id, item.type, 'enabled:', !item.enabled);
+	if (resultsCache[item.type]) {
+		console.log('[RecapSmartPanel] toggleItem: uit cache', item.type);
+		setPersistentItems(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
+		return;
+	}
+	// Alleen genereren als nog niet in cache
+	const section = composeSectionText(item.type);
+	console.log('[RecapSmartPanel] toggleItem: genereren en cachen', item.type);
+	setResultsCache(prev => ({ ...prev, [item.type]: section.text }));
+	setPersistentItems(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
+};
+const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems(prev => {
+	const newArr = [...prev];
+	const target = direction === 'up' ? index - 1 : index + 1;
+	if (target < 0 || target >= newArr.length) return prev;
+	const tmp = newArr[target];
+	newArr[target] = newArr[index];
+	newArr[index] = tmp;
+	return newArr;
+});
 
 	const buildQuizText = (includeAnswers: boolean | undefined): string => {
 		if (!quizQuestions || quizQuestions.length === 0) return '';
@@ -280,16 +318,48 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 			case 'blog': {
 				return { title: `## ${t('blog')}`, text: blogData || '' };
 			}
+			case 'explain': {
+				if (!explainData) return { title: `## ${t('explain')}`, text: '' };
+				const parts: string[] = [];
+				parts.push(`**Complexity Level:** ${explainData.complexityLevel}`);
+				parts.push(`**Focus Area:** ${explainData.focusArea}`);
+				parts.push(`**Format:** ${explainData.format}`);
+				parts.push('');
+				parts.push(explainData.explanation);
+				return { title: `## ${t('explain')}`, text: parts.join('\n') };
+			}
 		}
-	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, quizQuestions, quizIncludeAnswers]);
+	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, quizQuestions, quizIncludeAnswers]);
 
-	const enabledItems = items.filter(i => i.enabled);
+	const enabledItems = persistentItems.filter(i => i.enabled);
+
+	const getCachedOrGenerate = useCallback(async (type: RecapItemType, generator: () => Promise<any>) => {
+		if (resultsCache[type]) {
+			console.log(`[RecapSmartPanel] Using cached result for ${type}`);
+			return resultsCache[type];
+		}
+
+		console.log(`[RecapSmartPanel] Generating new result for ${type}`);
+		const result = await generator();
+		setResultsCache(prev => ({ ...prev, [type]: result }));
+		return result;
+	}, [resultsCache]);
+
+	const getOrCacheResult = (type: RecapItemType) => {
+		if (resultsCache[type]) return resultsCache[type]!;
+		const section = composeSectionText(type);
+		setResultsCache(prev => ({ ...prev, [type]: section.text }));
+		return section.text;
+	};
 
 	const composedText = useMemo(() => {
 		if (enabledItems.length === 0) return '';
-		const sections = enabledItems.map(i => composeSectionText(i.type));
-		return sections.map(s => `${s.title}\n\n${s.text}`).join('\n\n\n');
-	}, [enabledItems, composeSectionText]);
+		const sections = enabledItems.map(i => {
+			const section = composeSectionText(i.type);
+			return `${section.title}\n\n${getOrCacheResult(i.type)}`;
+		});
+		return sections.join('\n\n\n');
+	}, [enabledItems, composeSectionText, resultsCache]);
 
 	const handleExportText = useCallback(() => {
 		if (!composedText) return;
@@ -392,7 +462,7 @@ To send via email:
 					) : (
 						<>
 							<ul className="divide-y divide-gray-200 dark:divide-slate-700 rounded-md border border-gray-200 dark:border-slate-700 overflow-hidden">
-								{items.map((item, index) => (
+								{persistentItems.map((item, index) => (
 									<li key={item.id} className="flex items-center justify-between bg-white/60 dark:bg-slate-800/60 px-3 py-2">
 										<div className="flex items-center gap-3">
 											<input
@@ -405,7 +475,7 @@ To send via email:
 										</div>
 										<div className="flex items-center gap-1">
 											<ArrowButton direction="up" onClick={() => moveItem(index, 'up')} disabled={index === 0} />
-											<ArrowButton direction="down" onClick={() => moveItem(index, 'down')} disabled={index === items.length - 1} />
+											<ArrowButton direction="down" onClick={() => moveItem(index, 'down')} disabled={index === persistentItems.length - 1} />
 										</div>
 									</li>
 								))}

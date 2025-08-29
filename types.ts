@@ -159,3 +159,18 @@ export interface UserPreferences {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Explain interface
+export interface ExplainData {
+  complexityLevel: string;
+  focusArea: string;
+  format: string;
+  explanation: string;
+}
+
+// Explain options interface
+export interface ExplainOptions {
+  complexityLevel: string;
+  focusArea: string;
+  format: string;
+}

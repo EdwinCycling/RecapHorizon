@@ -60,6 +60,7 @@ if (import.meta.env.DEV) {
 // Helper function to get user subscription tier
 export const getUserSubscriptionTier = async (userId: string): Promise<string> => {
   try {
+    if (!userId) throw new Error('userId is leeg in getUserSubscriptionTier!');
     const userDoc = await getDoc(doc(db, 'users', userId));
     if (userDoc.exists()) {
       return userDoc.data()?.subscriptionTier || 'free';
@@ -82,7 +83,8 @@ export interface DailyUsage {
 
 export const getUserDailyUsage = async (userId: string): Promise<DailyUsage> => {
   const today = new Date().toISOString().split('T')[0];
-  const userRef = doc(db, 'users', userId);
+  if (!userId) throw new Error('userId is leeg in Firestore user functie!');
+    const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
   const data = userSnap.exists() ? userSnap.data() as any : {};
   const lastDate: string | undefined = data.lastDailyUsageDate;
@@ -114,7 +116,8 @@ export const getUserDailyUsage = async (userId: string): Promise<DailyUsage> => 
 
 export const incrementUserDailyUsage = async (userId: string, type: UsageSessionType): Promise<void> => {
   const today = new Date().toISOString().split('T')[0];
-  const userRef = doc(db, 'users', userId);
+  if (!userId) throw new Error('userId is leeg in Firestore user functie!');
+    const userRef = doc(db, 'users', userId);
   await setDoc(userRef, { lastDailyUsageDate: today }, { merge: true });
   if (type === 'audio') {
     await updateDoc(userRef, { dailyAudioCount: increment(1), updatedAt: serverTimestamp() }).catch(async () => {
@@ -138,7 +141,8 @@ export interface MonthlyTokensUsage {
 export const getUserMonthlyTokens = async (userId: string): Promise<MonthlyTokensUsage> => {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const userRef = doc(db, 'users', userId);
+  if (!userId) throw new Error('userId is leeg in Firestore user functie!');
+    const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
   const data = userSnap.exists() ? userSnap.data() as any : {};
   if (data.tokensMonth === currentMonth) {
@@ -162,7 +166,8 @@ export const getUserMonthlyTokens = async (userId: string): Promise<MonthlyToken
 export const addUserMonthlyTokens = async (userId: string, inputTokens: number, outputTokens: number): Promise<void> => {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const userRef = doc(db, 'users', userId);
+  if (!userId) throw new Error('userId is leeg in Firestore user functie!');
+    const userRef = doc(db, 'users', userId);
   await setDoc(userRef, { tokensMonth: currentMonth }, { merge: true });
   await updateDoc(userRef, {
     monthlyInputTokens: increment(inputTokens),
@@ -186,7 +191,8 @@ export interface MonthlySessionsUsage {
 export const getUserMonthlySessions = async (userId: string): Promise<MonthlySessionsUsage> => {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const userRef = doc(db, 'users', userId);
+  if (!userId) throw new Error('userId is leeg in Firestore user functie!');
+    const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
   const data = userSnap.exists() ? userSnap.data() as any : {};
   if (data.sessionsMonth === currentMonth) {
@@ -199,7 +205,8 @@ export const getUserMonthlySessions = async (userId: string): Promise<MonthlySes
 export const incrementUserMonthlySessions = async (userId: string): Promise<void> => {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const userRef = doc(db, 'users', userId);
+  if (!userId) throw new Error('userId is leeg in Firestore user functie!');
+    const userRef = doc(db, 'users', userId);
   await setDoc(userRef, { sessionsMonth: currentMonth }, { merge: true });
   await updateDoc(userRef, { monthlySessionsCount: increment(1), updatedAt: serverTimestamp() }).catch(async () => {
     await setDoc(userRef, { monthlySessionsCount: 1, updatedAt: serverTimestamp() }, { merge: true });
@@ -292,6 +299,7 @@ export const getUserSessionsThisMonth = async (userId: string): Promise<number> 
 export const updateTokenUsage = async (userId: string, inputTokens: number, outputTokens: number): Promise<void> => {
   try {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    if (!userId) throw new Error('userId is leeg in Firestore token usage functie!');
     const tokenUsageRef = doc(db, 'tokenUsage', `${userId}_${today}`);
     
     const tokenUsageDoc = await getDoc(tokenUsageRef);
@@ -324,6 +332,7 @@ export const updateTokenUsage = async (userId: string, inputTokens: number, outp
 export const getTokenUsageToday = async (userId: string): Promise<TokenUsage | null> => {
   try {
     const today = new Date().toISOString().split('T')[0];
+    if (!userId) throw new Error('userId is leeg in Firestore token usage functie!');
     const tokenUsageRef = doc(db, 'tokenUsage', `${userId}_${today}`);
     const tokenUsageDoc = await getDoc(tokenUsageRef);
     
@@ -360,6 +369,7 @@ export const getTokenUsageThisMonth = async (userId: string): Promise<TokenUsage
 // User preferences functions
 export const getUserPreferences = async (userId: string): Promise<UserPreferences | null> => {
   try {
+    if (!userId) throw new Error('userId is leeg in Firestore userPreferences functie!');
     const userPrefsRef = doc(db, 'userPreferences', userId);
     const userPrefsDoc = await getDoc(userPrefsRef);
     
@@ -375,6 +385,7 @@ export const getUserPreferences = async (userId: string): Promise<UserPreference
 
 export const saveUserPreferences = async (userId: string, preferences: Partial<UserPreferences>): Promise<void> => {
   try {
+    if (!userId) throw new Error('userId is leeg in Firestore userPreferences functie!');
     const userPrefsRef = doc(db, 'userPreferences', userId);
     const existingPrefs = await getUserPreferences(userId);
     

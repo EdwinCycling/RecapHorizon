@@ -49,6 +49,11 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
     },
     {
       category: 'core',
+      question: t('faqDocxImport'),
+      answer: t('faqDocxImportAnswer')
+    },
+    {
+      category: 'core',
       question: t('faqRecordingLength'),
       answer: t('faqRecordingLengthAnswer')
     },
@@ -73,6 +78,11 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
       category: 'ai',
       question: t('faqAIQuestions'),
       answer: t('faqAIQuestionsAnswer')
+    },
+    {
+      category: 'ai',
+      question: t('faqWebExpert'),
+      answer: t('faqWebExpertAnswer')
     },
 
     // Privacy & Security
@@ -205,6 +215,23 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
       category: 'core',
       question: t('faqWebPageImport'),
       answer: t('faqWebPageImportAnswer')
+    },
+    
+    // Image Upload FAQ
+    {
+      category: 'core',
+      question: t('faqImageUpload'),
+      answer: t('faqImageUploadAnswer')
+    },
+    {
+      category: 'core',
+      question: t('faqImageFormats'),
+      answer: t('faqImageFormatsAnswer')
+    },
+    {
+      category: 'ai',
+      question: t('faqImageAnalysis'),
+      answer: t('faqImageAnalysisAnswer')
     }
   ];
 

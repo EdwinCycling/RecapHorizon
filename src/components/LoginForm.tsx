@@ -1,9 +1,9 @@
 import React from 'react';
 
 interface LoginFormProps {
-  onLogin: (...args: any[]) => void;
-  onCreateAccount: (...args: any[]) => void;
-  onPasswordReset: (...args: any[]) => void;
+  onLogin: (email?: string, password?: string) => void;
+  onCreateAccount: (email?: string, password?: string) => void;
+  onPasswordReset: (email?: string) => void;
   onClose: () => void;
   t: (key: string) => string;
 }

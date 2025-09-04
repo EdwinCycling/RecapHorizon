@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
-import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, ExplainData } from '../../types';
+import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData } from '../../types';
 import { getBcp47Code } from '../languages';
 
 
@@ -26,7 +26,7 @@ interface RecapItem {
 
 interface RecapSmartPanelProps {
 	// Localized label provider
-	t: (key: any, params?: any) => string;
+	t: (key: string, params?: Record<string, unknown>) => string;
 
 	// Content inputs (already computed by the main app)
 	transcript: string;
@@ -333,7 +333,7 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 
 	const enabledItems = persistentItems.filter(i => i.enabled);
 
-	const getCachedOrGenerate = useCallback(async (type: RecapItemType, generator: () => Promise<any>) => {
+	const getCachedOrGenerate = useCallback(async <T,>(type: RecapItemType, generator: () => Promise<T>): Promise<T> => {
 		if (resultsCache[type]) {
 			console.log(`[RecapSmartPanel] Using cached result for ${type}`);
 			return resultsCache[type];

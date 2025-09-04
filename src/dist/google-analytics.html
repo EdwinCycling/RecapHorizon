@@ -1,0 +1,58 @@
+<!-- Google Analytics Setup for RecapSmart -->
+<!-- Replace GA_MEASUREMENT_ID with your actual Google Analytics ID -->
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GA_MEASUREMENT_ID', {
+    page_title: 'RecapSmart - AI Meeting Transcription',
+    page_location: window.location.href,
+    custom_map: {
+      'custom_dimension1': 'user_type',
+      'custom_dimension2': 'language',
+      'custom_dimension3': 'subscription_tier'
+    }
+  });
+  
+  // Track page views for SPA
+  window.addEventListener('popstate', function() {
+    gtag('config', 'GA_MEASUREMENT_ID', {
+      page_path: window.location.pathname + window.location.search
+    });
+  });
+  
+  // Track custom events
+  function trackEvent(eventName, parameters = {}) {
+    gtag('event', eventName, parameters);
+  }
+  
+  // Track transcription events
+  window.trackTranscriptionStart = () => trackEvent('transcription_started');
+  window.trackTranscriptionComplete = (duration) => trackEvent('transcription_completed', {duration: duration});
+  window.trackDocumentGenerated = (type) => trackEvent('document_generated', {document_type: type});
+  window.trackUpgrade = (tier) => trackEvent('upgrade_clicked', {tier: tier});
+</script>
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-XXXXXXX');</script>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<!-- Google Search Console Verification -->
+<meta name="google-site-verification" content="your-verification-code" />
+
+<!-- Bing Webmaster Tools -->
+<meta name="msvalidate.01" content="your-bing-verification-code" />
+
+<!-- Yandex Webmaster -->
+<meta name="yandex-verification" content="your-yandex-verification-code" />

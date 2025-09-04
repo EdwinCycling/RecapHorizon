@@ -2,7 +2,7 @@ import * as React from 'react';
 
 type FooterProps = {
   t: (key: string) => string,
-  authState: any,
+  authState: { user: unknown | null; loading: boolean } | null,
   setShowCookieModal: (v: boolean) => void,
   setShowStoryModal: (v: boolean) => void,
   setShowTeamModal: (v: boolean) => void,
@@ -13,7 +13,7 @@ type FooterProps = {
 
 const Footer: React.FC<FooterProps> = ({ t, authState, setShowCookieModal, setShowStoryModal, setShowTeamModal, setShowFAQPage, setShowDisclaimerModal, setShowPricingPage, }) => (
   <footer className="w-full mt-16 pt-8 border-t border-gray-200 dark:border-slate-700">
-    <div className="max-w-6xl mx-auto px-3 flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+    <div className="max-w-full mx-auto px-3 flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
       <div className="flex items-center gap-3">
         <a 
           href="/cookies" 

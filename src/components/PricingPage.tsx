@@ -85,7 +85,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-full w-full max-h-[90vh] overflow-y-auto">
         {/* Header with SEO-optimized title */}
         <div className="flex justify-between items-center p-6 border-b">
           <div>
@@ -223,15 +223,31 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                         </span>
                       </div>
                     )}
-                    {tier.features?.webPage && (
+                    {tier.features?.webPage && !tier.features?.webExpert && (
                       <div className="flex items-center">
                         <span className="text-green-500 mr-2">✓</span>
                         <span className="text-sm text-gray-700">
-                          {t('pricingWebPageImport')}
+                          {t('pricingBasicWebPageImport') || 'Basic Web Page Import (single URL)'}
                         </span>
                       </div>
                     )}
-                    {!tier.features?.chat && !tier.features?.podcast && !tier.features?.exportPpt && !tier.features?.businessCase && !tier.features?.webPage && (
+                    {tier.features?.webExpert && (
+                      <div className="flex items-center">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span className="text-sm text-gray-700">
+                          {t('pricingWebExpertImport') || 'WebExpert URL Import (multiple pages)'}
+                        </span>
+                      </div>
+                    )}
+                    {(tier.tier === SubscriptionTier.GOLD || tier.tier === SubscriptionTier.ENTERPRISE) && (
+                      <div className="flex items-center">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span className="text-sm text-gray-700">
+                          {t('pricingImageUpload')}
+                        </span>
+                      </div>
+                    )}
+                    {!tier.features?.chat && !tier.features?.podcast && !tier.features?.exportPpt && !tier.features?.businessCase && !tier.features?.webPage && tier.tier !== SubscriptionTier.GOLD && tier.tier !== SubscriptionTier.ENTERPRISE && (
                       <div className="text-sm text-gray-400 italic">
                         {t('pricingNoPremiumFeatures')}
                       </div>

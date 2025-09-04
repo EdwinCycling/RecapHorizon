@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StorytellingOptions } from '../types';
+import { StorytellingOptions } from '../../types';
 
 interface StorytellingQuestionsModalProps {
   isOpen: boolean;

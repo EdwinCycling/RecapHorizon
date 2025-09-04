@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import ImageUploadHelpModal from './ImageUploadHelpModal';
 
 interface SessionOptionsModalProps {
   isOpen: boolean;
@@ -7,6 +8,9 @@ interface SessionOptionsModalProps {
   onUploadFile: () => void;
   onPasteText: () => void;
   onWebPage: () => void;
+  onUploadImage: () => void;
+  onAskExpert: () => void;
+  userSubscription?: string;
   t: (key: string) => string;
 }
 
@@ -17,13 +21,18 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
   onUploadFile,
   onPasteText,
   onWebPage,
+  onUploadImage,
+  onAskExpert,
+  userSubscription,
   t
 }) => {
+  const [isImageHelpOpen, setIsImageHelpOpen] = useState(false);
+  
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-[95vw] max-w-[1600px] max-h-[85vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-slate-700">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{t('sessionOptionsTitle')}</h2>
@@ -42,14 +51,14 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
           </p>
 
           {/* Options Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 mb-6">
             {/* Audio Recording Option */}
             <div 
               onClick={() => {
                 onStartRecording();
                 onClose();
               }}
-              className="border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 bg-blue-50 dark:bg-blue-900/20 cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+              className="border-2 border-blue-200 dark:border-blue-700 rounded-xl p-8 bg-blue-50 dark:bg-blue-900/20 cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">🎤</div>
@@ -66,7 +75,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                 onUploadFile();
                 onClose();
               }}
-              className="border-2 border-green-200 dark:border-green-700 rounded-lg p-6 bg-green-50 dark:bg-green-900/20 cursor-pointer hover:border-green-300 dark:hover:border-green-600 transition-colors"
+              className="border-2 border-green-200 dark:border-green-700 rounded-xl p-8 bg-green-50 dark:bg-green-900/20 cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">📄</div>
@@ -86,7 +95,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                 onPasteText();
                 onClose();
               }}
-              className="border-2 border-purple-200 dark:border-purple-700 rounded-lg p-6 bg-purple-50 dark:bg-purple-900/20 cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
+              className="border-2 border-purple-200 dark:border-purple-700 rounded-xl p-8 bg-purple-50 dark:bg-purple-900/20 cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">📋</div>
@@ -103,7 +112,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                 onWebPage();
                 onClose();
               }}
-              className="border-2 border-orange-200 dark:border-orange-700 rounded-lg p-6 bg-orange-50 dark:bg-orange-900/20 cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 transition-colors"
+              className="border-2 border-orange-200 dark:border-orange-700 rounded-xl p-8 bg-orange-50 dark:bg-orange-900/20 cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">🌐</div>
@@ -111,6 +120,56 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
               </div>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 {t('sessionOptionWebPageDesc')}
+              </p>
+            </div>
+
+            {/* Image Upload Option */}
+            <div 
+              onClick={() => {
+                onUploadImage();
+                onClose();
+              }}
+              className="border-2 border-pink-200 dark:border-pink-700 rounded-xl p-8 bg-pink-50 dark:bg-pink-900/20 cursor-pointer hover:border-pink-300 dark:hover:border-pink-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+            >
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">📸</div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{t('sessionOptionImage')}</h3>
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-3">
+                {t('sessionOptionImageDesc')}
+              </p>
+              <div className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                {t('sessionOptionImageFormats')}
+              </div>
+            </div>
+
+            {/* Ask the Expert Option */}
+            <div 
+              onClick={() => {
+                // Check if user has premium subscription before allowing action
+                if (userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) {
+                  onAskExpert();
+                  onClose();
+                }
+                // If no subscription, do nothing (button appears clickable but doesn't work)
+              }}
+              className={`border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-8 bg-yellow-50 dark:bg-yellow-900/20 cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105 ${
+                userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase()) 
+                  ? '' 
+                  : 'opacity-70'
+              }`}
+            >
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">🧠</div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{t('sessionOptionExpert')}</h3>
+                {!(userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) && (
+                  <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    {t('premiumOnly')}
+                  </div>
+                )}
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                {t('sessionOptionExpertDesc')}
               </p>
             </div>
           </div>
@@ -138,6 +197,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
           </button>
         </div>
       </div>
+      
+      {/* Image Upload Help Modal */}
+      <ImageUploadHelpModal
+        isOpen={isImageHelpOpen}
+        onClose={() => setIsImageHelpOpen(false)}
+        t={t}
+      />
     </div>
   );
 };

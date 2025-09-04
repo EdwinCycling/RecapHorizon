@@ -5,8 +5,8 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-        port: 5173,
-        strictPort: true, // Dit zorgt ervoor dat Vite altijd poort 5173 gebruikt en faalt als deze bezet is
+        port: 3000,
+        strictPort: false, // Laat Vite een andere poort kiezen als deze bezet is
         host: true, // Dit zorgt ervoor dat de server toegankelijk is vanaf andere apparaten op je netwerk
         open: false, // Open browser niet automatisch
         cors: true // Enable CORS for development

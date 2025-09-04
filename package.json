@@ -1,7 +1,7 @@
 {
   "name": "recapsmart",
   "private": true,
-  "version": "0.81808",
+  "version": "0.8090",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "firebase": "^12.1.0",
     "jspdf": "^3.0.2",
+    "mammoth": "^1.10.0",
     "mermaid": "^11.3.0",
     "pdfjs-dist": "^5.4.54",
     "pptxgenjs": "^3.12.0",

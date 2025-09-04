@@ -8,18 +8,27 @@ import DisclaimerModal from './src/components/DisclaimerModal';
 import WaitlistModal from './src/components/WaitlistModal';
 import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
-import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions } from './types';
+import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, ExpertConfiguration, ExpertChatMessage } from './types';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
 // Mermaid is ESM-only; import dynamically to avoid type issues
-let mermaid: any;
+let mermaid: typeof import('mermaid') | undefined;
 import PptxGenJS from 'pptxgenjs';
 import RecapSmartPanel from './src/components/RecapSmartPanel';
 import LanguageSelector from './src/components/LanguageSelector';
 import SessionOptionsModal from './src/components/SessionOptionsModal';
+import ExpertConfigurationModal from './src/components/ExpertConfigurationModal';
+import ExpertChatModal from './src/components/ExpertChatModal';
+import ExpertHelpModal from './src/components/ExpertHelpModal';
 // Removed StorytellingQuestionsModal; inline panels are rendered under tabs
 import { getGeminiCode, getBcp47Code, getTotalLanguageCount } from './src/languages';
 import { useTabCache } from './src/hooks/useTabCache';
+import { fetchHTML, fetchMultipleHTML, extractTextFromHTML, FetchError } from './src/utils/fetchPage';
+import { useTranslation } from './src/hooks/useTranslation';
+import { AudioRecorder } from './src/utils/AudioRecorder';
+import MobileAudioHelpModal from './src/components/MobileAudioHelpModal';
+import ImageUploadHelpModal from './src/components/ImageUploadHelpModal';
+import { isMobileDevice } from './src/utils/deviceDetection';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -67,7 +76,7 @@ import {
   deleteField,
   increment
 } from 'firebase/firestore';
-import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, type MonthlyTokensUsage } from './src/firebase';
+import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, type MonthlyTokensUsage } from './src/firebase';
 
 
 
@@ -316,7 +325,7 @@ const LoginForm: React.FC<{
           onChange={(e) => setEmail(e.target.value)}
           required
           className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-          placeholder="jouw@email.com"
+          placeholder={t('emailPlaceholder')}
         />
       </div>
 
@@ -333,7 +342,7 @@ const LoginForm: React.FC<{
               required
               autoFocus={!!email} // Auto-focus if email is pre-filled
               className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder="••••••••"
+              placeholder={t('passwordPlaceholder')}
             />
             <button
               type="button"
@@ -362,7 +371,7 @@ const LoginForm: React.FC<{
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder="••••••••"
+              placeholder={t('passwordPlaceholder')}
             />
             <button
               type="button"
@@ -467,7 +476,7 @@ const LoadingOverlay: React.FC<{ text: string }> = ({ text }) => (
       </div>
     </div>
 );
-const PodcastPlayer: React.FC<{ script: string; language: 'nl' | 'en'; t: (key: any, params?: any) => string; }> = ({ script, language, t }) => {
+const PodcastPlayer: React.FC<{ script: string; language: 'nl' | 'en'; t: (key: string, params?: Record<string, unknown>) => string; }> = ({ script, language, t }) => {
     const [playbackState, setPlaybackState] = useState<'idle' | 'playing' | 'paused'>('idle');
     const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
@@ -530,7 +539,7 @@ const PodcastPlayer: React.FC<{ script: string; language: 'nl' | 'en'; t: (key: 
     );
 };
 
-const KeywordExplanationModal: React.FC<{ keyword: string; explanation: string | null; isLoading: boolean; onClose: () => void; t: (key: any, params?: any) => string; }> = ({ keyword, explanation, isLoading, onClose, t }) => {
+const KeywordExplanationModal: React.FC<{ keyword: string; explanation: string | null; isLoading: boolean; onClose: () => void; t: (key: string, params?: Record<string, unknown>) => string; }> = ({ keyword, explanation, isLoading, onClose, t }) => {
     return (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]" onClick={onClose}>
             <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-lg w-full m-4 p-6" onClick={(e) => e.stopPropagation()}>
@@ -565,7 +574,7 @@ const PowerPointOptionsModal: React.FC<{
         mainGoal: string;
         toneStyle: string;
     }) => void; 
-    t: (key: any, params?: any) => string; 
+    t: (key: string, params?: Record<string, unknown>) => string;
     currentTemplate: File | null;
     onTemplateChange: (file: File | null) => void;
     uiLang: string;
@@ -577,6 +586,7 @@ const PowerPointOptionsModal: React.FC<{
     const [mainGoal, setMainGoal] = useState('Informeren en updates geven');
     const [toneStyle, setToneStyle] = useState('Informerend en neutraal');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -706,7 +716,7 @@ const PowerPointOptionsModal: React.FC<{
                             onChange={(e) => setTargetAudience(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                         >
-                            <option value="Interne teamleden">{t('internalTeamMembers')}</option>
+                            <option value={t('internalTeamMembers')}>{t('internalTeamMembers')}</option>
                             <option value="Senior management / EXCO">{t('seniorManagement')}</option>
                             <option value="Potentiële klanten">{t('potentialCustomers')}</option>
                             <option value="Investeerders">{t('investors')}</option>
@@ -725,7 +735,7 @@ const PowerPointOptionsModal: React.FC<{
                             onChange={(e) => setMainGoal(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                         >
-                            <option value="Informeren en updates geven">{t('informAndUpdate')}</option>
+                            <option value={t('informAndProvideUpdates')}>{t('informAndUpdate')}</option>
                             <option value="Overtuigen tot een besluit">{t('convinceToDecide')}</option>
                             <option value="Trainen en kennis delen">{t('trainAndShare')}</option>
                             <option value="Probleem presenteren en oplossing voorstellen">{t('presentProblemAndSolution')}</option>
@@ -744,7 +754,7 @@ const PowerPointOptionsModal: React.FC<{
                             onChange={(e) => setToneStyle(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                         >
-                            <option value="Informerend en neutraal">{t('informativeAndNeutral')}</option>
+                            <option value={t('informativeAndNeutral')}>{t('informativeAndNeutral')}</option>
                             <option value="Formeel en feitelijk">{t('formalAndFactual')}</option>
                             <option value="Enthousiast en motiverend">{t('enthusiasticAndMotivating')}</option>
                             <option value="Kritisch en analytisch">{t('criticalAndAnalytical')}</option>
@@ -826,95 +836,7 @@ interface AuthState {
 
 // Utility function for copying text to clipboard
 
-// Email helper functions
-const openEmailClient = (to: string, subject: string, body: string) => {
-  // Check if the content is too long for mailto URLs (typical limit is around 2000-8000 characters)
-  const maxBodyLength = 2000; // Conservative limit for mailto URLs
-  
-  let truncatedBody = body;
-  if (body.length > maxBodyLength) {
-    // Truncate and add indication that content was truncated
-    truncatedBody = body.substring(0, maxBodyLength) + '\n\n[Content was truncated due to length limitations. Please copy the full content from the application.]';
-  }
-  
-  const encodedSubject = encodeURIComponent(subject);
-  const encodedBody = encodeURIComponent(truncatedBody);
-  
-  // Create the mailto URL
-  const mailtoUrl = `mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`;
-  
-  // Check if the URL is too long (browsers typically have limits around 2000-8000 characters)
-  if (mailtoUrl.length > 4000) {
-    // URL is too long, use clipboard fallback
-    displayToast('Email content too long for mailto link. Content copied to clipboard instead.', 'success');
-    copyToClipboard(body);
-    return;
-  }
-  
-  try {
-    // Try to open the mailto link
-    window.location.href = mailtoUrl;
-    
-    // If the content was truncated, show a toast notification
-    if (body.length > maxBodyLength) {
-      // Use setTimeout to ensure this runs after the mailto attempt
-      setTimeout(() => {
-        displayToast('Email content was truncated due to length. Full content copied to clipboard.', 'success');
-        copyToClipboard(body);
-      }, 100);
-    }
-  } catch (error) {
-    console.error('Failed to open email client:', error);
-    // Fallback: copy content to clipboard and show message
-    displayToast('Could not open email client. Content copied to clipboard instead.', 'error');
-    copyToClipboard(body);
-  }
-};
-
-const openEmailClientWithoutTo = (subject: string, body: string) => {
-  // Check if the content is too long for mailto URLs (typical limit is around 2000-8000 characters)
-  const maxBodyLength = 2000; // Conservative limit for mailto URLs
-  
-  let truncatedBody = body;
-  if (body.length > maxBodyLength) {
-    // Truncate and add indication that content was truncated
-    truncatedBody = body.substring(0, maxBodyLength) + '\n\n[Content was truncated due to length limitations. Please copy the full content from the application.]';
-  }
-  
-  const encodedSubject = encodeURIComponent(subject);
-  const encodedBody = encodeURIComponent(truncatedBody);
-  
-  // Create the mailto URL
-  const mailtoUrl = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
-  
-  // Check if the URL is too long (browsers typically have limits around 2000-8000 characters)
-  if (mailtoUrl.length > 4000) {
-    // URL is too long, use clipboard fallback
-    displayToast('Email content too long for mailto link. Content copied to clipboard instead.', 'success');
-    copyToClipboard(body);
-    return;
-  }
-  
-  try {
-    // Try to open the mailto link
-    window.location.href = mailtoUrl;
-    
-    // If the content was truncated, show a toast notification
-    if (body.length > maxBodyLength) {
-      // Use setTimeout to ensure this runs after the mailto attempt
-      setTimeout(() => {
-        displayToast('Email content was truncated due to length. Full content copied to clipboard.', 'success');
-        // Also copy the full content to clipboard as a fallback
-        copyToClipboard(body);
-      }, 100);
-    }
-  } catch (error) {
-    console.error('Failed to open email client:', error);
-    // Fallback: copy content to clipboard and show message
-    displayToast('Could not open email client. Content copied to clipboard instead.', 'error');
-    copyToClipboard(body);
-  }
-};
+// Email helper functions moved inside App component to access translation function
 
 // --- i18n ---
 import { translations } from './src/locales';
@@ -936,10 +858,6 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
   });
 };
 export default function App() {
-  const [status, setStatus] = useState<RecordingStatus>(RecordingStatus.IDLE);
-  // `language` is for the content (what's spoken), `uiLang` is for the app chrome
-  const [language, setLanguage] = useState<string | null>(null);
-  const [outputLang, setOutputLang] = useState<string>('en');
   const [uiLang, setUiLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'>(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       const savedLang = window.localStorage.getItem('uiLang') as 'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es' | null;
@@ -947,6 +865,104 @@ export default function App() {
     }
     return 'en';
   });
+  
+  // Translation hook
+  const { t, currentLanguage } = useTranslation(uiLang);
+  
+  // Email helper functions
+  const openEmailClient = (to: string, subject: string, body: string) => {
+    // Check if the content is too long for mailto URLs (typical limit is around 2000-8000 characters)
+    const maxBodyLength = 2000; // Conservative limit for mailto URLs
+    
+    let truncatedBody = body;
+    if (body.length > maxBodyLength) {
+      // Truncate and add indication that content was truncated
+      truncatedBody = body.substring(0, maxBodyLength) + '\n\n[Content was truncated due to length limitations. Please copy the full content from the application.]';
+    }
+    
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(truncatedBody);
+    
+    // Create the mailto URL
+    const mailtoUrl = `mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`;
+    
+    // Check if the URL is too long (browsers typically have limits around 2000-8000 characters)
+    if (mailtoUrl.length > 4000) {
+      // URL is too long, use clipboard fallback
+      displayToast(t('emailContentTooLong'), 'error');
+      copyToClipboard(body);
+      return;
+    }
+    
+    try {
+      // Try to open the mailto link
+      window.location.href = mailtoUrl;
+      
+      // If the content was truncated, show a toast notification
+      if (body.length > maxBodyLength) {
+        // Use setTimeout to ensure this runs after the mailto attempt
+        setTimeout(() => {
+          displayToast(t('emailContentTruncated'), 'success');
+          copyToClipboard(body);
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Failed to open email client:', error);
+      // Fallback: copy content to clipboard and show message
+      displayToast(t('couldNotOpenEmail'), 'error');
+      copyToClipboard(body);
+    }
+  };
+
+  const openEmailClientWithoutTo = (subject: string, body: string) => {
+    // Check if the content is too long for mailto URLs (typical limit is around 2000-8000 characters)
+    const maxBodyLength = 2000; // Conservative limit for mailto URLs
+    
+    let truncatedBody = body;
+    if (body.length > maxBodyLength) {
+      // Truncate and add indication that content was truncated
+      truncatedBody = body.substring(0, maxBodyLength) + '\n\n[Content was truncated due to length limitations. Please copy the full content from the application.]';
+    }
+    
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(truncatedBody);
+    
+    // Create the mailto URL
+    const mailtoUrl = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
+    
+    // Check if the URL is too long (browsers typically have limits around 2000-8000 characters)
+    if (mailtoUrl.length > 4000) {
+      // URL is too long, use clipboard fallback
+      displayToast(t('emailContentTooLong'), 'success');
+      copyToClipboard(body);
+      return;
+    }
+    
+    try {
+      // Try to open the mailto link
+      window.location.href = mailtoUrl;
+      
+      // If the content was truncated, show a toast notification
+      if (body.length > maxBodyLength) {
+        // Use setTimeout to ensure this runs after the mailto attempt
+        setTimeout(() => {
+          displayToast(t('emailContentTruncated'), 'success');
+          // Also copy the full content to clipboard as a fallback
+          copyToClipboard(body);
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Failed to open email client:', error);
+      // Fallback: copy content to clipboard and show message
+      displayToast(t('couldNotOpenEmail'), 'error');
+      copyToClipboard(body);
+    }
+  };
+  
+  const [status, setStatus] = useState<RecordingStatus>(RecordingStatus.IDLE);
+  // `language` is for the content (what's spoken), `uiLang` is for the app chrome
+  const [language, setLanguage] = useState<string | null>(null);
+  const [outputLang, setOutputLang] = useState<string>('en');
   
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -1011,7 +1027,7 @@ export default function App() {
   // Ensure audio context is resumed on user gesture on iOS
   useEffect(() => {
     const resumeAudioContext = () => {
-      const AudioContextClass: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
       try {
         const ctx = new AudioContextClass();
@@ -1023,7 +1039,7 @@ export default function App() {
       window.removeEventListener('touchend', resumeAudioContext);
       window.removeEventListener('click', resumeAudioContext);
     };
-    window.addEventListener('touchend', resumeAudioContext, { passive: true } as any);
+    window.addEventListener('touchend', resumeAudioContext, { passive: true });
     window.addEventListener('click', resumeAudioContext);
     return () => {
       window.removeEventListener('touchend', resumeAudioContext);
@@ -1087,8 +1103,22 @@ export default function App() {
   const webPageModal = useModalState();
   const [pastedText, setPastedText] = useState('');
   const comingSoonModal = useModalState();
+  const mobileAudioHelpModal = useModalState();
+  const imageUploadHelpModal = useModalState();
+  const expertConfigModal = useModalState();
+  const expertChatModal = useModalState();
+  const expertHelpModal = useModalState();
   
-  // Load saved language preferences
+  // Auth state
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    isLoading: true,
+  });
+  
+  // Expert chat state
+  const [expertConfiguration, setExpertConfiguration] = useState<ExpertConfiguration | null>(null);
+  
+  // Load saved language preferences from localStorage on initial load
   useEffect(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       const savedSessionLang = window.localStorage.getItem('sessionLang');
@@ -1097,62 +1127,31 @@ export default function App() {
       if (savedOutputLang) setOutputLang(savedOutputLang);
     }
   }, []);
-
-  // Ensure output language is loaded from localStorage on component mount
-  useEffect(() => {
-    const savedOutputLang = localStorage.getItem('outputLang');
-    if (savedOutputLang && !outputLang) {
-      setOutputLang(savedOutputLang);
-    }
-  }, [outputLang]);
   
-  // Save language preferences when they change
+  // Save language preferences when they change (localStorage + Firebase)
   useEffect(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       window.localStorage.setItem('uiLang', uiLang);
     }
   }, [uiLang]);
   
-  // Save session and output language when they change
+  // Save session and output language when they change (localStorage + Firebase)
   useEffect(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       if (language) window.localStorage.setItem('sessionLang', language);
       if (outputLang) window.localStorage.setItem('outputLang', outputLang);
+      
+      // Also save to Firebase if user is logged in
+      if (authState.user && (language || outputLang)) {
+        saveUserPreferences(authState.user.uid, {
+          sessionLanguage: language || 'nl',
+          outputLanguage: outputLang || 'nl'
+        }).catch(error => {
+          console.warn('Could not save language preferences to Firebase:', error);
+        });
+      }
     }
-  }, [language, outputLang]);
-
-  // Load saved language preferences
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const savedSessionLang = window.localStorage.getItem('sessionLang');
-      const savedOutputLang = window.localStorage.getItem('outputLang');
-      if (savedSessionLang) setLanguage(savedSessionLang);
-      if (savedOutputLang) setOutputLang(savedOutputLang);
-    }
-  }, []);
-
-  // Ensure output language is loaded from localStorage on component mount
-  useEffect(() => {
-    const savedOutputLang = localStorage.getItem('outputLang');
-    if (savedOutputLang && !outputLang) {
-      setOutputLang(savedOutputLang);
-    }
-  }, [outputLang]);
-  
-  // Save language preferences when they change
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('uiLang', uiLang);
-    }
-  }, [uiLang]);
-  
-  // Save session and output language when they change
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      if (language) window.localStorage.setItem('sessionLang', language);
-      if (outputLang) window.localStorage.setItem('outputLang', outputLang);
-    }
-  }, [language, outputLang]);
+  }, [language, outputLang, authState.user]);
 
   // Recording time tracking
   const [recordingStartMs, setRecordingStartMs] = useState<number | null>(null);
@@ -1199,21 +1198,8 @@ export default function App() {
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [showFAQPage, setShowFAQPage] = useState(false);
 
-  // Auth state
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    isLoading: true,
-      });
-
   // Effect to ensure language preferences are loaded after authentication
-  useEffect(() => {
-    if (authState.user && typeof window !== 'undefined' && window.localStorage) {
-      const savedSessionLang = window.localStorage.getItem('sessionLang');
-      const savedOutputLang = window.localStorage.getItem('outputLang');
-      if (savedSessionLang && !language) setLanguage(savedSessionLang);
-      if (savedOutputLang && !outputLang) setOutputLang(savedOutputLang);
-    }
-  }, [authState.user, language, outputLang]);
+  // Language preferences are now loaded from Firebase when user logs in
 
   // Effect to load monthly tokens and sessions when user changes
   const fetchUsage = async () => {
@@ -1266,9 +1252,9 @@ export default function App() {
   // Explain state
   const [explainData, setExplainData] = useState<ExplainData | null>(null);
   const [explainOptions, setExplainOptions] = useState<ExplainOptions>({ 
-    complexityLevel: 'Algemeen publiek (duidelijke taal)', 
-    focusArea: 'Algemeen overzicht', 
-    format: 'Korte paragraaf' 
+    complexityLevel: t('explainComplexityGeneral'), 
+    focusArea: t('explainFocusGeneral'), 
+    format: t('explainFormatShort') 
   });
   // Quiz state
   
@@ -1287,7 +1273,7 @@ export default function App() {
   const handleGenerateQuiz = async () => {
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
     if (!transcriptValidation.allowed) {
       setQuizError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
       setTimeout(() => setShowPricingPage(true), 2000);
@@ -1298,7 +1284,7 @@ export default function App() {
       // Don't reset other analysis data when generating quiz
       setIsGeneratingQuiz(true);
       setQuizError(null);
-      setLoadingText('Quiz genereren...');
+      setLoadingText(t('generatingQuiz'));
       const ai = new GoogleGenAI({ apiKey: apiKey });
       // Using Gemini 2.5 Flash - Google's latest and most advanced AI model
       // This model provides excellent reasoning, coding, and text generation capabilities
@@ -1324,7 +1310,7 @@ export default function App() {
         displayToast(`Quiz gegenereerd met ${arr.length} vragen!`, 'success');
       }
     } catch (e: any) {
-      setQuizError(e?.message || 'Genereren mislukt');
+      setQuizError(e?.message || t('generationFailed'));
     } finally {
       setIsGeneratingQuiz(false);
       setLoadingText('');
@@ -1335,13 +1321,13 @@ export default function App() {
     // Check if user has access to business case generation
     const effectiveTier = userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        displayToast(t('notEnoughCredits'), 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
     
     // Check transcript length based on user tier
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
     if (!transcriptValidation.allowed) {
         displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -1350,7 +1336,7 @@ export default function App() {
     
     try {
       // Use parameters if provided, otherwise use state values
-      const type = businessCaseType || businessCaseData?.businessCaseType || 'Kostenbesparing';
+      const type = businessCaseType || businessCaseData?.businessCaseType || t('costSavings');
       const useInternet = useInternetVerification !== undefined ? useInternetVerification : (businessCaseData?.useInternetVerification || false);
       
       // Don't reset other analysis data when generating business case
@@ -1358,12 +1344,12 @@ export default function App() {
       const ai = new GoogleGenAI({ apiKey: apiKey });
       
       const businessCaseTypeDescriptions = {
-        'Kostenbesparing': 'Kostenbesparing – hoe de oplossing processen efficiënter maakt en kosten verlaagt.',
-        'Omzetgroei': 'Omzetgroei – hoe de oplossing nieuwe markten opent of verkoop vergroot.',
-        'Innovatie': 'Innovatie / Concurrentievoordeel – hoe de oplossing helpt om voorop te blijven in de markt.',
-        'Risicovermindering': 'Risicovermindering – hoe de oplossing compliance, veiligheid of betrouwbaarheid verhoogt.',
-        'Klanttevredenheid': 'Klanttevredenheid & Retentie – hoe de oplossing de ervaring van klanten of medewerkers verbetert.',
-        'Schaalbaarheid': 'Schaalbaarheid & Toekomstbestendigheid – hoe de oplossing mee kan groeien met de organisatie.'
+        [t('costSavings')]: t('costSavingsDescription'),
+        [t('revenueGrowth')]: t('revenueGrowthDescription'),
+        [t('innovation')]: t('innovationDescription'),
+        [t('riskReduction')]: t('riskReductionDescription'),
+        [t('customerSatisfaction')]: t('customerSatisfactionDescription'),
+        [t('scalability')]: t('scalabilityDescription')
       };
 
       const sys = `Je bent een ervaren business consultant. Schrijf een overtuigende business case op basis van het transcript. De business case moet de volgende structuur hebben:
@@ -1430,6 +1416,22 @@ ${getTranscriptSlice(transcript, 20000)}`;
     }
   };
 
+  const handleSessionOptionImageUpload = () => {
+    // Check tier access for image upload
+    const effectiveTier = userSubscription;
+    if (effectiveTier !== SubscriptionTier.GOLD && 
+        effectiveTier !== SubscriptionTier.DIAMOND && 
+        effectiveTier !== SubscriptionTier.ENTERPRISE) {
+      setShowUpgradeModal(true);
+      setError('Image upload is alleen beschikbaar voor Gold, Diamond en Enterprise abonnementen.');
+      return;
+    }
+    
+    if (imageInputRef.current) {
+      imageInputRef.current.click();
+    }
+  };
+
   // Inline panels; no-op kept if referenced
   const handleOpenStorytellingQuestions = () => {
     setActiveView('storytelling');
@@ -1443,12 +1445,12 @@ ${getTranscriptSlice(transcript, 20000)}`;
     try {
       copyToClipboard(body);
       displayToast(
-        `Content copied to clipboard! \n\nTo send via email:\n1. Open your email client\n2. Paste the content (Ctrl+V or Cmd+V)\n3. Add a subject and recipient\n4. Send!`,
+        t('contentCopiedToClipboard'),
         'success'
       );
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      displayToast('Failed to copy content to clipboard. Please try again.', 'error');
+      displayToast(t('failedToCopyClipboard'), 'error');
     }
   };
 
@@ -1470,7 +1472,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
   // Waitlist states
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
   const [waitlistEmail, setWaitlistEmail] = useState('');
-  const [waitlist, setWaitlist] = useState<any[]>([]);
+  const [waitlist, setWaitlist] = useState<Array<{ email: string; timestamp: number }>>([]);
   const [selectedWaitlistUsers, setSelectedWaitlistUsers] = useState<string[]>([]);
 
   // Anonymization settings state
@@ -1499,17 +1501,20 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [isFetchingExplanation, setIsFetchingExplanation] = useState<boolean>(false);
 
   // Subscription state
-  const [userSubscription, setUserSubscription] = useState<SubscriptionTier>(SubscriptionTier.FREE);
+  const [userSubscription, setUserSubscription] = useState<SubscriptionTier>(SubscriptionTier.GOLD);
   const [dailyAudioCount, setDailyAudioCount] = useState<number>(0);
   const [dailyUploadCount, setDailyUploadCount] = useState<number>(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPricingPage, setShowPricingPage] = useState(false);
-  const [showSessionOptionsModal, setShowSessionOptionsModal] = useState(false);
+
   const [showWebPageModal, setShowWebPageModal] = useState(false);
   const [showWebPageHelp, setShowWebPageHelp] = useState(false);
   const [webPageUrl, setWebPageUrl] = useState('');
+  const [webPageUrls, setWebPageUrls] = useState<string[]>(['', '', '']);
+  const [useDeepseek, setUseDeepseek] = useState(false);
   const [isLoadingWebPage, setIsLoadingWebPage] = useState(false);
   const [webPageError, setWebPageError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Storytelling and Blog inline option panels
   const [storyOptions, setStoryOptions] = useState<StorytellingOptions>({ targetAudience: '', mainGoal: '', toneStyle: '', length: '' });
@@ -1520,8 +1525,8 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const td = (path: string): string => {
     const get = (lang: 'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'): string | null => {
       const segs = path.split('.');
-      let cur: any = translations[lang];
-      for (const s of segs) cur = cur?.[s];
+      let cur: Record<string, unknown> = translations[lang];
+      for (const s of segs) cur = (cur as any)?.[s];
       return typeof cur === 'string' ? cur : null;
     };
     return get(uiLang) || get('en') || path;
@@ -1567,7 +1572,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
     }
   } as const;
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamsRef = useRef<MediaStream[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -1576,20 +1581,13 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const isProcessing = !!loadingText;
 
 
   
-  const t = (key: string, params?: Record<string, string | number>) => {
-    let str = translations[uiLang]?.[key] || translations['en']?.[key] || key;
-    if (params) {
-        Object.entries(params).forEach(([paramKey, paramValue]) => {
-            str = str.replace(`{${paramKey}}`, String(paramValue));
-        });
-    }
-    return str;
-  };
+  // Translation function now provided by useTranslation hook
 
   // --- PERSISTENCE & THEME ---
     useEffect(() => {
@@ -1599,12 +1597,9 @@ ${getTranscriptSlice(transcript, 20000)}`;
             setApiKey(envApiKey.trim());
         }
 
-        const savedLang = localStorage.getItem('uiLang') as any;
-        if (savedLang) setUiLang(savedLang);
-        const savedSessionLang = localStorage.getItem('sessionLang') as any;
-        if (savedSessionLang) setLanguage(savedSessionLang);
-        const savedOutputLang = localStorage.getItem('outputLang') as any;
-        if (savedOutputLang) setOutputLang(savedOutputLang);
+        const savedLang = localStorage.getItem('uiLang') as string | null;
+        if (savedLang) setUiLang(savedLang as 'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es');
+        // Session and output language preferences are now loaded from Firebase when user logs in
         
         // Laad theme uit localStorage en pas direct toe
         const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -1651,6 +1646,22 @@ ${getTranscriptSlice(transcript, 20000)}`;
                         // Ensure user is redirected to start session screen after auth
                         setShowInfoPage(false);
                         
+                        // Load user language preferences from Firebase
+                        try {
+                          const userPrefs = await getUserPreferences(firebaseUser.uid);
+                          if (userPrefs) {
+                            if (userPrefs.sessionLanguage) {
+                              setLanguage(userPrefs.sessionLanguage);
+                              window.localStorage.setItem('sessionLang', userPrefs.sessionLanguage);
+                            }
+                            if (userPrefs.outputLanguage) {
+                              setOutputLang(userPrefs.outputLanguage);
+                              window.localStorage.setItem('outputLang', userPrefs.outputLanguage);
+                            }
+                          }
+                        } catch (e) { 
+                          console.warn('Could not load language preferences from Firebase:', e); 
+                        }
                         
                         // Load daily usage counters
                         try {
@@ -1715,6 +1726,11 @@ ${getTranscriptSlice(transcript, 20000)}`;
     if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
+    }
+    // Cleanup AudioRecorder
+    if (audioRecorderRef.current) {
+      audioRecorderRef.current.cleanup();
+      audioRecorderRef.current = null;
     }
     streamsRef.current.forEach(stream => stream.getTracks().forEach(track => track.stop()));
     streamsRef.current = [];
@@ -1815,7 +1831,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
     
     // Check transcript length based on user tier for chat
     const effectiveTier = userSubscription;
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
     if (!transcriptValidation.allowed) {
         displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -1883,7 +1899,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
   
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
-        const recognition = new (window as any).webkitSpeechRecognition();
+        const recognition = new (window as Window & { webkitSpeechRecognition: new () => SpeechRecognition }).webkitSpeechRecognition();
         // By setting continuous to false, the recognition service stops after each utterance or timeout.
         // We then use the `onend` event to manually restart it, creating a more robust "continuous" experience
         // that is less prone to browser-specific timeout errors like 'no-speech'.
@@ -2115,139 +2131,55 @@ ${getTranscriptSlice(transcript, 20000)}`;
     setDuration(0);
 
     try {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
-      const supportsDisplay = typeof (navigator.mediaDevices as any).getDisplayMedia === 'function';
-
-      let displayStream: MediaStream | null = null;
-      if (supportsDisplay && !isIOS) {
-        try {
-          displayStream = await navigator.mediaDevices.getDisplayMedia({
-            video: true,
-            audio: { sampleRate: 44100, channelCount: 2 } as MediaTrackConstraints
-          });
-        } catch (dsErr) {
-          console.warn('Display capture not available or denied. Falling back to microphone only.');
-        }
-      }
-
-      let micStream: MediaStream | null = null;
-      try {
-        micStream = await navigator.mediaDevices.getUserMedia({
-          audio: { sampleRate: 44100, channelCount: 2 } as MediaTrackConstraints,
-          video: false
-        });
-      } catch (micErr) {
-        console.warn('Microphone access denied.');
-      }
-
-      streamsRef.current = [displayStream, micStream].filter(Boolean) as MediaStream[];
-
-      // Create AudioContext in a mobile/iOS friendly way
-      const AudioContextClass: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-      const newAudioContext = new AudioContextClass();
-      // iOS requires explicit resume after a user gesture
-      if (newAudioContext.state === 'suspended') {
-        try { await newAudioContext.resume(); } catch {}
-      }
-      audioContextRef.current = newAudioContext;
-
-      const destination = newAudioContext.createMediaStreamDestination();
-      const analyser = newAudioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      analyser.smoothingTimeConstant = 0.8;
-      analyserRef.current = analyser;
-
-      let hasAudio = false;
-
-      if (displayStream) {
-        const displayAudioTracks = displayStream.getAudioTracks();
-        if (displayAudioTracks.length > 0) {
-          const displaySource = newAudioContext.createMediaStreamSource(new MediaStream(displayAudioTracks));
-          displaySource.connect(destination);
-          displaySource.connect(analyser);
-          hasAudio = true;
-          console.log('Display audio connected to analyser');
-        }
-      }
-
-      if (micStream) {
-        const micAudioTracks = micStream.getAudioTracks();
-        if (micAudioTracks.length > 0) {
-          const micSource = newAudioContext.createMediaStreamSource(new MediaStream(micAudioTracks));
-          micSource.connect(destination);
-          micSource.connect(analyser);
-          hasAudio = true;
-          console.log('Microphone audio connected to analyser');
-        }
-      }
-
-      if (!hasAudio) {
-        throw new Error(t("noDevices"));
-      }
-
-      const combinedStream = destination.stream;
-
-      // Pick a mimeType supported by the current browser (iOS Safari does not support audio/webm)
-      let selectedType = '';
-      try {
-        const candidates = [
-          'audio/webm; codecs=opus',
-          'audio/webm',
-          'audio/mp4',
-          'audio/aac',
-          'audio/mpeg'
-        ];
-        for (const type of candidates) {
-          if ((window as any).MediaRecorder && (MediaRecorder as any).isTypeSupported && (MediaRecorder as any).isTypeSupported(type)) {
-            selectedType = type;
-            break;
+      // Initialize AudioRecorder if not already done
+      if (!audioRecorderRef.current) {
+        audioRecorderRef.current = new AudioRecorder();
+        
+        // Setup callbacks
+        audioRecorderRef.current.onDataAvailable = (blob: Blob) => {
+          // Handle audio chunks for real-time processing if needed
+        };
+        
+        audioRecorderRef.current.onStop = (audioBlob: Blob) => {
+          const url = URL.createObjectURL(audioBlob);
+          setAudioURL(url);
+          setStatus(RecordingStatus.STOPPED);
+          if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        };
+        
+        audioRecorderRef.current.onError = (error: Error) => {
+          console.error("AudioRecorder error:", error);
+          setError(`${t("errorRecording")}: ${error.message}`);
+          setStatus(RecordingStatus.ERROR);
+        };
+        
+        audioRecorderRef.current.onStateChange = (state: string) => {
+          if (state === 'recording') {
+            setStatus(RecordingStatus.RECORDING);
+          } else if (state === 'paused') {
+            setStatus(RecordingStatus.PAUSED);
           }
-        }
-      } catch {}
-
-      const recorder = selectedType
-        ? new MediaRecorder(combinedStream, { mimeType: selectedType })
-        : new MediaRecorder(combinedStream);
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data);
-      };
-
-      recorder.onstop = () => {
-        const derivedType = recorder.mimeType || (audioChunksRef.current[0]?.type || 'audio/webm');
-        const audioBlob = new Blob(audioChunksRef.current, { type: derivedType });
-        const url = URL.createObjectURL(audioBlob);
-        setAudioURL(url);
-        setStatus(RecordingStatus.STOPPED);
-        cleanupStreams();
-        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      };
-
-      recorder.start();
-      setStatus(RecordingStatus.RECORDING);
+        };
+      }
+      
+      // Start recording with the new AudioRecorder
+      await audioRecorderRef.current.startRecording();
+      
       // Initialize timing
       const start = Date.now();
       setRecordingStartMs(start);
       setPauseAccumulatedMs(0);
       setPauseStartMs(null);
 
-      // Start de audio visualisatie
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-      }
-      drawVisualizer();
-
+      // Start timer for duration tracking and subscription limits
       timerIntervalRef.current = window.setInterval(() => {
         setDuration(prev => {
           const next = prev + 1;
           const tierLimits = subscriptionService.getTierLimits(effectiveTier);
           if (tierLimits && next >= tierLimits.maxSessionDuration * 60) {
             // Stop recording immediately at limit
-            try { mediaRecorderRef.current?.stop(); } catch {}
+            audioRecorderRef.current?.stopRecording();
             setStatus(RecordingStatus.STOPPED);
             if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
             displayToast(`Opname gestopt: je hebt de maximale opnametijd van ${tierLimits.maxSessionDuration} minuten bereikt.`, 'info');
@@ -2270,12 +2202,11 @@ ${getTranscriptSlice(transcript, 20000)}`;
       
       setError(`${t("errorRecording")}: ${errorMessage}`);
       setStatus(RecordingStatus.ERROR);
-      cleanupStreams();
     }
   };
   const pauseRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-        mediaRecorderRef.current.pause();
+    if (audioRecorderRef.current?.isRecording) {
+        audioRecorderRef.current.pauseRecording();
         setStatus(RecordingStatus.PAUSED);
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
@@ -2284,26 +2215,21 @@ ${getTranscriptSlice(transcript, 20000)}`;
   };
 
   const resumeRecording = () => {
-    if (mediaRecorderRef.current?.state === 'paused') {
-        mediaRecorderRef.current.resume();
+    if (audioRecorderRef.current?.isPaused) {
+        audioRecorderRef.current.resumeRecording();
         setStatus(RecordingStatus.RECORDING);
         // accumulate pause time
         setPauseAccumulatedMs(prev => prev + (pauseStartMs ? (Date.now() - pauseStartMs) : 0));
         setPauseStartMs(null);
         
-        // Start de audio visualisatie opnieuw
-        if (animationFrameIdRef.current) {
-          cancelAnimationFrame(animationFrameIdRef.current);
-        }
-        drawVisualizer();
-        
+        // Restart timer
         timerIntervalRef.current = window.setInterval(() => setDuration(prev => prev + 1), 1000);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && (status === RecordingStatus.RECORDING || status === RecordingStatus.PAUSED)) {
-      mediaRecorderRef.current.stop();
+    if (audioRecorderRef.current && (status === RecordingStatus.RECORDING || status === RecordingStatus.PAUSED)) {
+      audioRecorderRef.current.stopRecording();
       setPauseStartMs(null);
     }
   };
@@ -2348,15 +2274,15 @@ ${getTranscriptSlice(transcript, 20000)}`;
                             return;
                         }
                         resolve(cleanedText);
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                         console.error('PDF parsing error:', error);
-                        reject(new Error(`PDF verwerking mislukt: ${error.message || 'onbekende fout'}`));
+                        reject(new Error(`PDF verwerking mislukt: ${error instanceof Error ? error.message : 'onbekende fout'}`));
                     }
                 };
                 reader.onerror = () => reject(new Error('PDF lezen mislukt'));
                 reader.readAsArrayBuffer(file);
-            } catch (error: any) {
-                reject(new Error(`PDF library laden mislukt: ${error.message || 'onbekende fout'}`));
+            } catch (error: unknown) {
+                reject(new Error(`PDF library laden mislukt: ${error instanceof Error ? error.message : 'onbekende fout'}`));
             }
         });
     };
@@ -2398,7 +2324,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
         });
     };
 
-    const extractTextFromHTML = async (file: File): Promise<string> => {
+    const extractTextFromHTMLFile = async (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -2463,6 +2389,43 @@ ${getTranscriptSlice(transcript, 20000)}`;
         });
     };
 
+    const extractTextFromDOCX = async (file: File): Promise<string> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Dynamically import mammoth for DOCX processing
+                const mammoth = await import('mammoth');
+                
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const arrayBuffer = e.target?.result as ArrayBuffer;
+                        if (!arrayBuffer) {
+                            reject(new Error('Kon DOCX niet lezen'));
+                            return;
+                        }
+
+                        const result = await mammoth.extractRawText({ arrayBuffer });
+                        const text = result.value;
+                        
+                        if (!text.trim()) {
+                            reject(new Error('Geen tekst gevonden in DOCX bestand.'));
+                            return;
+                        }
+                        
+                        resolve(text.trim());
+                    } catch (error: unknown) {
+                        console.error('DOCX parsing error:', error);
+                        reject(new Error(`DOCX verwerking mislukt: ${(error as Error).message || 'onbekende fout'}`));
+                    }
+                };
+                reader.onerror = () => reject(new Error('DOCX lezen mislukt'));
+                reader.readAsArrayBuffer(file);
+            } catch (error: any) {
+                reject(new Error(`DOCX library laden mislukt: ${error.message || 'onbekende fout'}`));
+            }
+        });
+    };
+
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -2519,11 +2482,15 @@ ${getTranscriptSlice(transcript, 20000)}`;
             }
             // HTML bestanden
             else if (fileType === 'text/html' || fileName.endsWith('.html') || fileName.endsWith('.htm')) {
-                text = await extractTextFromHTML(file);
+                text = await extractTextFromHTMLFile(file);
             }
             // Markdown bestanden
             else if (fileType === 'text/markdown' || fileName.endsWith('.md')) {
                 text = await extractTextFromMarkdown(file);
+            }
+            // DOCX bestanden
+            else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileName.endsWith('.docx')) {
+                text = await extractTextFromDOCX(file);
             }
             // Plain text bestanden
             else if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
@@ -2534,7 +2501,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
                 try {
                     text = await file.text();
                 } catch {
-                    throw new Error('Bestandsformaat wordt niet ondersteund. Probeer PDF, RTF, HTML, MD of TXT.');
+                    throw new Error('Bestandsformaat wordt niet ondersteund. Probeer PDF, RTF, HTML, MD, DOCX of TXT.');
                 }
             }
 
@@ -2578,6 +2545,155 @@ ${getTranscriptSlice(transcript, 20000)}`;
         } catch (err: any) {
             console.error("Fout bij lezen van bestand:", err);
             setError(`${t("fileReadFailed")}: ${err.message || t("unknownError")}`);
+            setStatus(RecordingStatus.ERROR);
+            setLoadingText('');
+        }
+    };
+
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!language) {
+            setError(t("selectLangToUpload"));
+            return;
+        }
+
+        // Check tier access for image upload
+        const effectiveTier = userSubscription;
+        if (effectiveTier !== SubscriptionTier.GOLD && 
+            effectiveTier !== SubscriptionTier.DIAMOND && 
+            effectiveTier !== SubscriptionTier.ENTERPRISE) {
+            setShowUpgradeModal(true);
+            setError('Image upload is alleen beschikbaar voor Gold, Diamond en Enterprise abonnementen.');
+            return;
+        }
+
+        // Check if file is an image
+        const fileType = (file.type || '').toLowerCase();
+        const fileName = (file.name || '').toLowerCase();
+        const isValidImage = fileType.startsWith('image/') || 
+                           fileName.endsWith('.jpg') || 
+                           fileName.endsWith('.jpeg') || 
+                           fileName.endsWith('.png') || 
+                           fileName.endsWith('.webp') || 
+                           fileName.endsWith('.gif');
+        
+        if (!isValidImage) {
+            setError('Alleen afbeeldingsbestanden zijn toegestaan (JPG, PNG, JPEG, WEBP, GIF).');
+            return;
+        }
+
+        // Enforce daily session limits before processing
+        const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
+        const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
+        if (!canStart.allowed) {
+            setShowUpgradeModal(true);
+            setError(canStart.reason || 'Dagelijkse sessielimiet bereikt.');
+            return;
+        }
+
+        setError(null);
+        setAnonymizationReport(null);
+        setLoadingText('Afbeelding analyseren...');
+
+        try {
+            // Convert image to base64 for Gemini API
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+              try {
+                const base64Data = e.target?.result as string;
+                const base64Image = base64Data.split(',')[1]; // Remove data:image/...;base64, prefix
+                
+                if (!apiKey) {
+                  setError('API key niet beschikbaar. Neem contact op met de administrator.');
+                  setLoadingText('');
+                  return;
+                }
+                
+                setLoadingText('Afbeelding analyseren met AI...');
+                
+                const ai = new GoogleGenAI({ apiKey: apiKey });
+                const inputLanguage = getGeminiCode(language || 'en');
+                const analysisPrompt = `Analyze this image in detail and provide a comprehensive description in ${inputLanguage}. Include:
+
+1. What you see in the image (objects, people, text, scenes)
+2. Key details and important information
+3. Any text visible in the image (transcribe it accurately)
+4. Context and setting
+5. Notable features or elements
+
+Provide a detailed analysis that could be used for further AI processing and analysis.`;
+                
+                const imagePart = { inlineData: { mimeType: file.type, data: base64Image } };
+                const textPart = { text: analysisPrompt };
+                
+                const analysisResponse = await ai.models.generateContent({ 
+                  model: 'gemini-2.5-flash', 
+                  contents: { parts: [textPart, imagePart] } 
+                });
+                
+                // Track token usage
+                const promptTokens = tokenCounter.countPromptTokens([textPart]);
+                const responseTokens = tokenCounter.countResponseTokens(analysisResponse.text);
+                const totalTokens = tokenCounter.getTotalTokens([textPart], analysisResponse.text);
+                
+                try {
+                  if (authState.user) {
+                    await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
+                  }
+                } catch {}
+                
+                const imageAnalysisText = `[AFBEELDING GEANALYSEERD]\n\nBestandsnaam: ${file.name}\nBestandstype: ${file.type}\nBestandsgrootte: ${(file.size / 1024 / 1024).toFixed(2)} MB\n\n=== AI ANALYSE ===\n\n${analysisResponse.text}`;
+                
+                setTranscript(imageAnalysisText);
+                
+                // Reset all analysis data when new transcript is loaded
+                setSummary('');
+                setFaq('');
+                setLearningDoc('');
+                setFollowUpQuestions('');
+                setPodcastScript('');
+                setChatHistory([]);
+                setKeywordAnalysis(null);
+                setSentimentAnalysisResult(null);
+                setMindmapMermaid('');
+                setMindmapSvg('');
+                setExecutiveSummaryData(null);
+                setStorytellingData(null);
+                setBusinessCaseData(null);
+                setQuizQuestions(null);
+                setStatus(RecordingStatus.FINISHED);
+                
+                // Increment usage counters on successful finish
+                try {
+                  if (authState.user) {
+                    await incrementUserDailyUsage(authState.user.uid, 'upload');
+                    await incrementUserMonthlySessions(authState.user.uid);
+                    setDailyUploadCount(prev => prev + 1);
+                  }
+                } catch (e) {
+                  console.warn('Kon sessionCount niet updaten:', e);
+                }
+                
+                setActiveView('transcript');
+                setLoadingText('');
+                
+                if (imageInputRef.current) {
+                    imageInputRef.current.value = "";
+                }
+                
+              } catch (error: any) {
+                console.error('Fout bij afbeeldingsanalyse:', error);
+                setError(`Fout bij afbeeldingsanalyse: ${error.message || 'Onbekende fout'}`);
+                setLoadingText('');
+              }
+            };
+            
+            reader.readAsDataURL(file);
+        } catch (err: any) {
+            console.error("Fout bij verwerken van afbeelding:", err);
+            setError(`Fout bij verwerken van afbeelding: ${err.message || t("unknownError")}`);
             setStatus(RecordingStatus.ERROR);
             setLoadingText('');
         }
@@ -2649,57 +2765,151 @@ ${getTranscriptSlice(transcript, 20000)}`;
         }
     };
 
-    const handleWebPage = async (url: string) => {
+    const handleWebPage = async (url: string, useDeepseekOption = false, multipleUrls: string[] = []) => {
+        // Check if user is on Gold or Diamond tier if trying to use WebExpert
+  if (useDeepseekOption && 
+      userSubscription !== SubscriptionTier.GOLD && 
+      userSubscription !== SubscriptionTier.DIAMOND && 
+      !authState.isAdmin) {
+    setWebPageError(t("goldTierRequired") || "WebExpert option is only available for Gold and Diamond tier subscribers.");
+            return;
+        }
+
         if (!language) {
             setWebPageError(t("selectLangToUpload"));
             return;
         }
 
         if (!url.trim()) {
-            setWebPageError('Geen URL ingevoerd. Voer eerst een geldige URL in.');
+            setWebPageError(t("noUrlError") || 'No URL entered. Please enter a valid URL first.');
             return;
         }
-
-
 
         setWebPageError(null);
         setError(null);
         setAnonymizationReport(null);
-        setLoadingText('Webpagina laden en tekst extraheren...');
+        setLoadingText(useDeepseekOption ?
+    (t("loadingWebExpertAnalysis") || 'Loading and analyzing web pages with WebExpert...') : 
+            (t("loadingWebPage") || 'Loading web page and extracting text...'));
         setIsLoadingWebPage(true);
 
         try {
-            // Use a CORS proxy to fetch the web page content
-            const corsProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-            const response = await fetch(corsProxyUrl);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            let cleanText = '';
             
-            const proxyData = await response.json();
-            if (!proxyData.contents) {
-                throw new Error('Kon geen inhoud ophalen van de webpagina via de proxy.');
-            }
-            
-            const html = proxyData.contents;
-            
-            // Extract text content from HTML
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Remove script and style elements
-            const scripts = doc.querySelectorAll('script, style, nav, header, footer, aside');
-            scripts.forEach(el => el.remove());
-            
-            // Extract text content
-            const textContent = doc.body?.textContent || '';
-            const cleanText = textContent
-                .replace(/\s+/g, ' ')
-                .replace(/\n+/g, '\n')
-                .trim();
-            
-            if (cleanText.length < 100) {
-                throw new Error('Er kon maar weinig tekst worden opgehaald van deze webpagina. Dit kan komen door beveiligingsinstellingen of omdat de pagina weinig tekst bevat.');
+            if (useDeepseekOption) {
+                // Use Firecrawl API for deepseek option
+                const firecrawlApiKey = import.meta.env.VITE_FIRECRAWL_API_KEY;
+                if (!firecrawlApiKey) {
+                    throw new Error('Firecrawl API key is not configured.');
+                }
+                
+                // Filter out empty URLs
+                const validUrls = multipleUrls.filter(u => u.trim() !== '');
+                
+                console.log('Firecrawl API: Processing URLs:', validUrls);
+                
+                // Process multiple URLs using Firecrawl v2 API
+                const allResults = [];
+                
+                for (const singleUrl of validUrls) {
+                    console.log('Processing URL with Firecrawl v2:', singleUrl);
+                    
+                    const response = await fetch('https://api.firecrawl.dev/v2/scrape', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${firecrawlApiKey}`
+                        },
+                        body: JSON.stringify({
+                            url: singleUrl,
+                            formats: ['markdown', 'html'],
+                            onlyMainContent: true,
+                            includeTags: ['title', 'meta', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'article', 'section'],
+                            removeBase64Images: true,
+                            blockAds: true
+                        })
+                    });
+                    
+                    console.log(`Firecrawl v2 Response Status for ${singleUrl}:`, response.status);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`Firecrawl v2 Error for ${singleUrl}:`, errorText);
+                        continue; // Skip this URL and continue with others
+                    }
+                    
+                    const data = await response.json();
+                    console.log(`Firecrawl v2 Response Data for ${singleUrl}:`, data);
+                    
+                    if (data.success && data.data) {
+                        // Prefer HTML content, fallback to markdown, then general content
+                        const content = data.data.html || data.data.markdown || data.data.content || '';
+                        allResults.push({
+                            url: singleUrl,
+                            content: content,
+                            metadata: data.data.metadata || {}
+                        });
+                    }
+                }
+                
+                console.log('Firecrawl v2 API: Processed', allResults.length, 'URLs successfully');
+                
+                if (allResults.length === 0) {
+                    throw new Error('No content could be retrieved from any of the provided URLs.');
+                }
+                
+                // Combine text from all successfully processed URLs
+                cleanText = allResults.map((result: any) => {
+                    const content = result.content || '';
+                    const title = result.metadata?.title || 'Untitled';
+                    return `Source: ${result.url}\nTitle: ${title}\n\n${content}`;
+                }).join('\n\n---\n\n');
+                
+                if (cleanText.length < 100) {
+                    throw new Error('Very little text could be retrieved from these web pages.');
+                }
+            } else {
+                // Use improved fetchHTML implementation for regular option
+                try {
+                    const result = await fetchHTML(url, {
+                        timeoutMs: 15000,
+                        retries: 2,
+                        retryDelay: 1000,
+                        userAgent: "RecapSmart/1.0 (Web Content Analyzer)"
+                    });
+                    
+                    console.log('Successfully fetched:', result.metadata?.title || 'Untitled');
+                    console.log('Content length:', result.content.length);
+                    
+                    // Extract clean text from HTML
+                    cleanText = extractTextFromHTML(result.content);
+                    
+                    if (cleanText.length < 100) {
+                        throw new Error('Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.');
+                    }
+                    
+                } catch (fetchError) {
+                    console.warn('Direct fetch failed, falling back to CORS proxy:', fetchError);
+                    
+                    // Fallback to CORS proxy method
+                    const corsProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(corsProxyUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const proxyData = await response.json();
+                    if (!proxyData.contents) {
+                        throw new Error('Could not retrieve content from the web page via proxy.');
+                    }
+                    
+                    // Extract clean text from HTML using our utility
+                    cleanText = extractTextFromHTML(proxyData.contents);
+                    
+                    if (cleanText.length < 100) {
+                        throw new Error('Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.');
+                    }
+                }
             }
 
 
@@ -2722,24 +2932,45 @@ ${getTranscriptSlice(transcript, 20000)}`;
             setQuizQuestions(null);
             setStatus(RecordingStatus.FINISHED);
             
-
-            
             setActiveView('transcript');
             setLoadingText('');
             setShowWebPageModal(false);
             setWebPageUrl('');
+            setWebPageUrls(['', '', '']);
+            setUseDeepseek(false);
             setWebPageError(null);
-            displayToast('Webpagina succesvol geladen en verwerkt!', 'success');
-        } catch (err: any) {
-            console.error("Fout bij laden van webpagina:", err);
-            let errorMessage = 'Er is een fout opgetreden bij het laden van de webpagina.';
             
-            if (err.message.includes('HTTP error')) {
-                errorMessage = 'De webpagina kon niet worden geladen. Controleer of de URL correct is en probeer het opnieuw.';
-            } else if (err.message.includes('beveiligingsinstellingen')) {
-                errorMessage = 'De webpagina kon niet worden geladen vanwege beveiligingsinstellingen. Probeer een andere URL of neem contact op met de eigenaar van de website.';
-            } else if (err.message.includes('weinig tekst')) {
-                errorMessage = 'Er kon maar weinig tekst worden opgehaald van deze webpagina. Dit kan komen door beveiligingsinstellingen of omdat de pagina weinig tekst bevat.';
+            const successMessage = useDeepseekOption
+        ? (t("webPageWebExpertSuccess") || 'Web pages successfully analyzed with WebExpert!') 
+                : (t("webPageSuccess") || 'Web page successfully loaded and processed!');
+            displayToast(successMessage, 'success');
+        } catch (err: any) {
+            console.error("Error loading web page:", err);
+            console.error("Error details:", {
+                message: err.message,
+                stack: err.stack,
+                useDeepseekOption,
+                validUrls: useDeepseekOption ? multipleUrls.filter(u => u.trim() !== '') : [url],
+                firecrawlApiKey: import.meta.env.VITE_FIRECRAWL_API_KEY ? 'Present' : 'Missing'
+            });
+            
+            let errorMessage = err.message || t("webPageGenericError") || 'An error occurred while loading the web page.';
+            
+            if (err.message.includes('Firecrawl API key')) {
+                errorMessage = t("firecrawlApiKeyError") || 'Firecrawl API key is missing. Please check your configuration.';
+            } else if (err.message.includes('Firecrawl API error')) {
+                errorMessage = t("firecrawlApiError") || 'Error with Firecrawl API. Please try again later.';
+                console.error('Firecrawl API specific error:', err.message);
+            } else if (err.message.includes('HTTP error') || err.message.includes('status')) {
+                errorMessage = t("webPageLoadError") || 'The web page could not be loaded. Check if the URL is correct and try again.';
+            } else if (err.message.includes('security settings')) {
+                errorMessage = t("webPageSecurityError") || 'The web page could not be loaded due to security settings. Try another URL or contact the website owner.';
+            } else if (err.message.includes('little text')) {
+                errorMessage = t("webPageTextError") || 'Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.';
+            } else if (err.message.includes('Firecrawl API')) {
+                errorMessage = t("firecrawlApiError") || 'Error connecting to Firecrawl API. Please try again later.';
+            } else if (err.message.includes('API key')) {
+                errorMessage = t("apiKeyError") || 'API key configuration error. Please contact support.';
             }
             
             setWebPageError(errorMessage);
@@ -2892,7 +3123,7 @@ const handleGenerateAnalysis = async (type: ViewType) => {
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
     if (!transcriptValidation.allowed) {
         const errorMsg = transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.';
         setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
@@ -2956,7 +3187,7 @@ const handleKeywordClick = async (keyword: string) => {
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
     if (!transcriptValidation.allowed) {
         displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -3010,7 +3241,7 @@ const handleGenerateKeywordAnalysis = async () => {
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
     if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement');
         return;
@@ -3081,7 +3312,7 @@ const handleAnalyzeSentiment = async () => {
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
     if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement');
         return;
@@ -3159,7 +3390,7 @@ const handleGeneratePodcast = async () => {
     }
     
     // Check transcript length based on user tier
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
     if (!transcriptValidation.allowed) {
         displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -4055,9 +4286,9 @@ ${transcript}
       const transcribeResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: { parts: [textPart, audioPart] } });
       
       // Track token usage
-      const promptTokens = tokenCounter.countPromptTokens([textPart, audioPart]);
+      const promptTokens = tokenCounter.countPromptTokens([textPart]);
       const responseTokens = tokenCounter.countResponseTokens(transcribeResponse.text);
-      const totalTokens = tokenCounter.getTotalTokens([textPart, audioPart], transcribeResponse.text);
+      const totalTokens = tokenCounter.getTotalTokens([textPart], transcribeResponse.text);
       
               // Token usage logging removed
       try {
@@ -4265,7 +4496,7 @@ ${transcript}
             <div className="w-full max-w-md mt-4">
               <audio 
                 controls 
-                src={audioURL || ''} 
+                src={audioURL || null} 
                 className="w-full"
                 onLoadedMetadata={(e) => {
                   // Reset de slider positie naar het begin
@@ -4292,7 +4523,7 @@ ${transcript}
     const handleGenerateExecutiveSummary = async () => {
       // Check transcript length based on user tier
       const effectiveTier = userSubscription;
-      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
       if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -4340,7 +4571,7 @@ ${transcript}
     async function handleGenerateStorytelling(options?: StorytellingOptions) {
       // Check transcript length based on user tier
       const effectiveTier = userSubscription;
-      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
       if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -4410,7 +4641,7 @@ ${transcript}
     const handleGenerateBlog = async () => {
       // Check transcript length based on user tier
       const effectiveTier = userSubscription;
-      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
       if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -4465,7 +4696,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
     const handleGenerateExplain = async (options: ExplainOptions) => {
       // Check transcript length based on user tier
       const effectiveTier = userSubscription;
-      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
       if (!transcriptValidation.allowed) {
         setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
         setTimeout(() => setShowPricingPage(true), 2000);
@@ -4544,7 +4775,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
               onClick={async () => {
                 // Check transcript length based on user tier
                 const effectiveTier = userSubscription;
-                const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+                const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
                 if (!transcriptValidation.allowed) {
                   setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
                   setTimeout(() => setShowPricingPage(true), 2000);
@@ -4595,8 +4826,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     const { svg } = await m.render('mindmap-svg', cleaned);
                     setMindmapSvg(svg);
                   } catch (rErr) { console.warn('Mermaid render failed', rErr); }
-                } catch (e: any) {
-                  setError(`${t('generationFailed', { type: 'Mindmap' })}: ${e.message || t('unknownError')}`);
+                } catch (e: unknown) {
+                  setError(`${t('generationFailed', { type: 'Mindmap' })}: ${(e as Error).message || t('unknownError')}`);
                 } finally {
                   setLoadingText('');
                 }
@@ -5548,7 +5779,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                  onGenerateQuiz={async ({ numQuestions, numOptions }) => {
                     // Check transcript length based on user tier
                     const effectiveTier = userSubscription;
-                    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length);
+                    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
                     if (!transcriptValidation.allowed) {
                       throw new Error(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
                     }
@@ -5997,6 +6228,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 <li>RTF — {t('formatRtf')}</li>
                 <li>HTML — {t('formatHtml')}</li>
                 <li>Markdown (MD) — {t('formatMd')}</li>
+                <li>DOCX — {t('formatDocx')}</li>
               </ul>
               <p className="text-xs text-slate-500 dark:text-slate-400">{t('supportedFormatsNote')}</p>
               <div className="pt-2 flex justify-end">
@@ -6050,37 +6282,210 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-2xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('webPageTitle')}</h3>
+              <div className="flex items-center">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('webPageTitle')}</h3>
+                <div className="relative ml-2 group">
+                  <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <QuestionMarkIcon className="w-5 h-5" />
+                  </button>
+                  <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-white dark:bg-slate-700 rounded-lg shadow-lg border border-slate-200 dark:border-slate-600 z-10 hidden group-hover:block">
+                    <p className="text-sm text-slate-700 dark:text-slate-200">{t('webPageHelpText') || 'Enter a URL or drag and drop a link to analyze content from a web page.'}</p>
+                  </div>
+                </div>
+              </div>
               <button onClick={() => { setShowWebPageModal(false); setWebPageError(null); }} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4 space-y-4">
-              <div className="space-y-2">
-                <input
-                  type="url"
-                  placeholder={t('webPageUrlPlaceholder')}
-                  className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                  onChange={(e) => setWebPageUrl(e.target.value)}
-                  value={webPageUrl}
-                />
+              <div className="space-y-4">
+                {/* WebExpert Option (Gold, Diamond and Enterprise tiers) */}
+                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE || authState.isAdmin) && (
+                  <div className="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="useDeepseek"
+                      checked={useDeepseek}
+                      onChange={(e) => setUseDeepseek(e.target.checked)}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="useDeepseek" className="text-sm font-medium text-purple-700 dark:text-purple-300 flex items-center">
+                      <span className="mr-2">{t('useWebExpertOption') || 'Use WebExpert Option'}</span>
+                      <span className="px-2 py-0.5 text-xs bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 rounded-full">
+                        {t('goldDiamondEnterpriseOnly') || 'Gold, Diamond & Enterprise'}
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                {!useDeepseek ? (
+                  <>
+                    {/* Single URL Input */}
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('webPageUrlLabel') || 'Web Page URL'}</label>
+                      <input
+                        type="url"
+                        placeholder={t('webPageUrlPlaceholder')}
+                        className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                        onChange={(e) => setWebPageUrl(e.target.value)}
+                        value={webPageUrl}
+                      />
+                    </div>
+                    
+                    {/* Drag and Drop Area */}
+                    <div 
+                      className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 text-center transition-colors duration-200 ease-in-out bg-slate-50 dark:bg-slate-900/50 hover:border-cyan-400 dark:hover:border-cyan-500"
+                      style={{
+                        backgroundColor: isDragging ? 'rgba(14, 165, 233, 0.1)' : '',
+                        borderColor: isDragging ? 'rgb(14, 165, 233)' : ''
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragEnter={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        
+                        // Try to get URL from text
+                        const text = e.dataTransfer.getData('text');
+                        if (text) {
+                          // Check if it's a URL
+                          try {
+                            const url = new URL(text);
+                            setWebPageUrl(url.toString());
+                            return;
+                          } catch (e) {
+                            // Not a URL, continue checking other formats
+                          }
+                        }
+                        
+                        // Try to get URL from HTML
+                        const html = e.dataTransfer.getData('text/html');
+                        if (html) {
+                          const parser = new DOMParser();
+                          const doc = parser.parseFromString(html, 'text/html');
+                          const links = doc.querySelectorAll('a');
+                          if (links.length > 0) {
+                            setWebPageUrl(links[0].href);
+                            return;
+                          }
+                        }
+                      }}>
+                      <div className="text-slate-500 dark:text-slate-400">
+                        <div className="font-medium mb-1">{t('webPageDragDropText') || 'Drag and drop a URL here'}</div>
+                        <p className="text-sm text-slate-400 dark:text-slate-500">{t('webPageDragDropHint') || 'You can drag links from other tabs or applications'}</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Multiple URL Inputs for Deepseek */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {t('webExpertUrlsLabel') || 'Web Page URLs for WebExpert Analysis'}
+                      </label>
+                      
+                      {webPageUrls.map((url, index) => (
+                        <div
+                          key={index}
+                          className="relative group"
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.add('border-cyan-400', 'bg-cyan-50', 'dark:bg-cyan-900/20', 'shadow-lg');
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-cyan-400', 'bg-cyan-50', 'dark:bg-cyan-900/20', 'shadow-lg');
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-cyan-400', 'bg-cyan-50', 'dark:bg-cyan-900/20', 'shadow-lg');
+                            
+                            const droppedText = e.dataTransfer.getData('text/plain');
+                            if (droppedText && (droppedText.startsWith('http://') || droppedText.startsWith('https://'))) {
+                              const newUrls = [...webPageUrls];
+                              newUrls[index] = droppedText;
+                              setWebPageUrls(newUrls);
+                            }
+                          }}
+                        >
+                          <div className="relative border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-1 transition-all duration-200 hover:border-cyan-400 dark:hover:border-cyan-500 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <input
+                              type="url"
+                              placeholder={`${t('webPageUrlPlaceholder')} ${index + 1}`}
+                              className="w-full p-3 border-0 rounded-md bg-transparent text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500"
+                              onChange={(e) => {
+                                const newUrls = [...webPageUrls];
+                                newUrls[index] = e.target.value;
+                                setWebPageUrls(newUrls);
+                              }}
+                              value={url}
+                            />
+                            {!url && (
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="flex items-center space-x-2 text-slate-400 dark:text-slate-500">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                  </svg>
+                                  <span className="text-xs">
+                                    {t('webPageDragDropText') || 'Drag URL here or type'}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <p className="text-xs text-purple-600 dark:text-purple-400">
+                        {t('webExpertUrlsNote') || 'WebExpert allows analyzing multiple URLs simultaneously for comprehensive insights.'}
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 {webPageError && (
-                  <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                     <p className="text-sm text-red-600 dark:text-red-400">{webPageError}</p>
                   </div>
                 )}
               </div>
               <div className="flex justify-end gap-3">
                 <button 
-                  onClick={() => { setShowWebPageModal(false); setWebPageError(null); }} 
+                  onClick={() => { 
+                    setShowWebPageModal(false); 
+                    setWebPageError(null); 
+                    setUseDeepseek(false);
+                    setWebPageUrls(['', '', '']);
+                  }} 
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
                 >
                   {t('cancel')}
                 </button>
                 <button 
-                  onClick={() => handleWebPage(webPageUrl)} 
-                  disabled={!webPageUrl.trim() || isLoadingWebPage}
+                  onClick={() => {
+                    if (useDeepseek) {
+                      // Filter out empty URLs
+                      const validUrls = webPageUrls.filter(url => url.trim() !== '');
+                      if (validUrls.length > 0) {
+                        handleWebPage(validUrls[0], true, validUrls);
+                      } else {
+                        setWebPageError(t('noValidUrlsError') || 'Please enter at least one valid URL');
+                      }
+                    } else {
+                      handleWebPage(webPageUrl);
+                    }
+                  }} 
+                  disabled={(useDeepseek ? webPageUrls.every(url => !url.trim()) : !webPageUrl.trim()) || isLoadingWebPage}
                   className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-semibold disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {isLoadingWebPage ? (
@@ -6089,7 +6494,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       {t('loading')}
                     </>
                   ) : (
-                    t('processWebPage')
+                    useDeepseek ? (t('analyzeWithWebExpert') || 'Analyze with WebExpert') : t('processWebPage')
                   )}
                 </button>
               </div>
@@ -6411,13 +6816,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           </div>
         </div>
       )}
-      <main className="w-full max-w-6xl mx-auto px-3 sm:px-4 flex flex-col items-center gap-6 sm:gap-8 mt-20 sm:mt-12">
+      <main className="w-full max-w-7xl xl:max-w-[90vw] 2xl:max-w-[85vw] mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 flex flex-col items-center gap-6 sm:gap-8 mt-20 sm:mt-12">
         {authState.isLoading ? (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner className="w-8 h-8" text={t('loading')} />
           </div>
         ) : showInfoPage || !authState.user ? (
-          <div className="text-center py-16 w-full max-w-6xl mx-auto">
+          <div className="text-center py-16 w-full max-w-7xl xl:max-w-[85vw] 2xl:max-w-[80vw] mx-auto">
             {/* Start new session knop bovenaan info pagina verwijderd */}
             {/* Hero Section */}
             <div className="mb-20">
@@ -6439,10 +6844,10 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
               </p>
               
               {/* Login + Uitnodiging Section */}
-              <div className="max-w-5xl mx-auto w-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="max-w-6xl xl:max-w-7xl mx-auto w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 xl:gap-12">
                                       {/* {t('loginLeftProminent')} */}
-                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 xl:p-10 shadow-sm">
                     <h2 className="text-2xl font-semibold mb-4 text-slate-900 dark:text-slate-100">{t('login')}</h2>
                     <LoginForm 
                       onLogin={handleLogin}
@@ -6453,7 +6858,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     />
                   </div>
                   {/* Toegang op uitnodiging (rechts, minder prominent) */}
-                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/20 p-6">
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/20 p-8 xl:p-10">
                     <h2 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('waitlistTitle')}</h2>
                     <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">{t('waitlistLead')}</p>
                     <div className="flex gap-2">
@@ -6493,7 +6898,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
             {/* Hero visuals: clean, no big icons; modern image slides */}
             <div className="mb-16">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 xl:gap-8">
                 <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
                   <img src="/images/hero-1.jpg" alt="Opnemen van meeting op laptop" className="w-full h-44 object-cover" />
                   <div className="p-5">
@@ -6541,7 +6946,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             {/* Use cases - clean bullets without icons; add supporting images */}
             <div className="bg-gradient-to-r from-slate-50 to-cyan-50 dark:from-slate-800 dark:to-slate-700 p-6 sm:p-8 rounded-2xl mb-16 mx-1">
               <h2 className="text-3xl font-semibold text-slate-800 dark:text-slate-200 mb-6 text-center">{t('useCasesTitle')}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8 xl:gap-10">
                 <div>
                   <img src="/images/usecase-meeting.jpg" alt="Online vergadering met recap overzicht" className="w-full h-40 object-cover rounded-xl mb-4 border border-slate-200 dark:border-slate-700" />
                   <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">{t('useCaseMeetingTitle')}</h3>
@@ -6611,10 +7016,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           </div>
         ) : (
           <>
-            <div className="text-center">
-                <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-slate-100">{t('appTitle')}</h1>
 
-            </div>
         
             <div className="w-full max-w-6xl space-y-4 px-2">
             {error && (
@@ -6642,7 +7044,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         </div>
         
         {(status === RecordingStatus.IDLE || status === RecordingStatus.ERROR) ? (
-             <div className="w-full max-w-xl bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 space-y-6">
+             <div className="w-full max-w-[1600px] mx-auto bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 space-y-6">
                 {/* API Key Waarschuwing */}
                 {!apiKey && (
                     <div className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
@@ -6663,130 +7065,219 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 
                 {apiKey && (
                     <div className="transition-opacity duration-500">
-                        <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
-                            <span className="text-cyan-500 font-black tracking-wider text-sm uppercase mr-2">{t('step1')}</span> {t('sessionLang')}
-                            <button 
-                              onClick={step1Help.open}
-                              className="ml-2 text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
-                              title="Help bij sessie taal selectie"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            </button>
+                        <h2 className="text-2xl font-bold text-center text-slate-800 dark:text-slate-100 mb-6">
+                            {t('startOrUpload')}
                         </h2>
-                        <div className="flex justify-center mt-4">
-                          <LanguageSelector
-                            value={language ?? ''}
-                            onChange={setLanguage}
-                            placeholder={t('sessionLang')}
-                            appLanguage={uiLang}
-                            className="w-full max-w-md"
-                          />
+                        
+                        {/* Language settings - compact and less prominent */}
+                        <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 mb-6">
+                            <div className="flex items-center justify-center gap-1 mb-3">
+                                <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                                </svg>
+                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Taal instellingen</span>
+                                <button 
+                                  onClick={step1Help.open}
+                                  className="ml-1 text-slate-500 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-400 transition-colors"
+                                  title="Help bij taal selectie"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">{t('sessionLang')}</label>
+                                    <LanguageSelector
+                                        value={language ?? ''}
+                                        onChange={setLanguage}
+                                        placeholder={t('sessionLang')}
+                                        appLanguage={uiLang}
+                                        className="w-full"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">{t('outputLanguage')}</label>
+                                    <LanguageSelector
+                                        value={outputLang}
+                                        onChange={setOutputLang}
+                                        placeholder={t('outputLanguage')}
+                                        appLanguage={uiLang}
+                                        className="w-full"
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                )}
-                
-                {apiKey && (
-                    <div className="transition-opacity duration-500">
-                        <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100">
-                            <span className="text-cyan-500 font-black tracking-wider text-sm uppercase mr-2">{t('step2')}</span> {t('outputLanguage')}
-                            <button 
-                              onClick={step2Help.open}
-                              className="ml-2 text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
-                              title="Help bij output taal selectie"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            </button>
-                        </h2>
-                        <div className="flex justify-center mt-4">
-                          <LanguageSelector
-                            value={outputLang}
-                            onChange={setOutputLang}
-                            placeholder={t('outputLanguage')}
-                            appLanguage={uiLang}
-                            className="w-full max-w-md"
-                          />
-                        </div>
-                    </div>
-                )}
-                
-                {apiKey && (
-                    <div className="transition-opacity duration-500">
-                        <h2 className="text-xl font-bold text-center text-slate-800 dark:text-slate-100 mt-6 flex items-center justify-center gap-2">
-                            <span className="text-cyan-500 font-black tracking-wider text-sm uppercase">{t('step3')}</span> 
-                            <span>{t('startOrUpload')}</span>
-                            <button 
-                              onClick={() => setShowSessionOptionsModal(true)}
-                              className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
-                              title="Meer informatie over sessie opties"
-                            >
-                              <QuestionMarkIcon className="w-4 h-4" />
-                            </button>
-                        </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-                    <div className="w-full">
-                        <button onClick={startRecording} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 text-white hover:from-green-600 hover:to-emerald-700 dark:hover:from-green-700 dark:hover:to-emerald-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
-                            <MicIcon className="w-6 h-6" />
-                            <span className="text-lg font-semibold">{t('startRecording')}</span>
-                        </button>
-                        {/* Listen along help link - positioned under start recording button */}
-                        <div className="mt-3 text-center">
-                            <button onClick={() => systemAudioHelp.open()} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                🔊 {t('listenAlongHelp')}
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div className="w-full">
-                        <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(authState.isAdmin ? '.txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,text/plain,application/pdf,application/rtf,text/html,text/markdown')}/>
-                        <button onClick={() => fileInputRef.current?.click()} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
-                            <UploadIcon className="w-6 h-6" />
-                            <span className="text-lg font-semibold">{t('uploadTranscript')}</span>
-                        </button>
-                        {/* Supported formats info link - positioned under upload transcript button */}
-                        <div className="mt-3 text-center">
-                            <button onClick={formatsInfo.open} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                📄 {t('supportedFormatsLink')}
-                            </button>
-                        </div>
-                    </div>
+                        {/* Session Options - Main Actions */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-center gap-2 mb-4">
+                                <span className="text-lg font-medium text-slate-700 dark:text-slate-300">{t('chooseHowToStart')}</span>
+                                <button 
+                                  onClick={() => sessionOptionsModal.open()}
+                                  className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                                  title="Meer informatie over sessie opties"
+                                >
+                                  <QuestionMarkIcon className="w-4 h-4" />
+                                </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2 auto-rows-fr">
+                                {/* Audio Recording Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-green-300 dark:hover:border-green-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <MicIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('startRecording')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionAudioDesc')}</p>
+                                    </div>
+                                    <button onClick={startRecording} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 text-white hover:from-green-600 hover:to-emerald-700 dark:hover:from-green-700 dark:hover:to-emerald-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <MicIcon className="w-5 h-5" />
+                                        <span>{t('startRecording')}</span>
+                                    </button>
+                                    {/* Help links - positioned under start recording button */}
+                                    <div className="mt-3 text-center space-y-1">
+                                        <button onClick={() => systemAudioHelp.open()} className="block text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            🔊 {t('listenAlongHelp')}
+                                        </button>
+                                        {isMobileDevice() && (
+                                            <button onClick={() => mobileAudioHelpModal.open()} className="block text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 underline hover:no-underline transition-all duration-200">
+                                                📱 {t('mobileAudioHelpTitle')}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
 
-                    <div className="w-full">
-                        <button onClick={() => pasteModal.open()} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 dark:from-purple-600 dark:to-pink-700 text-white hover:from-purple-600 hover:to-pink-700 dark:hover:from-purple-700 dark:hover:to-pink-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
-                            <ClipboardIcon className="w-6 h-6" />
-                            <span className="text-lg font-semibold">{t('pasteTranscript')}</span>
-                        </button>
-                        {/* Paste help link - positioned under paste transcript button */}
-                        <div className="mt-3 text-center">
-                            <button onClick={() => pasteHelp.open()} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                📋 {t('pasteHelp')}
-                            </button>
-                        </div>
-                    </div>
+                                {/* File Upload Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <UploadIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('uploadTranscript')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionFileDesc')}</p>
+                                    </div>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(authState.isAdmin ? '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document')}/>
+                                    <input type="file" ref={imageInputRef} onChange={handleImageUpload} className="hidden" accept="image/*,.jpg,.jpeg,.png,.webp,.gif"/>
+                                    <button onClick={() => fileInputRef.current?.click()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <UploadIcon className="w-5 h-5" />
+                                        <span>{t('uploadFile')}</span>
+                                    </button>
+                                    {/* Supported formats info link */}
+                                    <div className="mt-3 text-center">
+                                        <button onClick={formatsInfo.open} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            📄 {t('supportedFormatsLink')}
+                                        </button>
+                                    </div>
+                                </div>
 
-                    <div className="w-full">
-                        <button onClick={() => setShowWebPageModal(true)} disabled={isProcessing || !language || !outputLang} className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 dark:from-orange-600 dark:to-red-700 text-white hover:from-orange-600 hover:to-red-700 dark:hover:from-orange-700 dark:hover:to-red-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0 9c-5 0-9-4-9-9m9 9c5 0 9-4 9-9m-9 9V3m0 9c0-5 4-9 9-9m-9 9c0 5-4 9-9 9" />
-                            </svg>
-                            <span className="text-lg font-semibold">{t('sessionOptionWebPage')}</span>
-                        </button>
-                        {/* Web page help link - positioned under web page button */}
-                        <div className="mt-3 text-center">
-                            <button onClick={() => setShowWebPageHelp(true)} className="text-sm text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                🌐 {t('help')}
-                            </button>
+                                {/* Paste Text Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <ClipboardIcon className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('pasteTranscript')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('pasteTextDirectly')}</p>
+                                    </div>
+                                    <button onClick={() => pasteModal.open()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 dark:from-purple-600 dark:to-pink-700 text-white hover:from-purple-600 hover:to-pink-700 dark:hover:from-purple-700 dark:hover:to-pink-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <ClipboardIcon className="w-5 h-5" />
+                                        <span>{t('pasteText')}</span>
+                                    </button>
+                                    {/* Paste help link */}
+                                    <div className="mt-3 text-center">
+                                        <button onClick={() => pasteHelp.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            📋 {t('pasteHelp')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Web Page Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-orange-300 dark:hover:border-orange-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0 9c-5 0-9-4-9-9m9 9c5 0 9-4 9-9m-9 9V3m0 9c0-5 4-9 9-9m-9 9c0 5-4 9-9 9" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionWebPage')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('analyzeWebPageContent')}</p>
+                                    </div>
+                                    <button onClick={() => setShowWebPageModal(true)} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 dark:from-orange-600 dark:to-red-700 text-white hover:from-orange-600 hover:to-red-700 dark:hover:from-orange-700 dark:hover:to-red-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0 9c-5 0-9-4-9-9m9 9c5 0 9-4 9-9m-9 9V3m0 9c0-5 4-9 9-9m-9 9c0 5-4 9-9 9" />
+                                        </svg>
+                                        <span>Webpagina</span>
+                                    </button>
+                                    {/* Web page help link */}
+                                    <div className="mt-3 text-center">
+                                        <button onClick={() => setShowWebPageHelp(true)} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            🌐 {t('help')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Image Upload Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-pink-300 dark:hover:border-pink-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-pink-100 dark:bg-pink-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-8 h-8 text-pink-600 dark:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionImage')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionImageDesc')}</p>
+                                    </div>
+                                    <button onClick={handleSessionOptionImageUpload} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 dark:from-pink-600 dark:to-rose-700 text-white hover:from-pink-600 hover:to-rose-700 dark:hover:from-pink-700 dark:hover:to-rose-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <span>{t('sessionOptionImage')}</span>
+                                    </button>
+                                    {/* Image help link */}
+                                    <div className="mt-3 text-center">
+                                        <button onClick={() => imageUploadHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            📸 {t('help')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Ask the Expert Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-indigo-300 dark:hover:border-indigo-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionExpert')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionExpertDesc')}</p>
+                                    </div>
+                                    <button onClick={() => expertConfigModal.open()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                        </svg>
+                                        <span>{t('sessionOptionExpert')}</span>
+                                    </button>
+                                    {/* Ask the Expert help link */}
+                                    <div className="mt-3 text-center">
+                                        <button onClick={() => expertHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            🎓 {t('help')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
                     </div>
                 )}
             </div>
         ) : (
-            status === RecordingStatus.FINISHED && renderAnalysisView()
+            status === RecordingStatus.FINISHED && (
+              <div className="w-full max-w-6xl lg:max-w-7xl xl:max-w-[90vw] 2xl:max-w-[85vw]">
+                {renderAnalysisView()}
+              </div>
+            )
         )}
 
         </>
@@ -6890,21 +7381,18 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       </Modal>
     )}
     {/* Session Options Modal */}
-    {sessionOptionsModal.isOpen && (
-      <Modal
-        isOpen={sessionOptionsModal.isOpen}
-        onClose={sessionOptionsModal.close}
-        title={t('sessionOptionsModalTitle')}
-      >
-        <SessionOptionsModal
-          onStartRecording={startRecording}
-          onUploadFile={handleSessionOptionUpload}
-          onPasteText={() => pasteModal.open()}
-          onWebPage={() => webPageModal.open()}
-          t={t}
-        />
-      </Modal>
-    )}
+    <SessionOptionsModal
+      isOpen={sessionOptionsModal.isOpen}
+      onClose={sessionOptionsModal.close}
+      onStartRecording={startRecording}
+      onUploadFile={handleSessionOptionUpload}
+      onPasteText={() => pasteModal.open()}
+      onWebPage={() => webPageModal.open()}
+      onUploadImage={handleSessionOptionImageUpload}
+      onAskExpert={() => expertConfigModal.open()}
+      userSubscription={String(userSubscription)}
+      t={t}
+    />
     {/* Storytelling Questions Modal removed in favor of inline panel */}
     {/* Pricing Page */}
     {showPricingPage && (
@@ -6926,8 +7414,77 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
     {showFAQPage && (
       <FAQPage onClose={() => setShowFAQPage(false)} t={t} />
     )}
-  </main>
-  </div>
+
+    {/* Mobile Audio Help Modal */}
+    {mobileAudioHelpModal.isOpen && (
+      <MobileAudioHelpModal
+        isOpen={mobileAudioHelpModal.isOpen}
+        onClose={mobileAudioHelpModal.close}
+        t={t}
+      />
+    )}
+
+    {/* Image Upload Help Modal */}
+    {imageUploadHelpModal.isOpen && (
+      <ImageUploadHelpModal
+        isOpen={imageUploadHelpModal.isOpen}
+        onClose={imageUploadHelpModal.close}
+        t={t}
+      />
+    )}
+
+    {/* Expert Configuration Modal */}
+    {expertConfigModal.isOpen && (
+      <ExpertConfigurationModal
+        isOpen={expertConfigModal.isOpen}
+        onClose={expertConfigModal.close}
+        onStartChat={(config) => {
+           setExpertConfiguration(config);
+           expertChatModal.open();
+         }}
+        t={t}
+      />
+     )}
+
+     {/* Expert Chat Modal */}
+     {expertChatModal.isOpen && expertConfiguration && (
+       <ExpertChatModal
+         isOpen={expertChatModal.isOpen}
+         onClose={expertChatModal.close}
+         configuration={expertConfiguration}
+         onAnalyze={(chatHistory, chatTranscript) => {
+           // If chatTranscript is not provided, convert expert chat history to transcript format for analysis
+           const transcript = chatTranscript || chatHistory
+             .map(message => `${message.role === 'user' ? 'User' : 'Expert'}: ${message.content}`)
+             .join('\n\n');
+           
+           // Set the transcript and switch to analysis view
+           setTranscript(transcript);
+           setStatus(RecordingStatus.FINISHED); // Set to FINISHED to show analysis view
+           setActiveView('transcript'); // Show the transcript view so users can see raw text and choose analysis
+           expertChatModal.close();
+         }}
+         onCancel={() => {
+           setExpertConfiguration(null);
+           expertChatModal.close();
+         }}
+         t={t}
+         apiKey={apiKey}
+         transcript={transcript}
+         updateTokensAndRefresh={updateTokensAndRefresh}
+       />
+     )}
+
+     {/* Expert Help Modal */}
+     {expertHelpModal.isOpen && (
+       <ExpertHelpModal
+         isOpen={expertHelpModal.isOpen}
+         onClose={expertHelpModal.close}
+         t={t}
+       />
+     )}
+   </main>
+   </div>
   </>
 ); 
 }

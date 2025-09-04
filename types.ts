@@ -59,8 +59,8 @@ export interface SpeechRecognition {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
-  onresult: (event: any) => void;
-  onerror: (event: any) => void;
+  onresult: (event: Event) => void;
+  onerror: (event: Event) => void;
   onend: () => void;
   start: () => void;
   stop: () => void;
@@ -173,4 +173,45 @@ export interface ExplainOptions {
   complexityLevel: string;
   focusArea: string;
   format: string;
+}
+
+// Ask the Expert interfaces
+export interface ExpertTopic {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface ExpertRole {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface ExpertBranche {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface ExpertConfiguration {
+  topic: ExpertTopic;
+  role: ExpertRole;
+  branche: ExpertBranche;
+}
+
+export interface ExpertChatMessage {
+  id: string;
+  role: 'user' | 'expert';
+  content: string;
+  timestamp: Date;
+}
+
+export interface ExpertChatSession {
+  id: string;
+  configuration: ExpertConfiguration;
+  messages: ExpertChatMessage[];
+  suggestedFollowUp?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

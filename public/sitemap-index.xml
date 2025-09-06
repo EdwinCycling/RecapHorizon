@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://recapsmart.app/sitemap.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+  
+  <!-- Language-specific sitemaps -->
+  <sitemap>
+    <loc>https://recapsmart.app/sitemap-nl.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+  
+  <sitemap>
+    <loc>https://recapsmart.app/sitemap-en.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+  
+  <sitemap>
+    <loc>https://recapsmart.app/sitemap-de.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+  
+  <sitemap>
+    <loc>https://recapsmart.app/sitemap-fr.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+  
+  <sitemap>
+    <loc>https://recapsmart.app/sitemap-es.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+  
+  <sitemap>
+    <loc>https://recapsmart.app/sitemap-pt.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+</sitemapindex>

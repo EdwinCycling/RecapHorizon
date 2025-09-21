@@ -89,12 +89,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
         {/* Header with SEO-optimized title */}
         <div className="flex justify-between items-center p-6 border-b">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">{t('pricingTitle')}</h1>
-            <p className="text-gray-600 mt-2">Choose the perfect plan for your AI transcription needs</p>
+            <h1 className="text-3xl font-medium text-gray-800 tracking-tight">{t('pricingTitle')}</h1>
+            <p className="text-gray-600 mt-2">{t('choosePerfectPlan')}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+            className="text-gray-500 hover:text-gray-700 text-2xl font-medium"
           >
             ×
           </button>
@@ -127,14 +127,14 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
               {/* Tier Header */}
               <div className="text-center mb-6">
                 <div className="text-4xl mb-2">{getTierIcon(tier.tier)}</div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                <h3 className="text-2xl font-medium text-gray-800 mb-2">
                   {tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1)}
                 </h3>
                 {(tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
-                  <div className="text-xl font-semibold text-cyan-600">{t('pricingComingSoon')}</div>
+                  <div className="text-xl font-medium text-cyan-600">{t('pricingComingSoon')}</div>
                 ) : tier.tier !== SubscriptionTier.ENTERPRISE ? (
                   <>
-                    <div className="text-4xl font-bold text-gray-800">
+                    <div className="text-4xl font-medium text-gray-800">
                       €{tier.price}
                       <span className="text-lg text-gray-600">{t('pricingPerMonth')}</span>
                     </div>
@@ -145,7 +145,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                     )}
                   </>
                 ) : (
-                  <div className="text-xl font-semibold text-gray-800">{t('pricingPriceOnRequest')}</div>
+                  <div className="text-xl font-medium text-gray-800">{t('pricingPriceOnRequest')}</div>
                 )}
               </div>
 
@@ -189,7 +189,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
 
                 {/* New: Premium Features */}
                 <div className="pt-3 border-t border-gray-200">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">{t('pricingPremiumFeatures')}</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">{t('pricingPremiumFeatures')}</h4>
                   <div className="space-y-2">
                     {tier.features?.chat && (
                       <div className="flex items-center">
@@ -199,14 +199,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                         </span>
                       </div>
                     )}
-                    {tier.features?.podcast && (
-                      <div className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        <span className="text-sm text-gray-700">
-                          {t('pricingPodcastGeneration')}
-                        </span>
-                      </div>
-                    )}
+
                     {tier.features?.exportPpt && (
                       <div className="flex items-center">
                         <span className="text-green-500 mr-2">✓</span>
@@ -227,7 +220,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                       <div className="flex items-center">
                         <span className="text-green-500 mr-2">✓</span>
                         <span className="text-sm text-gray-700">
-                          {t('pricingBasicWebPageImport') || 'Basic Web Page Import (single URL)'}
+                          {t('pricingBasicWebPageImport', 'Basic Web Page Import (single URL)')}
                         </span>
                       </div>
                     )}
@@ -235,7 +228,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                       <div className="flex items-center">
                         <span className="text-green-500 mr-2">✓</span>
                         <span className="text-sm text-gray-700">
-                          {t('pricingWebExpertImport') || 'WebExpert URL Import (multiple pages)'}
+                          {t('pricingWebExpertImport', 'WebExpert URL Import (multiple pages)')}
                         </span>
                       </div>
                     )}
@@ -247,7 +240,15 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                         </span>
                       </div>
                     )}
-                    {!tier.features?.chat && !tier.features?.podcast && !tier.features?.exportPpt && !tier.features?.businessCase && !tier.features?.webPage && tier.tier !== SubscriptionTier.GOLD && tier.tier !== SubscriptionTier.ENTERPRISE && (
+                    {(tier.tier === SubscriptionTier.GOLD || tier.tier === SubscriptionTier.ENTERPRISE) && (
+                      <div className="flex items-center">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span className="text-sm text-gray-700">
+                          {t('pricingEmailUpload')}
+                        </span>
+                      </div>
+                    )}
+                    {!tier.features?.chat && !tier.features?.exportPpt && !tier.features?.businessCase && !tier.features?.webPage && tier.tier !== SubscriptionTier.GOLD && tier.tier !== SubscriptionTier.ENTERPRISE && (
                       <div className="text-sm text-gray-400 italic">
                         {t('pricingNoPremiumFeatures')}
                       </div>
@@ -261,21 +262,21 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                 {tier.tier === currentTier ? (
                   <button
                     disabled
-                    className="w-full py-3 px-6 bg-gray-300 text-gray-600 rounded-lg font-semibold cursor-not-allowed"
+                    className="w-full py-3 px-6 bg-gray-300 text-gray-600 rounded font-medium cursor-not-allowed"
                   >
                     {t('pricingCurrentTierButton')}
                   </button>
                 ) : (tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
                   <button
                     disabled
-                    className="w-full py-3 px-6 bg-cyan-300 text-cyan-600 rounded-lg font-semibold cursor-not-allowed"
+                    className="w-full py-3 px-6 bg-cyan-300 text-cyan-600 rounded font-medium cursor-not-allowed"
                   >
                     {t('pricingAdminOnly')}
                   </button>
                 ) : (
                   <button
                     onClick={() => showComingSoonModal()}
-                    className={`w-full py-3 px-6 text-white rounded-lg font-semibold transition-colors ${getTierButtonColor(tier.tier)}`}
+                    className={`w-full py-3 px-6 text-white rounded font-medium transition-colors ${getTierButtonColor(tier.tier)}`}
                   >
                     {tier.tier === SubscriptionTier.FREE ? t('pricingStartFree') : (tier.tier === SubscriptionTier.ENTERPRISE ? t('pricingContactEnterprise') : t('pricingUpgradeTo', { tier: tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1) }))}
                   </button>
@@ -296,7 +297,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
             </p>
             <p>
               {t('pricingQuestions')}{' '}
-              <a href="mailto:support@recapsmart.nl" className="text-blue-600 hover:underline">
+              <a href="mailto:support@recaphorizon.nl" className="text-blue-600 hover:underline">
                 {t('pricingSupportEmail')}
               </a>
             </p>
@@ -307,9 +308,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
         <div className="p-6 border-t border-gray-200 flex justify-end">
           <button 
             onClick={onClose} 
-            className="px-6 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors"
+            className="px-6 py-3 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors"
           >
-            {t('close') || 'Close'}
+            {t('close', 'Close')}
           </button>
         </div>
       </div>

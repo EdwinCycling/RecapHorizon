@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://recapsmart.app/sitemap.xml
+Sitemap: https://recaphorizon.app/sitemap.xml
 
 # Allow important pages and features
 Allow: /

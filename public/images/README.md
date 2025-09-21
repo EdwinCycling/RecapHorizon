@@ -1,4 +1,4 @@
-# Foto's voor RecapSmart Info Pagina
+# Foto's voor RecapHorizon Info Pagina
 
 Dit zijn de foto's die gebruikt worden op de info pagina. Vervang deze dummy foto's door echte, professionele foto's.
 
@@ -33,7 +33,7 @@ Dit zijn de foto's die gebruikt worden op de info pagina. Vervang deze dummy fot
 - **Formaat:** JPG of JPEG
 - **Resolutie:** Minimaal 1200x800 pixels (voor goede kwaliteit op alle schermen)
 - **Bestandsgrootte:** Maximaal 500KB per foto (voor snelle laadtijden)
-- **Stijl:** Modern, professioneel, consistent met de RecapSmart branding
+- **Stijl:** Modern, professioneel, consistent met de RecapHorizon branding
 - **Kleur:** Heldere, levendige kleuren die goed werken met de donkere tekst overlay
 
 ## Plaatsing

@@ -19,15 +19,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onCreateAccount, onPassw
         }}
         className="space-y-4"
       >
-        <input type="email" placeholder={t('email') || 'Email'} className="w-full p-2 border rounded" required />
-        <input type="password" placeholder={t('password') || 'Password'} className="w-full p-2 border rounded" required />
+        <input type="email" placeholder={t('email', 'Email')} className="w-full p-2 border rounded" required />
+        <input type="password" placeholder={t('password', 'Password')} className="w-full p-2 border rounded" required />
         <div className="flex gap-2">
-          <button type="submit" className="px-4 py-2 bg-cyan-600 text-white rounded">{t('login') || 'Login'}</button>
-          <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={onCreateAccount}>{t('createAccount') || 'Create Account'}</button>
-          <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={onPasswordReset}>{t('forgotPassword') || 'Forgot Password?'}</button>
+          <button type="submit" className="px-4 py-2 bg-cyan-600 text-white rounded">{t('login', 'Login')}</button>
+          <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={onCreateAccount}>{t('createAccount', 'Create Account')}</button>
+          <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={onPasswordReset}>{t('forgotPassword', 'Forgot Password?')}</button>
         </div>
       </form>
-      <button onClick={onClose} className="mt-4 text-cyan-600 underline">{t('close') || 'Close'}</button>
+      <button onClick={onClose} className="mt-4 text-cyan-600 underline">{t('close', 'Close')}</button>
     </div>
   );
 };

@@ -445,7 +445,7 @@ export const getLanguageName = (code: string, appLanguage: string): string => {
   const lang = getLanguageByCode(code);
   if (!lang) return code;
   
-  // Voor Nederlandse klanten toon name_nl, voor andere app talen toon name_en
+  // For Dutch customers show name_nl, for other app languages show name_en
   if (appLanguage === 'nl') {
     return lang.name_nl;
   }
@@ -464,4 +464,52 @@ export const getBcp47Code = (code: string): string => {
 
 export const getTotalLanguageCount = (): number => {
   return supportedLanguages.length;
+};
+
+export const getFlagEmoji = (code: string): string => {
+  const map: Record<string, string> = {
+    nl: 'NL',
+    en: 'GB',
+    de: 'DE',
+    fr: 'FR',
+    es: 'ES',
+    pt: 'PT',
+    it: 'IT',
+    pl: 'PL',
+    sv: 'SE',
+    da: 'DK',
+    fi: 'FI',
+    no: 'NO',
+    tr: 'TR',
+    ru: 'RU',
+    zh: 'CN',
+    'zh-TW': 'TW',
+    ja: 'JP',
+    ko: 'KR',
+    ar: 'SA',
+    he: 'IL',
+    hi: 'IN',
+  };
+
+  const toFlag = (cc: string) =>
+    String.fromCodePoint(
+      ...cc
+        .toUpperCase()
+        .slice(0, 2)
+        .split('')
+        .map((c) => 127397 + c.charCodeAt(0))
+    );
+
+  const key = code.toLowerCase();
+  if (map[key]) return toFlag(map[key]);
+
+  // Try to infer from BCP-47 region if available
+  const lang = getLanguageByCode(code);
+  if (lang && lang.bcp47_code) {
+    const parts = lang.bcp47_code.split('-');
+    const region = parts[1];
+    if (region && region.length === 2) return toFlag(region);
+  }
+
+  return '🌐';
 };

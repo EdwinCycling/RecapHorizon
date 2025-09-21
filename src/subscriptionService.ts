@@ -6,31 +6,41 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxSessionDuration: 15,
     maxSessionsPerDay: 1,
     maxTranscriptLength: 5000,
-    allowedFileTypes: ['.txt', 'text/plain']
+    allowedFileTypes: ['.txt', 'text/plain'],
+    maxTokensPerMonth: 10000, // 10k tokens per month
+    maxTokensPerDay: 500 // 500 tokens per day
   },
   [SubscriptionTier.SILVER]: {
     maxSessionDuration: 60,
     maxSessionsPerDay: 3,
     maxTranscriptLength: 15000,
-    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown']
+    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.eml', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'email'],
+    maxTokensPerMonth: 50000, // 50k tokens per month
+    maxTokensPerDay: 2000 // 2k tokens per day
   },
   [SubscriptionTier.GOLD]: {
     maxSessionDuration: 90,
     maxSessionsPerDay: -1, // unlimited
     maxTranscriptLength: 30000,
-    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
+    maxTokensPerMonth: 150000, // 150k tokens per month
+    maxTokensPerDay: 6000 // 6k tokens per day
   },
   [SubscriptionTier.ENTERPRISE]: {
     maxSessionDuration: 90,
     maxSessionsPerDay: -1,
     maxTranscriptLength: 50000,
-    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
+    maxTokensPerMonth: 500000, // 500k tokens per month
+    maxTokensPerDay: 20000 // 20k tokens per day
   },
   [SubscriptionTier.DIAMOND]: {
     maxSessionDuration: 120,
     maxSessionsPerDay: -1,
     maxTranscriptLength: -1, // unlimited
-    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
+    maxTokensPerMonth: -1, // unlimited
+    maxTokensPerDay: -1 // unlimited
   }
 };
 
@@ -77,7 +87,6 @@ export const TIER_PRICING = {
 export const TIER_FEATURES = {
   [SubscriptionTier.FREE]: {
     chat: false,
-    podcast: false,
     exportPpt: false,
     businessCase: false,
     webPage: false,
@@ -86,7 +95,6 @@ export const TIER_FEATURES = {
   },
   [SubscriptionTier.SILVER]: {
     chat: false,
-    podcast: false,
     exportPpt: false,
     businessCase: false,
     webPage: true,
@@ -95,7 +103,6 @@ export const TIER_FEATURES = {
   },
   [SubscriptionTier.GOLD]: {
     chat: true,
-    podcast: true,
     exportPpt: true,
     businessCase: true,
     webPage: true,
@@ -104,7 +111,6 @@ export const TIER_FEATURES = {
   },
   [SubscriptionTier.ENTERPRISE]: {
     chat: true,
-    podcast: true,
     exportPpt: true,
     businessCase: true,
     webPage: true,
@@ -113,7 +119,6 @@ export const TIER_FEATURES = {
   },
   [SubscriptionTier.DIAMOND]: {
     chat: true,
-    podcast: true,
     exportPpt: true,
     businessCase: true,
     webPage: true,
@@ -191,6 +196,49 @@ export class SubscriptionService {
     return Math.max(0, limits.maxTranscriptLength - currentLength);
   }
 
+  // Token management methods
+  public isTokenUsageAllowed(tier: SubscriptionTier, tokensToUse: number, currentMonthlyUsage: number, currentDailyUsage: number): { allowed: boolean; reason?: string } {
+    const limits = this.getTierLimits(tier);
+    
+    // Check daily limit
+    if (limits.maxTokensPerDay !== -1 && (currentDailyUsage + tokensToUse) > limits.maxTokensPerDay) {
+      return {
+        allowed: false,
+        reason: `Je hebt je dagelijkse token limiet van ${limits.maxTokensPerDay.toLocaleString()} tokens bereikt. Probeer morgen opnieuw of upgrade naar een hogere tier.`
+      };
+    }
+    
+    // Check monthly limit
+    if (limits.maxTokensPerMonth !== -1 && (currentMonthlyUsage + tokensToUse) > limits.maxTokensPerMonth) {
+      return {
+        allowed: false,
+        reason: `Je hebt je maandelijkse token limiet van ${limits.maxTokensPerMonth.toLocaleString()} tokens bereikt. Upgrade naar een hogere tier voor meer tokens.`
+      };
+    }
+    
+    return { allowed: true };
+  }
+
+  public getRemainingTokens(tier: SubscriptionTier, currentMonthlyUsage: number, currentDailyUsage: number): { monthly: number; daily: number } {
+    const limits = this.getTierLimits(tier);
+    
+    const remainingMonthly = limits.maxTokensPerMonth === -1 ? -1 : Math.max(0, limits.maxTokensPerMonth - currentMonthlyUsage);
+    const remainingDaily = limits.maxTokensPerDay === -1 ? -1 : Math.max(0, limits.maxTokensPerDay - currentDailyUsage);
+    
+    return {
+      monthly: remainingMonthly,
+      daily: remainingDaily
+    };
+  }
+
+  public getTokenUsagePercentage(tier: SubscriptionTier, currentUsage: number, period: 'monthly' | 'daily'): number {
+    const limits = this.getTierLimits(tier);
+    const maxTokens = period === 'monthly' ? limits.maxTokensPerMonth : limits.maxTokensPerDay;
+    
+    if (maxTokens === -1) return 0; // unlimited
+    return Math.min(100, (currentUsage / maxTokens) * 100);
+  }
+
   // Validate session start
   public validateSessionStart(tier: SubscriptionTier, sessionsToday: number): { allowed: boolean; reason?: string } {
     if (!this.canStartNewSession(tier, sessionsToday)) {
@@ -261,8 +309,7 @@ export class SubscriptionService {
     switch (feature) {
       case 'chat':
         return t('chatFeatureUpgrade');
-      case 'podcast':
-        return t('podcastFeatureUpgrade');
+
       case 'exportPpt':
         return t('exportPptFeatureUpgrade');
       case 'businessCase':

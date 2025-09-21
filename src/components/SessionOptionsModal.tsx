@@ -9,9 +9,13 @@ interface SessionOptionsModalProps {
   onPasteText: () => void;
   onWebPage: () => void;
   onUploadImage: () => void;
+  onEmailImport: () => void;
   onAskExpert: () => void;
+  onNotionImport: () => void;
   userSubscription?: string;
   t: (key: string) => string;
+  // New: when true, show as help-only (no clicks on other items)
+  helpMode?: boolean;
 }
 
 const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
@@ -22,11 +26,16 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
   onPasteText,
   onWebPage,
   onUploadImage,
+  onEmailImport,
   onAskExpert,
+  onNotionImport,
   userSubscription,
-  t
+  t,
+  helpMode
 }) => {
   const [isImageHelpOpen, setIsImageHelpOpen] = useState(false);
+  const isReadOnly = Boolean(helpMode);
+  const isDiamond = (userSubscription || '').toLowerCase() === 'diamond';
   
   if (!isOpen) return null;
 
@@ -35,10 +44,10 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-[95vw] max-w-[1600px] max-h-[85vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{t('sessionOptionsTitle')}</h2>
+          <h2 className="text-2xl font-medium text-gray-800 dark:text-white tracking-tight">{t('sessionOptionsTitle')}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-bold"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-medium"
           >
             ×
           </button>
@@ -54,15 +63,12 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 mb-6">
             {/* Audio Recording Option */}
             <div 
-              onClick={() => {
-                onStartRecording();
-                onClose();
-              }}
-              className="border-2 border-blue-200 dark:border-blue-700 rounded-xl p-8 bg-blue-50 dark:bg-blue-900/20 cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+              onClick={!isReadOnly ? () => { onStartRecording(); onClose(); } : undefined}
+              className={`border-2 border-blue-200 dark:border-blue-700 rounded-xl p-8 bg-blue-50 dark:bg-blue-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">🎤</div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{t('sessionOptionAudio')}</h3>
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionAudio')}</h3>
               </div>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 {t('sessionOptionAudioDesc')}
@@ -71,15 +77,12 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* File Upload Option */}
             <div 
-              onClick={() => {
-                onUploadFile();
-                onClose();
-              }}
-              className="border-2 border-green-200 dark:border-green-700 rounded-xl p-8 bg-green-50 dark:bg-green-900/20 cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+              onClick={!isReadOnly ? () => { onUploadFile(); onClose(); } : undefined}
+              className={`border-2 border-green-200 dark:border-green-700 rounded-xl p-8 bg-green-50 dark:bg-green-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">📄</div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{t('sessionOptionFile')}</h3>
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionFile')}</h3>
               </div>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-3">
                 {t('sessionOptionFileDesc')}
@@ -91,15 +94,12 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Paste Text Option */}
             <div 
-              onClick={() => {
-                onPasteText();
-                onClose();
-              }}
-              className="border-2 border-purple-200 dark:border-purple-700 rounded-xl p-8 bg-purple-50 dark:bg-purple-900/20 cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+              onClick={!isReadOnly ? () => { onPasteText(); onClose(); } : undefined}
+              className={`border-2 border-purple-200 dark:border-purple-700 rounded-xl p-8 bg-purple-50 dark:bg-purple-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">📋</div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{t('sessionOptionPaste')}</h3>
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionPaste')}</h3>
               </div>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 {t('sessionOptionPasteDesc')}
@@ -108,15 +108,12 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Web Page Option */}
             <div 
-              onClick={() => {
-                onWebPage();
-                onClose();
-              }}
-              className="border-2 border-orange-200 dark:border-orange-700 rounded-xl p-8 bg-orange-50 dark:bg-orange-900/20 cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+              onClick={!isReadOnly ? () => { onWebPage(); onClose(); } : undefined}
+              className={`border-2 border-orange-200 dark:border-orange-700 rounded-xl p-8 bg-orange-50 dark:bg-orange-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">🌐</div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{t('sessionOptionWebPage')}</h3>
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionWebPage')}</h3>
               </div>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 {t('sessionOptionWebPageDesc')}
@@ -125,15 +122,12 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Image Upload Option */}
             <div 
-              onClick={() => {
-                onUploadImage();
-                onClose();
-              }}
-              className="border-2 border-pink-200 dark:border-pink-700 rounded-xl p-8 bg-pink-50 dark:bg-pink-900/20 cursor-pointer hover:border-pink-300 dark:hover:border-pink-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+              onClick={!isReadOnly ? () => { onUploadImage(); onClose(); } : undefined}
+              className={`border-2 border-pink-200 dark:border-pink-700 rounded-xl p-8 bg-pink-50 dark:bg-pink-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-pink-300 dark:hover:border-pink-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">📸</div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{t('sessionOptionImage')}</h3>
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionImage')}</h3>
               </div>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-3">
                 {t('sessionOptionImageDesc')}
@@ -143,17 +137,28 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
               </div>
             </div>
 
+            {/* Email Import Option */}
+            <div 
+              className="border-2 border-purple-200 dark:border-purple-700 rounded-xl p-8 bg-purple-50 dark:bg-purple-900/20"
+            >
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">📧</div>
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('emailImportOption')}</h3>
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                {t('emailImportOptionDesc')}
+              </p>
+            </div>
+
             {/* Ask the Expert Option */}
             <div 
-              onClick={() => {
-                // Check if user has premium subscription before allowing action
+              onClick={!isReadOnly ? () => {
                 if (userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) {
                   onAskExpert();
                   onClose();
                 }
-                // If no subscription, do nothing (button appears clickable but doesn't work)
-              }}
-              className={`border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-8 bg-yellow-50 dark:bg-yellow-900/20 cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105 ${
+              } : undefined}
+              className={`border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-8 bg-yellow-50 dark:bg-yellow-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200 ${
                 userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase()) 
                   ? '' 
                   : 'opacity-70'
@@ -161,7 +166,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             >
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">🧠</div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{t('sessionOptionExpert')}</h3>
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionExpert')}</h3>
                 {!(userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) && (
                   <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
                     {t('premiumOnly')}
@@ -172,6 +177,30 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                 {t('sessionOptionExpertDesc')}
               </p>
             </div>
+
+            {/* Analyse Notion Option (help-only) */}
+            {isDiamond && (
+              <div 
+                className="border-2 border-slate-300 dark:border-slate-600 rounded-xl p-8 bg-white dark:bg-slate-900/30"
+              >
+                <div className="text-center mb-4">
+                  <div className="mb-3 flex items-center justify-center">
+                    {/* Notion logo (inline SVG) */}
+                    <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true" className="drop-shadow-sm">
+                      <rect x="10" y="10" width="80" height="80" rx="10" fill="#111111" />
+                      <path d="M35 70V30h6l18 26V30h6v40h-6L41 44v26h-6z" fill="#ffffff"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('notionOption') || 'Analyse Notion'}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {t('notionOptionDesc') || 'Verbind via een beveiligde server integratie (Notion API). De geheime sleutel blijft alleen op de server — nooit in je browser. Kies een pagina om tekst in te lezen voor analyse.'}
+                  </p>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                  {t('notionOptionDesc') || 'Autoriseer Notion, kies een pagina en importeer notities naar je transcript.'}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Info Box */}

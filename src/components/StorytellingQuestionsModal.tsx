@@ -44,10 +44,10 @@ const StorytellingQuestionsModal: React.FC<StorytellingQuestionsModalProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{t('storytellingQuestionsTitle')}</h2>
+          <h2 className="text-2xl font-medium text-gray-800 dark:text-white tracking-tight">{t('storytellingQuestionsTitle')}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-bold"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-medium"
           >
             ×
           </button>
@@ -266,7 +266,7 @@ const StorytellingQuestionsModal: React.FC<StorytellingQuestionsModalProps> = ({
             </button>
             <button
               onClick={handleGenerate}
-              className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors"
+              className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded transition-colors"
             >
               {t('storytellingGenerate')}
             </button>

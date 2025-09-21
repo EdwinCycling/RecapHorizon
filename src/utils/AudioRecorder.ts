@@ -1,23 +1,35 @@
 // Enhanced AudioRecorder for mobile device compatibility
 // Handles common web-specific interruptions and provides robust recording
 
+type TranslationFunction = (key: string, fallback?: string) => string;
+
 export class AudioRecorder {
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   private stream: MediaStream | null = null;
   private audioContext: AudioContext | null = null;
-  private isRecording: boolean = false;
-  private isPaused: boolean = false;
+  private analyser: AnalyserNode | null = null;
+  private _isRecording: boolean = false;
+  private _isPaused: boolean = false;
   private onDataAvailable?: (chunks: Blob[]) => void;
   private onError?: (error: Error) => void;
   private onStateChange?: (state: 'recording' | 'paused' | 'stopped' | 'error') => void;
+  private onStop?: (blob: Blob) => void;
   private isMobile: boolean = false;
+  private t?: TranslationFunction;
 
-  constructor() {
+  constructor(t?: TranslationFunction) {
+    this.t = t;
     this.detectMobile();
     this.setupVisibilityListener();
     this.setupAudioContextListener();
   }
+
+  // Public getters for recording state
+  public get isRecording(): boolean { return this._isRecording; }
+  public get isPaused(): boolean { return this._isPaused; }
+
+  public getAnalyser(): AnalyserNode | null { return this.analyser; }
 
   private detectMobile(): void {
     this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -29,10 +41,12 @@ export class AudioRecorder {
     onDataAvailable?: (chunks: Blob[]) => void;
     onError?: (error: Error) => void;
     onStateChange?: (state: 'recording' | 'paused' | 'stopped' | 'error') => void;
+    onStop?: (blob: Blob) => void;
   }): void {
     this.onDataAvailable = callbacks.onDataAvailable;
     this.onError = callbacks.onError;
     this.onStateChange = callbacks.onStateChange;
+    this.onStop = callbacks.onStop;
   }
 
   // Start recording with enhanced mobile support
@@ -52,17 +66,18 @@ export class AudioRecorder {
         try {
           micStream = await navigator.mediaDevices.getUserMedia({ 
             audio: { 
-              sampleRate: 44100, 
-              channelCount: 2,
+              sampleRate: 8000, // Lower sample rate for better stability and reduced data
+              channelCount: 1, // Mono is sufficient for transcription
               echoCancellation: true,
               noiseSuppression: true,
               autoGainControl: true
+              // Additional constraints for better transcription quality
             } 
           });
         } catch (error) {
-          console.warn('Microphone access denied:', error);
+          console.warn(this.t?.('microphoneAccessDenied') || 'Microphone access denied:', error);
           if (!includeSystemAudio) {
-            throw new Error('Microphone access required but denied');
+            throw new Error(this.t?.('microphoneAccessDenied') || 'Microphone access required but denied');
           }
         }
       }
@@ -73,23 +88,35 @@ export class AudioRecorder {
         try {
           displayStream = await navigator.mediaDevices.getDisplayMedia({
             video: true,
-            audio: { sampleRate: 44100, channelCount: 2 } as MediaTrackConstraints
+            audio: { 
+              sampleRate: 8000, // Lower sample rate for better stability and reduced data
+              channelCount: 1, // Mono is sufficient for transcription
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            } as MediaTrackConstraints
           });
         } catch (error) {
-          console.warn('Display capture not available:', error);
+          console.warn(this.t?.('displayCaptureNotAvailable') || 'Display capture not available:', error);
         }
       }
 
       // Create audio context
       const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
       this.audioContext = new AudioContextClass();
+      // Attach statechange listener to handle brief interruptions on mobile (iOS Safari etc.)
+      this.setupAudioContextListener();
       
       // iOS requires explicit resume after user gesture
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
       }
 
-      // Combine streams
+      // Prepare analyser and destination
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 2048;
+      this.analyser.smoothingTimeConstant = 0.8;
+
       const destination = this.audioContext.createMediaStreamDestination();
       let hasAudio = false;
 
@@ -97,7 +124,7 @@ export class AudioRecorder {
         const displayAudioTracks = displayStream.getAudioTracks();
         if (displayAudioTracks.length > 0) {
           const displaySource = this.audioContext.createMediaStreamSource(new MediaStream(displayAudioTracks));
-          displaySource.connect(destination);
+          displaySource.connect(this.analyser);
           hasAudio = true;
         }
       }
@@ -106,16 +133,79 @@ export class AudioRecorder {
         const micAudioTracks = micStream.getAudioTracks();
         if (micAudioTracks.length > 0) {
           const micSource = this.audioContext.createMediaStreamSource(new MediaStream(micAudioTracks));
-          micSource.connect(destination);
+          micSource.connect(this.analyser);
           hasAudio = true;
         }
       }
 
       if (!hasAudio) {
-        throw new Error('No audio sources available');
+        throw new Error(this.t?.('noAudioSources') || 'No audio sources available');
       }
 
+      // Route analyser output to destination so it is recorded
+      this.analyser.connect(destination);
       this.stream = destination.stream;
+
+      // On some mobile devices, audio tracks can end briefly; try to recover automatically
+      this.stream.getAudioTracks().forEach((track) => {
+        track.addEventListener('ended', async () => {
+          console.warn('Audio track ended unexpectedly, attempting recovery...');
+          if (!this._isRecording) return;
+          try {
+            // Recreate destination if needed
+            if (!this.audioContext) return;
+            const newDest = this.audioContext.createMediaStreamDestination();
+            try { this.analyser?.disconnect(); } catch {}
+            this.analyser?.connect(newDest);
+            this.stream = newDest.stream;
+            if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+              // Note: MediaRecorder cannot change stream mid-flight in all browsers,
+              // so we stop and restart seamlessly building on existing chunks.
+              const prevChunks = this.audioChunks.slice();
+              this.mediaRecorder.stop();
+              // Small delay to allow onstop to flush
+              await new Promise(r => setTimeout(r, 50));
+              const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
+              // Initialize MediaRecorder with optimized settings for transcription
+              const mediaRecorderOptions: MediaRecorderOptions = {
+                mimeType,
+                audioBitsPerSecond: 16000 // 16kbps for maximum stability and minimal server load
+              };
+              
+              // Fallback if audioBitsPerSecond is not supported
+              try {
+                this.mediaRecorder = new MediaRecorder(this.stream, mediaRecorderOptions);
+              } catch (error) {
+                console.warn(this.t?.('mediaRecorderBitrateNotSupported') || 'MediaRecorder with bitrate not supported, using default:', error);
+                this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
+              }
+              this.audioChunks = prevChunks;
+              this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
+                if (event.data.size > 0) {
+                  this.audioChunks.push(event.data);
+                  this.onDataAvailable?.(this.audioChunks);
+                }
+              };
+              this.mediaRecorder.onstop = () => {
+                const mimeTypeInner = this.mediaRecorder?.mimeType || 'audio/webm';
+                const audioBlob = new Blob(this.audioChunks, { type: mimeTypeInner });
+                this._isRecording = false;
+                this._isPaused = false;
+                this.onStateChange?.('stopped');
+                this.onStop?.(audioBlob);
+                this.cleanup();
+              };
+              this.mediaRecorder.start(1000);
+              this._isRecording = true;
+              this._isPaused = false;
+              this.onStateChange?.('recording');
+              console.log(this.t?.('mediaRecorderRestarted') || 'MediaRecorder restarted after track end');
+            }
+          } catch (e) {
+            console.warn(this.t?.('failedToRecoverFromTrackEnd') || 'Failed to recover from track end:', e);
+          }
+        });
+      });
 
       // Choose appropriate MIME type for the platform
       let mimeType = 'audio/webm';
@@ -150,8 +240,19 @@ export class AudioRecorder {
         }
       }
 
-      // Initialize MediaRecorder
-      this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
+      // Initialize MediaRecorder with optimized settings for transcription
+      const mediaRecorderOptions: MediaRecorderOptions = {
+        mimeType,
+        audioBitsPerSecond: 16000 // 16kbps for maximum stability and minimal server load
+      };
+      
+      // Fallback if audioBitsPerSecond is not supported
+      try {
+        this.mediaRecorder = new MediaRecorder(this.stream, mediaRecorderOptions);
+      } catch (error) {
+        console.warn('MediaRecorder with bitrate not supported, using default:', error);
+        this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
+      }
 
       // Handle data availability - collect chunks every 1s for robustness
       this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
@@ -165,105 +266,121 @@ export class AudioRecorder {
       // Handle errors
       this.mediaRecorder.onerror = (event: Event) => {
         console.error('MediaRecorder error:', event);
-        const error = new Error('Recording failed');
+        const error = new Error(this.t?.('recordingFailed') || 'Recording failed');
         this.onError?.(error);
-        this.onStateChange?.("error");
+        this.onStateChange?.('error');
         this.stopRecording();
       };
 
       // Handle stop event
       this.mediaRecorder.onstop = () => {
-        this.isRecording = false;
-        this.isPaused = false;
-        this.onStateChange?.("stopped");
+        const mimeTypeInner = this.mediaRecorder?.mimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type: mimeTypeInner });
+        this._isRecording = false;
+        this._isPaused = false;
+        this.onStateChange?.('stopped');
+        // Emit final blob to consumer
+        this.onStop?.(audioBlob);
         this.cleanup();
       };
 
       // Start recording with 1s intervals for chunk collection
       this.mediaRecorder.start(1000);
-      this.isRecording = true;
-      this.isPaused = false;
-      this.onStateChange?.("recording");
+      this._isRecording = true;
+      this._isPaused = false;
+      this.onStateChange?.('recording');
       
-      console.log('Recording started with MIME type:', mimeType);
+      console.log(this.t?.('recordingStartedWithMimeType') || 'Recording started with MIME type:', mimeType);
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      console.error(this.t?.('failedToStartRecording') || 'Failed to start recording:', error);
       this.onError?.(error as Error);
-      this.onStateChange?.("error");
+      this.onStateChange?.('error');
       throw error;
     }
   }
 
   // Pause recording
   pauseRecording(): void {
-    if (this.mediaRecorder && this.isRecording && !this.isPaused) {
+    if (this.mediaRecorder && this._isRecording && !this._isPaused) {
       this.mediaRecorder.pause();
-      this.isPaused = true;
-      this.onStateChange?.("paused");
-      console.log('Recording paused');
+      this._isPaused = true;
+      this.onStateChange?.('paused');
+      console.log(this.t?.('recordingPausedConsole') || 'Recording paused');
     }
   }
 
   // Resume recording
   resumeRecording(): void {
-    if (this.mediaRecorder && this.isRecording && this.isPaused) {
+    if (this.mediaRecorder && this._isRecording && this._isPaused) {
       // Resume audio context if suspended
       if (this.audioContext?.state === 'suspended') {
         this.audioContext.resume().catch(err => 
-          console.error('Failed to resume AudioContext:', err)
+          console.error(this.t?.('failedToResumeAudioContext') || 'Failed to resume AudioContext:', err)
         );
       }
       
       this.mediaRecorder.resume();
-      this.isPaused = false;
-      this.onStateChange?.("recording");
-      console.log('Recording resumed');
+      this._isPaused = false;
+      this.onStateChange?.('recording');
+      console.log(this.t?.('recordingResumed') || 'Recording resumed');
     }
   }
 
   // Stop recording and get the final audio
   async stopRecording(): Promise<Blob> {
     return new Promise((resolve) => {
-      if (!this.mediaRecorder || !this.isRecording) {
+      if (!this.mediaRecorder || !this._isRecording) {
         const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        // Emit to consumer as well
+        this.onStop?.(audioBlob);
         resolve(audioBlob);
         return;
       }
 
       this.mediaRecorder.onstop = () => {
-        const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
-        const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+        const mimeTypeInner = this.mediaRecorder?.mimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type: mimeTypeInner });
         this.cleanup();
+        // Emit to consumer
+        this.onStop?.(audioBlob);
         resolve(audioBlob);
       };
 
       this.mediaRecorder.stop();
-      this.isRecording = false;
-      this.isPaused = false;
+      this._isRecording = false;
+      this._isPaused = false;
     });
   }
 
   // Clean up resources
-  private cleanup(): void {
-    if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop());
-      this.stream = null;
+  public cleanup(): void {
+    try {
+      if (this.stream) {
+        this.stream.getTracks().forEach((track) => track.stop());
+        this.stream = null;
+      }
+      if (this.analyser) {
+        try { this.analyser.disconnect(); } catch {}
+        this.analyser = null;
+      }
+      if (this.audioContext) {
+        try { this.audioContext.close(); } catch {}
+        this.audioContext = null;
+      }
+      this.mediaRecorder = null;
+    } catch (e) {
+      console.warn(this.t?.('cleanupError') || 'Cleanup error:', e);
     }
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-    }
-    this.mediaRecorder = null;
   }
 
   // Handle tab visibility changes (mobile browsers often pause when tab is hidden)
   private setupVisibilityListener(): void {
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && this.isRecording && !this.isPaused) {
-        console.log('Tab hidden, pausing recording to prevent interruption');
+      if (document.hidden && this._isRecording && !this._isPaused) {
+        console.log(this.t?.('tabHiddenPausingRecording') || 'Tab hidden, pausing recording to prevent interruption');
         this.pauseRecording();
-      } else if (!document.hidden && this.isRecording && this.isPaused) {
-        console.log('Tab visible, resuming recording');
+      } else if (!document.hidden && this._isRecording && this._isPaused) {
+        console.log(this.t?.('tabVisibleResumingRecording') || 'Tab visible, resuming recording');
         this.resumeRecording();
       }
     });
@@ -271,15 +388,31 @@ export class AudioRecorder {
 
   // Handle audio context interruptions (system audio interrupts)
   private setupAudioContextListener(): void {
-    // This will be set up when audio context is created
-    // We'll monitor state changes in the resume method
+    if (!this.audioContext) return;
+    try {
+      this.audioContext.onstatechange = async () => {
+        const state = this.audioContext?.state;
+        if (!state) return;
+        // When context becomes suspended unexpectedly during recording, attempt auto-resume
+        if (state === 'suspended' && this._isRecording && !this._isPaused) {
+          try {
+            await this.audioContext.resume();
+            console.log(this.t?.('audioContextAutoResumed') || 'AudioContext auto-resumed after brief interruption');
+          } catch (err) {
+            console.warn(this.t?.('failedToAutoResumeAudioContext') || 'Failed to auto-resume AudioContext:', err);
+          }
+        }
+      };
+    } catch (e) {
+      console.warn(this.t?.('couldNotAttachAudioContextListener') || 'Could not attach AudioContext statechange listener:', e);
+    }
   }
 
   // Get current recording state
   getState(): { isRecording: boolean; isPaused: boolean; chunksCount: number } {
     return {
-      isRecording: this.isRecording,
-      isPaused: this.isPaused,
+      isRecording: this._isRecording,
+      isPaused: this._isPaused,
       chunksCount: this.audioChunks.length
     };
   }
@@ -291,7 +424,7 @@ export class AudioRecorder {
 
   // Force cleanup (call when component unmounts)
   destroy(): void {
-    if (this.isRecording) {
+    if (this._isRecording) {
       this.stopRecording();
     }
     this.cleanup();

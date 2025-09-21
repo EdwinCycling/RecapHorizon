@@ -1,34 +1,47 @@
-import Footer from './src/components/Footer';
+import Footer from './src/components/Footer.tsx';
 import * as React from 'react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useModalState } from './src/hooks/useModalState';
-import Modal from './src/components/Modal';
-import CookieModal from './src/components/CookieModal';
-import DisclaimerModal from './src/components/DisclaimerModal';
-import WaitlistModal from './src/components/WaitlistModal';
-import LoginModal from './src/components/LoginModal';
+import Modal from './src/components/Modal.tsx';
+import CookieModal from './src/components/CookieModal.tsx';
+import DisclaimerModal from './src/components/DisclaimerModal.tsx';
+import WaitlistModal from './src/components/WaitlistModal.tsx';
+// COMMENTED OUT: 2FA Email confirmation modal no longer needed
+// import { EmailConfirmationModal } from './src/components/EmailConfirmationModal';
+// import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
-import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, ExpertConfiguration, ExpertChatMessage } from './types';
+import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, EmailOptions, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
 // Mermaid is ESM-only; import dynamically to avoid type issues
 let mermaid: typeof import('mermaid') | undefined;
 import PptxGenJS from 'pptxgenjs';
-import RecapSmartPanel from './src/components/RecapSmartPanel';
-import LanguageSelector from './src/components/LanguageSelector';
-import SessionOptionsModal from './src/components/SessionOptionsModal';
-import ExpertConfigurationModal from './src/components/ExpertConfigurationModal';
-import ExpertChatModal from './src/components/ExpertChatModal';
-import ExpertHelpModal from './src/components/ExpertHelpModal';
+import RecapHorizonPanel from './src/components/RecapHorizonPanel.tsx';
+import LanguageSelector from './src/components/LanguageSelector.tsx';
+import SessionOptionsModal from './src/components/SessionOptionsModal.tsx';
+import ExpertConfigurationModal from './src/components/ExpertConfigurationModal.tsx';
+import ExpertChatModal from './src/components/ExpertChatModal.tsx';
+import ExpertHelpModal from './src/components/ExpertHelpModal.tsx';
 // Removed StorytellingQuestionsModal; inline panels are rendered under tabs
 import { getGeminiCode, getBcp47Code, getTotalLanguageCount } from './src/languages';
 import { useTabCache } from './src/hooks/useTabCache';
 import { fetchHTML, fetchMultipleHTML, extractTextFromHTML, FetchError } from './src/utils/fetchPage';
 import { useTranslation } from './src/hooks/useTranslation';
 import { AudioRecorder } from './src/utils/AudioRecorder';
-import MobileAudioHelpModal from './src/components/MobileAudioHelpModal';
-import ImageUploadHelpModal from './src/components/ImageUploadHelpModal';
+import MobileAudioHelpModal from './src/components/MobileAudioHelpModal.tsx';
+import ImageUploadHelpModal from './src/components/ImageUploadHelpModal.tsx';
+import EmailImportHelpModal from './src/components/EmailImportHelpModal.tsx';
+import EmailUploadModal from './src/components/EmailUploadModal.tsx';
+import NotionImportModal from './src/components/NotionImportModal.tsx';
+import FileUploadModal from './src/components/FileUploadModal.tsx';
+import ImageUploadModal from './src/components/ImageUploadModal.tsx';
+import { SafeUserText } from './src/utils/SafeHtml';
+import { sanitizeTextInput, extractEmailAddresses } from './src/utils/security';
 import { isMobileDevice } from './src/utils/deviceDetection';
+import { readEml } from 'eml-parse-js';
+import MsgReader from '@kenjiuno/msgreader';
+import EmailCompositionTab, { EmailData } from './src/components/EmailCompositionTab.tsx';
+import TokenUsageMeter from './src/components/TokenUsageMeter.tsx';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -77,6 +90,10 @@ import {
   increment
 } from 'firebase/firestore';
 import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, type MonthlyTokensUsage } from './src/firebase';
+import { sessionManager, UserSession } from './src/utils/security';
+import SessionTimeoutWarning from './src/components/SessionTimeoutWarning.tsx';
+import { useSessionActivity } from './src/hooks/useSessionActivity';
+import { errorHandler, ErrorType } from './src/utils/errorHandler';
 
 
 
@@ -155,14 +172,7 @@ const SpeakerIcon: React.FC<{ className?: string }> = ({ className }) => (
 const SpeakerOffIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 5 6 9 2 9 2 15 6 15 11 19 11 5Z"/><path d="m23 9-6 6"/><path d="m17 9 6 6"/><line x1="15.54" x2="15.54" y1="8.46" y2="8.46"/></svg>
 );
-const PodcastIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-    <path d="M6.5 17.5c-3 0-5.5-2.5-5.5-5.5" />
-    <path d="M17.5 17.5c3 0 5.5-2.5 5.5-5.5" />
-  </svg>
-);
+
 const XIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 );
@@ -231,6 +241,13 @@ const ExplainIcon: React.FC<{ className?: string }> = ({ className }) => (
         <circle cx="12" cy="12" r="10"/>
         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
         <path d="M12 17h.01"/>
+    </svg>
+);
+
+const MailIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+        <polyline points="22 6 12 13 2 6"/>
     </svg>
 );
 
@@ -468,76 +485,46 @@ const UkFlagIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 // --- COMPONENTS ---
 
-const LoadingOverlay: React.FC<{ text: string }> = ({ text }) => (
+const LoadingOverlay: React.FC<{ text: string; progress?: number; cancelText?: string; onCancel?: () => void }> = ({ text, progress, cancelText, onCancel }) => {
+  const progressPercentage = typeof progress === 'number' ? Math.max(0, Math.min(100, Math.round(progress * 100))) : 0;
+  
+  return (
     <div className="fixed inset-0 bg-gray-200/80 dark:bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-[100] transition-opacity duration-300">
-      <div className="flex items-center gap-4 p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700">
+      <div className="flex items-start gap-4 p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 min-w-[320px] max-w-[90%]">
         <LoadingSpinner />
-        <p className="text-xl font-semibold text-slate-800 dark:text-slate-200">{text}</p>
+        <div className="flex-1">
+          <p className="text-xl font-semibold text-slate-800 dark:text-slate-200">{text}</p>
+          {typeof progress === 'number' && (
+            <div className="mt-3">
+              <div className="h-3 w-full bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-3 bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-cyan-400 dark:to-blue-400 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+              <div className="mt-2 flex justify-between items-center">
+                <span className="text-sm text-slate-600 dark:text-slate-300">
+                  {progressPercentage < 100 ? 'Verwerken...' : 'Bijna klaar...'}
+                </span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {progressPercentage}%
+                </span>
+              </div>
+            </div>
+          )}
+          {onCancel && (
+            <div className="mt-4 flex justify-end">
+              <button onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md font-semibold hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors">
+                {cancelText || 'Cancel'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
-);
-const PodcastPlayer: React.FC<{ script: string; language: 'nl' | 'en'; t: (key: string, params?: Record<string, unknown>) => string; }> = ({ script, language, t }) => {
-    const [playbackState, setPlaybackState] = useState<'idle' | 'playing' | 'paused'>('idle');
-    const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if (window.speechSynthesis.speaking) {
-                window.speechSynthesis.cancel();
-            }
-        };
-    }, []);
-
-    const handlePlay = () => {
-        if (playbackState === 'paused' && window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-        } else {
-            if (window.speechSynthesis.speaking) {
-                window.speechSynthesis.cancel();
-            }
-            const utterance = new SpeechSynthesisUtterance(script);
-            utterance.lang = getBcp47Code(language || 'en');
-            utterance.rate = 1;
-            utterance.pitch = 1;
-            utterance.onend = () => setPlaybackState('idle');
-            utterance.onerror = (e: SpeechSynthesisErrorEvent) => {
-                console.error('SpeechSynthesis Error:', e.error);
-                setPlaybackState('idle');
-            }
-            utteranceRef.current = utterance;
-            window.speechSynthesis.speak(utterance);
-        }
-        setPlaybackState('playing');
-    };
-
-    const handlePause = () => {
-        window.speechSynthesis.pause();
-        setPlaybackState('paused');
-    };
-    
-    const handleRewind = () => {
-        if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-        }
-        // Timeout to ensure cancel has processed before speaking again
-        setTimeout(handlePlay, 100); 
-    };
-
-    return (
-        <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] flex flex-col items-center justify-center gap-6">
-            <PodcastIcon className="w-24 h-24 text-purple-400" />
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('podcastReady')}</h3>
-            <div className="flex items-center gap-4">
-                <button onClick={handleRewind} title={t('rewindPodcast')} className="p-3 rounded-full bg-gray-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors">
-                    <RewindIcon className="w-6 h-6" />
-                </button>
-                <button onClick={() => playbackState === 'playing' ? handlePause() : handlePlay()} title={playbackState === 'playing' ? t('pause') : t('play')} className="p-4 rounded-full bg-purple-500 text-white hover:bg-purple-600 transition-colors shadow-lg">
-                    {playbackState === 'playing' ? <PauseIcon className="w-8 h-8" /> : <PlayIcon className="w-8 h-8" />}
-                </button>
-            </div>
-        </div>
-    );
+  );
 };
+
 
 const KeywordExplanationModal: React.FC<{ keyword: string; explanation: string | null; isLoading: boolean; onClose: () => void; t: (key: string, params?: Record<string, unknown>) => string; }> = ({ keyword, explanation, isLoading, onClose, t }) => {
     return (
@@ -586,7 +573,8 @@ const PowerPointOptionsModal: React.FC<{
     const [mainGoal, setMainGoal] = useState('Informeren en updates geven');
     const [toneStyle, setToneStyle] = useState('Informerend en neutraal');
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const imageInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -783,7 +771,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'podcast' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'email';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -842,9 +830,10 @@ interface AuthState {
 import { translations } from './src/locales';
 import { subscriptionService } from './src/subscriptionService';
 import { tokenCounter } from './src/tokenCounter';
-import UpgradeModal from './src/components/UpgradeModal';
-import PricingPage from './src/components/PricingPage';
-import FAQPage from './src/components/FAQPage';
+import { tokenManager } from './src/utils/tokenManager';
+import UpgradeModal from './src/components/UpgradeModal.tsx';
+import PricingPage from './src/components/PricingPage.tsx';
+import FAQPage from './src/components/FAQPage.tsx';
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -868,6 +857,9 @@ export default function App() {
   
   // Translation hook
   const { t, currentLanguage } = useTranslation(uiLang);
+  
+  // Auth and token management
+  const user = auth.currentUser;
   
   // Email helper functions
   const openEmailClient = (to: string, subject: string, body: string) => {
@@ -1003,11 +995,30 @@ export default function App() {
   const [faq, setFaq] = useState<string>('');
   const [learningDoc, setLearningDoc] = useState<string>('');
   const [followUpQuestions, setFollowUpQuestions] = useState<string>('');
-  const [podcastScript, setPodcastScript] = useState<string>('');
+  const [sentiment, setSentiment] = useState<string | null>(null);
+  const [learnings, setLearnings] = useState<string>('');
+  const [followup, setFollowup] = useState<string>('');
+  const [mindmapText, setMindmapText] = useState<string>('');
+
   const [activeView, setActiveView] = useState<ViewType>('transcript');
+  const [activeTab, setActiveTab] = useState('Transcribe');
   const [loadingText, setLoadingText] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
+  const [showActionButtons, setShowActionButtons] = useState<boolean>(false);
+  const actionButtonsRef = useRef<HTMLDivElement>(null);
+  
+  // Close action buttons when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionButtonsRef.current && !actionButtonsRef.current.contains(event.target as Node)) {
+        setShowActionButtons(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Chat state
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -1088,7 +1099,7 @@ export default function App() {
   const cookieModal = useModalState();
   const disclaimerModal = useModalState();
   const settingsModal = useModalState();
-  const loginModal = useModalState();
+  // const loginModal = useModalState();
     const systemAudioHelp = useModalState();
   const step1Help = useModalState();
   const step2Help = useModalState();
@@ -1105,6 +1116,11 @@ export default function App() {
   const comingSoonModal = useModalState();
   const mobileAudioHelpModal = useModalState();
   const imageUploadHelpModal = useModalState();
+  const emailImportHelpModal = useModalState();
+  const emailUploadModal = useModalState();
+  const fileUploadModal = useModalState();
+  const imageUploadModal = useModalState();
+  const notionImportModal = useModalState();
   const expertConfigModal = useModalState();
   const expertChatModal = useModalState();
   const expertHelpModal = useModalState();
@@ -1113,6 +1129,47 @@ export default function App() {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isLoading: true,
+  });
+  
+  // Session management state
+  const [currentSession, setCurrentSession] = useState<UserSession | null>(null);
+  const [sessionId, setSessionId] = useState<string>('');
+  
+  // Session logout handler
+  const handleSessionExpired = useCallback(async () => {
+    try {
+      await signOut(auth);
+      setCurrentSession(null);
+      setSessionId('');
+      setAuthState({ user: null, isLoading: false });
+      // Show a message to user about session expiration
+      displayToast(t('sessionExpired'), 'warning');
+    } catch (error) {
+      const userError = errorHandler.handleError(error, ErrorType.SESSION, {
+        userId: currentSession?.userId,
+        sessionId: sessionId
+      });
+      displayToast(userError.message, 'error');
+    }
+  }, [t, currentSession, sessionId]);
+  
+  // Session extend handler
+  const handleExtendSession = useCallback(() => {
+    if (sessionId) {
+      const result = sessionManager.refreshSession(sessionId);
+      if (result.success && result.session) {
+        setCurrentSession(result.session);
+        displayToast(t('sessionExtended'), 'success');
+      } else {
+        handleSessionExpired();
+      }
+    }
+  }, [sessionId, handleSessionExpired, t]);
+  
+  // Initialize session activity tracking
+  useSessionActivity({
+    sessionId,
+    onSessionExpired: handleSessionExpired
   });
   
   // Expert chat state
@@ -1147,7 +1204,11 @@ export default function App() {
           sessionLanguage: language || 'nl',
           outputLanguage: outputLang || 'nl'
         }).catch(error => {
-          console.warn('Could not save language preferences to Firebase:', error);
+          errorHandler.handleError(error, ErrorType.API, {
+            userId: authState.user?.uid,
+            sessionId: sessionId,
+            additionalContext: { action: 'saveLanguagePreferences' }
+          });
         });
       }
     }
@@ -1165,7 +1226,7 @@ export default function App() {
       const d = recordingStartMs ? new Date(recordingStartMs) : new Date();
       return d.toLocaleString('nl-NL');
     })();
-    const subject = `RecapSmart ${stamp} - ${type}`;
+    const subject = `RecapHorizon ${stamp} - ${type}`;
     
     // Limit content length for email to prevent mailto URL issues
     const maxContentLength = 1500; // Leave room for headers and truncation message
@@ -1217,7 +1278,12 @@ export default function App() {
       setMonthlyTokens(tokens);
       setMonthlySessions(sessions.sessions);
     } catch (e) {
-      console.error('Usage load error', e);
+      const userError = errorHandler.handleError(e, ErrorType.API, {
+        userId: authState?.user?.uid,
+        sessionId: sessionId,
+        additionalContext: { action: 'fetchUsage' }
+      });
+      // Don't show error to user for usage loading failures
     } finally {
       setIsLoadingUsage(false);
     }
@@ -1231,7 +1297,12 @@ export default function App() {
         // Update the UI immediately after token update
         await fetchUsage();
       } catch (error) {
-        console.error('Error updating tokens:', error);
+        const userError = errorHandler.handleError(error, ErrorType.API, {
+          userId: authState.user.uid,
+          sessionId: sessionId,
+          additionalContext: { promptTokens, responseTokens }
+        });
+        // Don't show error to user for token tracking failures
       }
     }
   };
@@ -1270,6 +1341,12 @@ export default function App() {
     return d.toLocaleString('nl-NL');
   };
 
+  // Memoize startStamp to prevent unnecessary re-renders and resets in RecapHorizonPanel
+  const startStamp = useMemo(() => {
+    const d = recordingStartMs ? new Date(recordingStartMs) : new Date();
+    return d.toLocaleString('nl-NL');
+  }, [recordingStartMs]);
+
   const handleGenerateQuiz = async () => {
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
@@ -1285,6 +1362,19 @@ export default function App() {
       setIsGeneratingQuiz(true);
       setQuizError(null);
       setLoadingText(t('generatingQuiz'));
+      
+      // Validate token usage for quiz generation
+      const quizPrompt = `You generate MCQs based on a transcript. Return ONLY a JSON array of objects with keys: question (string), options (array of {label, text}), correct_answer_label, correct_answer_text. Ensure exactly one correct answer per question. Labels are A, B, C, D but limited to requested count.\n\nConstraints: number_of_questions=${quizNumQuestions}, number_of_options=${quizNumOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
+      const tokenEstimate = tokenManager.estimateTokens(quizPrompt, 1.5);
+      const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+      
+      if (!tokenValidation.allowed) {
+        setQuizError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        setIsGeneratingQuiz(false);
+        return;
+      }
+      
       const ai = new GoogleGenAI({ apiKey: apiKey });
       // Using Gemini 2.5 Flash - Google's latest and most advanced AI model
       // This model provides excellent reasoning, coding, and text generation capabilities
@@ -1292,20 +1382,22 @@ export default function App() {
       const prompt = `${sys}\n\nConstraints: number_of_questions=${quizNumQuestions}, number_of_options=${quizNumOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
       const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
       
-      // Track token usage
+      // Track token usage with TokenManager
       const promptTokens = tokenCounter.countPromptTokens(prompt);
       const responseTokens = tokenCounter.countResponseTokens(res.text);
-      const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
       
-              // Token usage logging removed
-      await updateTokensAndRefresh(promptTokens, responseTokens);
+      try {
+        await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+      } catch (error) {
+        console.error('Error recording token usage:', error);
+      }
 
       let text = res.text || '';
       text = text.replace(/```[a-z]*|```/gi, '').trim();
       const arr = JSON.parse(text);
       setQuizQuestions(arr);
       
-      // Update RecapSmartPanel with new quiz questions
+      // Update RecapHorizonPanel with new quiz questions
       if (arr && arr.length > 0) {
         displayToast(`Quiz gegenereerd met ${arr.length} vragen!`, 'success');
       }
@@ -1341,6 +1433,19 @@ export default function App() {
       
       // Don't reset other analysis data when generating business case
       setLoadingText(t('generating', { type: 'Business Case' }));
+      
+      // Validate token usage for business case generation
+      const businessCasePrompt = `Je bent een ervaren business consultant. Schrijf een overtuigende business case op basis van het transcript. De business case moet de volgende structuur hebben:\n\n- Titel\n- Probleem\n- Oplossing\n- Verwachte Impact (kwantitatief en kwalitatief)\n- Kosten/Baten analyse\n- Conclusie (waarom deze business case waardevol is)\n\nSchrijf helder, zakelijk en overtuigend. Maximaal 600 woorden.\n\nBusiness Case Type: ${type}\nInternet verificatie (grounding): ${useInternet ? 'Ja - vul aan met actuele marktdata en relevante trends van internet' : 'Nee - gebruik alleen de transcript informatie'}\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
+      const tokenEstimate = tokenManager.estimateTokens(businessCasePrompt, 1.5);
+      const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+      
+      if (!tokenValidation.allowed) {
+        displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        setLoadingText('');
+        return;
+      }
+      
       const ai = new GoogleGenAI({ apiKey: apiKey });
       
       const businessCaseTypeDescriptions = {
@@ -1371,13 +1476,15 @@ ${getTranscriptSlice(transcript, 20000)}`;
 
       const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
       
-      // Track token usage
+      // Track token usage with TokenManager
       const promptTokens = tokenCounter.countPromptTokens(prompt);
       const responseTokens = tokenCounter.countResponseTokens(res.text);
-      const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
       
-              // Token usage logging removed
-      await updateTokensAndRefresh(promptTokens, responseTokens);
+      try {
+        await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+      } catch (error) {
+        console.error('Error recording token usage:', error);
+      }
 
       let text = res.text || '';
       text = text.replace(/```[a-z]*|```/gi, '').trim();
@@ -1411,9 +1518,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
   }, []);
 
   const handleSessionOptionUpload = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    fileUploadModal.open();
   };
 
   const handleSessionOptionImageUpload = () => {
@@ -1426,10 +1531,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
       setError('Image upload is alleen beschikbaar voor Gold, Diamond en Enterprise abonnementen.');
       return;
     }
-    
-    if (imageInputRef.current) {
-      imageInputRef.current.click();
-    }
+    imageUploadModal.open();
   };
 
   // Inline panels; no-op kept if referenced
@@ -1440,17 +1542,31 @@ ${getTranscriptSlice(transcript, 20000)}`;
   // Clipboard utility from utils
   // Use imported copyToClipboard and displayToast
 
+  // Wrappers to allow modal to pass File directly
+  const importTranscriptFile = async (file: File) => {
+    const target = { files: [file] } as unknown as React.ChangeEvent<HTMLInputElement>['target'];
+    await handleFileUpload({ target } as React.ChangeEvent<HTMLInputElement>);
+  };
+  const importImageFile = async (file: File) => {
+    const target = { files: [file] } as unknown as React.ChangeEvent<HTMLInputElement>['target'];
+    await handleImageUpload({ target } as React.ChangeEvent<HTMLInputElement>);
+  };
+
   // Utility function for copying content for email
   const copyToClipboardForEmail = (subject: string, body: string) => {
     try {
       copyToClipboard(body);
       displayToast(
-        t('contentCopiedToClipboard'),
+        t('copiedToClipboard'),
         'success'
       );
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-      displayToast(t('failedToCopyClipboard'), 'error');
+      const userError = errorHandler.handleError(error, ErrorType.UNKNOWN, {
+        userId: authState?.user?.uid,
+        sessionId: sessionId,
+        additionalContext: { action: 'copyToClipboard' }
+      });
+      displayToast(userError.message, 'error');
     }
   };
 
@@ -1470,10 +1586,13 @@ ${getTranscriptSlice(transcript, 20000)}`;
   };
 
   // Waitlist states
-  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+  // Waitlist modal now uses useModalState() hook: waitlistModal
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlist, setWaitlist] = useState<Array<{ email: string; timestamp: number }>>([]);
   const [selectedWaitlistUsers, setSelectedWaitlistUsers] = useState<string[]>([]);
+  // COMMENTED OUT: 2FA Email confirmation state no longer needed
+  // const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState('');
 
   // Anonymization settings state
   const [anonymizationRules, setAnonymizationRules] = useState<AnonymizationRule[]>(() => {
@@ -1506,6 +1625,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [dailyUploadCount, setDailyUploadCount] = useState<number>(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPricingPage, setShowPricingPage] = useState(false);
+  const [sessionOptionsHelpMode, setSessionOptionsHelpMode] = useState(false);
 
   const [showWebPageModal, setShowWebPageModal] = useState(false);
   const [showWebPageHelp, setShowWebPageHelp] = useState(false);
@@ -1520,6 +1640,10 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [storyOptions, setStoryOptions] = useState<StorytellingOptions>({ targetAudience: '', mainGoal: '', toneStyle: '', length: '' });
   type BlogOptions = { targetAudience: string; mainGoal: string; tone: string; length: string };
   const [blogOptions, setBlogOptions] = useState<BlogOptions>({ targetAudience: '', mainGoal: '', tone: '', length: '' });
+  const [emailOptions, setEmailOptions] = useState<EmailOptions>({ tone: '', length: '' });
+  const [emailAddresses, setEmailAddresses] = useState<string[]>([]);
+  const [emailContent, setEmailContent] = useState<string>('');
+  const [sessionType, setSessionType] = useState<SessionType>(SessionType.AUDIO_RECORDING);
 
   // Deep translation helper for nested keys like 'storytellingTargetAudienceOptions.internalTeam'
   const td = (path: string): string => {
@@ -1582,9 +1706,112 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const animationFrameIdRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  // Input-level and no-audio indicators
+  const [avgInputLevel, setAvgInputLevel] = useState<number>(0);
+  const [showNoInputHint, setShowNoInputHint] = useState<boolean>(false);
+  const lastNoInputStartRef = useRef<number | null>(null);
+  const lastLevelUpdateRef = useRef<number>(0);
 
   const isProcessing = !!loadingText;
 
+  // Progress + cancel state for segmented transcription
+  const [transcriptionProgress, setTranscriptionProgress] = useState<number | null>(null);
+  const [isSegmentedTranscribing, setIsSegmentedTranscribing] = useState<boolean>(false);
+  const cancelTranscriptionRef = useRef<boolean>(false);
+
+  const handleCancelTranscription = () => {
+    cancelTranscriptionRef.current = true;
+    setLoadingText('');
+    setTranscriptionProgress(null);
+    setIsSegmentedTranscribing(false);
+    try { if (timerIntervalRef.current) clearInterval(timerIntervalRef.current); } catch {}
+    setStatus(RecordingStatus.STOPPED);
+  };
+
+  // --- PWA INSTALL BANNER STATE ---
+  type BeforeInstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>; };
+  const [pwaPromptEvent, setPwaPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [pwaInstalled, setPwaInstalled] = useState<boolean>(() => {
+    try {
+      return (
+        localStorage.getItem('pwa_installed') === 'true' ||
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        ((navigator as any).standalone === true)
+      );
+    } catch {
+      return false;
+    }
+  });
+  const [showPwaBanner, setShowPwaBanner] = useState<boolean>(false);
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (e: Event) => {
+      (e as any).preventDefault?.();
+      setPwaPromptEvent(e as BeforeInstallPromptEvent);
+    };
+    const onAppInstalled = () => {
+      try { localStorage.setItem('pwa_installed', 'true'); } catch {}
+      setPwaInstalled(true);
+      setShowPwaBanner(false);
+    };
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt as any);
+    window.addEventListener('appinstalled', onAppInstalled as any);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt as any);
+      window.removeEventListener('appinstalled', onAppInstalled as any);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Test-forcing: always show banner for testing when ?pwaTest=1 or localStorage('pwa_force_banner') === 'true'
+    let forceBanner = false;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      forceBanner = sp.get('pwaTest') === '1' || localStorage.getItem('pwa_force_banner') === 'true';
+    } catch {}
+    if (forceBanner) {
+      setShowPwaBanner(true);
+      return;
+    }
+
+    const uid = authState.user?.uid;
+    if (!uid || pwaInstalled || !pwaPromptEvent) {
+      setShowPwaBanner(false);
+      return;
+    }
+
+    const lc = parseInt(localStorage.getItem(`pwa_login_count:${uid}`) || '0', 10);
+    const lastIgnore = parseInt(localStorage.getItem(`pwa_last_ignore_login:${uid}`) || '0', 10);
+    if (!lastIgnore || isNaN(lastIgnore)) {
+      setShowPwaBanner(true);
+    } else {
+      setShowPwaBanner(lc - lastIgnore >= 3);
+    }
+  }, [authState.user, pwaInstalled, pwaPromptEvent]);
+
+  const handlePwaIgnore = () => {
+    const uid = authState.user?.uid;
+    if (uid) {
+      const lc = parseInt(localStorage.getItem(`pwa_login_count:${uid}`) || '0', 10);
+      localStorage.setItem(`pwa_last_ignore_login:${uid}`, String(lc));
+    }
+    setShowPwaBanner(false);
+  };
+
+  const handlePwaInstall = async () => {
+    if (!pwaPromptEvent) return;
+    try {
+      await pwaPromptEvent.prompt();
+      const choice = await (pwaPromptEvent as any).userChoice;
+      if (choice?.outcome !== 'accepted') {
+        handlePwaIgnore();
+      }
+    } catch {
+      handlePwaIgnore();
+    } finally {
+      setPwaPromptEvent(null);
+    }
+  };
 
   
   // Translation function now provided by useTranslation hook
@@ -1625,7 +1852,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
 
     // Language preferences are already handled in the main useEffect hooks above
 
-    // Firebase Auth State Listener
+    // Firebase Auth State Listener with Session Management
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
             if (firebaseUser) {
@@ -1634,10 +1861,35 @@ ${getTranscriptSlice(transcript, 20000)}`;
                     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
                     if (userDoc.exists()) {
                         const userData = userDoc.data() as User;
+                        
+                        // Check for existing valid session first
+                        let session = sessionManager.getExistingValidSession(firebaseUser.uid);
+                        
+                        if (!session) {
+                            // Create new secure session only if no valid session exists
+                            const userAgent = navigator.userAgent;
+                            const ipAddress = undefined; // Would need server-side implementation for real IP
+                            session = sessionManager.createSession(firebaseUser.uid, ipAddress, userAgent);
+                        } else {
+                            // Refresh existing session to update activity
+                            const refreshResult = sessionManager.refreshSession(session.sessionId);
+                            if (!refreshResult.success) {
+                                // If refresh fails, create new session
+                                const userAgent = navigator.userAgent;
+                                const ipAddress = undefined;
+                                session = sessionManager.createSession(firebaseUser.uid, ipAddress, userAgent);
+                            } else {
+                                session = refreshResult.session!;
+                            }
+                        }
+                        
+                        setCurrentSession(session);
+                        setSessionId(session.sessionId);
+                        
                         setAuthState({
                             user: { ...userData, uid: firebaseUser.uid },
                             isLoading: false,
-                                                    });
+                        });
                         
                         // Load user subscription tier
                         const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
@@ -1645,6 +1897,13 @@ ${getTranscriptSlice(transcript, 20000)}`;
                         
                         // Ensure user is redirected to start session screen after auth
                         setShowInfoPage(false);
+
+                        // Increment PWA login counter for banner logic
+                        try {
+                          const key = `pwa_login_count:${firebaseUser.uid}`;
+                          const cnt = parseInt(localStorage.getItem(key) || '0', 10) + 1;
+                          localStorage.setItem(key, String(cnt));
+                        } catch {}
                         
                         // Load user language preferences from Firebase
                         try {
@@ -1659,8 +1918,40 @@ ${getTranscriptSlice(transcript, 20000)}`;
                               window.localStorage.setItem('outputLang', userPrefs.outputLanguage);
                             }
                           }
-                        } catch (e) { 
-                          console.warn('Could not load language preferences from Firebase:', e); 
+                        } catch (error) {
+                          console.error('Error loading user preferences:', error);
+                        }
+                        
+                        // Perform startup validation after user authentication
+                        try {
+                          const { StartupValidator } = await import('./src/utils/startupValidator');
+                          const validation = await StartupValidator.validateStartup(firebaseUser.uid, t);
+                          
+                          if (!validation.isReady) {
+                            console.warn('🚨 Startup validation found critical issues:', validation.criticalIssues);
+                            // Show user-friendly error message for critical issues
+                            if (validation.criticalIssues.length > 0) {
+                              displayToast(
+                                `Configuratie probleem: ${validation.criticalIssues[0]}. Neem contact op met support.`,
+                                'error'
+                              );
+                            }
+                          } else {
+                            console.log('✅ Startup validation completed successfully');
+                          }
+                          
+                          // Show warnings as info toasts (non-blocking)
+                          if (validation.warnings.length > 0) {
+                            console.warn('⚠️ Startup warnings:', validation.warnings);
+                            // Only show the first warning to avoid spam
+                            displayToast(
+                              `Let op: ${validation.warnings[0]}`,
+                              'warning'
+                            );
+                          }
+                        } catch (error) {
+                          console.error('Startup validation failed:', error);
+                          // Don't block the app for validation failures
                         }
                         
                         // Load daily usage counters
@@ -1668,21 +1959,36 @@ ${getTranscriptSlice(transcript, 20000)}`;
                           const usage = await getUserDailyUsage(firebaseUser.uid);
                           setDailyAudioCount(usage.audioCount || 0);
                           setDailyUploadCount(usage.uploadCount || 0);
-                        } catch (e) { console.warn('Kon dagelijkse usage niet laden:', e); }
+                        } catch (e) { 
+                          errorHandler.handleError(e, ErrorType.API, {
+                            userId: firebaseUser.uid,
+                            sessionId: session.sessionId,
+                            additionalContext: { action: 'loadDailyUsage' }
+                          });
+                        }
                     }
                 } catch (error) {
-                    console.error('Error loading user data:', error);
+                    const userError = errorHandler.handleError(error, ErrorType.AUTHENTICATION, {
+                        userId: firebaseUser?.uid,
+                        additionalContext: { action: 'loadUserData' }
+                    });
                     setAuthState({
                         user: null,
                         isLoading: false,
-                                            });
+                    });
+                    displayToast(userError.message, 'error');
                 }
             } else {
-                // User is signed out
+                // User is signed out - invalidate all sessions
+                if (currentSession) {
+                    sessionManager.invalidateAllUserSessions(currentSession.userId);
+                }
+                setCurrentSession(null);
+                setSessionId('');
                 setAuthState({
                     user: null,
                     isLoading: false,
-                                    });
+                });
                 setUserSubscription(SubscriptionTier.FREE);
                 setDailyAudioCount(0);
                 setDailyUploadCount(0);
@@ -1757,7 +2063,6 @@ ${getTranscriptSlice(transcript, 20000)}`;
     setFaq('');
     setLearningDoc('');
     setFollowUpQuestions('');
-    setPodcastScript('');
     setBlogData('');
     setError(null);
     setDuration(0);
@@ -1829,6 +2134,25 @@ ${getTranscriptSlice(transcript, 20000)}`;
         return;
     }
     
+    // Import security utilities
+    const { validateAndSanitizeForAI, rateLimiter } = await import('./src/utils/security');
+    
+    // Rate limiting check (max 15 chat messages per minute)
+    const sessionId = 'chat_' + (auth.currentUser?.uid || 'anonymous');
+    if (!rateLimiter.isAllowed(sessionId, 15, 60000)) {
+        displayToast('Te veel chatberichten. Probeer het over een minuut opnieuw.', 'error');
+        return;
+    }
+    
+    // Validate and sanitize the message
+    const validation = validateAndSanitizeForAI(message, 5000); // 5KB limit for chat messages
+    if (!validation.isValid) {
+        displayToast(`Ongeldig bericht: ${validation.error}`, 'error');
+        return;
+    }
+    
+    const sanitizedMessage = validation.sanitized;
+    
     // Check transcript length based on user tier for chat
     const effectiveTier = userSubscription;
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
@@ -1838,7 +2162,18 @@ ${getTranscriptSlice(transcript, 20000)}`;
         return;
     }
 
-    const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', text: message }, { role: 'model', text: '' }];
+    // Validate token usage for chat message
+    const chatPrompt = `You are a helpful assistant. The user has provided a transcript of a meeting. Answer their questions based on this transcript:\n\n---\n${transcript}\n---\n\nUser message: ${sanitizedMessage}`;
+    const tokenEstimate = tokenManager.estimateTokens(chatPrompt, 1.5);
+    const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+    
+    if (!tokenValidation.allowed) {
+        displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+    }
+    
+    const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', text: sanitizedMessage }, { role: 'model', text: '' }];
     setChatHistory(newHistory);
     setIsChatting(true);
     
@@ -1852,7 +2187,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
             });
         }
         
-        const responseStream = await chatInstanceRef.current.sendMessageStream({ message });
+        const responseStream = await chatInstanceRef.current.sendMessageStream({ message: sanitizedMessage });
         
         let fullResponse = '';
         for await (const chunk of responseStream) {
@@ -1860,13 +2195,15 @@ ${getTranscriptSlice(transcript, 20000)}`;
             setChatHistory(prev => prev.map((msg, i) => i === prev.length - 1 ? { ...msg, text: fullResponse } : msg));
         }
         
-        // Track token usage for chat
-        const promptTokens = tokenCounter.countPromptTokens(message);
+        // Track token usage with TokenManager
+        const promptTokens = tokenCounter.countPromptTokens(sanitizedMessage);
         const responseTokens = tokenCounter.countResponseTokens(fullResponse);
-        const totalTokens = tokenCounter.getTotalTokens(message, fullResponse);
         
-        // Token usage logging removed
-        await updateTokensAndRefresh(promptTokens, responseTokens);
+        try {
+            await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+            console.error('Error recording token usage:', error);
+        }
         
         if (isTTSEnabled) speak(fullResponse);
 
@@ -1895,7 +2232,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
       setChatInput('');
       await submitMessage(message);
     }
-  }, [chatInput, submitMessage, apiKey, authState.isAdmin, userSubscription, displayToast]);
+  }, [chatInput, submitMessage, apiKey, userSubscription, displayToast]);
   
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
@@ -2011,12 +2348,26 @@ ${getTranscriptSlice(transcript, 20000)}`;
     const dataArray = new Uint8Array(bufferLength);
     analyserRef.current.getByteTimeDomainData(dataArray);
 
-    // Bereken gemiddelde amplitude voor debug
+    // Bereken gemiddelde amplitude en update UI-indicatoren
     let sum = 0;
     for (let i = 0; i < bufferLength; i++) {
       sum += Math.abs(dataArray[i] - 128);
     }
     const averageAmplitude = sum / bufferLength;
+    const normalized = Math.min(1, averageAmplitude / 64);
+    const now = performance.now();
+    if (now - lastLevelUpdateRef.current > 100) {
+      setAvgInputLevel(normalized);
+      lastLevelUpdateRef.current = now;
+      const threshold = 0.02;
+      if (normalized < threshold) {
+        if (lastNoInputStartRef.current == null) lastNoInputStartRef.current = now;
+        if (now - lastNoInputStartRef.current > 2000) setShowNoInputHint(true);
+      } else {
+        lastNoInputStartRef.current = null;
+        setShowNoInputHint(false);
+      }
+    }
 
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
     canvasCtx.lineWidth = 2;
@@ -2115,7 +2466,6 @@ ${getTranscriptSlice(transcript, 20000)}`;
     setFaq('');
     setLearningDoc('');
     setFollowUpQuestions('');
-    setPodcastScript('');
     setBlogData('');
     setChatHistory([]);
     setKeywordAnalysis(null);
@@ -2129,42 +2479,80 @@ ${getTranscriptSlice(transcript, 20000)}`;
     setStatus(RecordingStatus.GETTING_PERMISSION);
     setError(null);
     setDuration(0);
+    // Reset chunks en vorige audio URL
+    audioChunksRef.current = [];
+    if (audioURL) {
+      try { URL.revokeObjectURL(audioURL); } catch {}
+      setAudioURL(null);
+    }
 
     try {
       // Initialize AudioRecorder if not already done
       if (!audioRecorderRef.current) {
         audioRecorderRef.current = new AudioRecorder();
         
-        // Setup callbacks
-        audioRecorderRef.current.onDataAvailable = (blob: Blob) => {
-          // Handle audio chunks for real-time processing if needed
-        };
-        
-        audioRecorderRef.current.onStop = (audioBlob: Blob) => {
-          const url = URL.createObjectURL(audioBlob);
-          setAudioURL(url);
-          setStatus(RecordingStatus.STOPPED);
-          if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-          timerIntervalRef.current = null;
-        };
-        
-        audioRecorderRef.current.onError = (error: Error) => {
-          console.error("AudioRecorder error:", error);
-          setError(`${t("errorRecording")}: ${error.message}`);
-          setStatus(RecordingStatus.ERROR);
-        };
-        
-        audioRecorderRef.current.onStateChange = (state: string) => {
-          if (state === 'recording') {
-            setStatus(RecordingStatus.RECORDING);
-          } else if (state === 'paused') {
-            setStatus(RecordingStatus.PAUSED);
+        // Setup callbacks using the AudioRecorder API
+        audioRecorderRef.current.setCallbacks({
+          onDataAvailable: (chunks) => {
+            // Sla binnenkomende chunks op voor transcribe
+            audioChunksRef.current = chunks ? [...chunks] : [];
+          },
+          onStop: (audioBlob: Blob) => {
+            // Zorg dat we chunks hebben, ook als alleen eindblob binnenkomt
+            if ((!audioChunksRef.current || audioChunksRef.current.length === 0) && audioBlob && audioBlob.size > 0) {
+              audioChunksRef.current = [audioBlob];
+            }
+            const url = URL.createObjectURL(audioBlob);
+            setAudioURL(url);
+            setStatus(RecordingStatus.STOPPED);
+            // Reset session recording status when recording stops
+            sessionManager.setRecordingStatus(sessionId, false);
+            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+            timerIntervalRef.current = null;
+          },
+          onError: (error: Error) => {
+            const userError = errorHandler.handleError(error, ErrorType.UNKNOWN, {
+              userId: authState.user?.uid,
+              sessionId: sessionId,
+              additionalContext: { action: 'audioRecording' }
+            });
+            setError(`${t("errorRecording")}: ${userError.message}`);
+            setStatus(RecordingStatus.ERROR);
+            // Reset session recording status on error
+            sessionManager.setRecordingStatus(sessionId, false);
+          },
+          onStateChange: (state) => {
+            if (state === 'recording') {
+              setStatus(RecordingStatus.RECORDING);
+            } else if (state === 'paused') {
+              setStatus(RecordingStatus.PAUSED);
+            } else if (state === 'stopped') {
+              setStatus(RecordingStatus.STOPPED);
+            } else if (state === 'error') {
+              setStatus(RecordingStatus.ERROR);
+            }
           }
-        };
+        });
       }
       
       // Start recording with the new AudioRecorder
       await audioRecorderRef.current.startRecording();
+      
+      // Update session recording status
+      sessionManager.setRecordingStatus(sessionId, true);
+
+      // Wire analyser to visualizer so the meter works
+      analyserRef.current = audioRecorderRef.current.getAnalyser();
+
+      // Kick off visualizer immediately if recording/paused
+      if (status === RecordingStatus.RECORDING || status === RecordingStatus.PAUSED) {
+        if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
+        setTimeout(() => {
+          if (canvasRef.current && analyserRef.current) {
+            drawVisualizer();
+          }
+        }, 50);
+      }
       
       // Initialize timing
       const start = Date.now();
@@ -2202,12 +2590,14 @@ ${getTranscriptSlice(transcript, 20000)}`;
       
       setError(`${t("errorRecording")}: ${errorMessage}`);
       setStatus(RecordingStatus.ERROR);
+      // Reset session recording status on error
+      sessionManager.setRecordingStatus(sessionId, false);
     }
   };
   const pauseRecording = () => {
     if (audioRecorderRef.current?.isRecording) {
         audioRecorderRef.current.pauseRecording();
-        setStatus(RecordingStatus.PAUSED);
+        // status will be updated by onStateChange callback
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
         setPauseStartMs(Date.now());
@@ -2217,7 +2607,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const resumeRecording = () => {
     if (audioRecorderRef.current?.isPaused) {
         audioRecorderRef.current.resumeRecording();
-        setStatus(RecordingStatus.RECORDING);
+        // status will be updated by onStateChange callback
         // accumulate pause time
         setPauseAccumulatedMs(prev => prev + (pauseStartMs ? (Date.now() - pauseStartMs) : 0));
         setPauseStartMs(null);
@@ -2230,6 +2620,9 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const stopRecording = () => {
     if (audioRecorderRef.current && (status === RecordingStatus.RECORDING || status === RecordingStatus.PAUSED)) {
       audioRecorderRef.current.stopRecording();
+      // Update session recording status
+      sessionManager.setRecordingStatus(sessionId, false);
+      // status and audio URL will be updated by callbacks
       setPauseStartMs(null);
     }
   };
@@ -2460,7 +2853,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
         const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
         if (!canStart.allowed) {
             setShowUpgradeModal(true);
-            setError(canStart.reason || 'Dagelijkse sessielimiet bereikt.');
+            setError(canStart.reason || t('errorDailySessionLimit'));
             return;
         }
 
@@ -2470,6 +2863,25 @@ ${getTranscriptSlice(transcript, 20000)}`;
 
         try {
             let text = '';
+            
+            // Validate token usage for file processing
+            if (authState.user) {
+                // Estimate tokens based on file size (rough estimation)
+                const fileSizeKB = file.size / 1024;
+                const estimatedTokens = Math.ceil(fileSizeKB * 0.75); // Rough estimation: 0.75 tokens per KB
+                
+                const tokenValidation = await tokenManager.validateTokenUsage(
+                    authState.user.uid,
+                    effectiveTier,
+                    estimatedTokens
+                );
+                
+                if (!tokenValidation.allowed) {
+                    setError(tokenValidation.reason || 'Token limiet bereikt voor bestandsverwerking.');
+                    setLoadingText('');
+                    return;
+                }
+            }
             // fileType, fileName defined above
 
             // PDF bestanden
@@ -2501,21 +2913,34 @@ ${getTranscriptSlice(transcript, 20000)}`;
                 try {
                     text = await file.text();
                 } catch {
-                    throw new Error('Bestandsformaat wordt niet ondersteund. Probeer PDF, RTF, HTML, MD, DOCX of TXT.');
+                    throw new Error(t('unsupportedFileFormat', 'Bestandsformaat wordt niet ondersteund. Probeer PDF, RTF, HTML, MD, DOCX of TXT.'));
                 }
             }
 
             if (!text.trim()) {
-                throw new Error('Geen tekst gevonden in het bestand.');
+                throw new Error(t('noTextFound', 'Geen tekst gevonden in het bestand.'));
             }
 
             setTranscript(text);
+            
+            // Record actual token usage for file processing
+            try {
+                if (authState.user) {
+                    const actualTokens = tokenCounter.countTokens(text);
+                    await tokenManager.recordTokenUsage(authState.user.uid, 0, actualTokens); // No prompt tokens for file upload
+                }
+            } catch (error) {
+                console.warn('Could not record token usage:', error);
+            }
+            
+            // Extract email addresses from transcript
+            const extractedEmails = extractEmailAddresses(text);
+            setEmailAddresses(extractedEmails);
             // Reset all analysis data when new transcript is loaded
             setSummary('');
             setFaq('');
             setLearningDoc('');
             setFollowUpQuestions('');
-            setPodcastScript('');
             setChatHistory([]);
             setKeywordAnalysis(null);
             setSentimentAnalysisResult(null);
@@ -2534,7 +2959,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
                 setDailyUploadCount(prev => prev + 1);
               }
             } catch (e) {
-              console.warn('Kon sessionCount niet updaten:', e);
+              console.warn(t('errorUpdateSessionCount'), e);
             }
             setActiveView('transcript');
             setLoadingText('');
@@ -2580,7 +3005,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
                            fileName.endsWith('.gif');
         
         if (!isValidImage) {
-            setError('Alleen afbeeldingsbestanden zijn toegestaan (JPG, PNG, JPEG, WEBP, GIF).');
+            setError(t('errorOnlyImageFiles'));
             return;
         }
 
@@ -2589,13 +3014,13 @@ ${getTranscriptSlice(transcript, 20000)}`;
         const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
         if (!canStart.allowed) {
             setShowUpgradeModal(true);
-            setError(canStart.reason || 'Dagelijkse sessielimiet bereikt.');
+            setError(canStart.reason || t('errorDailySessionLimit'));
             return;
         }
 
         setError(null);
         setAnonymizationReport(null);
-        setLoadingText('Afbeelding analyseren...');
+        setLoadingText(t('loadingAnalyzingImage'));
 
         try {
             // Convert image to base64 for Gemini API
@@ -2606,12 +3031,41 @@ ${getTranscriptSlice(transcript, 20000)}`;
                 const base64Image = base64Data.split(',')[1]; // Remove data:image/...;base64, prefix
                 
                 if (!apiKey) {
-                  setError('API key niet beschikbaar. Neem contact op met de administrator.');
+                  setError(t('errorApiKeyNotAvailable'));
                   setLoadingText('');
                   return;
                 }
                 
-                setLoadingText('Afbeelding analyseren met AI...');
+                setLoadingText(t('loadingAnalyzingImageWithAI'));
+                
+                // Validate token usage for image analysis
+                if (authState.user) {
+                    const inputLanguage = getGeminiCode(language || 'en');
+                    const analysisPrompt = `Analyze this image in detail and provide a comprehensive description in ${inputLanguage}. Include:
+
+1. What you see in the image (objects, people, text, scenes)
+2. Key details and important information
+3. Any text visible in the image (transcribe it accurately)
+4. Context and setting
+5. Notable features or elements
+
+Provide a detailed analysis that could be used for further AI processing and analysis.`;
+                    
+                    // Estimate tokens for image analysis (images typically use more tokens)
+                    const tokenEstimate = tokenManager.estimateTokens(analysisPrompt, 3);
+                    
+                    const tokenValidation = await tokenManager.validateTokenUsage(
+                        authState.user.uid,
+                        effectiveTier,
+                        tokenEstimate.totalTokens
+                    );
+                    
+                    if (!tokenValidation.allowed) {
+                        setError(tokenValidation.reason || t('errorTokenLimitImageAnalysis'));
+                        setLoadingText('');
+                        return;
+                    }
+                }
                 
                 const ai = new GoogleGenAI({ apiKey: apiKey });
                 const inputLanguage = getGeminiCode(language || 'en');
@@ -2633,18 +3087,20 @@ Provide a detailed analysis that could be used for further AI processing and ana
                   contents: { parts: [textPart, imagePart] } 
                 });
                 
-                // Track token usage
+                // Track token usage with TokenManager
                 const promptTokens = tokenCounter.countPromptTokens([textPart]);
                 const responseTokens = tokenCounter.countResponseTokens(analysisResponse.text);
-                const totalTokens = tokenCounter.getTotalTokens([textPart], analysisResponse.text);
                 
+                // Record actual token usage
                 try {
                   if (authState.user) {
-                    await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
+                    await tokenManager.recordTokenUsage(authState.user.uid, promptTokens, responseTokens);
                   }
-                } catch {}
+                } catch (error) {
+                  console.warn('Could not record token usage:', error);
+                }
                 
-                const imageAnalysisText = `[AFBEELDING GEANALYSEERD]\n\nBestandsnaam: ${file.name}\nBestandstype: ${file.type}\nBestandsgrootte: ${(file.size / 1024 / 1024).toFixed(2)} MB\n\n=== AI ANALYSE ===\n\n${analysisResponse.text}`;
+                const imageAnalysisText = `${t('imageAnalyzedLabel')}\n\n${t('fileInfoFilename')} ${file.name}\n${t('fileInfoType')} ${file.type}\n${t('fileInfoSize')} ${(file.size / 1024 / 1024).toFixed(2)} MB\n\n${t('aiAnalysisHeader')}\n\n${analysisResponse.text}`;
                 
                 setTranscript(imageAnalysisText);
                 
@@ -2653,7 +3109,6 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 setFaq('');
                 setLearningDoc('');
                 setFollowUpQuestions('');
-                setPodcastScript('');
                 setChatHistory([]);
                 setKeywordAnalysis(null);
                 setSentimentAnalysisResult(null);
@@ -2673,7 +3128,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                     setDailyUploadCount(prev => prev + 1);
                   }
                 } catch (e) {
-                  console.warn('Kon sessionCount niet updaten:', e);
+                  console.warn(t('errorUpdateSessionCount'), e);
                 }
                 
                 setActiveView('transcript');
@@ -2684,7 +3139,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 }
                 
               } catch (error: any) {
-                console.error('Fout bij afbeeldingsanalyse:', error);
+                console.error(t('errorImageAnalysis'), error);
                 setError(`Fout bij afbeeldingsanalyse: ${error.message || 'Onbekende fout'}`);
                 setLoadingText('');
               }
@@ -2699,14 +3154,169 @@ Provide a detailed analysis that could be used for further AI processing and ana
         }
     };
 
+    // Helper function to extract text from EML files
+    const extractTextFromEML = (emlContent: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            readEml(emlContent, (error: any, data: any) => {
+                if (error) {
+                    console.error(t('errorParsingEml'), error);
+                    return reject(error);
+                }
+                resolve(data.text || '');
+            });
+        });
+    };
+
+    const extractTextFromMSG = (msgBuffer: ArrayBuffer): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            try {
+                const msgReader = new MsgReader(msgBuffer);
+                const fileData = msgReader.getFileData();
+                
+                if (!fileData) {
+                    return reject(new Error(t('errorReadMsgFile')));
+                }
+                
+                // Extract text content from MSG file
+                let textContent = '';
+                
+                // Try to get body text
+                if (fileData.body) {
+                    textContent = fileData.body;
+                } else if (fileData.bodyHtml) {
+                    // If only HTML body is available, strip HTML tags
+                    textContent = fileData.bodyHtml.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+                }
+                
+                // Add subject if available
+                if (fileData.subject) {
+                    textContent = `${t('emailSubjectLabel')} ${fileData.subject}\n\n${textContent}`;
+                }
+                
+                resolve(textContent || '');
+            } catch (error) {
+                console.error(t('errorParsingMsg'), error);
+                reject(error);
+            }
+        });
+    };
+
+    const handleEmailImport = async (file: File): Promise<string | null> => {
+        return new Promise((resolve, reject) => {
+            // Validate file type
+            const fileExtension = file.name.toLowerCase().split('.').pop();
+            if (!fileExtension || !['eml', 'msg'].includes(fileExtension)) {
+                setError(t('invalidEmailFileType'));
+                resolve(null);
+                return;
+            }
+
+            // Check subscription tier for email import
+            if (userSubscription === SubscriptionTier.FREE) {
+                setError(t('emailImportRequiresSilver'));
+                resolve(null);
+                return;
+            }
+
+            // Check daily session limit
+            const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
+            const canStart = subscriptionService.validateSessionStart(userSubscription, totalSessionsToday);
+            if (!canStart.allowed) {
+                setError(canStart.reason || t('dailyLimitReached'));
+                resolve(null);
+                return;
+            }
+
+            // Read email file based on type
+            const reader = new FileReader();
+            
+            if (fileExtension === 'msg') {
+                // Read MSG file as ArrayBuffer
+                reader.onload = async (e) => {
+                    try {
+                        const msgBuffer = e.target?.result as ArrayBuffer;
+                        const extractedText = await extractTextFromMSG(msgBuffer);
+
+                        if (!extractedText.trim()) {
+                            setError(t('noTextFoundInEmail'));
+                            resolve(null);
+                            return;
+                        }
+                        resolve(extractedText);
+                    } catch (error) {
+                        console.error(t('errorProcessingMsg'), error);
+                        setError(t('emailProcessingError'));
+                        resolve(null);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                // Read EML file as text
+                reader.onload = async (e) => {
+                    try {
+                        const emlContent = e.target?.result as string;
+                        const extractedText = await extractTextFromEML(emlContent);
+
+                        if (!extractedText.trim()) {
+                            setError(t('noTextFoundInEmail'));
+                            resolve(null);
+                            return;
+                        }
+                        resolve(extractedText);
+                    } catch (error) {
+                        console.error(t('errorProcessingEml'), error);
+                        setError(t('emailProcessingError'));
+                        resolve(null);
+                    }
+                };
+                reader.readAsText(file);
+             }
+
+            reader.onerror = () => {
+                setError(t('emailReadError'));
+                resolve(null);
+            };
+
+            reader.onerror = () => {
+                setError(t('emailReadError'));
+                resolve(null);
+            };
+        });
+    };
+
+    const handleAnalyzeEmail = async (text: string) => {
+        await handlePasteTranscript(text);
+        emailUploadModal.close();
+        setActiveTab('Analyse');
+    };
+
     const handlePasteTranscript = async (pastedText: string) => {
         if (!language) {
             setError(t("selectLangToUpload"));
             return;
         }
 
-        if (!pastedText.trim()) {
-            setError('Geen tekst geplakt. Plak eerst tekst uit je klembord.');
+        // Import security utilities
+        const { validateAndSanitizeForAI, rateLimiter } = await import('./src/utils/security');
+        
+        // Rate limiting check (max 5 paste operations per minute)
+        const sessionId = 'paste_' + (auth.currentUser?.uid || 'anonymous');
+        if (!rateLimiter.isAllowed(sessionId, 5, 60000)) {
+            setError(t('errorTooManyPasteActions'));
+            return;
+        }
+        
+        // Validate and sanitize the pasted text
+        const validation = validateAndSanitizeForAI(pastedText, 100000); // 100KB limit
+        if (!validation.isValid) {
+            setError(t('errorInvalidText', { error: validation.error }));
+            return;
+        }
+        
+        const sanitizedText = validation.sanitized;
+        
+        if (!sanitizedText.trim()) {
+            setError(t('errorNoValidTextPasted'));
             return;
         }
 
@@ -2722,18 +3332,50 @@ Provide a detailed analysis that could be used for further AI processing and ana
             return;
         }
 
+        // Token validation for pasted text
+        const textLength = sanitizedText.length;
+        const estimatedTokens = Math.ceil(textLength / 4); // Rough estimate: 4 characters per token
+        
+        const tokenValidation = await tokenManager.validateTokenUsage(
+            authState.user?.uid || '',
+            effectiveTier,
+            estimatedTokens
+        );
+        
+        if (!tokenValidation.allowed) {
+            setError(tokenValidation.reason || t('errorTokenLimit'));
+            setShowUpgradeModal(true);
+            return;
+        }
+
         setError(null);
         setAnonymizationReport(null);
-        setLoadingText('Geplakte tekst verwerken...');
+        setLoadingText(t('loadingProcessingPastedText'));
 
         try {
-            setTranscript(pastedText);
-            // Reset all analysis data when new transcript is loaded
-            setSummary('');
-            setFaq('');
+            setTranscript(sanitizedText);
+        
+        // Extract email addresses from the transcript
+        const extractedEmails = extractEmailAddresses(sanitizedText);
+        setEmailAddresses(extractedEmails);
+        
+        // Record actual token usage for pasted text
+        try {
+            const actualTokens = tokenCounter.countTokens(sanitizedText);
+            await tokenManager.recordTokenUsage(
+                authState.user?.uid || '',
+                actualTokens,
+                0 // No response tokens for paste operation
+            );
+        } catch (tokenError) {
+            console.warn('Could not record token usage for paste:', tokenError);
+        }
+        
+        // Reset all analysis data when new transcript is loaded
+        setSummary('');
+        setFaq('');
             setLearningDoc('');
             setFollowUpQuestions('');
-            setPodcastScript('');
             setChatHistory([]);
             setKeywordAnalysis(null);
             setSentimentAnalysisResult(null);
@@ -2752,7 +3394,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 setDailyUploadCount(prev => prev + 1);
               }
             } catch (e) {
-              console.warn('Kon sessionCount niet updaten:', e);
+              console.warn(t('errorUpdateSessionCount'), e);
             }
             setActiveView('transcript');
             setLoadingText('');
@@ -2769,9 +3411,8 @@ Provide a detailed analysis that could be used for further AI processing and ana
         // Check if user is on Gold or Diamond tier if trying to use WebExpert
   if (useDeepseekOption && 
       userSubscription !== SubscriptionTier.GOLD && 
-      userSubscription !== SubscriptionTier.DIAMOND && 
-      !authState.isAdmin) {
-    setWebPageError(t("goldTierRequired") || "WebExpert option is only available for Gold and Diamond tier subscribers.");
+      userSubscription !== SubscriptionTier.DIAMOND) {
+    setWebPageError(t("goldTierRequired", "WebExpert option is only available for Gold and Diamond tier subscribers."));
             return;
         }
 
@@ -2781,7 +3422,25 @@ Provide a detailed analysis that could be used for further AI processing and ana
         }
 
         if (!url.trim()) {
-            setWebPageError(t("noUrlError") || 'No URL entered. Please enter a valid URL first.');
+            setWebPageError(t("noUrlError", 'No URL entered. Please enter a valid URL first.'));
+            return;
+        }
+
+        // Get effective tier for token validation
+        const effectiveTier = userSubscription;
+        
+        // Estimate tokens for web page processing (rough estimate)
+        const estimatedTokens = useDeepseekOption ? 15000 : 8000; // WebExpert uses more tokens
+        
+        const tokenValidation = await tokenManager.validateTokenUsage(
+            authState.user?.uid || '',
+            effectiveTier,
+            estimatedTokens
+        );
+        
+        if (!tokenValidation.allowed) {
+            setWebPageError(tokenValidation.reason || 'Token limiet bereikt.');
+            setShowUpgradeModal(true);
             return;
         }
 
@@ -2789,8 +3448,8 @@ Provide a detailed analysis that could be used for further AI processing and ana
         setError(null);
         setAnonymizationReport(null);
         setLoadingText(useDeepseekOption ?
-    (t("loadingWebExpertAnalysis") || 'Loading and analyzing web pages with WebExpert...') : 
-            (t("loadingWebPage") || 'Loading web page and extracting text...'));
+    t('loadingWebExpertAnalysis') :
+            t('loadingWebPageExtraction'));
         setIsLoadingWebPage(true);
 
         try {
@@ -2800,7 +3459,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 // Use Firecrawl API for deepseek option
                 const firecrawlApiKey = import.meta.env.VITE_FIRECRAWL_API_KEY;
                 if (!firecrawlApiKey) {
-                    throw new Error('Firecrawl API key is not configured.');
+                    throw new Error(t('firecrawlNotConfigured', 'Firecrawl API key is not configured.'));
                 }
                 
                 // Filter out empty URLs
@@ -2855,7 +3514,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 console.log('Firecrawl v2 API: Processed', allResults.length, 'URLs successfully');
                 
                 if (allResults.length === 0) {
-                    throw new Error('No content could be retrieved from any of the provided URLs.');
+                    throw new Error(t('noContentRetrieved', 'No content could be retrieved from any of the provided URLs.'));
                 }
                 
                 // Combine text from all successfully processed URLs
@@ -2866,7 +3525,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 }).join('\n\n---\n\n');
                 
                 if (cleanText.length < 100) {
-                    throw new Error('Very little text could be retrieved from these web pages.');
+                    throw new Error(t('littleTextRetrieved', 'Very little text could be retrieved from these web pages.'));
                 }
             } else {
                 // Use improved fetchHTML implementation for regular option
@@ -2875,7 +3534,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                         timeoutMs: 15000,
                         retries: 2,
                         retryDelay: 1000,
-                        userAgent: "RecapSmart/1.0 (Web Content Analyzer)"
+                        userAgent: "RecapHorizon/1.0 (Web Content Analyzer)"
                     });
                     
                     console.log('Successfully fetched:', result.metadata?.title || 'Untitled');
@@ -2885,29 +3544,29 @@ Provide a detailed analysis that could be used for further AI processing and ana
                     cleanText = extractTextFromHTML(result.content);
                     
                     if (cleanText.length < 100) {
-                        throw new Error('Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.');
+                        throw new Error(t('littleTextRetrievedSingle', 'Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.'));
                     }
                     
                 } catch (fetchError) {
-                    console.warn('Direct fetch failed, falling back to CORS proxy:', fetchError);
+                    console.warn(t('directFetchFailed', 'Direct fetch failed, falling back to CORS proxy:'), fetchError);
                     
                     // Fallback to CORS proxy method
                     const corsProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(corsProxyUrl);
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        throw new Error(t('httpErrorStatus', 'HTTP error! status: {status}', { status: response.status }));
                     }
                     
                     const proxyData = await response.json();
                     if (!proxyData.contents) {
-                        throw new Error('Could not retrieve content from the web page via proxy.');
+                        throw new Error(t('couldNotRetrieveProxy', 'Could not retrieve content from the web page via proxy.'));
                     }
                     
                     // Extract clean text from HTML using our utility
                     cleanText = extractTextFromHTML(proxyData.contents);
                     
                     if (cleanText.length < 100) {
-                        throw new Error('Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.');
+                        throw new Error(t('littleTextRetrievedSingle', 'Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.'));
                     }
                 }
             }
@@ -2915,12 +3574,24 @@ Provide a detailed analysis that could be used for further AI processing and ana
 
 
             setTranscript(cleanText);
+            
+            // Record actual token usage for web page processing
+            try {
+                const actualTokens = tokenCounter.countTokens(cleanText);
+                await tokenManager.recordTokenUsage(
+                    authState.user?.uid || '',
+                    actualTokens,
+                    0 // No response tokens for web page import
+                );
+            } catch (tokenError) {
+                console.warn('Could not record token usage for web page:', tokenError);
+            }
+            
             // Reset all analysis data when new transcript is loaded
             setSummary('');
             setFaq('');
             setLearningDoc('');
             setFollowUpQuestions('');
-            setPodcastScript('');
             setChatHistory([]);
             setKeywordAnalysis(null);
             setSentimentAnalysisResult(null);
@@ -2941,8 +3612,8 @@ Provide a detailed analysis that could be used for further AI processing and ana
             setWebPageError(null);
             
             const successMessage = useDeepseekOption
-        ? (t("webPageWebExpertSuccess") || 'Web pages successfully analyzed with WebExpert!') 
-                : (t("webPageSuccess") || 'Web page successfully loaded and processed!');
+        ? (t("webPageWebExpertSuccess", 'Web pages successfully analyzed with WebExpert!')) 
+                : (t("webPageSuccess", 'Web page successfully loaded and processed!'));
             displayToast(successMessage, 'success');
         } catch (err: any) {
             console.error("Error loading web page:", err);
@@ -2954,23 +3625,23 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 firecrawlApiKey: import.meta.env.VITE_FIRECRAWL_API_KEY ? 'Present' : 'Missing'
             });
             
-            let errorMessage = err.message || t("webPageGenericError") || 'An error occurred while loading the web page.';
+            let errorMessage = err.message || t("webPageGenericError", 'An error occurred while loading the web page.');
             
             if (err.message.includes('Firecrawl API key')) {
-                errorMessage = t("firecrawlApiKeyError") || 'Firecrawl API key is missing. Please check your configuration.';
+                errorMessage = t("firecrawlApiKeyError", 'Firecrawl API key is missing. Please check your configuration.');
             } else if (err.message.includes('Firecrawl API error')) {
-                errorMessage = t("firecrawlApiError") || 'Error with Firecrawl API. Please try again later.';
+                errorMessage = t("firecrawlApiError", 'Error with Firecrawl API. Please try again later.');
                 console.error('Firecrawl API specific error:', err.message);
             } else if (err.message.includes('HTTP error') || err.message.includes('status')) {
-                errorMessage = t("webPageLoadError") || 'The web page could not be loaded. Check if the URL is correct and try again.';
+                errorMessage = t("webPageLoadError", 'The web page could not be loaded. Check if the URL is correct and try again.');
             } else if (err.message.includes('security settings')) {
-                errorMessage = t("webPageSecurityError") || 'The web page could not be loaded due to security settings. Try another URL or contact the website owner.';
+                errorMessage = t("webPageSecurityError", 'The web page could not be loaded due to security settings. Try another URL or contact the website owner.');
             } else if (err.message.includes('little text')) {
-                errorMessage = t("webPageTextError") || 'Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.';
+                errorMessage = t("webPageTextError", 'Very little text could be retrieved from this web page. This may be due to security settings or because the page contains little text.');
             } else if (err.message.includes('Firecrawl API')) {
-                errorMessage = t("firecrawlApiError") || 'Error connecting to Firecrawl API. Please try again later.';
+                errorMessage = t("firecrawlApiError", 'Error connecting to Firecrawl API. Please try again later.');
             } else if (err.message.includes('API key')) {
-                errorMessage = t("apiKeyError") || 'API key configuration error. Please contact support.';
+                errorMessage = t("apiKeyError", 'API key configuration error. Please contact support.');
             }
             
             setWebPageError(errorMessage);
@@ -3066,7 +3737,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 }
     
                 setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
-                setPodcastScript(''); setBlogData(''); setChatHistory([]);
+                setBlogData(''); setChatHistory([]);
                 setKeywordAnalysis(null);
                 setSentimentAnalysisResult(null);
                 setMindmapMermaid('');
@@ -3110,7 +3781,28 @@ const handleGenerateAnalysis = async (type: ViewType) => {
     setActiveView(type);
     if ((type === 'summary' && summary) || (type === 'faq' && faq) || (type === 'learning' && learningDoc) || (type === 'followUp' && followUpQuestions)) return; 
 
-    if (!transcript.trim()) {
+    // Import security utilities
+    const { validateAndSanitizeForAI, rateLimiter } = await import('./src/utils/security');
+    
+    // Rate limiting check (max 10 analysis requests per minute)
+    const sessionId = 'analysis_' + (auth.currentUser?.uid || 'anonymous');
+    if (!rateLimiter.isAllowed(sessionId, 10, 60000)) {
+        const errorMsg = 'Te veel analyseverzoeken. Probeer het over een minuut opnieuw.';
+        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+        return;
+    }
+    
+    // Validate and sanitize transcript for AI processing
+    const validation = validateAndSanitizeForAI(transcript, 500000); // 500KB limit for analysis
+    if (!validation.isValid) {
+        const errorMsg = `Ongeldige transcript voor analyse: ${validation.error}`;
+        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+        return;
+    }
+    
+    const sanitizedTranscript = validation.sanitized;
+    
+    if (!sanitizedTranscript.trim()) {
         const errorMsg = t('transcriptEmpty');
         setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
         return;
@@ -3123,7 +3815,7 @@ const handleGenerateAnalysis = async (type: ViewType) => {
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
+    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, sanitizedTranscript.length, t);
     if (!transcriptValidation.allowed) {
         const errorMsg = transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.';
         setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
@@ -3131,28 +3823,49 @@ const handleGenerateAnalysis = async (type: ViewType) => {
         return;
     }
     
+    // Validate token usage before making API call
+    if (authState.user) {
+        const prompt = getAnalysisPrompt(type, language!, outputLang || language!);
+        const fullPrompt = `${prompt}\n\nHere is the text:\n\n${sanitizedTranscript}`;
+        const tokenEstimate = tokenManager.estimateTokens(fullPrompt, 2);
+        
+        const tokenValidation = await tokenManager.validateTokenUsage(
+            authState.user.uid,
+            effectiveTier,
+            tokenEstimate.totalTokens
+        );
+        
+        if (!tokenValidation.allowed) {
+            const errorMsg = tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer tokens.';
+            setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+            setTimeout(() => setShowPricingPage(true), 2000);
+            return;
+        }
+    }
+    
     setLoadingText(t('generating', { type }));
     
     try {
         const prompt = getAnalysisPrompt(type, language!, outputLang || language!);
-        if (!prompt) throw new Error('Invalid analysis type');
+        if (!prompt) throw new Error(t('invalidAnalysisType', 'Invalid analysis type'));
 
-        const fullPrompt = `${prompt}\n\nHere is the text:\n\n${transcript}`;
+        const fullPrompt = `${prompt}\n\nHere is the text:\n\n${sanitizedTranscript}`;
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fullPrompt });
 
-        // Track token usage
+        // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(fullPrompt);
         const responseTokens = tokenCounter.countResponseTokens(response.text);
-        const totalTokens = tokenCounter.getTotalTokens(fullPrompt, response.text);
         
-        // Token usage logging removed
+        // Record actual token usage
         try {
           if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
+            await tokenManager.recordTokenUsage(authState.user.uid, promptTokens, responseTokens);
           }
-        } catch {}
+        } catch (error) {
+          console.warn('Could not record token usage:', error);
+        }
 
         const resultText = response.text;
         if (type === 'summary') setSummary(resultText);
@@ -3194,6 +3907,27 @@ const handleKeywordClick = async (keyword: string) => {
         setIsFetchingExplanation(false);
         return;
     }
+    
+    // Validate token usage for keyword explanation
+    if (authState.user) {
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        const prompt = `Provide a short and clear explanation of the term '${keyword}' in the context of the following **${inputLanguage}** transcript. Return the explanation in **${outputLanguage}**, no extra titles or formatting. Keep it concise. Transcript: --- ${transcript} ---`;
+        
+        const tokenEstimate = tokenManager.estimateTokens(prompt, 1.5);
+        
+        const tokenValidation = await tokenManager.validateTokenUsage(
+            authState.user.uid,
+            effectiveTier,
+            tokenEstimate.totalTokens
+        );
+        
+        if (!tokenValidation.allowed) {
+            displayToast(tokenValidation.reason || 'Token limiet bereikt voor keyword uitleg.', 'error');
+            setIsFetchingExplanation(false);
+            return;
+        }
+    }
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
@@ -3202,17 +3936,18 @@ const handleKeywordClick = async (keyword: string) => {
         const prompt = `Provide a short and clear explanation of the term '${keyword}' in the context of the following **${inputLanguage}** transcript. Return the explanation in **${outputLanguage}**, no extra titles or formatting. Keep it concise. Transcript: --- ${transcript} ---`;
         const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
-        // Track token usage
+        // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
         const responseTokens = tokenCounter.countResponseTokens(response.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, response.text);
         
-        // Token usage logging removed
+        // Record actual token usage
         try {
           if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
+            await tokenManager.recordTokenUsage(authState.user.uid, promptTokens, responseTokens);
           }
-        } catch {}
+        } catch (error) {
+          console.warn('Could not record token usage:', error);
+        }
 
         setKeywordExplanation(response.text);
     } catch (err: any) {
@@ -3250,6 +3985,21 @@ const handleGenerateKeywordAnalysis = async () => {
     // Don't reset other analysis data when generating keyword analysis
     setLoadingText(t('generating', { type: t('keywordAnalysis') }));
     setError(null);
+    
+    // Validate token usage for keyword analysis
+    const inputLanguage = getGeminiCode(language || 'en');
+    const outputLanguage = getGeminiCode(outputLang || language || 'en');
+    const keywordPrompt = `Analyze the following **${inputLanguage}** transcript in **${outputLanguage}**. Identify the most frequent and important keywords. Group these into 5-7 relevant topics. For each topic, provide a short descriptive name and a list of associated keywords. Return JSON only. Transcript: --- ${transcript} ---`;
+    const tokenEstimate = tokenManager.estimateTokens(keywordPrompt, 1.5);
+    const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+    
+    if (!tokenValidation.allowed) {
+        setError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        setLoadingText('');
+        return;
+    }
+    
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const inputLanguage = getGeminiCode(language || 'en');
@@ -3274,22 +4024,20 @@ const handleGenerateKeywordAnalysis = async () => {
             config: { responseMimeType: "application/json", responseSchema: schema }
         });
 
-        // Track token usage
+        // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
         const responseTokens = tokenCounter.countResponseTokens(response.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, response.text);
         
-        // Token usage logging removed
         try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
+            await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+            console.error('Error recording token usage:', error);
+        }
 
         const result: KeywordTopic[] = JSON.parse(response.text);
         setKeywordAnalysis(result);
     } catch (err: any) {
-        console.error("Fout bij genereren Keyword Analyse:", err);
+        console.error(t('keywordAnalysisGenerationError', 'Error generating keyword analysis:'), err);
         setError(t('generationFailed', { type: t('keywordAnalysis') }) + `: ${err.message || t('unknownError')}`);
     } finally {
         setLoadingText('');
@@ -3319,10 +4067,24 @@ const handleAnalyzeSentiment = async () => {
     }
     
     // Don't reset other analysis data when generating sentiment analysis
-    
     setIsAnalyzingSentiment(true);
     setLoadingText(t('analyzingSentiment'));
     setError(null);
+    
+    // Validate token usage for sentiment analysis
+    const inputLanguage = getGeminiCode(language || 'en');
+    const outputLanguage = getGeminiCode(outputLang || language || 'en');
+    const sentimentPrompt = `Analyze the sentiment of the following **${inputLanguage}** transcript in **${outputLanguage}**. Return a JSON object with: 1. 'summary': a short factual summary of the sentiments found (e.g., "The conversation was predominantly positive with some negative points about X."). 2. 'conclusion': an overall conclusion about the general tone and atmosphere of the conversation. Do NOT include the full transcript with tags. Transcript: --- ${transcript} ---`;
+    const tokenEstimate = tokenManager.estimateTokens(sentimentPrompt, 1.5);
+    const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+    
+    if (!tokenValidation.allowed) {
+        setError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        setLoadingText('');
+        setIsAnalyzingSentiment(false);
+        return;
+    }
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
@@ -3345,17 +4107,15 @@ const handleAnalyzeSentiment = async () => {
             config: { responseMimeType: "application/json", responseSchema: schema }
         });
 
-        // Track token usage
+        // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
         const responseTokens = tokenCounter.countResponseTokens(response.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, response.text);
         
-        // Token usage logging removed
         try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
+            await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+            console.error('Error recording token usage:', error);
+        }
 
         const result: SentimentAnalysisResult = JSON.parse(response.text);
         setSentimentAnalysisResult(result);
@@ -3369,81 +4129,7 @@ const handleAnalyzeSentiment = async () => {
     }
 };
 
-const handleGeneratePodcast = async () => {
-    // Check if user has access to podcast generation
-    const effectiveTier = userSubscription;
-    if (!subscriptionService.isFeatureAvailable(effectiveTier, 'podcast')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
-        setTimeout(() => setShowPricingPage(true), 2000);
-        return;
-    }
-    
-    setActiveView('podcast');
-    if (podcastScript) return;
-    if (!transcript.trim()) {
-        setError(t("transcriptEmpty"));
-        return;
-    }
-    if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
-        return;
-    }
-    
-    // Check transcript length based on user tier
-    const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
-    if (!transcriptValidation.allowed) {
-        displayToast(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.', 'error');
-        setTimeout(() => setShowPricingPage(true), 2000);
-        return;
-    }
-    
-    // Don't reset other analysis data when generating podcast script
-    
-    setLoadingText(t('podcastGenerating'));
-    setError(null);
 
-    try {
-        const ai = new GoogleGenAI({ apiKey: apiKey });
-        const inputLanguage = getGeminiCode(language || 'en');
-        const outputLanguage = getGeminiCode(outputLang || language || 'en');
-        const prompt = `You are a podcast scriptwriter for the 'RecapSmart Podcast', hosted by 'Albert'. Use the **${inputLanguage}** transcript below to create an engaging, natural-sounding script in **${outputLanguage}** that can be spoken aloud directly.
-Structure:
-1.  [INTRO]: Welcome listeners and introduce the main topic of today concisely.
-2.  [CORE]: Go deeper using the key discussions, findings and insights from the transcript to form a compelling story or clear analysis.
-3.  [CLOSING]: Summarize the key points. Give concrete, actionable tips or action items. End with a friendly sign-off.
-Important:
-- Write as a continuous, natural spoken narrative in ${outputLanguage}.
-- Do not include headings like "[INTRO]" in the output.
-- Output only the text Albert will speak, with no extra formatting.
-Here is the transcript:
----
-${transcript}
----`;
-        
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-        
-        // Track token usage
-        const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(response.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, response.text);
-        
-        // Token usage logging removed
-        try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
-
-        setPodcastScript(response.text);
-
-    } catch (err: any) {
-        console.error("Fout bij genereren podcast:", err);
-        setError(`${t("podcastFailed")}: ${err.message || t("unknownError")}`);
-        setPodcastScript('');
-    } finally {
-        setLoadingText('');
-    }
-};
 
 // ... existing code ...
 
@@ -3509,7 +4195,7 @@ ${transcript}
         // User data loaded from Firestore
         
         if (!userData.isActive) {
-          throw new Error('Account is disabled. Contact administrator.');
+          throw new Error(t('accountDisabled', 'Account is disabled. Contact administrator.'));
         }
         
         // Update last login
@@ -3526,7 +4212,7 @@ ${transcript}
         // Load user subscription tier
         const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
         setUserSubscription(tier);
-        loginModal.close();
+        // login modal removed
         
         // Navigate to start session screen after login
         setShowInfoPage(false);
@@ -3542,7 +4228,7 @@ ${transcript}
           isActive: true,
                     lastLogin: serverTimestamp(),
           sessionCount: 0,
-          createdAt: serverTimestamp(),
+          createdAt: new Date(),
           updatedAt: serverTimestamp()
         };
         
@@ -3558,7 +4244,7 @@ ${transcript}
           
           // Set default subscription tier for new user
           setUserSubscription(SubscriptionTier.FREE);
-          loginModal.close();
+          // login modal removed
           
           // Navigate to start session screen after account creation
           setShowInfoPage(false);
@@ -3567,25 +4253,32 @@ ${transcript}
           displayToast(`Welkom ${email}! Je account is automatisch aangemaakt.`, 'success');
         } catch (createError) {
           console.error('Error creating automatic user document:', createError);
-          throw new Error('Kon gebruikersaccount niet aanmaken. Probeer het opnieuw of contact administrator.');
+          throw new Error(t('couldNotCreateAccount', 'Kon gebruikersaccount niet aanmaken. Probeer het opnieuw of contact administrator.'));
         }
       }
     } catch (error: any) {
       console.error('Login error:', error);
       
-      // Better error messages
+      // Use enhanced error handler
+      const { errorHandler } = await import('./src/utils/errorHandler');
+      const userFriendlyError = errorHandler.handleAuthError(error, {
+        userId: undefined, // No user ID yet since login failed
+        sessionId: undefined,
+        attemptedAction: 'login'
+      });
+      
+      // Better error messages with fallback to original logic
       if (error.code === 'auth/user-not-found') {
-        throw new Error('Email adres niet gevonden. Maak eerst een account aan.');
+        throw new Error(t('emailNotFound', 'Email adres niet gevonden. Maak eerst een account aan.'));
       } else if (error.code === 'auth/wrong-password') {
-        throw new Error('Onjuist wachtwoord. Probeer opnieuw.');
+        throw new Error(t('incorrectPassword', 'Onjuist wachtwoord. Probeer opnieuw.'));
       } else if (error.code === 'auth/invalid-email') {
-        throw new Error('Ongeldig email adres.');
-      } else if (error.code === 'auth/too-many-requests') {
-        throw new Error('Te veel pogingen. Probeer het later opnieuw.');
+        throw new Error(t('invalidEmail', 'Ongeldig email adres.'));
       } else if (error.code === 'auth/user-disabled') {
-        throw new Error('Account is uitgeschakeld. Contact administrator.');
+        throw new Error(t('accountDisabledContact', 'Account is uitgeschakeld. Contact administrator.'));
       } else {
-        throw new Error(t('loginFailed', { error: error.message }));
+        // Use enhanced error handler message for better UX
+        throw new Error(userFriendlyError.message);
       }
     }
   };
@@ -3600,14 +4293,14 @@ ${transcript}
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        throw new Error('Email not found in system. Contact administrator to be added.');
+        throw new Error(t('emailNotFoundSystem', 'Email not found in system. Contact administrator to be added.'));
       }
       
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
       
       if (!userData.isActive) {
-        throw new Error('Account is disabled. Contact administrator.');
+        throw new Error(t('accountDisabled', 'Account is disabled. Contact administrator.'));
       }
       
       // User found in database
@@ -3619,12 +4312,12 @@ ${transcript}
           // Try to sign in to see if account exists
           await signInWithEmailAndPassword(auth, email, 'dummy-password');
           console.log('Firebase Auth account exists, cannot create new one');
-          throw new Error('Dit email adres is al in gebruik in Firebase. Probeer in te loggen in plaats van een account aan te maken.');
+          throw new Error(t('emailInUseFirebase', 'Dit email adres is al in gebruik in Firebase. Probeer in te loggen in plaats van een account aan te maken.'));
         } catch (authError: any) {
           if (authError.code === 'auth/wrong-password') {
             // Account exists but wrong password - this is what we want
             // Firebase Auth account exists, cannot create new one
-            throw new Error('Dit email adres is al in gebruik in Firebase. Probeer in te loggen in plaats van een account aan te maken.');
+            throw new Error(t('firebaseEmailInUse', 'This email address is already in use in Firebase. Try logging in instead of creating an account.'));
           } else if (authError.code === 'auth/user-not-found') {
             // Account doesn't exist - this is also fine
             // No Firebase Auth account found, will create new one
@@ -3665,7 +4358,7 @@ ${transcript}
       // Load user subscription tier
       const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
       setUserSubscription(tier);
-      loginModal.close();
+      // login modal removed
       
       // Account creation successful
     } catch (error: any) {
@@ -3673,18 +4366,18 @@ ${transcript}
       
       // Better error messages
       if (error.code === 'auth/email-already-in-use') {
-        throw new Error('Dit email adres is al in gebruik. Probeer in te loggen in plaats van een account aan te maken.');
+        throw new Error(t('emailInUse', 'Dit email adres is al in gebruik. Probeer in te loggen in plaats van een account aan te maken.'));
       } else if (error.code === 'auth/weak-password') {
-        throw new Error('Wachtwoord moet minimaal 6 karakters zijn.');
+        throw new Error(t('weakPasswordMinimum', 'Password must be at least 6 characters.'));
       } else if (error.code === 'auth/invalid-email') {
-        throw new Error('Ongeldig email adres.');
+        throw new Error(t('invalidEmail', 'Ongeldig email adres.'));
       } else if (error.code === 'auth/invalid-credential') {
-        throw new Error('Ongeldige inloggegevens. Mogelijk bestaat het account al in Firebase. Probeer in te loggen of neem contact op met de administrator.');
+        throw new Error(t('invalidCredentials', 'Ongeldige inloggegevens. Mogelijk bestaat het account al in Firebase. Probeer in te loggen of neem contact op met de administrator.'));
       } else if (error.code === 'auth/operation-not-allowed') {
-        throw new Error('Account aanmaken is niet toegestaan. Neem contact op met de administrator.');
+        throw new Error(t('accountCreationNotAllowed', 'Account aanmaken is niet toegestaan. Neem contact op met de administrator.'));
       } else {
         console.error('Unknown Firebase error:', error);
-        throw new Error(`Account aanmaken mislukt: ${error.message}`);
+        throw new Error(t('accountCreationFailed', 'Account creation failed: {message}', { message: error.message }));
       }
     }
   };
@@ -3805,19 +4498,167 @@ ${transcript}
 
 
 
-  // Waitlist functions
+  // Simplified waitlist functions without 2FA email confirmation
+  // Note: 2FA email confirmation system has been temporarily disabled
   const addToWaitlist = async (email: string) => {
+    // Prevent waitlist action when user is logged in
+    if (authState.user) {
+      displayToast(t('waitlistAlreadyLoggedIn'), 'info');
+      return;
+    }
+    // Per-sessie beveiliging: slechts één aanmelding per browsersessie
+    const sessionGuardKey = 'waitlist_session_submitted';
     try {
-      await addDoc(collection(db, 'waitlist'), {
-        email: email.toLowerCase().trim(),
-        createdAt: serverTimestamp(),
-        status: 'pending'
-      });
-      setWaitlistEmail('');
-              displayToast('Je bent succesvol toegevoegd aan de wachtlijst! We nemen contact met je op zodra je toegang krijgt.', 'success');
+      if (typeof window !== 'undefined' && sessionStorage.getItem(sessionGuardKey) === '1') {
+        displayToast(t('waitlistAlreadySubmitted'), 'info');
+        return;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        displayToast(t('waitlistInvalidEmail'), 'error');
+        return;
+      }
+
+      // Write directly to waitlist; Firestore rules do not allow reading this collection from the client
+      let wrote = false;
+
+      // Prepare deterministic document ID based on hashed email, to enforce one entry per email
+      const normalizedEmail = email.toLowerCase().trim();
+      async function computeEmailHashHex(str: string): Promise<string> {
+        try {
+          const data = new TextEncoder().encode(str);
+          const hash = await crypto.subtle.digest('SHA-256', data);
+          return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch {
+          // Fallback: sanitized base64-like id (avoid problematic chars)
+          const base = typeof btoa === 'function' ? btoa(str) : encodeURIComponent(str);
+          return base.replace(/[^a-zA-Z0-9_-]/g, '_');
+        }
+      }
+      const waitlistDocId = await computeEmailHashHex(normalizedEmail);
+
+      try {
+        // Primary attempt: createdAt as Date + status 'pending'
+        await setDoc(doc(db, 'waitlist', waitlistDocId), {
+          email: normalizedEmail,
+          createdAt: new Date(),
+          status: 'pending'
+        }, { merge: false });
+        wrote = true;
+      } catch (e1: any) {
+        // Fallback: createdAt as serverTimestamp + status 'pending'
+        if (e1 && typeof e1.message === 'string' && e1.message.includes('permission-denied')) {
+          try {
+            await setDoc(doc(db, 'waitlist', waitlistDocId), {
+              email: normalizedEmail,
+              createdAt: serverTimestamp(),
+              status: 'pending'
+            }, { merge: false });
+            wrote = true;
+          } catch (e2: any) {
+            throw e2;
+          }
+        } else {
+          throw e1;
+        }
+      }
+
+      if (wrote) {
+        setWaitlistEmail('');
+        displayToast(
+          t('waitlistThankYou'), 
+          'success'
+        );
+        // Markeer deze sessie als voltooid, zodat er niet opnieuw kan worden ingezonden in dezelfde sessie
+        try {
+          if (typeof window !== 'undefined') sessionStorage.setItem(sessionGuardKey, '1');
+        } catch {}
+        // Log successful addition for monitoring (privacy-safe)
+        console.log('Waitlist addition successful:', {
+          email: email.substring(0, 3) + '***',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
     } catch (error) {
       console.error('Error adding to waitlist:', error);
-              displayToast('Er is een fout opgetreden bij het toevoegen aan de wachtlijst. Probeer het opnieuw.', 'error');
+      
+      // Enhanced error handling
+      let errorMessage = t('waitlistErrorAdding');
+      
+      if (error instanceof Error) {
+        if (error.message.includes('permission-denied')) {
+          errorMessage = t('errorAccessDenied');
+        } else if (error.message.includes('network')) {
+          errorMessage = t('errorNetwork');
+        }
+      }
+      
+      displayToast(errorMessage, 'error');
+    }
+  };
+
+  // COMMENTED OUT: 2FA Email confirmation system
+  /*
+  // Enhanced waitlist functions with 2FA email confirmation
+  const addToWaitlistWith2FA = async (email: string) => {
+    try {
+      // Import enhanced security utilities
+      const { validateWaitlistEmail, rateLimiter, initiateWaitlistSignup } = await import('./src/utils/security');
+      
+      // Enhanced rate limiting check with email tracking
+      const sessionId = 'waitlist_' + (auth.currentUser?.uid || 'anonymous');
+      const rateLimitResult = rateLimiter.isAllowedEnhanced(sessionId, 3, 60000, email);
+      
+      if (!rateLimitResult.allowed) {
+        const message = rateLimitResult.reason === 'Suspicious activity detected' 
+          ? t('waitlistSuspiciousActivity')
+          : rateLimitResult.reason === 'Email temporarily blocked due to repeated submissions'
+          ? t('waitlistEmailBlocked')
+          : rateLimitResult.reason === 'Too many attempts with this email address'
+          ? t('waitlistTooManyAttempts')
+          : t('waitlistTooManyRequests');
+        
+        displayToast(message, 'error');
+        return;
+      }
+      
+      // Initiate waitlist signup with email confirmation
+      const result = await initiateWaitlistSignup(email);
+      
+      if (result.success && result.requiresConfirmation) {
+        setShowEmailConfirmation(true);
+        displayToast('Een bevestigingsmail is verzonden. Controleer je inbox.', 'success');
+      } else {
+        displayToast(result.error || 'Er is een fout opgetreden.', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Error initiating waitlist signup:', error);
+      displayToast('Er is een fout opgetreden bij het aanmelden voor de wachtlijst.', 'error');
+    }
+  };
+  */
+  
+  // Helper function to generate a simple session-based hash for monitoring
+  const generateSessionHash = async (): Promise<string> => {
+    try {
+      const sessionData = {
+        timestamp: Math.floor(Date.now() / 3600000), // Hour-based
+        userAgent: navigator.userAgent.substring(0, 50),
+        language: navigator.language,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      };
+      
+      const encoder = new TextEncoder();
+      const data = encoder.encode(JSON.stringify(sessionData));
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+    } catch (error) {
+      console.warn('Could not generate session hash:', error);
+      return 'unknown';
     }
   };
 
@@ -3853,12 +4694,12 @@ ${transcript}
     // Controleer of gebruiker admin is
     if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to activateWaitlistUsers');
-      displayToast('Geen toegang tot wachtlijst beheer. Admin rechten vereist.', 'error');
+      displayToast(t('adminNoAccess'), 'error');
       return;
     }
 
     if (selectedWaitlistUsers.length === 0) {
-              displayToast('Selecteer eerst gebruikers om te activeren.', 'info');
+              displayToast(t('adminSelectUsers'), 'info');
       return;
     }
 
@@ -3885,27 +4726,27 @@ ${transcript}
       await loadUsers();
       await loadWaitlist();
       setSelectedWaitlistUsers([]);
-              displayToast(`${selectedWaitlistUsers.length} gebruiker(s) succesvol geactiveerd!`, 'success');
+              displayToast(`${selectedWaitlistUsers.length} ${t('adminUsersActivated')}`, 'success');
     } catch (error) {
       console.error('Error activating :', error);
-              displayToast('Fout bij activeren van gebruikers.', 'error');
+              displayToast(t('adminErrorActivating'), 'error');
     }
   };
   const removeFromWaitlist = async (userId: string) => {
     // Controleer of gebruiker admin is
     if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to removeFromWaitlist');
-      displayToast('Geen toegang tot wachtlijst beheer. Admin rechten vereist.', 'error');
+      displayToast(t('adminNoAccess'), 'error');
       return;
     }
 
     try {
       await deleteDoc(doc(db, 'waitlist', userId));
       await loadWaitlist();
-              displayToast('Gebruiker succesvol verwijderd van wachtlijst.', 'success');
+              displayToast(t('adminUserRemoved'), 'success');
     } catch (error) {
       console.error('Error removing from waitlist:', error);
-              displayToast('Fout bij verwijderen van gebruiker van wachtlijst.', 'error');
+              displayToast(t('adminErrorRemoving'), 'error');
     }
   };
   // Email invitation functions
@@ -3913,28 +4754,21 @@ ${transcript}
     // Controleer of gebruiker admin is
     if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to sendInvitationEmail');
-      displayToast('Geen toegang tot email functies. Admin rechten vereist.', 'error');
+      displayToast(t('adminNoEmailAccess'), 'error');
       return;
     }
 
     try {
-      const subject = 'Uitnodiging voor RecapSmart - Je kunt nu een account aanmaken!';
-      const body = `Beste gebruiker,
-
-Je bent uitgenodigd om je aan te melden bij RecapSmart!
-
-Je kunt nu een account aanmaken op: ${window.location.origin}
-
-Met vriendelijke groet,
-Het RecapSmart Team`;
+      const subject = t('emailInvitationSubject');
+      const body = t('emailInvitationBody').replace('[Registratielink]', window.location.origin);
 
       // Open lokale mail client
       openEmailClient(email, subject, body);
       
-      displayToast(`Email client geopend voor ${email}!`, 'success');
+      displayToast(t('emailClientOpened').replace('{email}', email), 'success');
     } catch (error) {
       console.error('Error sending invitation email:', error);
-              displayToast('Fout bij voorbereiden van uitnodigingsmail.', 'error');
+              displayToast(t('emailErrorPreparing'), 'error');
     }
   };
 
@@ -3949,36 +4783,22 @@ Het RecapSmart Team`;
     try {
       const emails = waitlist.filter(w => userIds.includes(w.id)).map(w => w.email);
       if (emails.length === 0) {
-        displayToast('Geen geldige emails gevonden.', 'info');
+        displayToast(t('emailNoValidEmails'), 'info');
         return;
       }
 
       // Voor meerdere emails, open de eerste in mail client en toon de rest in een popup
       if (emails.length === 1) {
         // Als er maar 1 email is, open direct de mail client
-        const subject = 'Uitnodiging voor RecapSmart - Je kunt nu een account aanmaken!';
-        const body = `Beste gebruiker,
-
-Je bent uitgenodigd om je aan te melden bij RecapSmart!
-
-Je kunt nu een account aanmaken op: ${window.location.origin}
-
-Met vriendelijke groet,
-Het RecapSmart Team`;
+        const subject = t('emailInvitationSubject');
+        const body = t('emailInvitationBody').replace('[Registratielink]', window.location.origin);
 
         openEmailClient(emails[0], subject, body);
-        displayToast(`Email client geopend voor ${emails[0]}!`, 'success');
+        displayToast(t('emailClientOpened').replace('{email}', emails[0]), 'success');
       } else {
         // Voor meerdere emails, toon een overzicht en open de eerste
-        const subject = 'Uitnodiging voor RecapSmart - Je kunt nu een account aanmaken!';
-        const body = `Beste gebruiker,
-
-Je bent uitgenodigd om je aan te melden bij RecapSmart!
-
-Je kunt nu een account aanmaken op: ${window.location.origin}
-
-Met vriendelijke groet,
-Het RecapSmart Team`;
+        const subject = t('emailInvitationSubject');
+        const body = t('emailInvitationBody').replace('[Registratielink]', window.location.origin);
 
         // Open eerste email in mail client
         openEmailClient(emails[0], subject, body);
@@ -4062,6 +4882,18 @@ Het RecapSmart Team`;
     const useTemplate = options.useTemplate && options.templateFile !== null;
 
     try {
+        // Validate token usage for presentation generation
+        const presentationPrompt = `Je bent een AI-expert in het creëren van professionele, gestructureerde en visueel aantrekkelijke zakelijke presentaties op basis van een meeting-transcript. Je taak is om de volgende content te genereren en te structureren in een JSON-object dat voldoet aan het verstrekte schema.\n\n**Taal:** ${getGeminiCode(options.language)} - Alle titels en content moeten in deze taal zijn.\n\n**Maximum aantal slides:** ${options.maxSlides} - Houd de presentatie binnen deze limiet.\n\n**Doelgroep:** ${options.targetAudience} - Pas de presentatie aan voor deze specifieke doelgroep.\n\n**Hoofddoel:** ${options.mainGoal} - Structureer de presentatie om dit doel te bereiken.\n\n**Toon/Stijl:** ${options.toneStyle} - Gebruik deze toon en stijl door de hele presentatie.\n\nTranscript:\n---\n${transcript}\n---`;
+        const tokenEstimate = tokenManager.estimateTokens(presentationPrompt, 2.0);
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+        
+        if (!tokenValidation.allowed) {
+            displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+            setTimeout(() => setShowPricingPage(true), 2000);
+            setLoadingText('');
+            return;
+        }
+        
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const prompt = `Je bent een AI-expert in het creëren van professionele, gestructureerde en visueel aantrekkelijke zakelijke presentaties op basis van een meeting-transcript. Je taak is om de volgende content te genereren en te structureren in een JSON-object dat voldoet aan het verstrekte schema.
 
@@ -4138,17 +4970,15 @@ ${transcript}
 
         const contentResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: "application/json", responseSchema: presentationSchema } });
         
-        // Track token usage
+        // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
         const responseTokens = tokenCounter.countResponseTokens(contentResponse.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, contentResponse.text);
         
-        // Token usage logging removed
         try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
+            await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+            console.error('Error recording token usage:', error);
+        }
 
         const presentationData: PresentationData = JSON.parse(contentResponse.text);
 
@@ -4190,7 +5020,7 @@ ${transcript}
             objects: [
                 { "placeholder": { options: { name: "title", type: "title", x: 0.5, y: 0.2, w: 9, h: 0.75, fontFace: "Helvetica", fontSize: 28, bold: true, color: "06B6D4" }, text: "Placeholder Title" } },
                 { "rect": { x: 0.5, y: 5.3, w: '90%', h: 0.01, fill: { color: '0891B2' } } },
-                { "text": { text: "RecapSmart", options: { x: 0.5, y: 5.35, w: '50%', h: 0.2, fontFace: "Helvetica", fontSize: 10, color: "94A3B8" } } },
+                { "text": { text: "RecapHorizon", options: { x: 0.5, y: 5.35, w: '50%', h: 0.2, fontFace: "Helvetica", fontSize: 10, color: "94A3B8" } } },
             ],
             slideNumber: { x: 9.0, y: 5.35, fontFace: "Arial", fontSize: 10, color: "94A3B8", align: 'right' }
         });
@@ -4230,7 +5060,7 @@ ${transcript}
         if (data.titleSlide.subtitle) titleSlide.addText(data.titleSlide.subtitle, { w: '100%', h: 0.75, y: 3.5, fontFace: 'Arial', fontSize: 22, color: 'E2E8F0', align: 'center' });
     }
     
-    if (data.agenda?.length > 0) addContentSlide({ title: t('inhoudsopgave') || 'Agenda', points: data.agenda }, true);
+    if (data.agenda?.length > 0) addContentSlide({ title: t('inhoudsopgave', 'Agenda'), points: data.agenda }, true);
     addContentSlide(data.introduction);
     data.mainContentSlides?.forEach(s => addContentSlide(s));
     addContentSlide(data.projectStatus);
@@ -4242,20 +5072,33 @@ ${transcript}
         let todoSlide = pptx.addSlide(isCustomTemplate ? {} : { masterName: "MASTER_SLIDE" });
         todoSlide.addText(data.todoList.title, { placeholder: 'title' });
         const tableHeader = [
-            { text: t('taak') || "Task", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
-            { text: t('eigenaar') || "Owner", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
-            { text: t('deadline') || "Deadline", options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
+            { text: t('taak', 'Task'), options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
+            { text: t('eigenaar', 'Owner'), options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
+            { text: t('deadline', 'Deadline'), options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
         ];
         // Op verzoek: kolommen 'Owner' en 'Deadline' leeg laten
         const tableRows = todoItems.map(item => [{ text: item.task }, { text: '' }, { text: '' }]);
         todoSlide.addTable([tableHeader, ...tableRows], { x: '5%', y: 1.1, w: '90%', colW: [5.4, 1.8, 1.8], autoPage: true, rowH: 0.4, fill: { color: '1E293B' }, color: 'E2E8F0', fontSize: 12, valign: 'middle', border: { type: 'solid', pt: 1, color: '0F172A' } });
     }
 
-    const fileName = `RecapSmart_Presentation_${new Date().toISOString().split('T')[0]}.pptx`;
+    const fileName = `RecapHorizon_Presentation_${new Date().toISOString().split('T')[0]}.pptx`;
     pptx.writeFile({ fileName });
     return { fileName, slideCount: (pptx as any).slides.length };
 };
   const handleTranscribe = async () => {
+    if (!audioChunksRef.current.length) {
+      // Probeer terug te vallen op audioURL als die bestaat
+      if (audioURL) {
+        try {
+          const fetched = await fetch(audioURL);
+          const fetchedBlob = await fetched.blob();
+          if (fetchedBlob && fetchedBlob.size > 0) {
+            audioChunksRef.current = [fetchedBlob];
+          }
+        } catch {}
+      }
+    }
+
     if (!audioChunksRef.current.length) {
       setError(t("noAudioToTranscribe"));
       setStatus(RecordingStatus.ERROR);
@@ -4266,44 +5109,254 @@ ${transcript}
     setLoadingText(t('transcribing'));
     setError(null);
     setAnonymizationReport(null);
-    setTranscript(''); setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions(''); setPodcastScript('');
+    setTranscript(''); setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
+    
+    // Initialize progress tracking immediately
+    setIsSegmentedTranscribing(true);
+    setTranscriptionProgress(0);
   
     try {
         if (!apiKey) {
-            displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+            displayToast(t('apiKeyNotAvailable'), 'error');
+            return;
+        }
+
+        // Enhanced API validation
+        const { ApiValidator } = await import('./src/utils/apiValidator');
+        const apiValidation = await ApiValidator.validateGoogleSpeechApi(apiKey);
+        
+        if (!apiValidation.isValid) {
+            const errorMessage = `${apiValidation.error}${apiValidation.suggestion ? ` - ${apiValidation.suggestion}` : ''}`;
+            displayToast(errorMessage, 'error');
+            setStatus(RecordingStatus.ERROR);
+            setLoadingText('');
+            return;
+        }
+        
+        console.log('✅ Google Cloud Speech API validatie succesvol');
+
+        // Validate token usage for transcription
+        // Estimate tokens based on audio duration (rough estimate: 1 minute = ~150 tokens)
+        const estimatedDurationMinutes = audioChunksRef.current.length / 60; // rough estimate
+        const estimatedTokens = Math.max(500, estimatedDurationMinutes * 150);
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
+        
+        if (!tokenValidation.allowed) {
+            displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+            setTimeout(() => setShowPricingPage(true), 2000);
+            setStatus(RecordingStatus.ERROR);
+            setLoadingText('');
             return;
         }
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-      const base64Audio = await blobToBase64(audioBlob);
-  
-              const inputLanguage = getGeminiCode(language || 'en');
+        const chunks = audioChunksRef.current;
+        const mimeType = (chunks?.[0] as any)?.type || 'audio/webm';
+
+        // 1-minuut segmenten (op basis van 1s chunks uit MediaRecorder) - verkleind voor betere stabiliteit
+        const segmentSeconds = 60;
+        const hasSecondResolution = chunks.length > 1; // wanneer MediaRecorder 1s chunks leverde
+        const totalSegments = hasSecondResolution ? Math.ceil(chunks.length / segmentSeconds) : 1;
+
+        const getSegmentBlob = (index: number) => {
+          if (hasSecondResolution) {
+            const start = index * segmentSeconds;
+            const end = Math.min(start + segmentSeconds, chunks.length);
+            const slice = chunks.slice(start, end);
+            return new Blob(slice, { type: mimeType });
+          }
+          // fallback: geen seconde-resolutie -> hele blob in 1 segment
+          return new Blob(chunks, { type: mimeType });
+        };
+
+        cancelTranscriptionRef.current = false;
+        setIsSegmentedTranscribing(true);
+        setTranscriptionProgress(0);
+        
+        console.log(`🎙️ ${t('startingTranscription', { count: totalSegments })}`);
+
+        const inputLanguage = getGeminiCode(language || 'en');
         const transcribePrompt = `Transcribe this audio recording accurately. The spoken language is ${inputLanguage}.`;
-      const audioPart = { inlineData: { mimeType: 'audio/webm', data: base64Audio } };
-      const textPart = { text: transcribePrompt };
-      
-      const transcribeResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: { parts: [textPart, audioPart] } });
-      
-      // Track token usage
-      const promptTokens = tokenCounter.countPromptTokens([textPart]);
-      const responseTokens = tokenCounter.countResponseTokens(transcribeResponse.text);
-      const totalTokens = tokenCounter.getTotalTokens([textPart], transcribeResponse.text);
-      
-              // Token usage logging removed
-      try {
-        if (authState.user) {
-          await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
+
+        let combinedText = '';
+        let consecutiveFailures = 0;
+        const maxConsecutiveFailures = 3; // Stop if 3 segments fail in a row
+
+        for (let i = 0; i < totalSegments; i++) {
+          if (cancelTranscriptionRef.current) {
+            setError(t('transcriptionCancelled'));
+            break;
+          }
+
+          const segmentBlob = getSegmentBlob(i);
+          const base64Audio = await blobToBase64(segmentBlob);
+          const audioPart = { inlineData: { mimeType, data: base64Audio } };
+          const textPart = { text: transcribePrompt };
+
+          // Update progress UI before processing
+          setTranscriptionProgress(i / totalSegments);
+          setLoadingText(`${t('transcribing')} (${i + 1}/${totalSegments})`);
+          
+          console.log(`🎵 Verwerking segment ${i + 1}/${totalSegments} gestart...`);
+
+          try {
+            // Enhanced retry logic for 500 errors with better fallback
+            let retryCount = 0;
+            const maxRetries = 5; // Increased from 3 to 5
+            let transcribeResponse;
+            
+            while (retryCount <= maxRetries) {
+              try {
+                transcribeResponse = await ai.models.generateContent({ 
+                  model: 'gemini-2.5-flash', 
+                  contents: { parts: [textPart, audioPart] } 
+                });
+                break; // Success, exit retry loop
+              } catch (retryError: any) {
+                retryCount++;
+                console.warn(`⚠️ Poging ${retryCount} voor segment ${i + 1} mislukt:`, retryError.message || retryError);
+                
+                // Check if it's a retryable error
+                const isRetryableError = 
+                  retryError.message?.includes('500') ||
+                  retryError.message?.includes('INTERNAL') ||
+                  retryError.message?.includes('503') ||
+                  retryError.message?.includes('RESOURCE_EXHAUSTED') ||
+                  retryError.status === 500 ||
+                  retryError.status === 503 ||
+                  retryError.status === 429 ||
+                  retryError.code === 500;
+                
+                if (retryCount <= maxRetries && isRetryableError) {
+                  // Faster retry for smaller segments
+                  const baseWaitTime = 2000 * Math.pow(1.5, retryCount - 1); // Start at 2s, slower growth
+                  const jitter = Math.random() * 1000; // Add 0-1s random jitter
+                  const waitTime = Math.min(baseWaitTime + jitter, 30000); // Max 30s
+                  console.log(`⏱️ Wachten ${Math.round(waitTime)}ms voor retry ${retryCount}...`);
+                  await new Promise(resolve => setTimeout(resolve, waitTime));
+                } else {
+                  throw retryError; // Re-throw if not retryable or max retries reached
+                }
+              }
+            }
+            
+            const segText = transcribeResponse?.text || '';
+            
+            console.log(`✅ Segment ${i + 1} succesvol verwerkt, tekst lengte: ${segText.length} karakters`);
+            
+            // Reset consecutive failures on success
+            consecutiveFailures = 0;
+
+            if (segText) {
+              combinedText += (combinedText ? '\n\n' : '') + segText;
+              setTranscript(prev => (prev ? prev + '\n\n' : '') + segText);
+            }
+            
+            // Track token usage with TokenManager per segment
+            try {
+              const promptTokens = tokenCounter.countPromptTokens([textPart]);
+              const responseTokens = tokenCounter.countResponseTokens(segText || '');
+              await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+            } catch (error) {
+              console.error('Error recording token usage for transcription segment:', error);
+            }
+          } catch (segmentError: any) {
+            console.error(`❌ Fout bij segment ${i + 1}:`, segmentError);
+            console.error(`❌ Error details:`, {
+              message: segmentError.message,
+              status: segmentError.status,
+              code: segmentError.code
+            });
+            
+            // Use enhanced error handler for better error management
+            const { errorHandler } = await import('./src/utils/errorHandler');
+            const userFriendlyError = errorHandler.handleApiError(segmentError, 
+              segmentError.status || (segmentError.message?.includes('500') ? 500 : undefined), 
+              {
+                userId: user?.uid,
+                sessionId: undefined,
+                endpoint: 'google-speech-api'
+              }
+            );
+            
+            // Enhanced error handling with better user feedback
+            let errorText;
+            const isServerError = segmentError.message?.includes('500') || 
+                                 segmentError.message?.includes('INTERNAL') || 
+                                 segmentError.status === 500 || 
+                                 segmentError.code === 500;
+            
+            if (isServerError) {
+              errorText = `[Segment ${i + 1}: ⚠️ ${userFriendlyError.message}]`;
+              console.log(`🔄 ${t('segmentSkipped', { number: i + 1 })}`);
+            } else if (segmentError.message?.includes('quota') || segmentError.message?.includes('limit')) {
+              errorText = `[Segment ${i + 1}: ⏸️ API-limiet bereikt - wacht en probeer later opnieuw]`;
+            } else {
+              errorText = `[Segment ${i + 1}: ❌ ${userFriendlyError.message}]`;
+            }
+            
+            combinedText += (combinedText ? '\n\n' : '') + errorText;
+            setTranscript(prev => (prev ? prev + '\n\n' : '') + errorText);
+            
+            // Track consecutive failures for circuit breaker
+            consecutiveFailures++;
+            
+            // Circuit breaker: stop if too many consecutive failures
+            if (consecutiveFailures >= maxConsecutiveFailures) {
+              console.error(`🚨 ${t('tooManyConsecutiveErrors')} (${consecutiveFailures}). ${t('transcriptionStopped')}`);
+            const stopMessage = `\n\n[⚠️ ${t('transcriptionStopped').replace('te veel fouten', `${consecutiveFailures} opeenvolgende fouten`)}. ${t('googleAiServiceOverloaded')}]`;
+              combinedText += stopMessage;
+              setTranscript(prev => prev + stopMessage);
+              break; // Exit the transcription loop
+            }
+            
+            // For server errors, continue with next segment instead of failing completely
+            if (isServerError) {
+              console.log(`⏭️ Doorgaan naar segment ${i + 2}/${totalSegments}... (${consecutiveFailures}/${maxConsecutiveFailures} opeenvolgende fouten)`);
+            }
+          }
+
+          // Update progress UI after processing
+          setTranscriptionProgress((i + 1) / totalSegments);
+          
+          // Enhanced progressive delay between segments to reduce server load
+          if (i < totalSegments - 1) {
+            // Shorter delays for 1-minute segments to keep total time reasonable
+            const baseDelay = 3000; // Reduced base delay to 3 seconds for shorter segments
+            const progressiveDelay = Math.min(baseDelay + (i * 500), 8000); // Max 8 seconds
+            const jitterDelay = Math.random() * 2000; // Add 0-2s random jitter
+            const totalDelay = progressiveDelay + jitterDelay;
+            
+            console.log(`⏱️ ${t('waitingForNextSegment', { ms: Math.round(totalDelay) })}`);
+            await new Promise(resolve => setTimeout(resolve, totalDelay));
+          }
         }
-      } catch {}
-      
-      setTranscript(transcribeResponse.text);
-      // Reset all analysis data when transcript is generated
+
+        if (cancelTranscriptionRef.current) {
+          setStatus(RecordingStatus.STOPPED);
+          return;
+        }
+
+        // Provide summary of transcription results
+        const successfulSegments = totalSegments - consecutiveFailures;
+        if (consecutiveFailures > 0) {
+          console.log(`🏁 ${t('transcriptionCompletedWithWarnings')}. ${t('transcriptionSummary', { successful: successfulSegments, total: totalSegments })}`);
+          const summaryMessage = `\n\n[📊 ${t('transcriptionSummary', { successful: successfulSegments, total: totalSegments })} ${consecutiveFailures > 0 ? t('segmentsSkippedDueToServerProblems', { count: consecutiveFailures }) : ''}]`;
+          combinedText += summaryMessage;
+          setTranscript(prev => prev + summaryMessage);
+        } else {
+          console.log(`🏁 ${t('transcriptionFullyCompleted', { count: totalSegments })}`);
+        }
+        
+        // Final progress update
+        setTranscriptionProgress(1);
+        setLoadingText(t('transcribing') + ' - ' + t('processing'));
+
+        // Na volledige loop is transcript reeds opgebouwd via setTranscript per segment
       setSummary('');
       setFaq('');
       setLearningDoc('');
       setFollowUpQuestions('');
-      setPodcastScript('');
       setBlogData('');
       setChatHistory([]);
       setKeywordAnalysis(null);
@@ -4323,15 +5376,33 @@ ${transcript}
             setDailyAudioCount(prev => prev + 1);
           }
         } catch (e) {
-          console.warn('Kon sessionCount niet updaten:', e);
+          console.warn(t('errorUpdateSessionCount'), e);
         }
       setActiveView('transcript');
 
     } catch (err: any) {
       console.error("Fout bij AI-verwerking:", err);
-      setError(`${t("aiError")}: ${err.message || t("unknownError")}`);
-        setStatus(RecordingStatus.ERROR);
-    } finally { setLoadingText(''); }
+      let errorMessage = `${t("aiError")}: `;
+      
+      if (err.message && err.message.includes('500')) {
+        errorMessage += 'Interne serverfout. Probeer het over een paar minuten opnieuw.';
+      } else if (err.message && err.message.includes('INTERNAL')) {
+        errorMessage += 'Tijdelijke AI-servicefout. Probeer het later opnieuw.';
+      } else {
+        errorMessage += err.message || t("unknownError");
+      }
+      
+      setError(errorMessage);
+      setStatus(RecordingStatus.ERROR);
+    } finally {
+      // Add a small delay to ensure final progress is visible
+      setTimeout(() => {
+        setLoadingText('');
+        setIsSegmentedTranscribing(false);
+        setTranscriptionProgress(null);
+        cancelTranscriptionRef.current = false;
+      }, 500);
+    }
   };
   
   const downloadTextFile = (text: string, filename: string) => {
@@ -4358,8 +5429,11 @@ ${transcript}
   const renderMarkdown = (text: string) => {
     if (!text) return text;
     
-    // Convert **text** to bold
-    const boldText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Sanitize the input first to prevent XSS
+    const sanitizedText = sanitizeTextInput(text, 10000);
+    
+    // Convert **text** to bold (only after sanitization)
+    const boldText = sanitizedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
     // Convert *text* to italic
     const italicText = boldText.replace(/\*(.*?)\*/g, '<em>$1</em>');
@@ -4367,7 +5441,13 @@ ${transcript}
     // Convert line breaks to <br> tags
     const withLineBreaks = italicText.replace(/\n/g, '<br>');
     
-    return <span dangerouslySetInnerHTML={{ __html: withLineBreaks }} />;
+    // Only allow safe HTML tags
+    const allowedTags = ['strong', 'em', 'br'];
+    const safeHtml = withLineBreaks.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/gi, (match, tagName) => {
+      return allowedTags.includes(tagName.toLowerCase()) ? match : '';
+    });
+    
+    return <span dangerouslySetInnerHTML={{ __html: safeHtml }} />;
   };
 
   const renderRecordingView = () => {
@@ -4408,7 +5488,7 @@ ${transcript}
         </div>
 
         {/* Audio Visualisatie */}
-        <div className="w-full flex justify-center">
+        <div className="w-full flex flex-col items-center">
           <canvas 
             ref={canvasRef} 
             width="600" 
@@ -4416,6 +5496,20 @@ ${transcript}
             className="w-full max-w-2xl border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800"
             style={{ width: '100%', height: '100px' }}
           />
+          {/* Niveaubalk voor input-level */}
+          <div className="mt-2 w-full max-w-2xl h-2 bg-slate-700 rounded">
+            <div
+              className="h-2 bg-cyan-500 rounded transition-[width] duration-150"
+              style={{ width: `${Math.round(avgInputLevel * 100)}%` }}
+              aria-label="Invoerniveau"
+            />
+          </div>
+          {/* Hint bij geen audio-invoer */}
+          {showNoInputHint && (
+            <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+              Geen audio gedetecteerd – controleer je microfoon of zet systeemgeluid aan.
+            </div>
+          )}
         </div>
 
         {/* Opname Controls */}
@@ -4488,12 +5582,49 @@ ${transcript}
       case RecordingStatus.GETTING_PERMISSION: return <p className="text-lg text-yellow-500 dark:text-yellow-400">{t('waitingPermission')}</p>;
       case RecordingStatus.STOPPED:
         return (
-          <div className="flex flex-col items-center gap-4">
-            <p className="text-lg text-green-600 dark:text-green-400">{t('recordingStopped')}</p>
-            <button onClick={handleTranscribe} disabled={isProcessing} className="px-8 py-4 rounded-xl bg-cyan-500 text-white text-lg font-bold hover:bg-cyan-600 disabled:bg-slate-600 transition-all duration-200">
-              {t('transcribeSession')}
-            </button>
-            <div className="w-full max-w-md mt-4">
+          <div className="flex flex-col items-center gap-6">
+            <div className="text-center">
+              <p className="text-lg text-green-600 dark:text-green-400 mb-2">{t('recordingStopped')}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Je audio opname is klaar. Luister terug en start de transcriptie wanneer je klaar bent.
+              </p>
+            </div>
+            
+            {/* Audio informatie panel */}
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 w-full max-w-md">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">📊 Opname Details</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Bestandsgrootte:</span>
+                  <span className="text-slate-800 dark:text-slate-200">
+                    {audioChunksRef.current && audioChunksRef.current.length > 0 
+                      ? `${(audioChunksRef.current.reduce((total, chunk) => total + chunk.size, 0) / 1024 / 1024).toFixed(1)} MB`
+                      : 'Onbekend'
+                    }
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Audio formaat:</span>
+                  <span className="text-slate-800 dark:text-slate-200">
+                    {audioChunksRef.current && audioChunksRef.current.length > 0 
+                      ? audioChunksRef.current[0].type || 'audio/webm'
+                      : 'audio/webm'
+                    }
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Kwaliteit:</span>
+                  <span className="text-slate-800 dark:text-slate-200">64 kbps, 16kHz mono</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Geoptimaliseerd voor:</span>
+                  <span className="text-slate-800 dark:text-slate-200">Spraakherkenning</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Audio player */}
+            <div className="w-full max-w-md">
               <audio 
                 controls 
                 src={audioURL || null} 
@@ -4508,11 +5639,59 @@ ${transcript}
                 }}
               />
               {audioURL && (
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 text-center">
-                  Audio opname geladen - gebruik de controls om af te spelen
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
+                  🎧 Luister je opname terug voordat je transcribeert
                 </p>
               )}
             </div>
+
+            {/* Actie knoppen */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+              <button 
+                onClick={handleTranscribe} 
+                disabled={isProcessing} 
+                className="flex-1 px-6 py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600 disabled:bg-slate-600 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <span>🚀</span>
+                {t('transcribeSession')}
+              </button>
+              <button 
+                onClick={() => {
+                  // Reset audio data en ga terug naar idle status
+                  if (audioURL) {
+                    URL.revokeObjectURL(audioURL);
+                    setAudioURL(null);
+                  }
+                  audioChunksRef.current = [];
+                  setStatus(RecordingStatus.IDLE);
+                  setError('');
+                  // Reset alle session data
+                  setTranscript('');
+                  setSummary('');
+                  setKeywordAnalysis(null);
+                  setSentiment(null);
+                  setFaq('');
+                  setLearnings('');
+                  setFollowup('');
+                  setChatHistory([]);
+                  setMindmapText('');
+                  setExecutiveSummaryData(null);
+                  setStorytellingData(null);
+                  setBusinessCaseData(null);
+                  setBlogData('');
+                  setExplainData(null);
+                  setQuizQuestions(null);
+                }}
+                className="flex-1 px-6 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <span>❌</span>
+                Annuleren
+              </button>
+            </div>
+            
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center max-w-md">
+              💡 Tip: Controleer je opname voordat je transcribeert. De annuleren knop wist alle sessiedata.
+            </p>
           </div>
         );
       default: return null;
@@ -4533,22 +5712,30 @@ ${transcript}
       try {
         // Don't reset other analysis data when generating executive summary
         setLoadingText(t('generating', { type: 'Executive summary' }));
+        
+        // Validate token usage for executive summary
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const sys = `Act as a seasoned McKinsey-style business analyst creating an extremely concise one-slide Executive Summary in OSC-R-B-C format (Objective, Situation, Complication, Resolution, Benefits, Call to Action). Use at most 1-3 short sentences per section. If a section is not explicitly present, output "[Niet expliciet besproken]". Return ONLY valid JSON with keys: objective, situation, complication, resolution, benefits, call_to_action.`;
         const prompt = `${sys}\n\nTranscript (NL or other):\n${getTranscriptSlice(transcript, 20000)}`;
+        const estimatedTokens = tokenCounter.countPromptTokens(prompt) + 500; // Add buffer for response
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
+        
+        if (!tokenValidation.allowed) {
+          setError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+          setTimeout(() => setShowPricingPage(true), 2000);
+          setLoadingText('');
+          return;
+        }
         const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
-        // Track token usage
-        const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(res.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
-        
-        // Token usage logging removed
+        // Track token usage with TokenManager
         try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
+          const promptTokens = tokenCounter.countPromptTokens(prompt);
+          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+          console.error('Error recording token usage for executive summary:', error);
+        }
 
         let text = res.text || '';
         text = text.replace(/```[a-z]*|```/gi, '').trim();
@@ -4581,7 +5768,8 @@ ${transcript}
       try {
         // Don't reset other analysis data when generating storytelling
         setLoadingText(t('generating', { type: 'Storytelling' }));
-        const ai = new GoogleGenAI({ apiKey: apiKey });
+        
+        // Validate token usage for storytelling
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         
@@ -4598,25 +5786,48 @@ ${transcript}
             customInstructions += `\n- Toon/Stijl: ${options.toneStyle}`;
           }
           if (options.length) {
-            customInstructions += `\n- Gewenste lengte: ${options.length}`;
+            // Add specific word count guidelines based on length
+            let wordCountGuideline = '';
+            switch (options.length) {
+              case 'short':
+                wordCountGuideline = 'short (aim for 300-500 words)';
+                break;
+              case 'medium':
+                wordCountGuideline = 'medium (aim for 500-800 words)';
+                break;
+              case 'long':
+                wordCountGuideline = 'long (aim for 800-1200 words)';
+                break;
+              default:
+                wordCountGuideline = options.length;
+            }
+            customInstructions += `\n- Gewenste lengte: ${wordCountGuideline}. IMPORTANT: Strictly adhere to this word count range.`;
           }
         }
         
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        
         const sys = `You receive a **${inputLanguage}** transcript from a meeting/webinar/podcast. Transform this into a narrative text in **${outputLanguage}** that reads like a story. Use storytelling elements: don't use character names, describe the setting, build tension around dilemmas or questions, and end with a clear outcome or cliffhanger. Write in an accessible and vivid style, as if it were a journalistic article or short story. Use quotes from the transcript as dialogue fragments. Focus on emotion, conflict, and the key insights that emerged. Make it readable for a broad audience, without being boring or too technical.${customInstructions}`;
         const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
+        const estimatedTokens = tokenCounter.countPromptTokens(prompt) + 1000; // Add buffer for response
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
+        
+        if (!tokenValidation.allowed) {
+          setError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+          setTimeout(() => setShowPricingPage(true), 2000);
+          setLoadingText('');
+          return;
+        }
         const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
-        // Track token usage
-        const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(res.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
-        
-        // Token usage logging removed
+        // Track token usage with TokenManager
         try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
+          const promptTokens = tokenCounter.countPromptTokens(prompt);
+          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+          console.error('Error recording token usage for storytelling:', error);
+        }
 
         let text = res.text || '';
         text = text.replace(/```[a-z]*|```/gi, '').trim();
@@ -4652,9 +5863,12 @@ ${transcript}
         // Don't reset other analysis data when generating blog
         // This allows  to keep other analyses while generating blog content
         setLoadingText(t('generating', { type: 'Blog' }));
-        const ai = new GoogleGenAI({ apiKey: apiKey });
+        
+        // Validate token usage for blog generation
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        
+        const ai = new GoogleGenAI({ apiKey: apiKey });
         const sys = `Act as an experienced content marketer/blog writer. Analyze the **${inputLanguage}** transcript thoroughly to identify key topics, discussion points, conclusions and insights. Generate a complete blog post in **${outputLanguage}** that effectively communicates the core message of the transcript to a broad audience.
 IMPORTANT: Start DIRECTLY with the title (H1), without introduction or explanation about how the blog was written.
 Blog Post Structure:
@@ -4668,19 +5882,25 @@ Call to Action (Blog-specific): E.g. "Leave your comment", "Want to know more?",
 Tone: The standard tone should be informative, objective and somewhat enthusiastic/engaged. It should captivate the reader.
 Length: Standard length: approx. 500 words (or 4000 characters). If the transcript is very short, a shorter but complete blog post. If the transcript is extremely long, focus on the most important highlights within the specified length.`;
         const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
+        const estimatedTokens = tokenCounter.countPromptTokens(prompt) + 1000; // Add buffer for response
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
+        
+        if (!tokenValidation.allowed) {
+          setError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+          setTimeout(() => setShowPricingPage(true), 2000);
+          setLoadingText('');
+          return;
+        }
         const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
-        // Track token usage
-        const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(res.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
-        
-        // Token usage logging removed
+        // Track token usage with TokenManager
         try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
+          const promptTokens = tokenCounter.countPromptTokens(prompt);
+          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+          console.error('Error recording token usage for blog generation:', error);
+        }
 
         let text = res.text || '';
         text = text.replace(/```[a-z]*|```/gi, '').trim();
@@ -4688,6 +5908,86 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
         setActiveView('blog');
       } catch (e: any) {
         setError(`${t('generationFailed', { type: 'Blog' })}: ${e.message || t('unknownError')}`);
+      } finally {
+        setLoadingText('');
+      }
+    };
+
+    const handleGenerateEmail = async (options: EmailOptions) => {
+      // Check transcript length based on user tier
+      const effectiveTier = userSubscription;
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
+      if (!transcriptValidation.allowed) {
+        setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+      }
+      
+      try {
+        setLoadingText(t('generating', { type: 'Email' }));
+        
+        // Validate token usage for email generation
+        const inputLanguage = getGeminiCode(language || 'en');
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        
+        const lengthInstructions = {
+          'Zeer Kort': 'Write a very brief email (2-3 sentences maximum).',
+          'Kort': 'Write a short email (1 paragraph).',
+          'Gemiddeld': 'Write a medium-length email (2-3 paragraphs).',
+          'Uitgebreid': 'Write a comprehensive email with detailed information.'
+        };
+        
+        const toneInstructions = {
+          'Professioneel': 'Use professional business language.',
+          'Vriendelijk': 'Use friendly and approachable language.',
+          'Formeel': 'Use formal and respectful language.',
+          'Informeel': 'Use casual and relaxed language.'
+        };
+        
+        const sys = `Act as a professional email writer. Analyze the **${inputLanguage}** transcript and create a well-structured email in **${outputLanguage}** based on the specified requirements.
+
+Requirements:
+- Length: ${lengthInstructions[options.length as keyof typeof lengthInstructions] || 'Write a medium-length email'}
+- Tone: ${toneInstructions[options.tone as keyof typeof toneInstructions] || 'Use professional language'}
+
+Structure the email with:
+1. Clear subject line
+2. Appropriate greeting
+3. Main content based on transcript key points
+4. Professional closing
+
+IMPORTANT: Start DIRECTLY with the email content, without introduction or explanation about how it was written.`;
+        
+        const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
+        const estimatedTokens = tokenCounter.countPromptTokens(prompt) + 800; // Add buffer for response
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
+        
+        if (!tokenValidation.allowed) {
+          setError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+          setTimeout(() => setShowPricingPage(true), 2000);
+          setLoadingText('');
+          return;
+        }
+        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        
+        // Track token usage with TokenManager
+        try {
+          const promptTokens = tokenCounter.countPromptTokens(prompt);
+          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+          console.error('Error recording token usage for email generation:', error);
+        }
+
+        let text = res.text || '';
+        text = text.replace(/```[a-z]*|```/gi, '').trim();
+        
+        setEmailContent(text);
+        setActiveView('email');
+      } catch (e: any) {
+        setError(`${t('generationFailed', { type: 'Email' })}: ${e.message || t('unknownError')}`);
       } finally {
         setLoadingText('');
       }
@@ -4705,7 +6005,8 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
       
       try {
         setLoadingText(t('generating', { type: 'Explain' }));
-        const ai = new GoogleGenAI({ apiKey: apiKey });
+        
+        // Validate token usage for explain generation
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         
@@ -4735,18 +6036,27 @@ Requirements:
 IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanation about how it was written.`;
         
         const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
+        const estimatedTokens = tokenCounter.countPromptTokens(prompt) + 1000; // Add buffer for response
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
+        
+        if (!tokenValidation.allowed) {
+          setError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+          setTimeout(() => setShowPricingPage(true), 2000);
+          setLoadingText('');
+          return;
+        }
+        
+        const ai = new GoogleGenAI({ apiKey: apiKey });
         const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         
-        // Track token usage
-        const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(res.text);
-        const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
-        
+        // Track token usage with TokenManager
         try {
-          if (authState.user) {
-            await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-          }
-        } catch {}
+          const promptTokens = tokenCounter.countPromptTokens(prompt);
+          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+          console.error('Error recording token usage for explain generation:', error);
+        }
 
         let text = res.text || '';
         text = text.replace(/```[a-z]*|```/gi, '').trim();
@@ -4761,6 +6071,65 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         setActiveView('explain');
       } catch (e: any) {
         setError(`${t('generationFailed', { type: 'Explain' })}: ${e.message || t('unknownError')}`);
+      } finally {
+        setLoadingText('');
+      }
+    };
+
+    const handleGenerateMindmap = async () => {
+      // Check transcript length based on user tier
+      const effectiveTier = userSubscription;
+      const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, transcript.length, t);
+      if (!transcriptValidation.allowed) {
+        setError(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+      }
+      
+      try {
+        setLoadingText(t('generating', { type: 'Mindmap' }));
+        
+        // Validate token usage for mindmap generation
+        const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
+        const prompt = `${sys}\n\nTranscript:\n${transcript.slice(0, 12000)}`;
+        const tokenEstimate = tokenManager.estimateTokens(prompt, 1.5);
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+        
+        if (!tokenValidation.allowed) {
+          setError(tokenValidation.reason || 'Token limiet bereikt voor je huidige abonnement.');
+          setTimeout(() => setShowPricingPage(true), 2000);
+          return;
+        }
+        
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        
+        // Track token usage with TokenManager
+        try {
+          const promptTokens = tokenCounter.countPromptTokens(prompt);
+          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+        } catch (error) {
+          console.error('Error recording token usage for mindmap generation:', error);
+        }
+        
+        const raw = res.text || '';
+        const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
+        if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
+        setMindmapMermaid(cleaned);
+        
+        try {
+          const mod = await import('mermaid');
+          const m: any = (mod as any).default || mod;
+          const { svg } = await m.render('mindmap-svg', cleaned);
+          setMindmapSvg(svg);
+        } catch (rErr) { 
+          console.warn('Mermaid render failed', rErr); 
+        }
+        
+        setActiveView('mindmap');
+      } catch (e: any) {
+        setError(`${t('generationFailed', { type: 'Mindmap' })}: ${e.message || t('unknownError')}`);
       } finally {
         setLoadingText('');
       }
@@ -4795,30 +6164,38 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       setKeywordAnalysis([]);
                       setSentimentAnalysisResult(null);
                       setQuizQuestions([]);
-                      setPodcastScript('');
                       setBlogData('');
                     }
                   setLoadingText(t('generating', { type: 'Mindmap' }));
-                  const ai = new GoogleGenAI({ apiKey: apiKey });
+                  
+                  // Validate token usage for mindmap generation
                   const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
                   const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 12000)}`;
+                  const estimatedTokens = tokenCounter.countPromptTokens(prompt) + 500; // Add buffer for response
+                  const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
+                  
+                  if (!tokenValidation.allowed) {
+                    setError(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+                    setTimeout(() => setShowPricingPage(true), 2000);
+                    setLoadingText('');
+                    return;
+                  }
+                  
+                  const ai = new GoogleGenAI({ apiKey: apiKey });
                   const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
                   
-                  // Track token usage
-                  const promptTokens = tokenCounter.countPromptTokens(prompt);
-                  const responseTokens = tokenCounter.countResponseTokens(res.text);
-                  const totalTokens = tokenCounter.getTotalTokens(prompt, res.text);
-                  
-                  // Token usage logging removed
+                  // Track token usage with TokenManager
                   try {
-                    if (authState.user) {
-                      await addUserMonthlyTokens(authState.user.uid, promptTokens, responseTokens);
-                    }
-                  } catch {}
+                    const promptTokens = tokenCounter.countPromptTokens(prompt);
+                    const responseTokens = tokenCounter.countResponseTokens(res.text);
+                    await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+                  } catch (error) {
+                    console.error('Error recording token usage for mindmap generation:', error);
+                  }
 
                   const raw = res.text || '';
                   const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
-                  if (!/^mindmap\b/.test(cleaned)) throw new Error('Invalid mindmap output');
+                  if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
                   setMindmapMermaid(cleaned);
                   try {
                     const mod = await import('mermaid');
@@ -4841,26 +6218,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       }
       return (
         <div className="relative p-4">
-          <div className="absolute top-4 right-4 flex gap-2">
-            <button onClick={() => {
-                const txt = `## ${t('mindmap')}\n\n${mindmapMermaid}`;
-                copyToClipboard(txt);
-            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                <CopyIcon className="w-5 h-5" />
-            </button>
-            <button onClick={() => {
-                const txt = `## ${t('mindmap')}\n\n${mindmapMermaid}`;
-                downloadTextFile(txt, 'mindmap.txt');
-            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
-                ⬇️
-            </button>
-            <button onClick={() => {
-                const { subject, body } = generateEmailContent(t('mindmap'), `## ${t('mindmap')}\n\n${mindmapMermaid}`);
-                copyToClipboardForEmail(subject, body);
-            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
-                ✉️
-            </button>
-          </div>
+
           {mindmapSvg ? (
             <div className="overflow-auto max-h-[70vh]" dangerouslySetInnerHTML={{ __html: mindmapSvg }} />
           ) : (
@@ -4873,7 +6231,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         { id: 'transcript', type: 'view', icon: TranscriptIcon, label: () => isAnonymized ? t('transcriptAnonymized') : t('transcript') },
         { id: 'anonymize', type: 'action', icon: AnonymizeIcon, label: () => t('anonymize'), onClick: handleAnonymizeTranscript, disabled: () => isProcessing || isAnonymized || !transcript.trim() },
         { id: 'chat', type: 'view', icon: ChatIcon, label: () => t('chat') },
-        { id: 'podcast', type: 'view', icon: PodcastIcon, label: () => t('podcast') },
+
         { id: 'presentation', type: 'action', icon: PresentationIcon, label: () => t('exportPPT'), onClick: () => {
             // Check if user has access to PowerPoint export
             const effectiveTier = userSubscription;
@@ -4907,10 +6265,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         { id: 'mindmap', type: 'view', icon: MindmapIcon, label: () => t('mindmap') },
         { id: 'storytelling', type: 'view', icon: StorytellingIcon, label: () => t('storytelling') },
         { id: 'blog', type: 'view', icon: BlogIcon, label: () => t('blog') },
-        { id: 'explain', type: 'view', icon: ExplainIcon, label: () => t('explain') }
+        { id: 'explain', type: 'view', icon: ExplainIcon, label: () => t('explain') },
+        // Email tab - alleen zichtbaar voor Gold, Enterprise, Diamond en bij email import
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) ? 
+            [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, podcast: podcastScript, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '' };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', email: emailContent || '' };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -4920,7 +6281,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         if (view === 'followUp' && followUpQuestions) { setActiveView('followUp'); return; }
         if (view === 'exec' && executiveSummaryData) { setActiveView('exec'); return; }
         if (view === 'keyword' && keywordAnalysis && keywordAnalysis.length > 0) { setActiveView('keyword'); return; }
-        if (view === 'podcast' && podcastScript && podcastScript.trim()) { setActiveView('podcast'); return; }
+
         if (view === 'sentiment' && sentimentAnalysisResult) { setActiveView('sentiment'); return; }
         if (view === 'storytelling' && storytellingData?.story) { setActiveView('storytelling'); return; }
         if (view === 'blog' && blogData) { setActiveView('blog'); return; }
@@ -4928,6 +6289,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         if (view === 'quiz' && quizQuestions) { setActiveView('quiz'); return; }
         if (view === 'businessCase' && businessCaseData?.businessCase) { setActiveView('businessCase'); return; }
         if (view === 'explain' && explainData?.explanation) { setActiveView('explain'); return; }
+        if (view === 'email' && emailContent) { setActiveView('email'); return; }
 
         // If content doesn't exist, generate it
         if (['summary', 'faq', 'learning', 'followUp'].includes(view)) {
@@ -4938,8 +6300,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             setActiveView('quiz');
         } else if (view === 'keyword') {
             handleGenerateKeywordAnalysis();
-        } else if (view === 'podcast') {
-            handleGeneratePodcast();
         } else if (view === 'sentiment') {
             handleAnalyzeSentiment();
         } else if (view === 'storytelling') {
@@ -4967,6 +6327,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 });
             }
             setActiveView('explain');
+        } else if (view === 'email') {
+            setActiveView('email');
         } else if (view === 'mindmap') {
             // Generate mindmap if it doesn't exist
             (async () => {
@@ -4979,7 +6341,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
                 const raw = res.text || '';
                 const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
-                if (!/^mindmap\b/.test(cleaned)) throw new Error('Invalid mindmap output');
+                if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
                 setMindmapMermaid(cleaned);
                 try {
                   const mod = await import('mermaid');
@@ -5039,7 +6401,10 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             return (
                 <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
                     <div className="absolute top-4 right-4 flex gap-2">
-                        <button onClick={() => {
+                        <button onClick={() => handleGenerateExecutiveSummary()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')}>
+                            🔄
+                        </button>
+                        <button onClick={async () => {
                             const txt = (() => {
                                 const parts: string[] = [
                                   `## ${t('executiveSummary')}`,
@@ -5053,7 +6418,12 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 ];
                                 return parts.join('\n');
                             })();
-                            copyToClipboard(txt);
+                            try {
+                                await copyToClipboard(txt);
+                                displayToast(t('copiedToClipboard'), 'success');
+                            } catch {
+                                displayToast(t('copyFailed'), 'error');
+                            }
                         }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
                             <CopyIcon className="w-5 h-5" />
                         </button>
@@ -5072,7 +6442,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 return parts.join('\n');
                             })();
                             downloadTextFile(txt, 'executive-summary.txt');
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
+                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')}>
                             ⬇️
                         </button>
                         <button onClick={() => {
@@ -5091,16 +6461,16 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             })();
                             const { subject, body } = generateEmailContent(t('executiveSummary'), content);
                             copyToClipboardForEmail(subject, body);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
+                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyForEmail')}>
                             ✉️
                         </button>
                     </div>
-                    {block(t('objective') || 'Objective', executiveSummaryData.objective)}
-                    {block(t('situation') || 'Situation', executiveSummaryData.situation)}
-                    {block(t('complication') || 'Complication', executiveSummaryData.complication)}
-                    {block(t('resolution') || 'Resolution', executiveSummaryData.resolution)}
-                    {block(t('benefits') || 'Benefits', executiveSummaryData.benefits)}
-                    {block(t('callToAction') || 'Call to Action', executiveSummaryData.call_to_action)}
+                    {block(t('objective', 'Objective'), executiveSummaryData.objective)}
+                    {block(t('situation', 'Situation'), executiveSummaryData.situation)}
+                    {block(t('complication', 'Complication'), executiveSummaryData.complication)}
+                    {block(t('resolution', 'Resolution'), executiveSummaryData.resolution)}
+                    {block(t('benefits', 'Benefits'), executiveSummaryData.benefits)}
+                    {block(t('callToAction', 'Call to Action'), executiveSummaryData.call_to_action)}
                 </div>
             );
         }
@@ -5184,10 +6554,20 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     {storytellingData ? (
                         <div className="relative">
                             <div className="absolute top-0 right-0 flex gap-2">
-                                <button onClick={() => copyToClipboard(storytellingData.story)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
+                                <button onClick={() => handleGenerateStorytelling(storyOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Opnieuw')}>
+                                    🔄
+                                </button>
+                                <button onClick={async () => {
+                                    try {
+                                        await copyToClipboard(storytellingData.story);
+                                        displayToast(t('copiedToClipboard'), 'success');
+                                    } catch {
+                                        displayToast(t('copyFailed'), 'error');
+                                    }
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
                                     <CopyIcon className="w-5 h-5" />
                                 </button>
-                                <button onClick={() => downloadTextFile(storytellingData.story, 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">⬇️</button>
+                                <button onClick={() => downloadTextFile(storytellingData.story, 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')}>⬇️</button>
                             </div>
                             <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{t('storytelling')}</h4>
                             <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{storytellingData.story}</p>
@@ -5203,11 +6583,11 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
                     <div className="flex flex-wrap gap-3 items-end mb-4">
                         <div>
-                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Aantal vragen (1-5)</label>
+                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('numberOfQuestions')}</label>
                             <input type="number" min={1} max={5} value={quizNumQuestions} onChange={(e) => setQuizNumQuestions(Math.max(1, Math.min(5, Number(e.target.value) || 2)))} className="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900" />
                         </div>
                         <div>
-                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Opties per vraag</label>
+                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('optionsPerQuestion')}</label>
                             <select value={quizNumOptions} onChange={(e) => setQuizNumOptions(Number(e.target.value) as 2|3|4)} className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900">
                                 <option value={2}>2</option>
                                 <option value={3}>3</option>
@@ -5216,9 +6596,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         </div>
                         <label className="inline-flex items-center gap-2 text-sm">
                             <input type="checkbox" checked={quizIncludeAnswers} onChange={(e) => setQuizIncludeAnswers(e.target.checked)} className="w-4 h-4" />
-                            <span>Inclusief antwoorden</span>
+                            <span>{t('includeAnswers')}</span>
                         </label>
-                        <button onClick={handleGenerateQuiz} disabled={isGeneratingQuiz || !transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">{isGeneratingQuiz ? 'Genereren...' : 'Genereren'}</button>
+                        <button onClick={handleGenerateQuiz} disabled={isGeneratingQuiz || !transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">{isGeneratingQuiz ? t('generatingQuiz') : t('generate')}</button>
                         {quizQuestions && quizQuestions.length > 0 && (
                             <div className="ml-auto flex items-center gap-2">
                                 <button onClick={async () => {
@@ -5232,8 +6612,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                         });
                                         return parts.join('\n');
                                     })();
-                                    try { await navigator.clipboard.writeText(txt); displayToast('Gekopieerd!', 'success'); } catch {}
-                                }} className="px-3 py-1.5 rounded bg-slate-800 text-white text-sm hover:bg-slate-900">Kopieer</button>
+                                    try { await navigator.clipboard.writeText(txt); displayToast(t('copy'), 'success'); } catch {}
+                                }} className="px-3 py-1.5 rounded bg-slate-800 text-white text-sm hover:bg-slate-900">{t('copy')}</button>
                                 <button onClick={() => {
                                     const txt = (() => {
                                         const parts: string[] = ['## Quizvragen', ''];
@@ -5248,8 +6628,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                     const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
                                     const url = URL.createObjectURL(blob);
                                     const a = document.createElement('a'); a.href = url; a.download = 'quizvragen.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-                                    displayToast('Tekstbestand gedownload', 'success');
-                                }} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm hover:bg-slate-800">Download .txt</button>
+                                    displayToast(t('downloadTxt'), 'success');
+                                }} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm hover:bg-slate-800">{t('downloadTxt')}</button>
                                 <button onClick={() => {
                                     const content = (() => {
                                         const parts: string[] = ['## Quizvragen', ''];
@@ -5262,9 +6642,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                         });
                                         return parts.join('\n');
                                     })();
-                                    const { subject, body } = generateEmailContent(t('quizQuestions') || 'Quizvragen', content);
+                                    const { subject, body } = generateEmailContent(t('quizQuestions', 'Quizvragen'), content);
                                     copyToClipboardForEmail(subject, body);
-                                }} className="px-3 py-1.5 rounded bg-slate-600 text-white text-sm hover:bg-slate-700">Mail</button>
+                                }} className="px-3 py-1.5 rounded bg-slate-600 text-white text-sm hover:bg-slate-700">{t('mail')}</button>
                             </div>
                         )}
                     </div>
@@ -5273,9 +6653,15 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         <ol className="space-y-3 list-decimal list-inside">
                             {quizQuestions.map((q, idx) => (
                                 <li key={`quiz-${idx}-${q.question.substring(0, 20)}`} className="text-sm">
-                                    <div className="font-medium text-slate-800 dark:text-slate-100 mb-1">{q.question}</div>
+                                    <div className="font-medium text-slate-800 dark:text-slate-100 mb-1">
+                                        <SafeUserText text={q.question} />
+                                    </div>
                                     <div className="ml-4 space-y-1">
-                                        {q.options.map(opt => (<div key={opt.label} className="text-slate-700 dark:text-slate-200">{opt.label}) {opt.text}</div>))}
+                                        {q.options.map(opt => (
+                                            <div key={opt.label} className="text-slate-700 dark:text-slate-200">
+                                                {opt.label}) <SafeUserText text={opt.text} />
+                                            </div>
+                                        ))}
                                     </div>
                                     {quizIncludeAnswers && (
                                         <div className="mt-1 text-slate-700 dark:text-slate-200">Correct antwoord: {q.correct_answer_label} - {q.correct_answer_text}</div>
@@ -5291,37 +6677,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         }
         if (activeView === 'mindmap') return renderMindmapView();
         
-        if (activeView === 'podcast') {
-            // Check if user has access to podcast generation
-            const effectiveTier = userSubscription;
-            if (!subscriptionService.isFeatureAvailable(effectiveTier, 'podcast')) {
-                return (
-                    <div className="flex items-center justify-center p-8 min-h-[300px]">
-                        <div className="text-center">
-                            <div className="text-6xl mb-4">🔒</div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Podcast generatie niet beschikbaar</h3>
-                            <p className="text-slate-600 dark:text-slate-400 mb-4">
-                                Podcast generatie is beschikbaar vanaf Gold tier. Upgrade je abonnement om podcast scripts te genereren.
-                            </p>
-                            <button 
-                                onClick={() => setShowPricingPage(true)}
-                                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
-                            >
-                                Bekijk Abonnementen
-                            </button>
-                        </div>
-                    </div>
-                );
-            }
-            
-            if (loadingText && !podcastScript) {
-                 return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[300px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
-            }
-            if (podcastScript) {
-                return <PodcastPlayer script={podcastScript} language={language || 'nl'} t={t} />;
-            }
-            return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
-        }
+
         if (activeView === 'blog') {
             const L = blogLabels[uiLang] || blogLabels.en;
             return (
@@ -5331,32 +6687,32 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-3">{td('storytellingOptional')}</div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Doelgroep Blogpost:</label>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('blogTargetAudience')}:</label>
                                 <select value={blogOptions.targetAudience} onChange={(e) => setBlogOptions(b => ({ ...b, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                     {L.targetAudience.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Hoofddoel van de Blogpost:</label>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('blogMainGoal')}:</label>
                                 <select value={blogOptions.mainGoal} onChange={(e) => setBlogOptions(b => ({ ...b, mainGoal: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                     {L.mainGoal.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Gewenste Toon:</label>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('blogTone')}:</label>
                                 <select value={blogOptions.tone} onChange={(e) => setBlogOptions(b => ({ ...b, tone: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                     {L.tone.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Gewenste Lengte (ongeveer):</label>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('blogLength')}:</label>
                                 <select value={blogOptions.length} onChange={(e) => setBlogOptions(b => ({ ...b, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                     {L.length.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
                                 </select>
                             </div>
                         </div>
                         <div className="mt-2">
-                            <button onClick={handleGenerateBlog} disabled={!transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">Genereren</button>
+                            <button onClick={handleGenerateBlog} disabled={!transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">{t('generate')}</button>
                         </div>
                     </div>
 
@@ -5366,7 +6722,17 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     ) : blogData ? (
                         <div className="relative">
                             <div className="absolute top-0 right-0 flex gap-2">
-                                <button onClick={() => copyToClipboard(blogData)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
+                                <button onClick={handleGenerateBlog} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Opnieuw')}>
+                                    🔄
+                                </button>
+                                <button onClick={async () => {
+                                    try {
+                                        await copyToClipboard(blogData);
+                                        displayToast(t('copiedToClipboard'), 'success');
+                                    } catch {
+                                        displayToast(t('copyFailed'), 'error');
+                                    }
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
                                     <CopyIcon className="w-5 h-5" />
                                 </button>
                                 <button onClick={() => downloadTextFile(blogData, 'blog.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">⬇️</button>
@@ -5391,6 +6757,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 return (
                     <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
                          <div className="absolute top-4 right-4 flex gap-2">
+                             <button onClick={() => handleAnalyzeSentiment()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')}>
+                                 🔄
+                             </button>
                              <button onClick={() => copyToClipboard(fullContent)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
                                  <CopyIcon className="w-5 h-5" />
                              </button>
@@ -5424,6 +6793,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             return (
                 <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
                     <div className="absolute top-4 right-4 flex gap-2">
+                        <button onClick={() => handleGenerateKeywordAnalysis()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')}>
+                            🔄
+                        </button>
                         <button onClick={() => {
                             const txt = (() => {
                                 const parts: string[] = [`## ${t('keywordAnalysis')}`, ''];
@@ -5655,6 +7027,28 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             );
         }
 
+        if (activeView === 'email') {
+            return (
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                    <EmailCompositionTab
+                        transcript={transcript}
+                        summary={summary}
+                        emailAddresses={emailAddresses}
+                        userId={user.uid}
+                        userTier={userSubscription}
+                        onPreviewEmail={(emailData: EmailData) => {
+                            console.log('Preview email:', emailData);
+                            // You can implement email preview functionality here
+                        }}
+                        onOpenMailto={(emailData: EmailData) => {
+                            const { subject, body } = generateEmailContent(t('email'), emailData.body);
+                            const mailtoUrl = `mailto:${emailData.to.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                            window.open(mailtoUrl, '_blank');
+                        }}
+                    />
+                </div>
+            );
+        }
         if (activeView === 'explain') {
             return (
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
@@ -5728,24 +7122,91 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         const content = analysisContent[activeView];
         return (
             <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                <div className="absolute top-4 right-4 flex gap-2">
-                    <button onClick={() => copyToClipboard(content)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                        <CopyIcon className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => downloadTextFile(content, `${activeView}.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
-                        ⬇️
-                    </button>
-                    <button onClick={() => {
-                        const allActions = [...primaryActions, ...analysisActions];
-                        const found = allActions.find(a => a.id === activeView);
-                        const fnName = found ? found.label() : activeView;
-                        const { subject, body } = generateEmailContent(fnName, content || '');
-                        copyToClipboardForEmail(subject, body);
-                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
-                        ✉️
-                    </button>
+                <div className="absolute top-4 right-4">
+                    <div 
+                        ref={actionButtonsRef}
+                        className="relative"
+                        onMouseEnter={() => setShowActionButtons(true)}
+                        onMouseLeave={() => setShowActionButtons(false)}
+                    >
+                        <button 
+                            className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                            aria-label={t('actions')}
+                            onClick={() => setShowActionButtons(!showActionButtons)}
+                        >
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="2"/>
+                                <circle cx="12" cy="12" r="2"/>
+                                <circle cx="12" cy="19" r="2"/>
+                            </svg>
+                        </button>
+                        {showActionButtons && (
+                            <div 
+                                className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                onMouseEnter={() => setShowActionButtons(true)}
+                                onMouseLeave={() => setShowActionButtons(false)}
+                            >
+                                {activeView !== 'transcript' && (
+                                    <button onClick={() => {
+                                        // Regenerate content based on activeView
+                                        if (['summary', 'faq', 'learning', 'followUp'].includes(activeView)) {
+                                            handleGenerateAnalysis(activeView);
+                                        } else if (activeView === 'exec') {
+                                            handleGenerateExecutiveSummary();
+                                        } else if (activeView === 'keyword') {
+                                            handleGenerateKeywordAnalysis();
+                                        } else if (activeView === 'sentiment') {
+                                            handleAnalyzeSentiment();
+                                        } else if (activeView === 'blog') {
+                                            handleGenerateBlog();
+                                        } else if (activeView === 'businessCase') {
+                                            handleGenerateBusinessCase();
+                                        } else if (activeView === 'quiz') {
+                                            handleGenerateQuiz();
+                                        } else if (activeView === 'mindmap') {
+                                            handleGenerateMindmap();
+                                        } else if (activeView === 'storytelling') {
+                                            handleGenerateStorytelling();
+                                        }
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')}>
+                                        🔄
+                                    </button>
+                                )}
+                                <button onClick={async () => {
+                                    await copyToClipboard(content);
+                                    displayToast(t('contentCopied', 'Content copied to clipboard!'));
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
+                                    <CopyIcon className="w-5 h-5" />
+                                </button>
+                                <button onClick={() => downloadTextFile(content, `${activeView}.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
+                                    ⬇️
+                                </button>
+                                <button onClick={() => {
+                                    const allActions = [...primaryActions, ...analysisActions];
+                                    const found = allActions.find(a => a.id === activeView);
+                                    const fnName = found ? found.label() : activeView;
+                                    const { subject, body } = generateEmailContent(fnName, content || '');
+                                    copyToClipboardForEmail(subject, body);
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
+                                    ✉️
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                    {activeView === 'transcript' && emailAddresses && emailAddresses.length > 0 && (
+                        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3">📧 Gevonden e-mailadressen:</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {emailAddresses.map((email, index) => (
+                                    <span key={index} className="px-3 py-1 bg-blue-100 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+                                        {email}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     <pre className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">
                         {renderMarkdown(content || t('noContent'))}
                     </pre>
@@ -5755,7 +7216,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
     };
     return (
         <div className={`w-full max-w-6xl mx-auto bg-transparent rounded-lg transition-all duration-300 ${isAnonymized ? 'ring-2 ring-green-400/80 shadow-lg shadow-green-500/10' : ''}`}>
-             <RecapSmartPanel
+             <RecapHorizonPanel
                  t={t}
                  transcript={transcript}
                  summary={summary}
@@ -5773,7 +7234,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                  explainData={explainData}
                  quizQuestions={quizQuestions}
                  quizIncludeAnswers={quizIncludeAnswers}
-                 startStamp={getStartStamp()}
+                 startStamp={startStamp}
                  outputLanguage={outputLang}
                  onNotify={(msg, type) => displayToast(msg, type)}
                  onGenerateQuiz={async ({ numQuestions, numOptions }) => {
@@ -5784,10 +7245,30 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       throw new Error(transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.');
                     }
                     
-                    const ai = new GoogleGenAI({ apiKey: apiKey });
+                    // Validate token usage for quiz generation
                     const sys = `You generate MCQs based on a transcript. Return ONLY a JSON array of objects with keys: question (string), options (array of {label, text}), correct_answer_label, correct_answer_text. Generate between 1 and 5 questions as requested. Ensure exactly one correct answer per question. Labels should be A, B, C, D but only up to the requested number of options.`;
+                    const quizPrompt = `${sys}\n\nConstraints: number_of_questions=${numQuestions}, number_of_options=${numOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
+                    const tokenEstimate = tokenManager.estimateTokens(quizPrompt, 1.5);
+                    const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+                    
+                    if (!tokenValidation.allowed) {
+                        throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+                    }
+                    
+                    const ai = new GoogleGenAI({ apiKey: apiKey });
                     const prompt = `${sys}\n\nConstraints: number_of_questions=${numQuestions}, number_of_options=${numOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
                     const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+                    
+                    // Track token usage with TokenManager
+                    const promptTokens = tokenCounter.countPromptTokens(prompt);
+                    const responseTokens = tokenCounter.countResponseTokens(res.text);
+                    
+                    try {
+                        await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
+                    } catch (error) {
+                        console.error('Error recording token usage:', error);
+                    }
+                    
                     let text = res.text || '';
                     text = text.replace(/```[a-z]*|```/gi, '').trim();
                     const arr = JSON.parse(text);
@@ -5834,17 +7315,19 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
     );
   };
   const renderChatView = () => (
-    <div className="flex flex-col h-[70vh] bg-white dark:bg-slate-800 rounded-b-lg transition-colors">
+    <div className="flex flex-col h-[50vh] bg-white dark:bg-slate-800 rounded-b-lg transition-colors">
         <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-slate-700">
             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 pl-2">{t('chatWithTranscript')}</h3>
-            <button 
-                onClick={() => setIsTTSEnabled(!isTTSEnabled)} 
-                disabled={!apiKey}
-                className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md ${isTTSEnabled ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-500/20' : (!apiKey) ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
-            >
-                {isTTSEnabled ? <SpeakerIcon className="w-5 h-5" /> : <SpeakerOffIcon className="w-5 h-5" />}
-                <span>{isTTSEnabled ? t('readAnswers') : (!apiKey ? t('readAnswers') : t('readAnswers'))}</span>
-            </button>
+            {userSubscription === SubscriptionTier.DIAMOND && (
+                <button 
+                    onClick={() => setIsTTSEnabled(!isTTSEnabled)} 
+                    disabled={!apiKey}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md ${isTTSEnabled ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-500/20' : (!apiKey) ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
+                >
+                    {isTTSEnabled ? <SpeakerIcon className="w-5 h-5" /> : <SpeakerOffIcon className="w-5 h-5" />}
+                    <span>{t('readAnswers')}</span>
+                </button>
+            )}
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {chatHistory.map((msg, index) => (
@@ -5879,14 +7362,16 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     className="flex-1 bg-transparent text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 resize-none focus:outline-none px-2" 
                     disabled={isChatting}
                 />
-                <button 
-                    onClick={toggleListening} 
-                    disabled={!apiKey}
-                    className={`p-2 rounded-full transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : (!apiKey) ? 'bg-slate-300 dark:bg-slate-600 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
-                    title={(!apiKey) ? t('setupApiKey') : (isListening ? t('stopListening') : t('startListening'))}
-                > 
-                    <MicIcon className="w-5 h-5"/> 
-                </button>
+                {userSubscription === SubscriptionTier.DIAMOND && (
+                    <button 
+                        onClick={toggleListening} 
+                        disabled={!apiKey}
+                        className={`p-2 rounded-full transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : (!apiKey) ? 'bg-slate-300 dark:bg-slate-600 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
+                        title={(!apiKey) ? t('setupApiKey') : (isListening ? t('stopListening') : t('startListening'))}
+                    > 
+                        <MicIcon className="w-5 h-5"/> 
+                    </button>
+                )}
                 <button 
                     onClick={handleSendMessage} 
                     disabled={isChatting || (!chatInput.trim() && !voiceInputPreview.trim()) || (!apiKey)} 
@@ -5902,7 +7387,14 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
   return (
     <>
     <div className="min-h-screen text-slate-800 dark:text-white font-sans flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
-      {isProcessing && <LoadingOverlay text={loadingText || t('processing')} />}
+      {isProcessing && (
+        <LoadingOverlay
+          text={loadingText || t('processing')}
+          progress={isSegmentedTranscribing ? (transcriptionProgress ?? 0) : undefined}
+          cancelText={t('cancel', 'Annuleren')}
+          onCancel={isSegmentedTranscribing ? handleCancelTranscription : undefined}
+        />
+      )}
       {selectedKeyword && (
         <KeywordExplanationModal
             keyword={selectedKeyword}
@@ -5969,23 +7461,29 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           {/* Logo & brand */}
           {!showInfoPage && (
             <button onClick={() => setShowInfoPage(true)} className="flex items-center gap-2 min-w-0 hover:opacity-90">
-              <img src="/logo.png" alt="RecapSmart Logo" className="w-8 h-8 rounded-lg" />
+              <img src="/logo.png" alt="RecapHorizon Logo" className="w-8 h-8 rounded-lg" />
             </button>
           )}
           
-          <div className="flex items-center gap-2 bg-gray-200 dark:bg-slate-800 px-2 py-1 rounded-md shrink-0">
-            <select value={uiLang} onChange={(e) => setUiLang(e.target.value as any)} className="bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none">
-              <option value="en">EN</option>
-              <option value="nl">NL</option>
-              <option value="de">DE</option>
-              <option value="fr">FR</option>
-              <option value="pt">PT</option>
-              <option value="es">ES</option>
-            </select>
-          </div>
-                          <button onClick={toggleTheme} className="flex items-center justify-center h-9 w-9 bg-gray-200 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-opacity-80">
-                  {theme === 'light' ? <MoonIcon className="w-5 h-5"/> : <SunIcon className="w-5 h-5"/>}
-                </button>
+          <LanguageSelector
+            value={uiLang}
+            onChange={(val) => setUiLang(val as any)}
+            placeholder={t('language')}
+            appLanguage={uiLang}
+            className=""
+            allowedUiCodes={["nl","en","de","fr","es","pt"]}
+            hideSearch
+            flagsOnly
+            variant="header"
+          />
+          <button onClick={toggleTheme} title={theme === 'light' ? t('switchToDark') : t('switchToLight')} className="flex items-center justify-center h-9 w-9 bg-gray-200 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-opacity-80">
+            {theme === 'light' ? <MoonIcon className="w-5 h-5"/> : <SunIcon className="w-5 h-5"/>}
+          </button>
+          
+          {/* Token Usage Meter for logged in users */}
+          {authState.user && (
+            <TokenUsageMeter userTier={userSubscription} t={t} onShowPricing={() => setShowPricingPage(true)} />
+          )}
           
           {/* Conditional Buttons based on state */}
           {authState.user ? (
@@ -6003,7 +7501,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                           setFaq('');
                           setLearningDoc('');
                           setFollowUpQuestions('');
-                          setPodcastScript('');
                           setBlogData('');
                           setChatHistory([]);
                           setKeywordAnalysis(null);
@@ -6088,7 +7585,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       setFaq('');
                       setLearningDoc('');
                       setFollowUpQuestions('');
-                      setPodcastScript('');
                       setBlogData('');
                       setChatHistory([]);
                       setKeywordAnalysis(null);
@@ -6126,7 +7622,10 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           ) : (
             /* Not logged in - only show login button */
             <button 
-              onClick={() => loginModal.open()} 
+              onClick={() => {
+                const el = document.getElementById('login-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }} 
               className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
             >
               <span>🔐</span>
@@ -6153,48 +7652,20 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
       <WaitlistModal isOpen={waitlistModal.isOpen} onClose={waitlistModal.close} t={t} waitlistEmail={waitlistEmail} setWaitlistEmail={setWaitlistEmail} addToWaitlist={addToWaitlist} />
 
-      <LoginModal
-  isOpen={loginModal.isOpen}
-  onClose={loginModal.close}
-  t={t}
-  handleLogin={async (email: string, password: string) => {
-    setLoadingText(t('loggingIn'));
-    setError(null);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      if (!user || !user.uid) {
-        throw new Error('Geen geldige gebruiker gevonden na inloggen.');
-      }
-      // Hier pas Firestore functies aanroepen met user.uid
-      // Voorbeeld: await getUserSubscriptionTier(user.uid);
-      // ...andere Firestore calls
-      // Zet eventueel app state naar "ingelogd"
-      // Sluit modal na succes
-      loginModal.close();
-    } catch (error: any) {
-      setError(error.message || t('generalError'));
-    } finally {
-      setLoadingText('');
-    }
-  }}
-  handleCreateAccount={handleCreateAccount}
-  handlePasswordReset={handlePasswordReset}
-/>
 
       {/* Settings Modal */}
       {systemAudioHelp.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Systeem-audio inschakelen</h3>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('enableSystemAudio')}</h3>
               <button onClick={systemAudioHelp.close} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4">
               <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
-                Volg deze stappen om mee te luisteren met podcasts en video's. Zet bij het delen van je scherm de optie <strong>"Systeem audio"</strong> aan.
+                {t('systemAudioInstructions')}
               </p>
               <div className="rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
                 <img src="/uitleg.png" alt="Uitleg systeem audio aanzetten" className="w-full h-auto" />
@@ -6202,7 +7673,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
               <div className="mt-4 flex items-center justify-between">
                 {/* Link verwijderd */}
                 <button onClick={systemAudioHelp.close} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">
-                  Sluiten
+                  {t('close')}
                 </button>
               </div>
             </div>
@@ -6289,7 +7760,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     <QuestionMarkIcon className="w-5 h-5" />
                   </button>
                   <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-white dark:bg-slate-700 rounded-lg shadow-lg border border-slate-200 dark:border-slate-600 z-10 hidden group-hover:block">
-                    <p className="text-sm text-slate-700 dark:text-slate-200">{t('webPageHelpText') || 'Enter a URL or drag and drop a link to analyze content from a web page.'}</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-200">{t('webPageHelpText', 'Enter a URL or drag and drop a link to analyze content from a web page.')}</p>
                   </div>
                 </div>
               </div>
@@ -6300,7 +7771,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             <div className="p-4 space-y-4">
               <div className="space-y-4">
                 {/* WebExpert Option (Gold, Diamond and Enterprise tiers) */}
-                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE || authState.isAdmin) && (
+                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
                   <div className="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
                     <input
                       type="checkbox"
@@ -6310,9 +7781,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                     />
                     <label htmlFor="useDeepseek" className="text-sm font-medium text-purple-700 dark:text-purple-300 flex items-center">
-                      <span className="mr-2">{t('useWebExpertOption') || 'Use WebExpert Option'}</span>
+                      <span className="mr-2">{t('useWebExpertOption', 'Use WebExpert Option')}</span>
                       <span className="px-2 py-0.5 text-xs bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 rounded-full">
-                        {t('goldDiamondEnterpriseOnly') || 'Gold, Diamond & Enterprise'}
+                        {t('goldDiamondEnterpriseOnly', 'Gold, Diamond & Enterprise')}
                       </span>
                     </label>
                   </div>
@@ -6322,7 +7793,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   <>
                     {/* Single URL Input */}
                     <div className="space-y-1">
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('webPageUrlLabel') || 'Web Page URL'}</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('webPageUrlLabel', 'Web Page URL')}</label>
                       <input
                         type="url"
                         placeholder={t('webPageUrlPlaceholder')}
@@ -6381,8 +7852,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         }
                       }}>
                       <div className="text-slate-500 dark:text-slate-400">
-                        <div className="font-medium mb-1">{t('webPageDragDropText') || 'Drag and drop a URL here'}</div>
-                        <p className="text-sm text-slate-400 dark:text-slate-500">{t('webPageDragDropHint') || 'You can drag links from other tabs or applications'}</p>
+                        <div className="font-medium mb-1">{t('webPageDragDropText', 'Drag and drop a URL here')}</div>
+                        <p className="text-sm text-slate-400 dark:text-slate-500">{t('webPageDragDropHint', 'You can drag links from other tabs or applications')}</p>
                       </div>
                     </div>
                   </>
@@ -6391,7 +7862,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     {/* Multiple URL Inputs for Deepseek */}
                     <div className="space-y-3">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {t('webExpertUrlsLabel') || 'Web Page URLs for WebExpert Analysis'}
+                        {t('webExpertUrlsLabel', 'Web Page URLs for WebExpert Analysis')}
                       </label>
                       
                       {webPageUrls.map((url, index) => (
@@ -6437,7 +7908,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                                   </svg>
                                   <span className="text-xs">
-                                    {t('webPageDragDropText') || 'Drag URL here or type'}
+                                    {t('webPageDragDropText', 'Drag URL here or type')}
                                   </span>
                                 </div>
                               </div>
@@ -6447,7 +7918,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       ))}
                       
                       <p className="text-xs text-purple-600 dark:text-purple-400">
-                        {t('webExpertUrlsNote') || 'WebExpert allows analyzing multiple URLs simultaneously for comprehensive insights.'}
+                        {t('webExpertUrlsNote', 'WebExpert allows analyzing multiple URLs simultaneously for comprehensive insights.')}
                       </p>
                     </div>
                   </>
@@ -6479,7 +7950,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       if (validUrls.length > 0) {
                         handleWebPage(validUrls[0], true, validUrls);
                       } else {
-                        setWebPageError(t('noValidUrlsError') || 'Please enter at least one valid URL');
+                        setWebPageError(t('noValidUrlsError', 'Please enter at least one valid URL'));
                       }
                     } else {
                       handleWebPage(webPageUrl);
@@ -6494,7 +7965,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       {t('loading')}
                     </>
                   ) : (
-                    useDeepseek ? (t('analyzeWithWebExpert') || 'Analyze with WebExpert') : t('processWebPage')
+                    useDeepseek ? (t('analyzeWithWebExpert', 'Analyze with WebExpert')) : t('processWebPage')
                   )}
                 </button>
               </div>
@@ -6521,7 +7992,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
               <p className="text-lg leading-relaxed">
-                De taal selecteren voor het bron document/opname helpt AI om het beter te begrijpen.
+                {t('helpLanguageSelection')}
               </p>
             </div>
             
@@ -6530,7 +8001,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 onClick={step1Help.close} 
                 className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-colors"
               >
-                Sluiten
+{t('buttonClose')}
               </button>
             </div>
           </div>
@@ -6555,7 +8026,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             
             <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
               <p className="text-lg leading-relaxed">
-                De taal selecteren voor het bron document/opname helpt AI om het beter te begrijpen.
+                {t('helpLanguageSelection')}
               </p>
             </div>
             
@@ -6564,7 +8035,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 onClick={step2Help.close} 
                 className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-colors"
               >
-                Sluiten
+{t('buttonClose')}
               </button>
             </div>
           </div>
@@ -6656,25 +8127,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             </div>
             
             <div className="space-y-6">
-              {/* Huidige tier + gebruik */}
-              <div className="p-4 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/60">
-                <div className="flex flex-wrap items-center gap-4 text-sm">
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 mr-2">{t('settingsCurrentTier')}</span>
-                    <span className="font-semibold capitalize">{authState.isAdmin ? 'diamond' : String(userSubscription)}</span>
-                    <button onClick={() => { settingsModal.close(); setShowPricingPage(true); }} className="ml-2 text-cyan-600 dark:text-cyan-400 underline">{t('settingsViewPricing')}</button>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 mr-2">{t('settingsTokensThisMonth')}</span>
-                    <span className="font-semibold">{monthlyTokens?.totalTokens ?? 0}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 mr-2">{t('settingsSessionsThisMonth')}</span>
-                    <span className="font-semibold">{monthlySessions ?? 0}</span>
-                  </div>
-                </div>
-              </div>
-
               {/* API Key beheer verwijderd – sleutel komt uit .env.local */}
 
               {/* Anonimisatie Regels Sectie */}
@@ -6748,7 +8200,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   {anonymizationRules.length === 0 && (
                     <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                       <p>{t('settingsNoRules')}</p>
-                      <p className="text-sm mt-1">{t('settingsAddRule')} om tekst automatisch te anonimiseren.</p>
+                      <p className="text-sm mt-1">{t('settingsAddRule')} {t('settingsAnonymizationAutoText')}.</p>
                     </div>
                   )}
                 </div>
@@ -6828,13 +8280,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             <div className="mb-20">
               {/* Logo - kleiner en subtieler */}
               <div className="flex justify-center mb-6">
-                <img src="/logo.png" alt="RecapSmart Logo" className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl shadow-lg" />
+                <img src="/logo.png" alt="RecapHorizon Logo" className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl shadow-lg" />
               </div>
               
               {/* Hoofdtitel - meer compact en elegant */}
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-slate-100 mb-4">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600">
-                  RecapSmart
+                  RecapHorizon
                 </span>
               </h1>
               
@@ -6844,10 +8296,11 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
               </p>
               
               {/* Login + Uitnodiging Section */}
+              {!authState.user && (
               <div className="max-w-6xl xl:max-w-7xl mx-auto w-full">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 xl:gap-12">
                                       {/* {t('loginLeftProminent')} */}
-                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 xl:p-10 shadow-sm">
+                  <div id="login-section" className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 xl:p-10 shadow-sm">
                     <h2 className="text-2xl font-semibold mb-4 text-slate-900 dark:text-slate-100">{t('login')}</h2>
                     <LoginForm 
                       onLogin={handleLogin}
@@ -6879,7 +8332,11 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       </button>
                     </div>
                     <button
-                      onClick={() => setShowWaitlistModal(true)}
+                      onClick={() => {
+                        if (!authState.user) {
+                          waitlistModal.open();
+                        }
+                      }}
                       className="mt-3 text-cyan-700 dark:text-cyan-400 hover:underline text-sm"
                     >
                       {t('waitlistMoreInfo')}
@@ -6887,6 +8344,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   </div>
                 </div>
               </div>
+              )}
               
             {/* CTA beknopt onder login */}
             <div className="text-center px-2 mt-6">
@@ -6909,17 +8367,31 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
                   <img src="/images/hero-2.jpg" alt="AI analyse resultaten" className="w-full h-44 object-cover" />
                   <div className="p-5">
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">AI analyse</h3>
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('featureAIAnalysisTitle')}</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featureAIAnalysisDesc')}</p>
                   </div>
                 </div>
-                                  <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
-                    <img src="/images/hero-3.jpg" alt="Export maken" className="w-full h-44 object-cover" />
-                    <div className="p-5">
-                      <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2"> Export</h3>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featurePresentationsDesc')}</p>
-                    </div>
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
+                  <img src="/images/hero-3.jpg" alt="Export maken" className="w-full h-44 object-cover" />
+                  <div className="p-5">
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('useCaseExportTitle')}</h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featurePresentationsDesc')}</p>
                   </div>
+                </div>
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
+                  <img src="/images/usecase-kit.jpg" alt="AI-Assistent Toolkit" className="w-full h-44 object-cover" />
+                  <div className="p-5">
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('featureToolkitTitle')}</h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featureToolkitDesc')}</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
+                  <img src="/images/usecase-pwa.jpg" alt="PWA Ondersteuning" className="w-full h-44 object-cover" />
+                  <div className="p-5">
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('featurePWATitle')}</h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">{t('featurePWADesc')}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -7045,6 +8517,22 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         
         {(status === RecordingStatus.IDLE || status === RecordingStatus.ERROR) ? (
              <div className="w-full max-w-[1600px] mx-auto bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 space-y-6">
+                {/* PWA Install Banner - only on start screen, when logged in, and not installed */}
+                {showPwaBanner && (
+                  <div className="mb-2 rounded-lg border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/30 p-3 flex items-center justify-between gap-3">
+                    <div className="text-sm text-cyan-900 dark:text-cyan-200">
+                      {t('pwaInstallBannerText')}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={handlePwaIgnore} className="px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        {t('pwaIgnore')}
+                      </button>
+                      <button onClick={handlePwaInstall} className="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">
+                        {t('pwaInstall')}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {/* API Key Waarschuwing */}
                 {!apiKey && (
                     <div className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
@@ -7075,16 +8563,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                                 </svg>
-                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Taal instellingen</span>
-                                <button 
-                                  onClick={step1Help.open}
-                                  className="ml-1 text-slate-500 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-400 transition-colors"
-                                  title="Help bij taal selectie"
-                                >
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                </button>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
@@ -7114,7 +8592,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             <div className="flex items-center justify-center gap-2 mb-4">
                                 <span className="text-lg font-medium text-slate-700 dark:text-slate-300">{t('chooseHowToStart')}</span>
                                 <button 
-                                  onClick={() => sessionOptionsModal.open()}
+                                  onClick={() => { setSessionOptionsHelpMode(true); sessionOptionsModal.open(); }}
                                   className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
                                   title="Meer informatie over sessie opties"
                                 >
@@ -7158,9 +8636,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('uploadTranscript')}</h3>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionFileDesc')}</p>
                                     </div>
-                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(authState.isAdmin ? '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document')}/>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(userSubscription === SubscriptionTier.DIAMOND ? '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document')}/>
                                     <input type="file" ref={imageInputRef} onChange={handleImageUpload} className="hidden" accept="image/*,.jpg,.jpeg,.png,.webp,.gif"/>
-                                    <button onClick={() => fileInputRef.current?.click()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                    <button onClick={handleSessionOptionUpload} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
                                         <UploadIcon className="w-5 h-5" />
                                         <span>{t('uploadFile')}</span>
                                     </button>
@@ -7208,15 +8686,45 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0 9c-5 0-9-4-9-9m9 9c5 0 9-4 9-9m-9 9V3m0 9c0-5 4-9 9-9m-9 9c0 5-4 9-9 9" />
                                         </svg>
-                                        <span>Webpagina</span>
+                                        <span>{t('webpage')}</span>
                                     </button>
                                     {/* Web page help link */}
                                     <div className="mt-3 text-center">
                                         <button onClick={() => setShowWebPageHelp(true)} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                            🌐 {t('help')}
+                                            🌐 {t('webPageHelpTitle')}
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Notion Page Option */}
+                                {userSubscription === SubscriptionTier.DIAMOND && (
+                                  <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-slate-400 dark:hover:border-slate-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                      <div className="text-center mb-4">
+                                          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                              <svg width="32" height="32" viewBox="0 0 100 100" aria-hidden="true" className="text-black dark:text-white">
+                                                  <rect x="10" y="10" width="80" height="80" rx="10" fill="currentColor" />
+                                                  <path d="M35 70V30h6l18 26V30h6v40h-6L41 44v26h-6z" fill="#ffffff"/>
+                                              </svg>
+                                          </div>
+                                          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('notionOption')}</h3>
+                                          <p className="text-sm text-slate-600 dark:text-slate-400">{t('notionOptionDesc')}</p>
+                                      </div>
+                                      <button onClick={() => notionImportModal.open()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-slate-700 to-black dark:from-slate-600 dark:to-black text-white hover:from-black hover:to-slate-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                          <svg className="w-5 h-5" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true">
+                                              <rect x="10" y="10" width="80" height="80" rx="10"></rect>
+                                          </svg>
+                                          <span>{t('notionOption') || 'Notion'}</span>
+                                      </button>
+                                      {/* Notion help link */}
+                                      {userSubscription === SubscriptionTier.DIAMOND && (
+                                        <div className="mt-3 text-center">
+                                            <button onClick={() => { setSessionOptionsHelpMode(true); sessionOptionsModal.open(); }} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                                🧭 {t('notionSearchHelp')}
+                                            </button>
+                                        </div>
+                                      )}
+                                  </div>
+                                )}
 
                                 {/* Image Upload Option */}
                                 <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-pink-300 dark:hover:border-pink-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
@@ -7238,7 +8746,32 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                     {/* Image help link */}
                                     <div className="mt-3 text-center">
                                         <button onClick={() => imageUploadHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                            📸 {t('help')}
+                                            📸 {t('imageUploadHelpTitle')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Email Import Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('emailImportOption')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('emailImportOptionDesc')}</p>
+                                    </div>
+                                    <button onClick={() => emailUploadModal.open()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-violet-600 dark:from-purple-600 dark:to-violet-700 text-white hover:from-purple-600 hover:to-violet-700 dark:hover:from-purple-700 dark:hover:to-violet-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <span>{t('emailImportOption')}</span>
+                                    </button>
+                                    {/* Email help link */}
+                                    <div className="mt-3 text-center">
+                                        <button onClick={() => emailImportHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            📧 {t('emailImportHelpTitle')}
                                         </button>
                                     </div>
                                 </div>
@@ -7263,7 +8796,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                     {/* Ask the Expert help link */}
                                     <div className="mt-3 text-center">
                                         <button onClick={() => expertHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                            🎓 {t('help')}
+                                            🎓 {t('expertHelpTitle')}
                                         </button>
                                     </div>
                                 </div>
@@ -7383,14 +8916,17 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
     {/* Session Options Modal */}
     <SessionOptionsModal
       isOpen={sessionOptionsModal.isOpen}
-      onClose={sessionOptionsModal.close}
+      onClose={() => { setSessionOptionsHelpMode(false); sessionOptionsModal.close(); }}
       onStartRecording={startRecording}
-      onUploadFile={handleSessionOptionUpload}
+      onUploadFile={() => handleSessionOptionUpload()}
       onPasteText={() => pasteModal.open()}
       onWebPage={() => webPageModal.open()}
-      onUploadImage={handleSessionOptionImageUpload}
+      onUploadImage={() => handleSessionOptionImageUpload()}
+      onEmailImport={() => emailUploadModal.open()}
+      onNotionImport={() => notionImportModal.open()}
       onAskExpert={() => expertConfigModal.open()}
-      userSubscription={String(userSubscription)}
+      userSubscription={SubscriptionTier[userSubscription] as unknown as string}
+      helpMode={sessionOptionsHelpMode}
       t={t}
     />
     {/* Storytelling Questions Modal removed in favor of inline panel */}
@@ -7433,6 +8969,78 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       />
     )}
 
+    {/* Email Import Help Modal */}
+    {emailImportHelpModal.isOpen && (
+      <EmailImportHelpModal
+        isOpen={emailImportHelpModal.isOpen}
+        onClose={emailImportHelpModal.close}
+        t={t}
+      />
+    )}
+
+    {/* Email Upload Modal */}
+    {emailUploadModal.isOpen && (
+      <EmailUploadModal
+        isOpen={emailUploadModal.isOpen}
+        onClose={emailUploadModal.close}
+        onEmailImport={handleEmailImport}
+        onAnalyze={handleAnalyzeEmail}
+        userSubscription={String(userSubscription)}
+        t={t}
+      />
+    )}
+
+    {/* File Upload Modal */}
+    {fileUploadModal.isOpen && (
+      <FileUploadModal
+        isOpen={fileUploadModal.isOpen}
+        onClose={fileUploadModal.close}
+        onImport={async (file) => {
+          await importTranscriptFile(file);
+          fileUploadModal.close();
+        }}
+        t={t}
+        accept={
+          userSubscription === SubscriptionTier.DIAMOND
+            ? '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            : userSubscription === SubscriptionTier.FREE
+              ? '.txt,text/plain'
+              : '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }
+        helperText={t('sessionOptionFileFormats')}
+      />
+    )}
+
+    {/* Image Upload Modal */}
+    {imageUploadModal.isOpen && (
+      <ImageUploadModal
+        isOpen={imageUploadModal.isOpen}
+        onClose={imageUploadModal.close}
+        onImport={async (file) => {
+          await importImageFile(file);
+          imageUploadModal.close();
+        }}
+        t={t}
+      />
+    )}
+
+    {/* Notion Import Modal */}
+    {notionImportModal.isOpen && userSubscription === SubscriptionTier.DIAMOND && (
+      <NotionImportModal
+        isOpen={notionImportModal.isOpen}
+        onClose={notionImportModal.close}
+        t={t}
+        onAuthorizedAndLoaded={(text) => {
+          const sanitizedText = sanitizeTextInput(text);
+          setTranscript(sanitizedText);
+          setStatus(RecordingStatus.FINISHED);
+          setActiveView('transcript');
+          displayToast(t('webPageStandardSuccess') || 'Successfully processed web page', 'success');
+          notionImportModal.close();
+        }}
+      />
+    )}
+
     {/* Expert Configuration Modal */}
     {expertConfigModal.isOpen && (
       <ExpertConfigurationModal
@@ -7472,6 +9080,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
          apiKey={apiKey}
          transcript={transcript}
          updateTokensAndRefresh={updateTokensAndRefresh}
+         userId={user.uid}
+         userTier={userSubscription}
        />
      )}
 
@@ -7481,6 +9091,15 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
          isOpen={expertHelpModal.isOpen}
          onClose={expertHelpModal.close}
          t={t}
+       />
+     )}
+     
+     {/* Session Timeout Warning */}
+     {sessionId && (
+       <SessionTimeoutWarning
+         sessionId={sessionId}
+         onExtendSession={handleExtendSession}
+         onLogout={handleSessionExpired}
        />
      )}
    </main>

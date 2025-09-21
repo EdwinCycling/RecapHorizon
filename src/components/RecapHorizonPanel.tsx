@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import jsPDF from 'jspdf';
 import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData } from '../../types';
 import { getBcp47Code } from '../languages';
+import EmailCompositionTab, { EmailData } from './EmailCompositionTab';
 
 
 
@@ -15,7 +16,7 @@ import { getBcp47Code } from '../languages';
 
 
 
-type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain';
+type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email';
 
 interface RecapItem {
 	id: string;
@@ -24,7 +25,7 @@ interface RecapItem {
 	enabled: boolean;
 }
 
-interface RecapSmartPanelProps {
+interface RecapHorizonPanelProps {
 	// Localized label provider
 	t: (key: string, params?: Record<string, unknown>) => string;
 
@@ -47,6 +48,12 @@ interface RecapSmartPanelProps {
 	quizIncludeAnswers?: boolean;
 	outputLanguage?: string; // Output language for BCP47 display
 
+	// Email functionality
+	emailAddresses?: string[];
+	emailEnabled?: boolean;
+	onPreviewEmail?: (emailData: EmailData) => void;
+	onOpenMailto?: (emailData: EmailData) => void;
+
 	// Notifications
 	onNotify?: (message: string, type?: 'success' | 'error' | 'info') => void;
 
@@ -65,13 +72,13 @@ const ChevronIcon: React.FC<{ className?: string; direction: 'up' | 'down' }>
 		</svg>
 	);
 
-const ArrowButton: React.FC<{ disabled?: boolean; onClick: () => void; direction: 'up' | 'down' }>
-	= ({ disabled, onClick, direction }) => (
+const ArrowButton: React.FC<{ disabled?: boolean; onClick: () => void; direction: 'up' | 'down'; t: (key: string) => string }>
+	= ({ disabled, onClick, direction, t }) => (
 		<button
 			onClick={onClick}
 			disabled={disabled}
 			className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed`}
-			aria-label={direction === 'up' ? 'Omhoog' : 'Omlaag'}
+			aria-label={direction === 'up' ? t('moveUp') : t('moveDown')}
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
 				{direction === 'up' ? <polyline points="18 15 12 9 6 15"/> : <polyline points="6 9 12 15 18 9"/>}
@@ -79,7 +86,7 @@ const ArrowButton: React.FC<{ disabled?: boolean; onClick: () => void; direction
 		</button>
 	);
 
-export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
+export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	t,
 	transcript,
 	summary,
@@ -98,6 +105,10 @@ export const RecapSmartPanel: React.FC<RecapSmartPanelProps> = ({
 	quizQuestions,
 	quizIncludeAnswers,
 	outputLanguage,
+	emailAddresses,
+	emailEnabled,
+	onPreviewEmail,
+	onOpenMailto,
 	onNotify,
 	startStamp,
 }) => {
@@ -133,7 +144,7 @@ useEffect(() => {
 	})();
 
 	if (shouldReset) {
-		console.log('[RecapSmartPanel] Significant session change detected - resetting');
+		console.log('[RecapHorizonPanel] Significant session change detected - resetting');
 		setPersistentItems([]);
 		processedContentRef.current.clear();
 		previousStartStampRef.current = startStamp;
@@ -161,6 +172,7 @@ useEffect(() => {
 		if (!!businessCaseData) availableContent.add('businessCase');
 		if (!!blogData && blogData.trim().length > 0) availableContent.add('blog');
 		if (!!explainData && explainData.explanation && explainData.explanation.trim().length > 0) availableContent.add('explain');
+		if (emailEnabled && !!emailAddresses && emailAddresses.length > 0) availableContent.add('email');
 
 		// Vind nieuwe content die nog niet is verwerkt
 		const newContent = Array.from(availableContent).filter(type => !processedContentRef.current.has(type));
@@ -179,12 +191,13 @@ useEffect(() => {
 					case 'followup': title = t('followUp'); break;
 					case 'chat': title = t('chat'); break;
 					case 'mindmap': title = t('mindmap'); break;
-					case 'exec': title = t('executiveSummary') || 'Executive summary'; break;
-					case 'quiz': title = t('quizQuestions') || 'Quizvragen'; break;
+					case 'exec': title = t('executiveSummary', 'Executive summary'); break;
+					case 'quiz': title = t('quizQuestions', 'Quizvragen'); break;
 					case 'storytelling': title = t('storytelling'); break;
-					case 'businessCase': title = t('businessCase') || 'Zakelijke case'; break;
+					case 'businessCase': title = t('businessCase', 'Zakelijke case'); break;
 					case 'blog': title = t('blog'); break;
 					case 'explain': title = t('explain'); break;
+					case 'email': title = t('emailFormTitle', 'E-mail Samenstelling'); break;
 				}
 				itemsToAdd.push({ id: type, type: type as RecapItemType, title, enabled: false });
 			});
@@ -209,15 +222,15 @@ useEffect(() => {
 const toggleItem = (id: string) => {
 	const item = persistentItems.find(i => i.id === id);
 	if (!item) return;
-	console.log('[RecapSmartPanel] toggleItem:', id, item.type, 'enabled:', !item.enabled);
+	console.log('[RecapHorizonPanel] toggleItem:', id, item.type, 'enabled:', !item.enabled);
 	if (resultsCache[item.type]) {
-		console.log('[RecapSmartPanel] toggleItem: uit cache', item.type);
+		console.log('[RecapHorizonPanel] toggleItem: uit cache', item.type);
 		setPersistentItems(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
 		return;
 	}
 	// Alleen genereren als nog niet in cache
 	const section = composeSectionText(item.type);
-	console.log('[RecapSmartPanel] toggleItem: genereren en cachen', item.type);
+	console.log('[RecapHorizonPanel] toggleItem: genereren en cachen', item.type);
 	setResultsCache(prev => ({ ...prev, [item.type]: section.text }));
 	setPersistentItems(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
 };
@@ -293,27 +306,27 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 			case 'exec': {
 				const sections: string[] = [];
 				const block = (label: string, value?: string) => `${label}\n${value || ''}`;
-				sections.push(block(t('objective') || 'Objective', executiveSummaryData?.objective));
+				sections.push(block(t('objective'), executiveSummaryData?.objective));
 				sections.push('');
-				sections.push(block(t('situation') || 'Situation', executiveSummaryData?.situation));
+				sections.push(block(t('situation'), executiveSummaryData?.situation));
 				sections.push('');
-				sections.push(block(t('complication') || 'Complication', executiveSummaryData?.complication));
+				sections.push(block(t('complication'), executiveSummaryData?.complication));
 				sections.push('');
-				sections.push(block(t('resolution') || 'Resolution', executiveSummaryData?.resolution));
+				sections.push(block(t('resolution'), executiveSummaryData?.resolution));
 				sections.push('');
-				sections.push(block(t('benefits') || 'Benefits', executiveSummaryData?.benefits));
+				sections.push(block(t('benefits'), executiveSummaryData?.benefits));
 				sections.push('');
-				sections.push(block(t('callToAction') || 'Call to Action', executiveSummaryData?.call_to_action));
-				return { title: `## ${t('executiveSummary') || 'Executive summary'}`, text: sections.join('\n') };
+				sections.push(block(t('callToAction'), executiveSummaryData?.call_to_action));
+				return { title: `## ${t('executiveSummary', 'Executive summary')}`, text: sections.join('\n') };
 			}
 			case 'quiz': {
-				return { title: `## ${t('quizQuestions') || 'Quizvragen'}`, text: buildQuizText(quizIncludeAnswers) };
+				return { title: `## ${t('quizQuestions', 'Quizvragen')}`, text: buildQuizText(quizIncludeAnswers) };
 			}
 			case 'storytelling': {
 				return { title: `## ${t('storytelling')}`, text: storytellingData?.story || '' };
 			}
 			case 'businessCase': {
-				return { title: `## ${t('businessCase') || 'Zakelijke case'}`, text: businessCaseData?.businessCase || '' };
+				return { title: `## ${t('businessCase', 'Zakelijke case')}`, text: businessCaseData?.businessCase || '' };
 			}
 			case 'blog': {
 				return { title: `## ${t('blog')}`, text: blogData || '' };
@@ -335,11 +348,11 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 
 	const getCachedOrGenerate = useCallback(async <T,>(type: RecapItemType, generator: () => Promise<T>): Promise<T> => {
 		if (resultsCache[type]) {
-			console.log(`[RecapSmartPanel] Using cached result for ${type}`);
+			console.log(`[RecapHorizonPanel] Using cached result for ${type}`);
 			return resultsCache[type];
 		}
 
-		console.log(`[RecapSmartPanel] Generating new result for ${type}`);
+		console.log(`[RecapHorizonPanel] Generating new result for ${type}`);
 		const result = await generator();
 		setResultsCache(prev => ({ ...prev, [type]: result }));
 		return result;
@@ -413,7 +426,8 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 
 	const handleMailComposed = useCallback(() => {
 		if (!composedText) return;
-		const subject = `RecapSmart ${startStamp || new Date().toLocaleString('nl-NL')} - RecapSmart`;
+		const locale = outputLanguage ? getBcp47Code(outputLanguage) : 'en-US';
+		const subject = `RecapHorizon ${startStamp || new Date().toLocaleString(locale)} - RecapHorizon`;
 		const body = composedText;
 		
 
@@ -448,8 +462,8 @@ To send via email:
 				className="w-full flex items-center justify-between px-3 py-2 text-left"
 			>
 				<div className="flex items-center gap-2">
-					<span className="text-base font-bold text-slate-800 dark:text-slate-100">
-						RecapSmart{outputLanguage ? ` (${getBcp47Code(outputLanguage)})` : ''}
+					<span className="text-base font-medium text-slate-800 dark:text-slate-100">
+						RecapHorizon{outputLanguage ? ` (${getBcp47Code(outputLanguage)})` : ''}
 					</span>
 					<span className="text-xs text-slate-500 dark:text-slate-400">{!hasAnyItem ? '(geen items)' : numEnabled === 0 ? '(selecteer items)' : `(${numEnabled} geselecteerd)`}</span>
 				</div>
@@ -458,7 +472,7 @@ To send via email:
 			{isOpen && (
 				<div className="px-3 pb-3">
 					{!hasAnyItem ? (
-						<div className="p-3 text-sm text-slate-500 dark:text-slate-400">Items verschijnen hier zodra inhoud is geladen uit de tabbladen.</div>
+						<div className="p-3 text-sm text-slate-500 dark:text-slate-400">{t('itemsAppearHere')}</div>
 					) : (
 						<>
 							<ul className="divide-y divide-gray-200 dark:divide-slate-700 rounded-md border border-gray-200 dark:border-slate-700 overflow-hidden">
@@ -474,8 +488,8 @@ To send via email:
 											<span className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.title}</span>
 										</div>
 										<div className="flex items-center gap-1">
-											<ArrowButton direction="up" onClick={() => moveItem(index, 'up')} disabled={index === 0} />
-											<ArrowButton direction="down" onClick={() => moveItem(index, 'down')} disabled={index === persistentItems.length - 1} />
+											<ArrowButton direction="up" onClick={() => moveItem(index, 'up')} disabled={index === 0} t={t} />
+<ArrowButton direction="down" onClick={() => moveItem(index, 'down')} disabled={index === persistentItems.length - 1} t={t} />
 										</div>
 									</li>
 								))}
@@ -483,9 +497,9 @@ To send via email:
 
 							{numEnabled > 0 && (
 								<div className="flex flex-wrap items-center gap-2 mt-3">
-									<button onClick={handleExportPdf} className="px-3 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold">Exporteren naar PDF</button>
-									<button onClick={handleExportText} className="px-3 py-2 rounded-md bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold">Exporteren naar Tekst</button>
-									<button onClick={handleMailComposed} className="px-3 py-2 rounded-md bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold">Copy for Email</button>
+									<button onClick={handleExportPdf} className="px-3 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium">{t('exportToPdf')}</button>
+									<button onClick={handleExportText} className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium">{t('exportToText')}</button>
+									<button onClick={handleMailComposed} className="px-3 py-2 rounded bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium">{t('copyForEmail')}</button>
 								</div>
 							)}
 						</>
@@ -496,6 +510,6 @@ To send via email:
 	);
 };
 
-export default RecapSmartPanel;
+export default RecapHorizonPanel;
 
 

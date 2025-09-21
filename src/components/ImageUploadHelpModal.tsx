@@ -17,7 +17,7 @@ const ImageUploadHelpModal: React.FC<ImageUploadHelpModalProps> = ({ isOpen, onC
         <div className="flex justify-between items-start p-6 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <PhotoIcon className="w-6 h-6 text-cyan-500 dark:text-cyan-400" />
-            <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('imageUploadHelpTitle')}</h3>
+            <h3 className="text-xl font-medium text-cyan-500 dark:text-cyan-400 tracking-tight">{t('imageUploadHelpTitle')}</h3>
           </div>
           <button 
             onClick={onClose}
@@ -31,13 +31,13 @@ const ImageUploadHelpModal: React.FC<ImageUploadHelpModalProps> = ({ isOpen, onC
         <div className="p-6 space-y-6 text-sm text-slate-700 dark:text-slate-300">
           {/* Subtitle */}
           <div>
-            <h4 className="font-semibold text-lg text-slate-800 dark:text-slate-200 mb-3">{t('imageUploadHelpSubtitle')}</h4>
+            <h4 className="font-medium text-lg text-slate-800 dark:text-slate-200 mb-3">{t('imageUploadHelpSubtitle')}</h4>
             <p className="leading-relaxed">{t('imageUploadHelpIntro')}</p>
           </div>
 
           {/* Supported Formats */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-5">
-            <h5 className="font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
+            <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
               <span className="text-xl">📁</span>
               {t('imageUploadHelpFormatsTitle')}
             </h5>
@@ -57,7 +57,7 @@ const ImageUploadHelpModal: React.FC<ImageUploadHelpModalProps> = ({ isOpen, onC
 
           {/* AI Analysis Features */}
           <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-5">
-            <h5 className="font-semibold text-purple-800 dark:text-purple-200 mb-3 flex items-center gap-2">
+            <h5 className="font-medium text-purple-800 dark:text-purple-200 mb-3 flex items-center gap-2">
               <span className="text-xl">🤖</span>
               {t('imageUploadHelpAITitle')}
             </h5>
@@ -85,7 +85,7 @@ const ImageUploadHelpModal: React.FC<ImageUploadHelpModalProps> = ({ isOpen, onC
 
           {/* How to Use */}
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-5">
-            <h5 className="font-semibold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
+            <h5 className="font-medium text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
               <span className="text-xl">📋</span>
               {t('imageUploadHelpUsageTitle')}
             </h5>

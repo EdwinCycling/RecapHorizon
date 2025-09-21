@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 .trae/
+
+# Local environment files (do NOT commit secrets)
+.env
+.env.*
+
+# Local Netlify folder
+.netlify

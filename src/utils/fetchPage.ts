@@ -2,6 +2,8 @@
 // Browser-compatible delay function
 const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
+type TranslationFunction = (key: string, fallback?: string) => string;
+
 export interface FetchOptions {
   timeoutMs?: number;
   retries?: number;
@@ -41,13 +43,14 @@ export class FetchError extends Error {
  */
 export async function fetchHTML(
   url: string, 
-  options: FetchOptions = {}
+  options: FetchOptions = {},
+  t?: TranslationFunction
 ): Promise<FetchResult> {
   const {
     timeoutMs = 15000,
     retries = 2,
     retryDelay: initialRetryDelay = 1000,
-    userAgent = "RecapSmart/1.0 (Web Content Analyzer)",
+    userAgent = "RecapHorizon/1.0 (+https://recaphorizon.app)",
     followRedirects = true,
     maxRedirects = 5
   } = options;
@@ -73,7 +76,7 @@ export async function fetchHTML(
     }, timeoutMs);
 
     try {
-      console.log(`[FetchHTML] Attempt ${attempt + 1}/${retries + 1} for URL: ${url}`);
+      console.log(t?.('fetchAttempt', `[FetchHTML] Attempt ${attempt + 1}/${retries + 1} for URL: ${url}`) || `[FetchHTML] Attempt ${attempt + 1}/${retries + 1} for URL: ${url}`);
       
       const response = await fetch(url, {
         method: "GET",
@@ -115,7 +118,7 @@ export async function fetchHTML(
       // Check content type
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('text/html') && !contentType.includes('application/xhtml')) {
-        console.warn(`[FetchHTML] Warning: Content-Type is '${contentType}', expected HTML`);
+        console.warn(t?.('fetchContentTypeWarning', `[FetchHTML] Warning: Content-Type is '${contentType}', expected HTML`) || `[FetchHTML] Warning: Content-Type is '${contentType}', expected HTML`);
       }
 
       const htmlContent = await response.text();
@@ -125,7 +128,7 @@ export async function fetchHTML(
       }
 
       // Extract metadata from HTML
-      const metadata = extractMetadata(htmlContent);
+      const metadata = extractMetadata(htmlContent, t);
 
       // Convert headers to plain object
       const headers: Record<string, string> = {};
@@ -133,7 +136,7 @@ export async function fetchHTML(
         headers[key] = value;
       });
 
-      console.log(`[FetchHTML] Successfully fetched ${htmlContent.length} characters from ${url}`);
+      console.log(t?.('fetchSuccess', `[FetchHTML] Successfully fetched ${htmlContent.length} characters from ${url}`) || `[FetchHTML] Successfully fetched ${htmlContent.length} characters from ${url}`);
       
       return {
         content: htmlContent,
@@ -151,7 +154,7 @@ export async function fetchHTML(
       clearTimeout(timeout);
       lastError = error as Error;
       
-      console.error(`[FetchHTML] Attempt ${attempt + 1} failed:`, {
+      console.error(t?.('fetchAttemptFailed', `[FetchHTML] Attempt ${attempt + 1} failed:`) || `[FetchHTML] Attempt ${attempt + 1} failed:`, {
         url,
         error: lastError.message,
         name: lastError.name
@@ -178,7 +181,7 @@ export async function fetchHTML(
 
       // Wait before retry (except on last attempt)
       if (attempt < retries) {
-        console.log(`[FetchHTML] Waiting ${retryDelay}ms before retry...`);
+        console.log(t?.('fetchRetryWait', `[FetchHTML] Waiting ${retryDelay}ms before retry...`) || `[FetchHTML] Waiting ${retryDelay}ms before retry...`);
         await delay(retryDelay);
         // Exponential backoff
         retryDelay *= 1.5;
@@ -198,7 +201,7 @@ export async function fetchHTML(
 /**
  * Extract metadata from HTML content
  */
-function extractMetadata(html: string): { title?: string; description?: string } {
+function extractMetadata(html: string, t?: TranslationFunction): { title?: string; description?: string } {
   const metadata: { title?: string; description?: string } = {};
   
   try {
@@ -215,7 +218,7 @@ function extractMetadata(html: string): { title?: string; description?: string }
       metadata.description = descMatch[1].trim();
     }
   } catch (error) {
-    console.warn('[FetchHTML] Error extracting metadata:', error);
+    console.warn(t?.('fetchMetadataError', '[FetchHTML] Error extracting metadata:') || '[FetchHTML] Error extracting metadata:', error);
   }
   
   return metadata;
@@ -227,13 +230,14 @@ function extractMetadata(html: string): { title?: string; description?: string }
 export async function fetchMultipleHTML(
   urls: string[],
   options: FetchOptions = {},
-  maxConcurrent: number = 3
+  maxConcurrent: number = 3,
+  t?: TranslationFunction
 ): Promise<Array<FetchResult | FetchError>> {
   if (!urls || urls.length === 0) {
     return [];
   }
 
-  console.log(`[FetchMultipleHTML] Fetching ${urls.length} URLs with max ${maxConcurrent} concurrent requests`);
+  console.log(t?.('fetchMultipleStart', `[FetchMultipleHTML] Fetching ${urls.length} URLs with max ${maxConcurrent} concurrent requests`) || `[FetchMultipleHTML] Fetching ${urls.length} URLs with max ${maxConcurrent} concurrent requests`);
   
   const results: Array<FetchResult | FetchError> = [];
   
@@ -243,9 +247,9 @@ export async function fetchMultipleHTML(
     
     const batchPromises = batch.map(async (url) => {
       try {
-        return await fetchHTML(url, options);
+        return await fetchHTML(url, options, t);
       } catch (error) {
-        console.error(`[FetchMultipleHTML] Failed to fetch ${url}:`, error);
+        console.error(t?.('fetchMultipleFailed', `[FetchMultipleHTML] Failed to fetch ${url}:`) || `[FetchMultipleHTML] Failed to fetch ${url}:`, error);
         return error as FetchError;
       }
     });
@@ -260,7 +264,7 @@ export async function fetchMultipleHTML(
   }
   
   const successful = results.filter(r => !(r instanceof FetchError)).length;
-  console.log(`[FetchMultipleHTML] Completed: ${successful}/${urls.length} successful`);
+  console.log(t?.('fetchMultipleCompleted', `[FetchMultipleHTML] Completed: ${successful}/${urls.length} successful`) || `[FetchMultipleHTML] Completed: ${successful}/${urls.length} successful`);
   
   return results;
 }

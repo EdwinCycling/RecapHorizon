@@ -1,0 +1,79 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidFileSize(maxSizeInMB) {
+      return request.resource.size <= maxSizeInMB * 1024 * 1024;
+    }
+    
+    function isValidAudioFile() {
+      return request.resource.contentType.matches('audio/.*') ||
+             request.resource.contentType.matches('video/.*') ||
+             request.resource.contentType == 'application/octet-stream';
+    }
+    
+    function isValidImageFile() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidDocumentFile() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('text/.*') ||
+             request.resource.contentType.matches('application/.*word.*') ||
+             request.resource.contentType.matches('application/.*sheet.*') ||
+             request.resource.contentType.matches('application/.*presentation.*');
+    }
+    
+    // User audio recordings - only owner can access
+    match /users/{userId}/recordings/{recordingId} {
+      allow read, write, delete: if isOwner(userId) &&
+        isValidAudioFile() &&
+        isValidFileSize(100); // 100MB max for audio files
+    }
+    
+    // User uploaded documents - only owner can access
+    match /users/{userId}/documents/{documentId} {
+      allow read, write, delete: if isOwner(userId) &&
+        (isValidDocumentFile() || isValidImageFile()) &&
+        isValidFileSize(50); // 50MB max for documents
+    }
+    
+    // User profile images - only owner can access
+    match /users/{userId}/profile/{imageId} {
+      allow read, write, delete: if isOwner(userId) &&
+        isValidImageFile() &&
+        isValidFileSize(5); // 5MB max for profile images
+    }
+    
+    // Temporary uploads - only owner can access, auto-delete after 24h
+    match /temp/{userId}/{fileId} {
+      allow read, write, delete: if isOwner(userId) &&
+        (isValidAudioFile() || isValidDocumentFile() || isValidImageFile()) &&
+        isValidFileSize(200); // 200MB max for temporary files
+    }
+    
+    // Public assets (read-only for all authenticated users)
+    match /public/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write, delete: if false; // Only admin can manage public assets
+    }
+    
+    // System backups and logs - completely restricted
+    match /system/{allPaths=**} {
+      allow read, write, delete: if false; // System files are server-side only
+    }
+    
+    // Default deny rule for any unmatched paths
+    match /{allPaths=**} {
+      allow read, write, delete: if false;
+    }
+  }
+}

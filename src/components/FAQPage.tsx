@@ -18,10 +18,10 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
   
   // SEO-optimized page title and description
   React.useEffect(() => {
-    document.title = 'FAQ - Veelgestelde Vragen | RecapSmart';
+    document.title = 'FAQ - Veelgestelde Vragen | RecapHorizon';
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Vind antwoorden op veelgestelde vragen over RecapSmart AI transcriptie, meeting analyse, en meer. Bekijk onze uitgebreide FAQ sectie.');
+      metaDescription.setAttribute('content', 'Vind antwoorden op veelgestelde vragen over RecapHorizon AI transcriptie, meeting analyse, en meer. Bekijk onze uitgebreide FAQ sectie.');
     }
   }, []);
 
@@ -39,8 +39,8 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
     // Core Functionality
     {
       category: 'core',
-      question: t('faqWhatIsRecapSmart'),
-      answer: t('faqWhatIsRecapSmartAnswer')
+      question: t('faqWhatIsRecapHorizon'),
+      answer: t('faqWhatIsRecapHorizonAnswer')
     },
     {
       category: 'core',
@@ -61,6 +61,11 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
       category: 'core',
       question: t('faqPauseResume'),
       answer: t('faqPauseResumeAnswer')
+    },
+    {
+      category: 'core',
+      question: t('faqEmailUpload'),
+      answer: t('faqEmailUploadAnswer')
     },
 
     // AI Features
@@ -269,7 +274,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
               </svg>
             </button>
           )}
-          <h1 className="text-5xl font-bold text-slate-900 dark:text-slate-100 mb-6">
+          <h1 className="text-5xl font-medium text-slate-900 dark:text-slate-100 mb-6 tracking-tight">
             {t('faqTitle')}
           </h1>
           <p className="text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
@@ -285,7 +290,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
               placeholder={t('faqSearchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-6 py-4 text-lg border-2 border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-cyan-500 focus:outline-none transition-all duration-200"
+              className="w-full px-6 py-4 text-lg border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-cyan-500 focus:outline-none transition-all duration-200"
             />
             <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400">
               🔍
@@ -299,7 +304,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`px-6 py-3 rounded-full font-semibold transition-all duration-200 flex items-center gap-2 ${
+              className={`px-6 py-3 rounded-md font-medium transition-all duration-200 flex items-center gap-2 ${
                 activeCategory === category.id
                   ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/25'
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
@@ -322,7 +327,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
                 onClick={() => toggleItem(index)}
                 className="w-full px-8 py-6 text-left flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200 rounded-2xl"
               >
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 pr-4">
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 pr-4">
                   {faq.question}
                 </h3>
                 <div className={`text-2xl text-cyan-500 transition-transform duration-200 ${
@@ -349,7 +354,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
         {filteredFAQs.length === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <h3 className="text-2xl font-medium text-slate-700 dark:text-slate-300 mb-2">
               {t('faqNoResultsTitle')}
             </h3>
             <p className="text-slate-500 dark:text-slate-400">
@@ -363,15 +368,15 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
         {/* Stats Section */}
         <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="text-center">
-            <div className="text-4xl font-bold text-cyan-500 mb-2">50+</div>
+            <div className="text-4xl font-medium text-cyan-500 mb-2">50+</div>
             <div className="text-slate-600 dark:text-slate-400">{t('faqStatsFeatures')}</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-cyan-500 mb-2">100%</div>
+            <div className="text-4xl font-medium text-cyan-500 mb-2">100%</div>
             <div className="text-slate-600 dark:text-slate-400">{t('faqStatsPrivacy')}</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-cyan-500 mb-2">24/7</div>
+            <div className="text-4xl font-medium text-cyan-500 mb-2">24/7</div>
             <div className="text-slate-600 dark:text-slate-400">{t('faqStatsAvailable')}</div>
           </div>
         </div>
@@ -380,9 +385,9 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
         <div className="mt-12 flex justify-center">
           <button 
             onClick={onClose} 
-            className="px-6 py-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors"
+            className="px-6 py-3 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors"
           >
-            {t('close') || 'Close'}
+            {t('close', 'Close')}
           </button>
         </div>
         </div>

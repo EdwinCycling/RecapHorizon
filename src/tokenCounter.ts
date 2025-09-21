@@ -51,6 +51,7 @@ export const tokenCounter = {
   countPromptTokens,
   countResponseTokens,
   getTotalTokens,
+  countTokens: estimateTokens, // Alias for estimateTokens to maintain compatibility
 };
 
 export default tokenCounter;

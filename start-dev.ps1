@@ -1,4 +1,4 @@
-Write-Host "Starting RecapSmart development server on port 3000..." -ForegroundColor Green
+Write-Host "Starting RecapHorizon development server on port 3000..." -ForegroundColor Green
 Write-Host ""
 Write-Host "If port 3000 is already in use, please close the application using that port first." -ForegroundColor Yellow
 Write-Host ""

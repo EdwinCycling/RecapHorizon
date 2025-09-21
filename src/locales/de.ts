@@ -26,7 +26,10 @@ export const de = {
   transcribing: "Transkribiere...",
   summarizing: "Fasse zusammen...",
   processing: "Verarbeite...",
-  appTitle: "RecapSmart",
+  appTitle: "RecapHorizon",
+  pwaInstallBannerText: "Installiere RecapHorizon als App für schnellen Zugriff über deine Taskleiste.",
+  pwaIgnore: "Ignorieren",
+  pwaInstall: "Installieren",
 
   reset: "Zurücksetzen",
   startNewSession: "Neue Sitzung",
@@ -54,9 +57,7 @@ export const de = {
   keyLearnings: "Wichtigste Learnings",
   followUp: "Follow-up",
   chat: "Chat",
-  podcast: "Podcast",
   anonymize: "Anonymisieren",
-  makePodcast: "Podcast erstellen",
   exportPPT: "PPT exportieren",
   copyContent: "Inhalt kopieren",
   noContent: "Noch kein Inhalt generiert.",
@@ -69,8 +70,7 @@ export const de = {
   finalizingPresentation: "Finalisiere Präsentation...",
   presentationFailed: "Präsentation fehlgeschlagen",
   speechRecognitionUnsupported: "Spracherkennung wird nicht unterstützt.",
-  podcastGenerating: "Erzeuge Podcast-Skript...",
-  podcastFailed: "Podcast-Erzeugung fehlgeschlagen",
+
   fileReadFailed: "Datei konnte nicht gelesen werden",
   selectLangToUpload: "Bitte Sprache vor dem Hochladen wählen.",
   keywordAnalysis: "Keyword-Analyse",
@@ -85,11 +85,10 @@ export const de = {
   step2: "Schritt 2",
   step3: "Schritt 3",
   presentationSuccess: "Präsentation '{fileName}' mit {slideCount} Folien erstellt.",
-  podcastReady: "Podcast abspielbereit",
-  rewindPodcast: "Podcast neu starten",
+
   downloadScript: "Skript herunterladen",
   play: "Abspielen",
-  podcastDownloadNote: "Hinweis: Direkter Audio-Download nicht unterstützt.",
+
   inhoudsopgave: "Inhaltsverzeichnis",
   taak: "Aufgabe",
   eigenaar: "Verantwortlich",
@@ -145,7 +144,7 @@ export const de = {
   clearTemplate: "Vorlage löschen",
   pptTemplateNote: "Hinweis: KI-Bilder sind bei benutzerdefinierter Vorlage deaktiviert.",
   listenAlongTitle: "Hören Sie mit Podcasts und YouTube",
-  listenAlongBody: "Aktivieren Sie den Systemton und lassen Sie RecapSmart automatisch transkribieren und zusammenfassen.",
+  listenAlongBody: "Aktivieren Sie den Systemton und lassen Sie RecapHorizon automatisch transkribieren und zusammenfassen.",
   listenAlongHelp: "Audio mithören? Erklärung",
   supportedFormatsLink: "Unterstützte Formate",
   supportedFormatsTitle: "Unterstützte Dateiformate",
@@ -159,12 +158,12 @@ export const de = {
   supportedFormatsNote: "Hinweis: PDF, RTF und DOCX werden automatisch in Klartext umgewandelt. Ergebnisse können je nach Qualität des Quelldokuments variieren.",
   landingHeroSubtitle: "Transformieren Sie Meetings, Webinare und Gespräche in professionelle Dokumente, Export und Erkenntnisse mit KI",
   waitlistTitle: "📋 Zugang auf Einladung",
-  waitlistLead: "RecapSmart ist derzeit nur auf Einladung verfügbar. Treten Sie der Warteliste bei!",
+  waitlistLead: "RecapHorizon ist derzeit nur auf Einladung verfügbar. Treten Sie der Warteliste bei!",
   emailPlaceholder: "ihre@email.de",
   waitlistSignUp: "Beitreten",
   waitlistMoreInfo: "Mehr über die Warteliste",
   aboutAiTitle: "🤖 Über KI & API-Schlüssel",
-  aboutAiBody: "RecapSmart verwendet die Google Gemini API; dafür benötigen wir einen API-Schlüssel. RecapSmart arbeitet mit Ihrem Schlüssel: er ist kostenlos, keine Gebühren. Der Schlüssel gehört Ihnen — deshalb kann RecapSmart so erschwinglich sein.",
+  aboutAiBody: "RecapHorizon verwendet die Google Gemini API; dafür benötigen wir einen API-Schlüssel. RecapHorizon arbeitet mit Ihrem Schlüssel: er ist kostenlos, keine Gebühren. Der Schlüssel gehört Ihnen — deshalb kann RecapHorizon so erschwinglich sein.",
   haveAccessLead: "Haben Sie bereits Zugang? Melden Sie sich an, um zu beginnen",
   loginNow: "Anmelden",
   featuresTitle: "Perfekt Für:",
@@ -176,10 +175,13 @@ export const de = {
   featurePresentationsDesc: "Verwenden Sie genau den Inhalt, den Sie benötigen, und fassen Sie ihn in einem Dokument, einer Präsentation oder einer E-Mail zusammen.",
   featureChatTitle: "💬 Chat & Fragen",
   featureChatDesc: "Stellen Sie Fragen zu Ihrem Transkript und erhalten Sie detaillierte Antworten. Sprach-Eingabe unterstützt.",
-  featurePodcastTitle: "🎧 Podcast-Skripte",
-  featurePodcastDesc: "Generieren Sie Podcast-Skripte und Inhalte aus Ihren Meetings. Perfekt für Content Creator.",
+
   featurePrivacyTitle: "🔒 Datenschutz & Anonymisierung",
   featurePrivacyDesc: "Automatische Anonymisierung von Namen und sensiblen Informationen. Konfigurierbare Regeln für Ihre Organisation.",
+  featureToolkitTitle: "🛠️ KI-Assistent Toolkit",
+  featureToolkitDesc: "RecapHorizon bietet ein vielseitiges Toolkit mit Funktionalitäten über die Audioaufnahme hinaus, einschließlich Datei- und Textanalyse, Webseiten-Import und Bildverarbeitung, ergänzt durch Premium-Optionen wie E-Mail-Import und Experten-Chat.",
+  featurePWATitle: "📱 PWA-Unterstützung",
+  featurePWADesc: "RecapHorizon unterstützt Progressive Web Apps (PWAs), was bedeutet, dass es offline verfügbar ist, schnell lädt und nach der Installation wie eine App auf Ihrem Gerät funktioniert.",
   privacyTitle: "🔒 Vollständige Datenschutzgarantie",
   privacyLead: "Wichtig: Ihre Sitzungen werden NICHT in unserer Datenbank gespeichert. Alle Daten bleiben vollständig lokal auf Ihrem Gerät.",
   privacyItemRecordings: "🎙️ Aufnahmen bleiben lokal",
@@ -205,7 +207,7 @@ export const de = {
   useCasesCreation1: "Content Creator und Journalisten",
   useCasesCreation2: "Marketing-Experten und PR-Spezialisten (für Brainstorms und Kampagnen)",
   useCasesCreation3: "Webinar-Hosts und Trainer",
-  useCasesCreation4: "Podcaster und Vlogger (für Aufnahmen und Bearbeitung)",
+  useCasesCreation4: "Vlogger (für Aufnahmen und Bearbeitung)",
   useCasesResearchTitle: "Forschung & Analyse",
   useCasesResearch1: "Forscher und Akademiker",
   useCasesResearch2: "Rechtsprofis",
@@ -219,7 +221,7 @@ export const de = {
   hiwStep3Title: "Ergebnis",
   hiwStep3Desc: "Laden Sie Ihre Dokumente, Export und Erkenntnisse herunter",
   ctaTitle: "🚀 Bereit zu starten?",
-  ctaLead: "Melden Sie sich an und entdecken Sie, wie RecapSmart Ihren Workflow transformieren kann. Sparen Sie Stunden an manuellen Notizen und Dokumentation.",
+  ctaLead: "Melden Sie sich an und entdecken Sie, wie RecapHorizon Ihren Workflow transformieren kann. Sparen Sie Stunden an manuellen Notizen und Dokumentation.",
   listening: "Hören...",
   speaking: "Sprechen Sie Ihre Frage...",
   startListening: "Spracherkennung starten",
@@ -278,37 +280,42 @@ export const de = {
   benefits: "Vorteile",
   callToAction: "Call to Action",
   quizQuestions: "Quiz-Fragen",
+  numberOfQuestions: "Anzahl Fragen (1-5)",
+  optionsPerQuestion: "Optionen pro Frage",
+  includeAnswers: "Antworten einschließen",
+  generate: "Generieren",
+  regenerate: "Neu generieren",
   // Use case Texte für Info-Seite
   useCaseMeetingTitle: "Direkte Meeting-Zusammenfassungen",
-  useCaseMeetingDesc1: "Du hast ein Online-Meeting, du lässt RecapSmart auf deinem PC mithören, lauschend auf System-Audio.",
-  useCaseMeetingDesc2: "RecapSmart liefert direkt eine knappe Zusammenfassung, Aktionspunkte und Entscheidungen, damit du sofort weißt, was vereinbart wurde.",
+  useCaseMeetingDesc1: "Du hast ein Online-Meeting, du lässt RecapHorizon auf deinem PC mithören, lauschend auf System-Audio.",
+  useCaseMeetingDesc2: "RecapHorizon liefert direkt eine knappe Zusammenfassung, Aktionspunkte und Entscheidungen, damit du sofort weißt, was vereinbart wurde.",
   useCaseWebinarTitle: "Webinar-Essenz in Minuten",
-  useCaseWebinarDesc1: "Du hast ein langes und informatives Webinar verfolgt, RecapSmart hört auf deinem PC mit.",
+  useCaseWebinarDesc1: "Du hast ein langes und informatives Webinar verfolgt, RecapHorizon hört auf deinem PC mit.",
   useCaseWebinarDesc2: "Erhalte direkt die wichtigsten Lernpunkte, Keywords und eine Zusammenfassung, ohne stundenlang durch deine Notizen zu wühlen.",
   useCaseConversationTitle: "Nie wieder Details verpassen",
-  useCaseConversationDesc1: "Ein wichtiges Gespräch mit Kollegen und du lässt RecapSmart auf deinem Smartphone mithören.",
+  useCaseConversationDesc1: "Ein wichtiges Gespräch mit Kollegen und du lässt RecapHorizon auf deinem Smartphone mithören.",
   useCaseConversationDesc2: "Danach direkt eine Übersicht mit Vereinbarungen.",
   useCaseSalesTitle: "Griff auf Kundengespräche",
   useCaseSalesDesc1: "Tägliche Kundengespräche? Nutze Sentiment-Analyse für zusätzliche Einblicke.",
-  useCaseSalesDesc2: "Lass RecapSmart den Audio vom Lautsprecher analysieren.",
+  useCaseSalesDesc2: "Lass RecapHorizon den Audio vom Lautsprecher analysieren.",
   useCaseQuizTitle: "Wissenscheck mit Quiz-Fragen",
   useCaseQuizDesc1: "Wiederhole ein Training oder teste dein Team.",
-  useCaseQuizDesc2: "RecapSmart erstellt Quiz-Fragen für Selbststudium oder Tests.",
+  useCaseQuizDesc2: "RecapHorizon erstellt Quiz-Fragen für Selbststudium oder Tests.",
   useCaseFaqTitle: "Blitzschnelle FAQs",
   useCaseFaqDesc1: "Schnell eine Liste mit Fragen und Antworten.",
-  useCaseFaqDesc2: "Analysiere dein Gespräch oder Webinar; RecapSmart macht den Rest.",
+  useCaseFaqDesc2: "Analysiere dein Gespräch oder Webinar; RecapHorizon macht den Rest.",
   useCaseExecTitle: "Executive-Überblick",
   useCaseExecDesc1: "Strategisches Update im O-S-C-R-B-C-Stil.",
   useCaseExecDesc2: "Perfekt für deine Executive-Folie.",
   useCaseVoiceTitle: "Strategie mit Sprach-Eingabe",
-  useCaseVoiceDesc1: "Sprich deine Ideen ein, RecapSmart arbeitet sie aus.",
+  useCaseVoiceDesc1: "Sprich deine Ideen ein, RecapHorizon arbeitet sie aus.",
   useCaseVoiceDesc2: "Inklusive Dokumente und Executive-Zusammenfassung.",
   useCaseChatTitle: "Chat über deine Inhalte",
   useCaseChatDesc1: "Frage alles über dein Meeting oder Webinar.",
   useCaseChatDesc2: "Direkte Antworten ohne Suchen.",
   useCaseExportTitle: "Alles in einem Dokument",
   useCaseExportDesc1: "Bündle alle Ergebnisse und exportiere.",
-  useCaseExportDesc2: "Mit dem RecapSmart-Panel stellst du alles zusammen.",
+  useCaseExportDesc2: "Mit dem RecapHorizon-Panel stellst du alles zusammen.",
   // Admin panel translations
   adminPanel: "Admin-Panel",
   backToStartSession: "Zurück zur Sitzung starten",
@@ -347,7 +354,7 @@ export const de = {
   forgotPassword: "Passwort vergessen?",
   // FAQ translations
   faqTitle: "Häufig gestellte Fragen",
-  faqSubtitle: "Alles, was Sie über RecapSmart wissen müssen. Von grundlegender Funktionalität bis hin zu fortschrittlichen KI-Funktionen, Datenschutzeinstellungen und praktischen Anwendungsfällen.",
+  faqSubtitle: "Alles, was Sie über RecapHorizon wissen müssen. Von grundlegender Funktionalität bis hin zu fortschrittlichen KI-Funktionen, Datenschutzeinstellungen und praktischen Anwendungsfällen.",
   faqSearchPlaceholder: "In allen Fragen suchen...",
   faqNoResultsTitle: "Keine Fragen gefunden",
   faqNoResultsSubtitle: "Versuchen Sie andere Suchbegriffe oder wählen Sie eine andere Kategorie.",
@@ -363,10 +370,10 @@ export const de = {
   faqStatsPrivacy: "Datenschutz",
   faqStatsAvailable: "Verfügbar - 64 Sprachen",
   // FAQ Questions and Answers
-  faqWhatIsRecapSmart: "Was ist RecapSmart und wie funktioniert es?",
-  faqWhatIsRecapSmartAnswer: "RecapSmart ist ein KI-gestütztes Tool, das Ihre Meetings, Webinare und Gespräche automatisch aufzeichnet, transkribiert und analysiert. Es funktioniert, indem es Ihr Mikrofon und Systemaudio verwendet, um alles zu erfassen, woraufhin die KI den Inhalt in Zusammenfassungen, Aktionspunkte und Erkenntnisse verarbeitet. Alle Daten bleiben lokal auf Ihrem Gerät für vollständige Privatsphäre.",
+  faqWhatIsRecapHorizon: "Was ist RecapHorizon und wie funktioniert es?",
+    faqWhatIsRecapHorizonAnswer: "RecapHorizon ist ein KI-gestütztes Tool, das Ihre Meetings, Webinare und Gespräche automatisch aufzeichnet, transkribiert und analysiert. Es funktioniert, indem es Ihr Mikrofon und Systemaudio verwendet, um alles zu erfassen, woraufhin die KI den Inhalt in Zusammenfassungen, Aktionspunkte und Erkenntnisse verarbeitet. Alle Daten bleiben lokal auf Ihrem Gerät für vollständige Privatsphäre.",
   faqFileFormats: "Welche Dateiformate kann ich hochladen?",
-  faqFileFormatsAnswer: "RecapSmart unterstützt TXT-, PDF-, RTF-, HTML-, Markdown- und DOCX-Dateien. PDF-, RTF- und DOCX-Dateien werden automatisch in Klartext umgewandelt. Für beste Ergebnisse empfehlen wir TXT-Dateien, aber alle Formate werden unterstützt.",
+  faqFileFormatsAnswer: "RecapHorizon unterstützt TXT-, PDF-, RTF-, HTML-, Markdown- und DOCX-Dateien. PDF-, RTF- und DOCX-Dateien werden automatisch in Klartext umgewandelt. Für beste Ergebnisse empfehlen wir TXT-Dateien, aber alle Formate werden unterstützt.",
   faqDocxImport: "Wie funktioniert der DOCX-Import?",
   faqDocxImportAnswer: "DOCX-Dateien werden automatisch in Klartext konvertiert, wenn Sie sie hochladen. Der Text wird aus dem Dokument extrahiert und kann dann von unserer KI analysiert werden. Formatierungen wie fetter Text, Tabellen und Bilder gehen bei der Konvertierung verloren, aber der Textinhalt bleibt erhalten.",
   faqRecordingLength: "Wie lange kann ich aufnehmen?",
@@ -411,11 +418,11 @@ export const de = {
   webPageUrlPlaceholder: "https://beispiel.com/artikel",
   processWebPage: "Webseite verarbeiten",
   webPageHelpTitle: "Webseiten-Hilfe",
-  webPageHelpDescription: "Lerne, wie du Webseiten in RecapSmart importierst:",
+  webPageHelpDescription: "Lerne, wie du Webseiten in RecapHorizon importierst:",
   webPageHelpStep1: "Kopiere die URL der Webseite, die du analysieren möchtest",
   webPageHelpStep2: "Füge die URL in das Eingabefeld oben ein",
   webPageHelpStep3: "Klicke auf 'Webseite verarbeiten', um den Text zu importieren",
-  webPageHelpStep4: "RecapSmart extrahiert automatisch allen Text und bereitet ihn für die Analyse vor",
+  webPageHelpStep4: "RecapHorizon extrahiert automatisch allen Text und bereitet ihn für die Analyse vor",
   
   faqStorage: "Wo wurden meine Aufnahmen gespeichert?",
   
@@ -485,9 +492,9 @@ export const de = {
   storytellingLengthQuestion: "Wie lang soll die Geschichte ungefähr sein?",
   storytellingLengthPlaceholder: "Länge auswählen",
   storytellingLengthOptions: {
-    short: "Kurz",
-    medium: "Mittel", 
-    long: "Lang"
+    short: "Kurz (300-500 Wörter)",
+    medium: "Mittel (500-800 Wörter)", 
+    long: "Lang (800-1200 Wörter)"
   },
   
   // General
@@ -497,63 +504,63 @@ export const de = {
   help: "Hilfe",
   faqStorageAnswer: "Alle Aufnahmen bleiben lokal auf Ihrem Gerät. Wir speichern nichts auf unseren Servern. Ihre Privatsphäre steht an erster Stelle - wir können Ihre Sitzungen nicht sehen, speichern oder verwenden.",
   faqAnonymization: "Wie funktioniert die Anonymisierung?",
-  faqAnonymizationAnswer: "RecapSmart kann automatisch Namen und sensible Informationen durch Pseudonyme ersetzen. Sie können Anonymisierungsregeln für Ihre Organisation konfigurieren. Dies ist ideal für Compliance und Datenschutz.",
+  faqAnonymizationAnswer: "RecapHorizon kann automatisch Namen und sensible Informationen durch Pseudonyme ersetzen. Sie können Anonymisierungsregeln für Ihre Organisation konfigurieren. Dies ist ideal für Compliance und Datenschutz.",
   faqDataExport: "Kann ich meine Daten exportieren und löschen?",
   faqDataExportAnswer: "Ja, Sie können alle Ihre generierten Inhalte in verschiedene Formate exportieren. Alle Daten können einfach gelöscht werden, indem Sie Ihre Browser-Daten löschen.",
   faqPhoneRecording: "Kann ich Telefongespräche direkt aufnehmen und analysieren?",
-  faqPhoneRecordingAnswer: "Nein, Sie können und dürfen keine Telefongespräche direkt von Ihrem Telefon aufnehmen und analysieren. Sie können jedoch ein Telefongespräch auf Lautsprecher stellen und RecapSmart auf Ihrem Laptop zuhören lassen. Informieren Sie unbedingt Ihre Gesprächspartner.",
-  faqMeetings: "Wie kann ich RecapSmart für Meetings verwenden?",
-  faqMeetingsAnswer: "Starten Sie eine Aufnahme für Ihr Meeting und lassen Sie RecapSmart zuhören. Danach erhalten Sie eine prägnante Zusammenfassung, Aktionspunkte und Entscheidungen. Ideal für Projektmanager, Teamleiter und Führungskräfte.",
+  faqPhoneRecordingAnswer: "Nein, Sie können und dürfen keine Telefongespräche direkt von Ihrem Telefon aufnehmen und analysieren. Sie können jedoch ein Telefongespräch auf Lautsprecher stellen und RecapHorizon auf Ihrem Laptop zuhören lassen. Informieren Sie unbedingt Ihre Gesprächspartner.",
+  faqMeetings: "Wie kann ich RecapHorizon für Meetings verwenden?",
+  faqMeetingsAnswer: "Starten Sie eine Aufnahme für Ihr Meeting und lassen Sie RecapHorizon zuhören. Danach erhalten Sie eine prägnante Zusammenfassung, Aktionspunkte und Entscheidungen. Ideal für Projektmanager, Teamleiter und Führungskräfte.",
   faqWebinars: "Kann ich Webinare verarbeiten?",
-  faqWebinarsAnswer: "Absolut! Lassen Sie RecapSmart während Webinaren zuhören und erhalten Sie die Essenz in Minuten. Sie erhalten die wichtigsten Lernpunkte, Keywords und eine Zusammenfassung, ohne stundenlang durch Ihre Notizen gehen zu müssen.",
+  faqWebinarsAnswer: "Absolut! Lassen Sie RecapHorizon während Webinaren zuhören und erhalten Sie die Essenz in Minuten. Sie erhalten die wichtigsten Lernpunkte, Keywords und eine Zusammenfassung, ohne stundenlang durch Ihre Notizen gehen zu müssen.",
   faqCustomerConversations: "Wie hilft es bei Kundengesprächen?",
-  faqCustomerConversationsAnswer: "Verwenden Sie Sentiment-Analyse für zusätzliche Einblicke in Kundengespräche. RecapSmart analysiert das Audio und gibt Ihnen ein besseres Verständnis der Kundenzufriedenheit und -bedürfnisse.",
+  faqCustomerConversationsAnswer: "Verwenden Sie Sentiment-Analyse für zusätzliche Einblicke in Kundengespräche. RecapHorizon analysiert das Audio und gibt Ihnen ein besseres Verständnis der Kundenzufriedenheit und -bedürfnisse.",
   faqTrainingQuizzes: "Kann ich Schulungen und Quiz erstellen?",
-  faqTrainingQuizzesAnswer: "Ja! RecapSmart generiert automatisch Quiz-Fragen basierend auf Ihrem Inhalt. Perfekt für das Testen Ihres Teams oder Selbststudium. Sie können die Anzahl der Fragen und Antwortoptionen anpassen.",
+  faqTrainingQuizzesAnswer: "Ja! RecapHorizon generiert automatisch Quiz-Fragen basierend auf Ihrem Inhalt. Perfekt für das Testen Ihres Teams oder Selbststudium. Sie können die Anzahl der Fragen und Antwortoptionen anpassen.",
   faqContentCreators: "Wie funktioniert es für Content Creator?",
-  faqContentCreatorsAnswer: "Content Creator können Podcast-Skripte aus Meetings generieren, Executive-Zusammenfassungen erstellen und Mindmaps erstellen. Ideal für Journalisten, Vermarkter und Vlogger.",
+  faqContentCreatorsAnswer: "Content Creator können Executive-Zusammenfassungen erstellen und Mindmaps erstellen. Ideal für Journalisten, Vermarkter und Vlogger.",
   faqExportOptions: "Welche Export-Optionen sind verfügbar?",
   faqExportOptionsAnswer: "Sie können PowerPoint-Präsentationen generieren, PDFs exportieren, Text in die Zwischenablage kopieren und alle Inhalte in einem Dokument zusammenfassen. Die KI generiert sogar Bilder für Ihre Folien.",
   faqPowerPoint: "Kann ich PowerPoint-Präsentationen erstellen?",
-  faqPowerPointAnswer: "Ja! RecapSmart generiert automatisch PowerPoint-Präsentationen mit KI-generierten Bildern. Sie können die Anzahl der Folien, Vorlage und Sprache anpassen. Perfekt für Executive-Updates.",
+  faqPowerPointAnswer: "Ja! RecapHorizon generiert automatisch PowerPoint-Präsentationen mit KI-generierten Bildern. Sie können die Anzahl der Folien, Vorlage und Sprache anpassen. Perfekt für Executive-Updates.",
   faqMindmap: "Wie funktioniert die Mindmap-Funktionalität?",
   faqMindmapAnswer: "Die KI analysiert Ihren Inhalt und generiert automatisch eine visuelle Mindmap. Dies hilft beim Verstehen von Verbindungen und Strukturieren von Informationen. Sie können die Mindmap als Bild exportieren.",
   faqTemplates: "Kann ich Vorlagen verwenden?",
   faqTemplatesAnswer: "Ja, Sie können benutzerdefinierte PowerPoint-Vorlagen hochladen. Beachten Sie, dass KI-Bilder bei Verwendung benutzerdefinierter Vorlagen für optimale Kompatibilität deaktiviert sind.",
   faqBrowsers: "Welche Browser werden unterstützt?",
-  faqBrowsersAnswer: "RecapSmart funktioniert auf allen modernen Browsern, die WebRTC unterstützen, einschließlich Chrome, Firefox, Safari und Edge. Für die beste Erfahrung empfehlen wir Chrome.",
+  faqBrowsersAnswer: "RecapHorizon funktioniert auf allen modernen Browsern, die WebRTC unterstützen, einschließlich Chrome, Firefox, Safari und Edge. Für die beste Erfahrung empfehlen wir Chrome.",
   faqRecordingProblems: "Was, wenn ich Probleme mit der Aufnahme habe?",
   faqRecordingProblemsAnswer: "Überprüfen Sie, ob Ihre Mikrofon- und Bildschirmaufnahme-Berechtigungen erteilt wurden. Laden Sie die Seite neu, wenn Sie Probleme haben. Alle Aufnahmen werden lokal gespeichert, sodass Sie keine Daten verlieren.",
-  faqMobile: "Kann ich RecapSmart auf dem Handy verwenden?",
-  faqMobileAnswer: "Ja, RecapSmart funktioniert auf Smartphones und Tablets. Sie können Meetings aufnehmen und Transkriptionen hochladen. Die Benutzeroberfläche passt sich automatisch an Ihre Bildschirmgröße an.",
-  faqPricing: "Wie viel kostet RecapSmart?",
-  faqPricingAnswer: "RecapSmart kostet nur €2 pro Monat mit einem Minimum von 6 Monaten. Danach können Sie monatlich mit 1 Monat Kündigungsfrist kündigen. Es gibt auch einen kostenlosen Modus mit eingeschränkten Funktionen.",
+  faqMobile: "Kann ich RecapHorizon auf dem Handy verwenden?",
+  faqMobileAnswer: "Ja, RecapHorizon funktioniert auf Smartphones und Tablets. Sie können Meetings aufnehmen und Transkriptionen hochladen. Die Benutzeroberfläche passt sich automatisch an Ihre Bildschirmgröße an.",
+  faqPricing: "Wie viel kostet RecapHorizon?",
+  faqPricingAnswer: "RecapHorizon kostet nur €2 pro Monat mit einem Minimum von 6 Monaten. Danach können Sie monatlich mit 1 Monat Kündigungsfrist kündigen. Es gibt auch einen kostenlosen Modus mit eingeschränkten Funktionen.",
   faqPaidVersion: "Was bekomme ich in der kostenpflichtigen Version?",
-  faqPaidVersionAnswer: "Sie erhalten unbegrenzte Transkriptionen, KI-Zusammenfassungen, PowerPoint-Generierung, Mindmaps, Podcast-Skripte, Chat-Funktionalität, Anonymisierung und alle Export-Optionen. Keine Einschränkungen bei Dateiformaten.",
+  faqPaidVersionAnswer: "Sie erhalten unbegrenzte Transkriptionen, KI-Zusammenfassungen, PowerPoint-Generierung, Mindmaps, Chat-Funktionalität, Anonymisierung und alle Export-Optionen. Keine Einschränkungen bei Dateiformaten.",
   faqTrialPeriod: "Gibt es eine kostenlose Testphase?",
-  faqTrialPeriodAnswer: "Ja, Sie können RecapSmart 1 Monat lang kostenlos nutzen. Dies gibt Ihnen einen guten Eindruck davon, was RecapSmart kann, bevor Sie sich für ein Upgrade entscheiden.",
+  faqTrialPeriodAnswer: "Ja, Sie können RecapHorizon 1 Monat lang kostenlos nutzen. Dies gibt Ihnen einen guten Eindruck davon, was RecapHorizon kann, bevor Sie sich für ein Upgrade entscheiden.",
   faqCancellation: "Kann ich jederzeit kündigen?",
   faqCancellationAnswer: "Nach den ersten 6 Monaten können Sie jederzeit mit 1 Monat Kündigungsfrist kündigen. Sie behalten Zugang zu allen Funktionen bis zum Ende Ihres Abonnements.",
   
   // Neue FAQ-Items
-  faq64Languages: "Wie viele Sprachen unterstützt RecapSmart?",
-  faq64LanguagesAnswer: "RecapSmart unterstützt 64 verschiedene Sprachen für Transkription und Analyse. Sie können in jeder unterstützten Sprache sprechen und Ausgaben in einer anderen Sprache generieren.",
+  faq64Languages: "Wie viele Sprachen unterstützt RecapHorizon?",
+  faq64LanguagesAnswer: "RecapHorizon unterstützt 64 verschiedene Sprachen für Transkription und Analyse. Sie können in jeder unterstützten Sprache sprechen und Ausgaben in einer anderen Sprache generieren.",
   
   faqMultilingual: "Kann ich ein französisches Gespräch analysieren und deutsche Ergebnisse erhalten?",
-  faqMultilingualAnswer: "Ja! Sie können zum Beispiel eine französische Präsentation aufnehmen, die Analyse auf Deutsch durchführen lassen und die App selbst auf Spanisch verwenden. RecapSmart ist vollständig mehrsprachig und flexibel.",
+  faqMultilingualAnswer: "Ja! Sie können zum Beispiel eine französische Präsentation aufnehmen, die Analyse auf Deutsch durchführen lassen und die App selbst auf Spanisch verwenden. RecapHorizon ist vollständig mehrsprachig und flexibel.",
   
   faqTeamsTranscript: "Wie importiere ich ein Microsoft Teams-Transkript?",
-  faqTeamsTranscriptAnswer: "Einfach: 1) Laden Sie Ihre Teams-Aufnahme herunter, 2) Öffnen Sie die Transkriptdatei, 3) Wählen Sie den gesamten Text aus und kopieren Sie ihn, 4) Fügen Sie den Text in RecapSmart unter 'Transkript einfügen' ein. RecapSmart verarbeitet es sofort für die Analyse.",
+  faqTeamsTranscriptAnswer: "Einfach: 1) Laden Sie Ihre Teams-Aufnahme herunter, 2) Öffnen Sie die Transkriptdatei, 3) Wählen Sie den gesamten Text aus und kopieren Sie ihn, 4) Fügen Sie den Text in RecapHorizon unter 'Transkript einfügen' ein. RecapHorizon verarbeitet es sofort für die Analyse.",
   
   // Web page functionality FAQ
   faqWebPageImport: "Kann ich Text direkt von einer Webseite importieren?",
-  faqWebPageImportAnswer: "Ja! Sie können eine URL eingeben, um Text direkt von einer Webseite zu importieren. RecapSmart holt automatisch allen Text ab und bereitet ihn für die Analyse vor. Dies ist nützlich für Artikel, Blog-Beiträge, Nachrichtenartikel und andere Webinhalte.",
+  faqWebPageImportAnswer: "Ja! Sie können eine URL eingeben, um Text direkt von einer Webseite zu importieren. RecapHorizon holt automatisch allen Text ab und bereitet ihn für die Analyse vor. Dies ist nützlich für Artikel, Blog-Beiträge, Nachrichtenartikel und andere Webinhalte.",
   
   // Story modal translations
   storyTitle: "Unsere Geschichte",
-  storyContent: `Die Geschichte von RecapSmart: Jenseits des Chaos
+  storyContent: `Die Geschichte von RecapHorizon: Jenseits des Chaos
 
-Kennen Sie dieses Gefühl nach einem intensiven Meeting, einem fesselnden Webinar oder einem wichtigen Gespräch mit Ihrem Kollegen? Dieser verschwommene Nachhall, in dem Sie versuchen zu rekonstruieren: "Was haben wir genau besprochen? Was waren die konkreten Vereinbarungen? Und, oh ja, gab es auch noch Folgeaktionen?" Es war diese geteilte, universelle Frustration – das alltägliche Chaos der Kommunikation – die ein kleines Team von Visionären zusammenbrachte. Sie nannten sich später, sehr passend, das "RecapSmart Team".
+Kennen Sie dieses Gefühl nach einem intensiven Meeting, einem fesselnden Webinar oder einem wichtigen Gespräch mit Ihrem Kollegen? Dieser verschwommene Nachhall, in dem Sie versuchen zu rekonstruieren: "Was haben wir genau besprochen? Was waren die konkreten Vereinbarungen? Und, oh ja, gab es auch noch Folgeaktionen?" Es war diese geteilte, universelle Frustration – das alltägliche Chaos der Kommunikation – die ein kleines Team von Visionären zusammenbrachte. Sie nannten sich später, sehr passend, das "RecapHorizon Team".
 
 Ihr erster Gedanke war einfach, doch revolutionär: Es musste eine Möglichkeit geben, die Essenz jeder Konversation zu erfassen und zu strukturieren, unabhängig vom Medium. Ob es eine laute Brainstorming-Sitzung um einen Kaffeetisch war, ein formales Online-Meeting oder ein Ad-hoc-Telefonat, sie wollten ein Programm, das uns helfen würde, ein Meeting aufnehmen und zusammenfassen zu können. Der Anfang war rudimentär, ein roher Diamant, der Form annehmen musste.
 
@@ -561,22 +568,22 @@ Bald wuchs die Ambition über nur Meetings hinaus. Das Chaos war schließlich ni
 
 Und dann die Zugänglichkeit. Ein mächtiges Tool ist nutzlos, wenn es nicht immer und überall verfügbar ist. Die Vision erweiterte sich: nicht nur auf Ihrem PC, sondern besonders auch auf Ihrem Smartphone. Der Traum war kristallklar: "Drücken Sie einen Knopf auf Ihrem Smartphone, legen Sie es hin, und lassen Sie die Konversation vollständig automatisiert zu einer strukturierten Übersicht verarbeiten." Es musste nahtlos sein, eine intuitive Erweiterung Ihres täglichen Arbeitsablaufs.
 
-Was das RecapSmart Team jedoch sofort klar machte, war, dass ihr Fokus absolut nicht auf der Aufnahme und Speicherung von Audio oder Video lag. Tatsächlich werden diese Rohdaten nach der Verarbeitung sofort gelöscht. Datenschutz und Effizienz standen an erster Stelle; es ging rein um die Transformation der flüchtigen gesprochenen Sprache in konkrete, greifbare Erkenntnisse. Es war die Essenz, der 'Recap', der zählte, nicht der Träger.
+Was das RecapHorizon Team jedoch sofort klar machte, war, dass ihr Fokus absolut nicht auf der Aufnahme und Speicherung von Audio oder Video lag. Tatsächlich werden diese Rohdaten nach der Verarbeitung sofort gelöscht. Datenschutz und Effizienz standen an erster Stelle; es ging rein um die Transformation der flüchtigen gesprochenen Sprache in konkrete, greifbare Erkenntnisse. Es war die Essenz, der 'Recap', der zählte, nicht der Träger.
 
-Das ultimative Ziel war es, Hand in Hand mit fortschrittlicher KI das Beste aus den Daten herauszuholen. Je nach Aufnahme und den Bedürfnissen des Benutzers musste RecapSmart ihnen ermöglichen, leicht zu wählen, was sie sehen wollten. Das eine Mal eine prägnante Zusammenfassung, das andere Mal eine tiefgehende Sentiment-Analyse oder eine Liste konkreter Follow-up-Aktionen. Der Benutzer war der Regisseur, die KI der unsichtbare Assistent, der die Daten in die gewünschte Ausgabe knetete.
+Das ultimative Ziel war es, Hand in Hand mit fortschrittlicher KI das Beste aus den Daten herauszuholen. Je nach Aufnahme und den Bedürfnissen des Benutzers musste RecapHorizon ihnen ermöglichen, leicht zu wählen, was sie sehen wollten. Das eine Mal eine prägnante Zusammenfassung, das andere Mal eine tiefgehende Sentiment-Analyse oder eine Liste konkreter Follow-up-Aktionen. Der Benutzer war der Regisseur, die KI der unsichtbare Assistent, der die Daten in die gewünschte Ausgabe knetete.
 
-Diese Evolution, von einer einfachen Frustration zu einer ehrgeizigen Vision, gipfelte in der Schaffung einer robusten Web-App. Dies machte das Versprechen von 'überall und immer zugänglich' endlich wahr. Unabhängig vom Gerät oder Standort stand RecapSmart bereit.
+Diese Evolution, von einer einfachen Frustration zu einer ehrgeizigen Vision, gipfelte in der Schaffung einer robusten Web-App. Dies machte das Versprechen von 'überall und immer zugänglich' endlich wahr. Unabhängig vom Gerät oder Standort stand RecapHorizon bereit.
 
-Das RecapSmart Team war realistisch. Sie wussten, dass sie sicherlich nicht das erste Tool waren, das dies konnte. Der Markt war bereits voller verschiedener Lösungen. Aber wo viele Konkurrenten komplex waren, eine hohe Schwelle hatten und ein Preisschild von 15 bis 35 Euro pro Monat pro Benutzer mit sich brachten, wollte RecapSmart etwas anderes. Es war ein Tool, das vom Benutzer aus gebaut wurde, mit dem Versprechen der Zugänglichkeit für alle. Die Kosten wurden so niedrig wie möglich gehalten, um eine niedrigschwellige Alternative zu bieten, die jeder immer nutzen konnte, ohne Schmerzen im Geldbeutel. Sie glaubten daran, dass die Kraft der Erkenntnis nicht der Elite vorbehalten sein sollte, sondern für alle verfügbar sein sollte.
+Das RecapHorizon Team war realistisch. Sie wussten, dass sie sicherlich nicht das erste Tool waren, das dies konnte. Der Markt war bereits voller verschiedener Lösungen. Aber wo viele Konkurrenten komplex waren, eine hohe Schwelle hatten und ein Preisschild von 15 bis 35 Euro pro Monat pro Benutzer mit sich brachten, wollte RecapHorizon etwas anderes. Es war ein Tool, das vom Benutzer aus gebaut wurde, mit dem Versprechen der Zugänglichkeit für alle. Die Kosten wurden so niedrig wie möglich gehalten, um eine niedrigschwellige Alternative zu bieten, die jeder immer nutzen konnte, ohne Schmerzen im Geldbeutel. Sie glaubten daran, dass die Kraft der Erkenntnis nicht der Elite vorbehalten sein sollte, sondern für alle verfügbar sein sollte.
 
-Heute ist das RecapSmart Team stolz auf das, was sie erreicht haben: eine mächtige, intuitive und erschwingliche Lösung, die das Chaos der Kommunikation in klare Erkenntnisse umwandelt. Aber die Reise ist noch lange nicht vorbei. Ihre Notizbücher sind voller neuer Ideen, und der Antrieb, Kommunikation noch intelligenter und effizienter zu machen, brennt heller als je zuvor. Die nächsten Schritte sind bereits im Sinn, alle darauf ausgerichtet, den Benutzer weiter zu stärken.
+Heute ist das RecapHorizon Team stolz auf das, was sie erreicht haben: eine mächtige, intuitive und erschwingliche Lösung, die das Chaos der Kommunikation in klare Erkenntnisse umwandelt. Aber die Reise ist noch lange nicht vorbei. Ihre Notizbücher sind voller neuer Ideen, und der Antrieb, Kommunikation noch intelligenter und effizienter zu machen, brennt heller als je zuvor. Die nächsten Schritte sind bereits im Sinn, alle darauf ausgerichtet, den Benutzer weiter zu stärken.
 
-RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
+RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   storyClose: "Schließen",
   
   // Team modal translations
   teamTitle: "Das Team",
-  teamContent: "Wir werden das Team hier bald vorstellen. Interesse am gemeinsamen Aufbau? Mailen Sie an support@recapsmart.nl",
+  teamContent: "Wir werden das Team hier bald vorstellen. Interesse am gemeinsamen Aufbau? Mailen Sie an support@recaphorizon.nl",
   teamClose: "Schließen",
   
   // Cookie modal translations
@@ -622,7 +629,7 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   disclaimerTitle: "⚠️ Haftungsausschluss",
   disclaimerClose: "Schließen",
   disclaimerAIContent: "KI-generierter Inhalt",
-  disclaimerAIContentAnswer: "RecapSmart verwendet die neueste KI-Technologie, um Transkriptionen, Zusammenfassungen, Analysen und andere Inhalte zu generieren. Alle generierten Inhalte sind KI-basiert und dienen nur zur Unterstützung Ihrer Arbeit.",
+  disclaimerAIContentAnswer: "RecapHorizon verwendet die neueste KI-Technologie, um Transkriptionen, Zusammenfassungen, Analysen und andere Inhalte zu generieren. Alle generierten Inhalte sind KI-basiert und dienen nur zur Unterstützung Ihrer Arbeit.",
   disclaimerAccuracy: "Keine Garantie für Genauigkeit",
   disclaimerAccuracyAnswer: "Obwohl wir unser Bestes tun, um genaue Ergebnisse zu liefern, können wir nicht garantieren, dass alle KI-generierten Inhalte 100% genau sind. Wir empfehlen, alle Ausgaben zu überprüfen und zu verifizieren, bevor Sie sie für wichtige Entscheidungen verwenden.",
   disclaimerOwnRisk: "Verwendung auf eigene Gefahr",
@@ -647,7 +654,7 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   logout: "Abmelden",
 
   // Pricing page translations
-  pricingTitle: "RecapSmart Abonnements",
+  pricingTitle: "RecapHorizon Abonnements",
   pricingCurrentTier: "Sie sind derzeit auf dem {tier} Tier",
   pricingCurrentTierAdmin: "Sie sind derzeit auf dem {tier} Tier (Admin)",
   pricingComingSoon: "Demnächst verfügbar",
@@ -678,7 +685,40 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   pricingGoldEnterprise: "Gold und Enterprise bieten Zugang zu allen Premium-Funktionen.",
   pricingDiamondAdmin: "Diamond Tier ist exklusiv für Admins und bietet alle Funktionen.",
   pricingQuestions: "Haben Sie Fragen zu den Abonnements? Kontaktieren Sie uns über",
-  pricingSupportEmail: "support@recapsmart.nl",
+  pricingSupportEmail: "support@recaphorizon.nl",
+
+  // Upgrade modal translations
+  upgradeSubscription: "Abonnement Upgraden",
+  upgradeSubscriptionDesc: "Upgraden Sie Ihr Abonnement, um mehr Funktionen freizuschalten und Ihre Limits zu erhöhen.",
+  premiumFeaturesFromGold: "Premium-Funktionen ab Gold Tier",
+  chatWithTranscriptFeature: "Chat mit Transkript",
+  powerpointExportFeature: "PowerPoint-Export",
+  businessCaseGeneratorFeature: "Business Case Generator",
+  silverTier: "Silber",
+  goldTier: "Gold",
+  upgradeToSilver: "Auf Silber upgraden",
+  upgradeToGold: "Auf Gold upgraden",
+  subscriptionCancellable: "Alle Abonnements sind nach 6 Monaten monatlich kündbar.",
+  supportContact: "Haben Sie Fragen? Kontaktieren Sie uns über support@recaphorizon.nl",
+  later: "Später",
+  silverPrice: "€5/Monat",
+  goldPrice: "€8/Monat",
+  silverFeature1: "• 60 Minuten pro Sitzung",
+  silverFeature2: "• 3 Sitzungen pro Tag",
+  silverFeature3: "• 15.000 Zeichen Transkript",
+  silverFeature4: "• Alle Dateitypen",
+  silverFeature5: "• Grundfunktionen",
+  goldFeature1: "• 90 Minuten pro Sitzung",
+  goldFeature2: "• Unbegrenzte Sitzungen",
+  goldFeature3: "• 30.000 Zeichen Transkript",
+  goldFeature4: "• Alle Dateitypen",
+  goldFeature5: "• Alle Premium-Funktionen",
+  moveUp: "Nach oben",
+  moveDown: "Nach unten",
+  sessionExpiringSoon: "Sitzung läuft bald ab",
+  sessionWillExpireIn: "Ihre Sitzung läuft in {timeRemaining} ab. Möchten Sie Ihre Sitzung verlängern?",
+  extending: "Verlängern...",
+  extendSession: "Sitzung verlängern",
 
   // Settings page translations
   settingsTitle: "⚙️ Einstellungen",
@@ -688,6 +728,7 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   settingsSessionsThisMonth: "Sitzungen diesen Monat:",
   settingsAnonymizationRules: "Anonymisierungsregeln",
   settingsAddRule: "+ Regel hinzufügen",
+  settingsAnonymizationAutoText: "um Text automatisch zu anonymisieren",
   settingsOriginalText: "Ursprünglicher Text",
   settingsOriginalTextPlaceholder: "z.B. Jan, Company, etc.",
   settingsReplacementText: "Ersatztext",
@@ -701,6 +742,30 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   // Subscription service error messages
   fileUploadNotAllowed: "Ihr aktuelles Abonnement unterstützt nur {allowedTypes} Dateien. Upgraden Sie auf Silver oder Gold, um andere Dateitypen hochzuladen.",
   transcriptTooLong: "Ihr Transkript ist {currentLength} Zeichen lang, aber Ihr aktuelles Abonnement unterstützt maximal {maxLength} Zeichen. Upgraden Sie auf eine höhere Stufe für längere Transkripte.",
+  
+  // Email upload error messages
+  emailProcessingError: "Fehler beim Verarbeiten der E-Mail-Datei. Bitte überprüfen Sie das Dateiformat und versuchen Sie es erneut.",
+  
+  // Email import functionality
+  emailImportOption: "E-Mail Import",
+  emailImportOptionDesc: "Importieren Sie .msg und .eml Dateien",
+  emailImportDragDropText: "E-Mail-Dateien hier ablegen oder klicken zum Hochladen",
+  emailImportError: "Fehler beim Verarbeiten der E-Mail-Datei",
+  emailImportHelpTitle: "E-Mail Import Hilfe",
+  emailImportHelpSubtitle: "Wie man E-Mail-Dateien importiert",
+  emailImportHelpIntro: "Mit dieser Funktion können Sie E-Mail-Dateien (.msg und .eml) hochladen und analysieren.",
+  emailImportHelpStep1: "Wählen Sie .msg oder .eml Dateien von Ihrem Computer aus",
+  emailImportHelpStep2: "Ziehen Sie Dateien in den Upload-Bereich",
+  emailImportHelpStep3: "Warten Sie, bis die E-Mails verarbeitet und analysiert wurden",
+  emailImportHelpFormatsTitle: "Unterstützte Formate",
+  emailImportHelpSupportedFormats: "Unterstützte Dateitypen",
+  emailImportHelpFormatsList: ".msg (Outlook), .eml (Standard E-Mail-Format)",
+  emailImportHowToUseTitle: "So verwenden Sie es",
+  emailImportTipsTitle: "Tipps",
+  emailImportTip1: "E-Mail-Dateien können mehrere Nachrichten enthalten, die kombiniert werden",
+  emailImportTip2: "Anhänge in E-Mails werden derzeit nicht verarbeitet",
+  emailImportTip3: "HTML-Formatierung wird automatisch in Nur-Text umgewandelt",
+  emailImportTip4: "Große E-Mail-Dateien können länger zur Verarbeitung benötigen",
   
   // Upgrade messages
   upgradeDurationMessage: "Sie haben die maximale Aufnahmezeit von {maxDuration} Minuten für diese Sitzung erreicht. Upgraden Sie auf Silver (60 Min) oder Gold (90 Min) für längere Sitzungen.",
@@ -765,7 +830,7 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   // Mobile Audio Help
   mobileAudioHelpTitle: "Telefon-Audioaufnahme (Verbesserungen)",
   mobileAudioHelpSubtitle: "Warum können Aufnahmen von Ihrem Telefon unterbrochen werden?",
-  mobileAudioHelpIntro: "Ihr Telefon kann Aufnahmen unterbrechen, wenn ein eingehender Anruf eingeht, auch wenn Sie ihn nicht beantworten. Das liegt daran, dass iOS und Android dem Anruf vorübergehend Priorität für den Mikrofonzugriff geben, was die Funktionalität von RecapSmart beeinträchtigen kann. Um dies zu verhindern, empfehlen wir zwei Lösungen. Unten finden Sie Anweisungen für iOS und Android. Wählen Sie die Option, die am besten zu Ihrer Situation passt, damit Ihre Aufnahmen ungestört ablaufen können.",
+  mobileAudioHelpIntro: "Ihr Telefon kann Aufnahmen unterbrechen, wenn ein eingehender Anruf eingeht, auch wenn Sie ihn nicht beantworten. Das liegt daran, dass iOS und Android dem Anruf vorübergehend Priorität für den Mikrofonzugriff geben, was die Funktionalität von RecapHorizon beeinträchtigen kann. Um dies zu verhindern, empfehlen wir zwei Lösungen. Unten finden Sie Anweisungen für iOS und Android. Wählen Sie die Option, die am besten zu Ihrer Situation passt, damit Ihre Aufnahmen ungestört ablaufen können.",
   mobileAudioHelpOption1Title: "Option 1: Flugmodus aktivieren – Unterbrechungen vermeiden",
   mobileAudioHelpOption1iOS: "Für iOS: Gehen Sie zu Einstellungen > Flugmodus und schalten Sie ihn ein. Lassen Sie WLAN an, wenn Internetzugang erforderlich ist.",
   mobileAudioHelpOption1Android: "Für Android: Öffnen Sie das Schnellmenü durch Herunterziehen, tippen Sie auf das Flugmodus-Symbol. Aktivieren Sie WLAN bei Bedarf für Konnektivität.",
@@ -779,7 +844,7 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   faqImageUpload: "Kann ich Bilder für KI-Analyse hochladen?",
   faqImageUploadAnswer: "Ja! Benutzer der Gold-, Diamond- und Enterprise-Stufen können Bilder für KI-gestützte Analyse hochladen. Diese Funktion ermöglicht es Ihnen, Fotos, Dokumente, Screenshots und andere visuelle Inhalte mit fortschrittlicher KI-Technologie zu analysieren.",
   faqImageFormats: "Welche Bildformate werden unterstützt?",
-  faqImageFormatsAnswer: "RecapSmart unterstützt die folgenden Bildformate: JPG, JPEG, PNG, WEBP und GIF. Klicken Sie einfach auf die Bild-Upload-Schaltfläche und wählen Sie Ihre Datei von Ihrem Gerät aus.",
+  faqImageFormatsAnswer: "RecapHorizon unterstützt die folgenden Bildformate: JPG, JPEG, PNG, WEBP und GIF. Klicken Sie einfach auf die Bild-Upload-Schaltfläche und wählen Sie Ihre Datei von Ihrem Gerät aus.",
   faqImageAnalysis: "Was kann die KI in meinen Bildern analysieren?",
   faqImageAnalysisAnswer: "Unsere KI kann umfassende Bildanalysen durchführen, einschließlich: Objekterkennung und -identifikation, optische Zeichenerkennung (OCR) für Textextraktion, Kontextanalyse und Szenenverständnis, detaillierte Beschreibungen visueller Elemente und intelligente Erkenntnisse basierend auf dem Bildinhalt.",
   
@@ -814,6 +879,7 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   imageUploadHelpClose: "Verstanden",
 
   // Expert Help Modal translations
+  sessionOptionExpertDesc: "Chatte mit einem KI-Experten über deine Idee und RecapHorizon liefert dir anschließend tiefgehende Einblicke und Analysen",
   expertHelpTitle: "Frage den Experten Hilfe",
   expertHelpIntro: "Die 'Frage den Experten'-Funktion ermöglicht es Ihnen, mit einem KI-Experten zu chatten, der auf Ihr spezifisches Fachgebiet zugeschnitten ist.",
   expertHelpHowItWorks: "Wie es funktioniert:",
@@ -833,15 +899,783 @@ RecapSmart: Jenseits des Chaos, die Essenz an erster Stelle.`,
   expertHelpClose: "Verstanden",
 
   // Expert configuration options
-  expertConfigStart: {
-    expertTopics: {
-      // 100 topics would be added here
+  expertConfigTitle: "Fragen Sie den Experten: Konfigurieren Sie Ihren Experten",
+  expertTopicLabel: "Worüber möchten Sie diskutieren? (Wählen Sie ein Thema)",
+  expertTopicPlaceholder: "Wählen Sie ein Thema...",
+  expertRoleLabel: "Wählen Sie die Rolle des KI-Experten:",
+  expertRolePlaceholder: "Wählen Sie eine Rolle...",
+  expertBrancheLabel: "Wählen Sie die Branche/den Bereich der Idee:",
+  expertBranchePlaceholder: "Wählen Sie eine Branche/einen Bereich...",
+  expertConfigStart: "Chat starten",
+  
+  // Expert Dropdown translations
+  searchPlaceholder: "Suchen...",
+  noOptionsFound: "Keine Optionen gefunden",
+  
+  // Email composition labels
+  emailTo: "An",
+  emailCC: "CC",
+  emailBCC: "BCC",
+  emailNA: "N/A",
+
+  // Expert Chat Modal translations
+  expertChatTitle: "Fragen Sie den Experten Chat",
+  expertChatPlaceholder: "Geben Sie Ihre Frage hier ein...",
+  suggestedQuestions: "Folgefrage Vorschlag",
+  executeSuggestion: "Folgefrage ausführen",
+  chatCancel: "Chat abbrechen",
+  toAnalysis: "Zur Analyse",
+  expertInitialMessage: "Hallo! Ich bin Ihr {role} spezialisiert auf {branche}. Ich bin bereit, Ihnen bei Fragen zu \"{topic}\" zu helfen. Was möchten Sie besprechen?",
+  expertInitialSuggestion: "Können Sie mir mehr über die wichtigsten Aspekte dieses Themas erzählen?",
+  expertSystemInstruction: "Sie sind ein Experte {role} spezialisiert auf {topic} im {branche} Sektor.\n\nIhre Aufgabe ist es:\n1. Professionelle und detaillierte Antworten auf Deutsch zu geben\n2. Spezifische Einblicke aus Ihrer Expertise in {topic} zu bieten\n3. Praktische Ratschläge zu geben, die für den {branche} Sektor relevant sind\n4. Den Transkript-Kontext zu nutzen, um gezielte Analysen zu erstellen\n5. Konkrete Empfehlungen basierend auf bewährten Praktiken in Ihrem Bereich zu geben\n\n{transcriptContext}\n\nAntworten Sie immer auf Deutsch und aus Ihrer Rolle als {role} Experte.",
+  expertTranscriptContext: "Hier ist das Transkript, zu dem der Benutzer Fragen hat:\n\n---\n{transcript}\n---\n\nVerwenden Sie dieses Transkript als Kontext für Ihre Antworten.",
+  expertFollowUpPrompt: "Sie sind ein hilfreicher Assistent, der relevante Folgefragen basierend auf einem Chat-Gespräch generiert.\n\nHier ist ein aktuelles Chat-Gespräch zwischen einem Benutzer und einem Experten:\n\n{recentMessages}\n\nLetzte Antwort des Experten:\n{lastResponse}\n\nGenerieren Sie eine spezifische Folgefrage, die der Benutzer stellen könnte, um tiefer in den Inhalt dieses Gesprächs einzutauchen. Die Frage sollte direkt mit den besprochenen Themen zusammenhängen und dem Benutzer helfen, mehr Einblicke zu gewinnen.\n\nGeben Sie nur die Frage zurück, ohne Einleitung oder Erklärung.",
+  expertChatUser: "Benutzer",
+  expertChatExpert: "Experte",
+  confirmAnalysis: "Chat abgeschlossen, zur Analyse übergehen?",
+
+  // Expert Configuration Options - 50 Topics
+  expertTopics: {
+    emailMarketing: "E-Mail-Marketing",
+    internationalLaw: "Internationales Recht",
+    corporateLaw: "Unternehmensrecht",
+    criminalLaw: "Strafrecht",
+    familyLaw: "Familienrecht",
+    intellectualProperty: "Geistiges Eigentum",
+    environmentalLaw: "Umweltrecht",
+    laborLaw: "Arbeitsrecht",
+    taxLaw: "Steuerrecht",
+    realEstateLaw: "Immobilienrecht",
+    healthcareLaw: "Gesundheitsrecht",
+    bankingLaw: "Bankrecht",
+    insuranceLaw: "Versicherungsrecht",
+    immigrationLaw: "Einwanderungsrecht",
+    contractLaw: "Vertragsrecht",
+    constitutionalLaw: "Verfassungsrecht",
+    administrativeLaw: "Verwaltungsrecht",
+    civilRights: "Bürgerrechte",
+    humanRights: "Menschenrechte",
+    cyberLaw: "Cyber-Recht",
+    aviationLaw: "Luftfahrtrecht",
+    maritimeLaw: "Seerecht",
+    energyLaw: "Energierecht",
+    entertainmentLaw: "Unterhaltungsrecht",
+    sportsLaw: "Sportrecht",
+    educationLaw: "Bildungsrecht",
+    elderLaw: "Seniorenrecht",
+    disabilityLaw: "Behindertenrecht",
+    animalLaw: "Tierrecht",
+    spacelaw: "Weltraumrecht",
+    dataProtection: "Datenschutz",
+    privacyLaw: "Datenschutzrecht",
+    competitionLaw: "Wettbewerbsrecht",
+    securitiesLaw: "Wertpapierrecht",
+    bankruptcyLaw: "Insolvenzrecht",
+    mergerAcquisition: "Fusionen und Übernahmen",
+    complianceRegulatory: "Compliance und Regulierung",
+    litigationDispute: "Rechtsstreitigkeiten",
+    arbitrationMediation: "Schiedsverfahren und Mediation",
+    legalTechnology: "Rechtstechnologie",
+    legalEthics: "Rechtsethik",
+    legalResearch: "Rechtsforschung",
+    legalWriting: "Rechtliches Schreiben",
+    courtProcedures: "Gerichtsverfahren",
+    legalAdvice: "Rechtsberatung",
+    clientCounseling: "Mandantenberatung",
+    legalStrategy: "Rechtsstrategie",
+    riskManagement: "Risikomanagement",
+    legalDocumentation: "Rechtsdokumentation",
+    regulatoryCompliance: "Regulatorische Compliance"
+  },
+
+  // Expert Configuration Options - 30 Roles
+  expertRoles: {
+    financialAnalyst: { name: "Finanzanalyst", description: "Finanzanalyse und Investitionsberatung" },
+    marketingSpecialist: { name: "Marketing-Spezialist", description: "Marketing-Strategien und Kampagnen" },
+    hrConsultant: { name: "HR-Berater", description: "Personalwesen und Mitarbeiterentwicklung" },
+    itConsultant: { name: "IT-Berater", description: "Technologie-Beratung und IT-Lösungen" },
+    legalAdvisor: { name: "Rechtsberater", description: "Rechtliche Beratung und Compliance" },
+    businessAnalyst: { name: "Business-Analyst", description: "Geschäftsanalyse und Prozessoptimierung" },
+    projectManager: { name: "Projektmanager", description: "Projektplanung und -durchführung" },
+    salesManager: { name: "Vertriebsleiter", description: "Vertriebsstrategien und Kundenbeziehungen" },
+    operationsManager: { name: "Betriebsleiter", description: "Betriebsführung und operative Effizienz" },
+    dataScientist: { name: "Data Scientist", description: "Datenanalyse und maschinelles Lernen" },
+    productManager: { name: "Produktmanager", description: "Produktentwicklung und -strategie" },
+    qualityAssurance: { name: "Qualitätssicherung", description: "Qualitätskontrolle und -management" },
+    riskManager: { name: "Risikomanager", description: "Risikobewertung und -management" },
+    complianceOfficer: { name: "Compliance-Beauftragter", description: "Einhaltung von Vorschriften und Standards" },
+    strategicPlanner: { name: "Strategieplaner", description: "Strategische Planung und Entwicklung" },
+    customerSuccess: { name: "Customer Success Manager", description: "Kundenerfolg und -zufriedenheit" },
+    supplyChainManager: { name: "Supply Chain Manager", description: "Lieferkettenmanagement und Logistik" },
+    digitalTransformation: { name: "Digital Transformation Specialist", description: "Digitale Transformation und Innovation" },
+    cybersecurityExpert: { name: "Cybersicherheitsexperte", description: "IT-Sicherheit und Datenschutz" },
+    sustainabilityConsultant: { name: "Nachhaltigkeitsberater", description: "Nachhaltigkeitsstrategien und ESG" },
+    changeManagement: { name: "Change Management Specialist", description: "Organisationsveränderung und -entwicklung" },
+    innovationManager: { name: "Innovationsmanager", description: "Innovation und neue Technologien" },
+    brandManager: { name: "Brand Manager", description: "Markenführung und -entwicklung" },
+    contentStrategist: { name: "Content-Stratege", description: "Content-Marketing und -strategie" },
+    uxDesigner: { name: "UX-Designer", description: "Benutzererfahrung und Interface-Design" },
+    businessDeveloper: { name: "Business Developer", description: "Geschäftsentwicklung und Partnerschaften" },
+    financialPlanner: { name: "Finanzplaner", description: "Finanzplanung und Budgetierung" },
+    trainingSpecialist: { name: "Schulungsspezialist", description: "Mitarbeiterschulung und -entwicklung" },
+    communicationsManager: { name: "Kommunikationsmanager", description: "Interne und externe Kommunikation" },
+    researchAnalyst: { name: "Forschungsanalyst", description: "Marktforschung und Datenanalyse" }
+  },
+
+  // Expert Configuration Options - 50 Branches
+  expertBranches: {
+    technologySoftware: { name: "Technologie & Software", description: "IT-Sektor und Softwareentwicklung" },
+    familyRelationships: { name: "Familie & Beziehungen", description: "Persönliche Beziehungen und Familiendynamik" },
+    educationTraining: { name: "Bildung & Ausbildung", description: "Bildungseinrichtungen und berufliche Weiterbildung" },
+    healthcareMedical: { name: "Gesundheitswesen & Medizin", description: "Medizinische Versorgung und Gesundheitsdienste" },
+    financeBanking: { name: "Finanzen & Banking", description: "Finanzdienstleistungen und Banking" },
+    marketingAdvertising: { name: "Marketing & Werbung", description: "Marketing-Strategien und Werbekampagnen" },
+    retailConsumerGoods: { name: "Einzelhandel & Konsumgüter", description: "Einzelhandel und Konsumprodukte" },
+    manufacturing: { name: "Fertigung", description: "Produktion und Herstellung" },
+    constructionRealEstate: { name: "Bau & Immobilien", description: "Bausektor und Immobilienmarkt" },
+    transportationLogistics: { name: "Transport & Logistik", description: "Transport- und Logistikdienstleistungen" },
+    energyUtilities: { name: "Energie & Versorgung", description: "Energiesektor und Versorgungsunternehmen" },
+    hospitalityTourism: { name: "Gastgewerbe & Tourismus", description: "Gastgewerbe und Tourismusbranche" },
+    mediaEntertainment: { name: "Medien & Unterhaltung", description: "Medienbranche und Unterhaltung" },
+    telecommunications: { name: "Telekommunikation", description: "Telekom- und Kommunikationsdienste" },
+    aerospaceDefense: { name: "Luft- & Raumfahrt & Verteidigung", description: "Luft- und Raumfahrt- und Verteidigungsindustrie" },
+    automotive: { name: "Automobilindustrie", description: "Automobilindustrie und Mobilität" },
+    pharmaceuticals: { name: "Pharmazeutika", description: "Pharmaindustrie" },
+    biotechnology: { name: "Biotechnologie", description: "Biotechnologische Innovationen" },
+    environmentalServices: { name: "Umweltdienstleistungen", description: "Umweltmanagement und Nachhaltigkeit" },
+    legalServices: { name: "Rechtsdienstleistungen", description: "Rechtsdienstleistungen" },
+    consultingServices: { name: "Beratungsdienstleistungen", description: "Professionelle Beratung" },
+    nonprofit: { name: "Gemeinnützig", description: "Gemeinnützige Organisationen" },
+    governmentPublicSector: { name: "Regierung & Öffentlicher Sektor", description: "Regierungsbehörden und öffentliche Dienste" },
+    educationInstitutions: { name: "Bildungseinrichtungen", description: "Schulen und Universitäten" },
+    researchDevelopment: { name: "Forschung & Entwicklung", description: "F&E und Innovation" },
+    artsCulture: { name: "Kunst & Kultur", description: "Kultursektor und Kunst" },
+    sportsRecreation: { name: "Sport & Erholung", description: "Sport und Freizeitaktivitäten" },
+    agriculture: { name: "Landwirtschaft", description: "Agrarsektor" },
+    fishing: { name: "Fischerei", description: "Fischereiindustrie" },
+    mining: { name: "Bergbau", description: "Bergbau und Rohstoffgewinnung" },
+    forestry: { name: "Forstwirtschaft", description: "Forstwirtschaft und Holzindustrie" },
+    insurance: { name: "Versicherung", description: "Versicherungssektor" },
+    realEstateServices: { name: "Immobiliendienstleistungen", description: "Immobilienmakler und -verwaltung" },
+    itServices: { name: "IT-Dienstleistungen", description: "IT-Services und Support" },
+    cybersecurityServices: { name: "Cybersicherheitsdienste", description: "Cybersicherheitsdienste" },
+    cloudServices: { name: "Cloud-Dienste", description: "Cloud-Computing und -Services" },
+    ecommerce: { name: "E-Commerce", description: "Online-Handel und Webshops" },
+    digitalMarketing: { name: "Digitales Marketing", description: "Online-Marketing und SEO" },
+    socialMedia: { name: "Social Media", description: "Social Media Marketing und Management" },
+    gaming: { name: "Gaming", description: "Gaming-Industrie und Entwicklung" },
+    vrAr: { name: "VR & AR", description: "Virtual und Augmented Reality" },
+    iot: { name: "Internet der Dinge", description: "IoT-Lösungen und Smart Devices" },
+    blockchain: { name: "Blockchain", description: "Blockchain-Technologie und Krypto" },
+    aiMl: { name: "KI & Maschinelles Lernen", description: "Künstliche Intelligenz und ML" },
+    robotics: { name: "Robotik", description: "Robotik und Automatisierung" },
+    nanotechnology: { name: "Nanotechnologie", description: "Nanotechnologische Innovationen" },
+    renewableEnergy: { name: "Erneuerbare Energien", description: "Nachhaltige Energielösungen" },
+    smartCities: { name: "Smart Cities", description: "Smart Cities und IoT-Infrastruktur" }
+  },
+
+  emailTone: {
+    formal: {
+      label: "Förmlich",
+      description: "Professioneller und respektvoller Ton"
     },
-    expertRoles: {
-      // 25 roles would be added here
+    friendly: {
+      label: "Freundlich",
+      description: "Warmer und zugänglicher Ton"
     },
-    expertBranches: {
-      // 50 branches would be added here
+    direct: {
+      label: "Direkt",
+      description: "Klar und auf den Punkt gebracht"
+    },
+    persuasive: {
+      label: "Überzeugend",
+      description: "Überzeugender und zwingender Ton"
+    },
+    empathetic: {
+      label: "Einfühlsam",
+      description: "Verständnisvoller und mitfühlender Ton"
+    },
+    humorous: {
+      label: "Humorvoll",
+      description: "Leichter und ansprechender Ton"
+    },
+    neutral: {
+      label: "Neutral",
+      description: "Ausgewogener und objektiver Ton"
     }
-  }
+  },
+  
+  // Narrative email option
+  emailNarrative: "Erzählender E-Mail-Text",
+  emailNarrativeDescription: "Die E-Mail erzählerischer und persönlicher gestalten",
+  emailNarrativeYes: "Ja, erzählerisch gestalten",
+  emailNarrativeNo: "Nein, geschäftlich halten",
+  
+  // Email detail level
+  emailDetailLevel: "Detailgrad",
+  emailDetailLevelDescription: "Wie ausführlich soll die Antwort sein?",
+  emailDetailVeryShort: "Sehr kurz (1-2 Sätze)",
+  emailDetailShort: "Kurz",
+  emailDetailMedium: "Mittel",
+  emailDetailExtensive: "Ausführlich",
+  emailDetailVeryShortDesc: "Nur das Wesentliche",
+  emailDetailShortDesc: "Direkt und auf den Punkt, keine überflüssigen Details",
+  emailDetailMediumDesc: "Ausreichend Detail und Kontext, aber dennoch prägnant",
+  emailDetailExtensiveDesc: "Alle relevanten Details, Hintergrund",
+  
+  // Mailto modal
+  mailtoModal: "E-Mail wird vorbereitet",
+  mailtoModalDescription: "Die E-Mail wird in Ihrem Standard-E-Mail-Programm geöffnet. Der Inhalt befindet sich in Ihrer Zwischenablage - fügen Sie ihn manuell in die E-Mail ein mit Strg+V oder Rechtsklick > Einfügen.",
+  mailtoModalContinue: "Fortfahren",
+  mailtoModalCancel: "Abbrechen",
+
+  // Email preview modal
+  copyEmailBody: "E-Mail-Inhalt kopieren",
+  openInEmailClient: "In E-Mail-Client öffnen",
+  emailPreview: "E-Mail-Vorschau",
+  includeSummary: "Zusammenfassung einfügen",
+  includeConclusions: "Schlussfolgerungen einfügen",
+  includeActionPoints: "Aktionspunkte einfügen",
+  emailIncludeOptions: "Was möchten Sie in die E‑Mail aufnehmen?",
+  emailTitle: "Titel",
+  emailTitlePlaceholder: "E-Mail-Titel",
+  emailTitleHelp: "Wird als Betreff und als Titelzeile oben in der E-Mail verwendet. Sie können dies ändern.",
+  plainTextOnly: "Nur reiner Text wird unterstützt.",
+  emailSummaryIntro: "Hier ist die Zusammenfassung unseres Meetings:",
+  emailClosing: "Mit freundlichen Grüßen",
+  copiedToClipboard: "In Zwischenablage kopiert!",
+  copyFailed: "Kopieren fehlgeschlagen",
+  copied: "Kopiert!",
+  emailClientError: "E-Mail-Client konnte nicht geöffnet werden",
+  emailClientInstructions: "E-Mail-Client Anweisungen:",
+  emailInstruction1: "Falls Ihr E-Mail-Client nicht öffnet, kopieren Sie den E-Mail-Inhalt manuell",
+  emailInstruction2: "Fügen Sie den Inhalt in Ihre bevorzugte E-Mail-Anwendung ein",
+  emailInstruction3: "Fügen Sie die Empfänger hinzu und senden Sie die E-Mail",
+  dismiss: "Schließen",
+  
+  // Email view translations
+  emailOptional: "Optionale Einstellungen",
+  emailLength: "Länge",
+  emailLengthVeryShort: "Sehr Kurz",
+  emailLengthShort: "Kurz",
+  emailLengthMedium: "Mittel",
+  emailLengthExtensive: "Ausführlich",
+  emailToneProfessional: "Professionell",
+  emailToneFriendly: "Freundlich",
+  emailToneFormal: "Formal",
+  emailToneInformal: "Informell",
+  emailGenerate: "E-Mail Generieren",
+  
+  // Image upload
+  dragImageHere: "Ziehen Sie Ihr Bild hierher oder klicken Sie auf Importieren",
+  
+  // File upload
+  dragFileHere: "Ziehen Sie Ihre Datei hierher oder klicken Sie auf Importieren",
+
+  // Firestore health check
+  firestoreConnectionError: "Kann keine Verbindung zu Firestore herstellen",
+  checkInternetAndConfig: "Überprüfen Sie Ihre Internetverbindung und Firebase-Konfiguration",
+  firestoreReadPermissionsError: "Keine Leseberechtigungen für Firestore",
+  checkFirestoreReadRules: "Überprüfen Sie die Firestore-Sicherheitsregeln für das Lesen",
+  ensureUserLoggedInWithAccess: "Stellen Sie sicher, dass der Benutzer angemeldet ist und Zugriff auf seine eigenen Daten hat",
+  firestoreWritePermissionsError: "Keine Schreibberechtigungen für Firestore",
+  checkFirestoreWriteRules: "Überprüfen Sie die Firestore-Sicherheitsregeln für das Schreiben",
+  firestoreGenericError: "Es gibt ein Problem mit der Datenbankverbindung",
+  firestorePermissionDenied: "Kein Zugriff auf die Datenbank. Bitte melden Sie sich erneut an.",
+  firestoreDatabaseUnavailable: "Datenbank vorübergehend nicht verfügbar. Bitte versuchen Sie es in ein paar Minuten erneut.",
+  firestoreConfigurationError: "Datenbank-Konfigurationsproblem. Bitte wenden Sie sich an den Support.",
+  firestoreQuotaExceeded: "Datenbank-Kontingent überschritten. Bitte versuchen Sie es später erneut.",
+  firestoreConnectionInterrupted: "Verbindung unterbrochen. Überprüfen Sie Ihre Internetverbindung.",
+  firestoreNetworkError: "Netzwerkproblem. Überprüfen Sie Ihre Internetverbindung.",
+
+  // Startup validation
+  firestoreHealthCheckFailed: "Firestore-Gesundheitsprüfung fehlgeschlagen",
+  firestoreAuthenticationRequired: "Bitte melden Sie sich an, um auf alle Datenbankfunktionen zuzugreifen",
+  firestoreSkippingAuthTests: "Berechtigungstests übersprungen - Authentifizierung erforderlich",
+
+  // App.tsx hardcoded strings
+  webpage: "Webseite",
+  
+  // Additional keys for hardcoded strings
+  apiKeyNotAvailable: "API-Schlüssel nicht verfügbar. Kontaktieren Sie den Administrator",
+  switchToDark: "Zu dunkel wechseln",
+  switchToLight: "Zu hell wechseln",
+  systemAudioInstructions: "Befolgen Sie diese Schritte, um Podcasts und Videos mitzuhören. Aktivieren Sie beim Teilen Ihres Bildschirms die Option 'System-Audio'.",
+  blogTargetAudience: "Blog-Zielgruppe",
+  blogMainGoal: "Hauptziel des Blogs",
+  blogTone: "Gewünschter Ton",
+  blogLength: "Gewünschte Länge (ungefähr)",
+
+  // Language selector
+  searchLanguage: "Sprache suchen...",
+  noLanguagesFound: "Keine Sprachen gefunden",
+
+  // Email confirmation modal
+  emailConfirmation: "E-Mail-Bestätigung",
+  confirmEmailAddress: "Bestätigen Sie Ihre E-Mail-Adresse",
+  confirmationCodeSent: "Wir haben einen Bestätigungscode gesendet an:",
+  enterConfirmationCodeInstruction: "Geben Sie den Bestätigungscode ein, um Ihre Wartelisten-Anmeldung abzuschließen.",
+  confirmationCode: "Bestätigungscode",
+  enterConfirmationCode: "Bestätigungscode eingeben",
+  confirming: "Bestätige...",
+  noCodeReceived: "Keinen Code erhalten?",
+  bcc: "BCC",
+  notApplicable: "N/A",
+  copyForEmail: "Für E-Mail kopieren",
+
+  // UI states (additional)
+  error: "Fehler",
+  sessionsThisMonth: "Sitzungen diesen Monat",
+  currentTier: "Aktuelle Stufe:",
+  viewPricing: "Preise anzeigen",
+  download: "Herunterladen",
+  actions: "Aktionen",
+
+  // Waitlist modal
+  waitlistExplanation: "RecapHorizon ist derzeit nur für eingeladene Benutzer zugänglich...",
+  signUpWithEmail: "Melden Sie sich mit Ihrer E-Mail-Adresse an",
+  addToWaitlist: "Wir setzen Sie auf die Warteliste",
+  receiveInvitation: "Sobald Platz ist, erhalten Sie eine Einladung",
+  createAccountAndUse: "Sie können dann ein Konto erstellen und die App nutzen",
+  whatHappensToData: "Was passiert mit Ihren Daten?",
+  emailUsageExplanation: "Ihre E-Mail-Adresse wird nur verwendet, um Sie zu kontaktieren...",
+  recordingsStayLocal: "Aufnahmen: Bleiben vollständig lokal auf Ihrem Gerät",
+  transcriptionsPrivacy: "Transkriptionen: Wir können sie nicht sehen oder speichern",
+  aiOutputPrivacy: "KI-Ausgabe: Nur Sie haben Zugriff auf Ihre Inhalte",
+  privacyStatement: "Wir speichern nichts von Ihren Sitzungen. Ihre Privatsphäre steht an erster Stelle.",
+
+  // Expert configuration
+  role: "Rolle:",
+  industry: "Branche:",
+  topic: "Thema:",
+
+  // File upload
+  supportedImageFormats: "JPG, JPEG, PNG, WEBP, GIF",
+  processingMsgEmlFile: "MSG/EML-Datei verarbeiten...",
+  dragDropEmlMsgInstruction: "Sie können eine .eml- oder .msg-Datei ziehen und ablegen...",
+
+  // Content loading
+  itemsAppearWhenLoaded: "Elemente erscheinen hier, sobald Inhalte aus den Tabs geladen werden",
+
+  // Additional email confirmation modal
+  confirm: "Bestätigen",
+  sending: "Senden...",
+  resendCode: "Code erneut senden",
+  resendCodeWithTimer: "Code erneut senden ({time}s)",
+  demoWarning: "Hinweis: Dies ist eine Demo-Implementierung. In einer Produktionsumgebung würde eine echte E-Mail mit dem Bestätigungscode gesendet.",
+  testingNote: "Zum Testen: Überprüfen Sie die Browser-Konsole für den generierten Token.",
+
+  // Waitlist modal
+  waitlist: "Warteliste",
+  waitlistDescription: "RecapHorizon ist derzeit nur auf Einladung zugänglich. Dies stellt sicher, dass wir den besten Service bieten und die App basierend auf Feedback unserer Nutzer optimieren können.",
+  howWaitlistWorks: "Wie funktioniert die Warteliste?",
+  waitlistStep1: "Melden Sie sich mit Ihrer E-Mail-Adresse an",
+  waitlistStep2: "Wir setzen Sie auf die Warteliste",
+  waitlistStep3: "Sobald Platz ist, erhalten Sie eine Einladung",
+  waitlistStep4: "Sie können dann ein Konto erstellen und die App nutzen",
+  whatHappensWithData: "Was passiert mit Ihren Daten?",
+  dataUsageDescription: "Ihre E-Mail-Adresse wird nur verwendet, um Sie zu kontaktieren, wenn Sie Zugang erhalten. Wir teilen Ihre Daten nicht mit Dritten.",
+  important: "Wichtig:",
+  sessionsNotSaved: "Wenn Sie die App verwenden, werden Ihre Sitzungen NICHT in unserer Datenbank gespeichert.",
+  recordingsLocal: "Aufnahmen: Bleiben vollständig lokal auf Ihrem Gerät",
+  transcriptionsPrivate: "Transkriptionen: Wir können sie nicht sehen oder speichern",
+  aiOutputPrivate: "KI-Ausgabe: Nur Sie haben Zugang zu Ihren Inhalten",
+  privacyFirst: "Wir speichern absolut nichts von Ihren Sitzungen. Ihre Privatsphäre steht an erster Stelle.",
+  directSignup: "Direkte Anmeldung",
+  signUp: "Anmelden",
+
+  // Console Messages & Errors
+  basicConnectionOk: "✅ Grundverbindung: OK",
+  basicConnectionFailed: "❌ Grundverbindung fehlgeschlagen:",
+  readPermissionsOk: "✅ Leseberechtigungen: OK",
+  readPermissionsFailed: "❌ Leseberechtigungen fehlgeschlagen:",
+  skippingReadPermissionsTest: "ℹ️ Leseberechtigungstest überspringen - Benutzer nicht authentifiziert",
+  writePermissionsOk: "✅ Schreibberechtigungen: OK",
+  writePermissionsFailed: "❌ Schreibberechtigungen fehlgeschlagen:",
+  indexesOk: "✅ Indizes: OK",
+  indexTestFailed: "❌ Index-Test fehlgeschlagen:",
+  microphoneAccessDenied: "Mikrofonzugriff erforderlich aber verweigert",
+  noAudioSources: "Keine Audioquellen verfügbar",
+  recordingFailed: "Aufnahme fehlgeschlagen",
+  recordingStartedWithMimeType: "Aufnahme gestartet mit MIME-Typ:",
+  recordingPausedConsole: "Aufnahme pausiert",
+  recordingResumed: "Aufnahme fortgesetzt",
+  tabHiddenPausingRecording: "Tab verborgen, Aufnahme pausieren um Unterbrechung zu vermeiden",
+  tabVisibleResumingRecording: "Tab sichtbar, Aufnahme fortsetzen",
+  mediaRecorderRestarted: "MediaRecorder nach Track-Ende neu gestartet",
+  failedToRecoverFromTrackEnd: "Wiederherstellung nach Track-Ende fehlgeschlagen:",
+  displayCaptureNotAvailable: "Bildschirmaufnahme nicht verfügbar:",
+  mediaRecorderBitrateNotSupported: "MediaRecorder mit Bitrate nicht unterstützt, Standard verwenden:",
+  failedToStartRecording: "Aufnahme starten fehlgeschlagen:",
+  failedToResumeAudioContext: "AudioContext fortsetzen fehlgeschlagen:",
+  cleanupError: "Aufräumfehler:",
+  audioContextAutoResumed: "AudioContext automatisch nach kurzer Unterbrechung fortgesetzt",
+  failedToAutoResumeAudioContext: "Automatisches Fortsetzen des AudioContext fehlgeschlagen:",
+  couldNotAttachAudioContextListener: "AudioContext statechange Listener konnte nicht angehängt werden:",
+
+  // Error Messages
+  jsxDevNotAvailable: "jsxDEV ist in der Produktions-Runtime nicht verfügbar",
+  couldNotFindRootElement: "Root-Element zum Mounten nicht gefunden",
+  userIdRequiredForReadTest: "Benutzer-ID für Leseberechtigungstest erforderlich",
+  userIdRequiredForWriteTest: "Benutzer-ID für Schreibberechtigungstest erforderlich",
+  userIdEmptyInSubscriptionTier: "userId ist leer in getUserSubscriptionTier!",
+  userIdEmptyInFirestoreUser: "userId ist leer in Firestore user Funktion!",
+  userIdEmptyInTokenUsage: "userId ist leer in Firestore token usage Funktion!",
+  userIdEmptyInUserPreferences: "userId ist leer in Firestore userPreferences Funktion!",
+  invalidUrlProvided: "Ungültige URL bereitgestellt",
+  emptyResponseReceived: "Leere Antwort erhalten",
+  requestTimeoutAfter: "Request-Timeout nach",
+  redirectToDisabled: "Weiterleitung zu {location} (Weiterleitungen deaktiviert)",
+  invalidAnalysisType: "Ungültiger Analysetyp",
+  invalidMindmapOutput: "Ungültige Mindmap-Ausgabe",
+  rateLimitExceeded: "Rate-Limit überschritten",
+  
+  // File handling errors
+  unsupportedFileFormat: "Dateiformat wird nicht unterstützt. Versuchen Sie PDF, RTF, HTML, MD, DOCX oder TXT.",
+  noTextFound: "Kein Text in der Datei gefunden.",
+  firecrawlNotConfigured: "Firecrawl API-Schlüssel ist nicht konfiguriert.",
+  noContentRetrieved: "Es konnte kein Inhalt von den angegebenen URLs abgerufen werden.",
+  littleTextRetrieved: "Es konnte sehr wenig Text von diesen Webseiten abgerufen werden.",
+  littleTextRetrievedSingle: "Es konnte sehr wenig Text von dieser Webseite abgerufen werden. Dies kann an Sicherheitseinstellungen liegen oder daran, dass die Seite wenig Text enthält.",
+  couldNotRetrieveProxy: "Inhalt konnte nicht über Proxy von der Webseite abgerufen werden.",
+  
+  // Authentication errors
+  accountDisabled: "Konto ist deaktiviert. Kontaktieren Sie den Administrator.",
+  couldNotCreateAccount: "Benutzerkonto konnte nicht erstellt werden. Versuchen Sie es erneut oder kontaktieren Sie den Administrator.",
+  emailNotFound: "E-Mail-Adresse nicht gefunden. Erstellen Sie zuerst ein Konto.",
+  incorrectPassword: "Falsches Passwort. Versuchen Sie es erneut.",
+  invalidEmail: "Ungültige E-Mail-Adresse.",
+  accountDisabledContact: "Konto ist deaktiviert. Kontaktieren Sie den Administrator.",
+  emailNotFoundSystem: "E-Mail im System nicht gefunden. Kontaktieren Sie den Administrator, um hinzugefügt zu werden.",
+  emailInUse: "Diese E-Mail-Adresse wird bereits verwendet. Versuchen Sie sich anzumelden, anstatt ein Konto zu erstellen.",
+  emailInUseFirebase: "Diese E-Mail-Adresse wird bereits in Firebase verwendet. Versuchen Sie sich anzumelden, anstatt ein Konto zu erstellen.",
+  invalidCredentials: "Ungültige Anmeldedaten. Möglicherweise existiert das Konto bereits in Firebase. Versuchen Sie sich anzumelden oder kontaktieren Sie den Administrator.",
+  accountCreationNotAllowed: "Kontoerstellung ist nicht erlaubt. Kontaktieren Sie den Administrator.",
+  keywordAnalysisGenerationError: "Fehler beim Generieren der Keyword-Analyse:",
+  
+  // New unique translations
+  exportToPdf: "Als PDF exportieren",
+  exportToText: "Als Text exportieren",
+  noResultsYet: "Noch keine Ergebnisse. Versuchen Sie eine Suche.",
+  pageLoadedSuccessfully: "Seite erfolgreich geladen!",
+  language: "Sprache",
+  selectTopic: "Thema auswählen...",
+  selectRole: "Rolle auswählen...",
+  selectBranch: "Branche/Bereich auswählen...",
+  processingMsgFile: "MSG/EML-Datei wird verarbeitet...",
+  onlyPlainTextSupported: "Nur einfacher Text wird unterstützt.",
+  
+  // Security & Privacy Messages
+  aiServiceIntegration: "Die App integriert sich mit KI-Services. Die Qualität und Verfügbarkeit dieser Services hängen von den Bedingungen des KI-Anbieters ab und können variieren. Wir haben keine Kontrolle über die zugrunde liegenden KI-Modelle oder deren Ausgabe.",
+  
+  // Google Cloud Speech API Errors
+  speechApiKeyNotConfigured: "Google Cloud Speech API-Schlüssel ist nicht konfiguriert",
+  addValidApiKey: "Fügen Sie einen gültigen API-Schlüssel zu den Umgebungsvariablen hinzu",
+  speechApiKeyInvalidFormat: "Google Cloud Speech API-Schlüssel hat ungültiges Format",
+  checkApiKeyCorrect: "Überprüfen Sie, ob der API-Schlüssel korrekt aus der Google Cloud Console kopiert wurde",
+  speechApiAccessDenied: "Google Cloud Speech API-Zugriff verweigert",
+  speechApiQuotaExceeded: "Google Cloud Speech API-Kontingent überschritten",
+  cannotConnectSpeechApi: "Kann keine Verbindung zur Google Cloud Speech API herstellen",
+  checkInternetFirewall: "Überprüfen Sie Ihre Internetverbindung und Firewall-Einstellungen",
+  
+  // Firestore Error Messages
+  cannotConnectFirestore: "Kann keine Verbindung zu Firestore herstellen",
+  checkInternetFirebaseConfig: "Überprüfen Sie Ihre Internetverbindung und Firebase-Konfiguration",
+  checkFirestoreSecurityRules: "Überprüfen Sie die Firestore-Sicherheitsregeln",
+  noReadPermissionsFirestore: "Keine Leseberechtigungen für Firestore",
+  makeSureUserLoggedIn: "Stellen Sie sicher, dass der Benutzer angemeldet ist und Zugriff auf seine eigenen Daten hat",
+  skippingPermissionTests: "Berechtigungstests werden übersprungen - Authentifizierung erforderlich",
+  pleaseLoginDatabaseFeatures: "Bitte melden Sie sich an, um auf alle Datenbankfunktionen zuzugreifen",
+  noWritePermissionsFirestore: "Keine Schreibberechtigungen für Firestore",
+  firestoreIndexesNotWorking: "Firestore-Indizes funktionieren nicht korrekt",
+  checkFirebaseConsoleMissingIndexes: "Überprüfen Sie die Firebase-Konsole auf fehlende Indizes",
+  createRequiredCompositeIndexes: "Erstellen Sie die erforderlichen zusammengesetzten Indizes in der Firebase-Konsole",
+  
+  // Generic Database Errors
+  problemDatabaseConnection: "Es gibt ein Problem mit der Datenbankverbindung",
+  noAccessDatabaseLoginAgain: "Kein Zugriff auf die Datenbank. Bitte melden Sie sich erneut an.",
+  logOutLogInAgain: "Melden Sie sich ab und wieder an",
+  checkAccountActive: "Überprüfen Sie, ob Ihr Konto aktiv ist",
+  contactSupportProblemPersists: "Kontaktieren Sie den Support, wenn das Problem weiterhin besteht",
+  databaseTemporarilyUnavailable: "Datenbank vorübergehend nicht verfügbar. Bitte versuchen Sie es in wenigen Minuten erneut.",
+  waitTryAgain: "Warten Sie 2-3 Minuten und versuchen Sie es erneut",
+  checkInternetConnection: "Überprüfen Sie Ihre Internetverbindung",
+  reloadPageProblemPersists: "Laden Sie die Seite neu, wenn das Problem weiterhin besteht",
+  databaseConfigurationProblem: "Datenbank-Konfigurationsproblem. Bitte kontaktieren Sie den Support.",
+  contactAdministrator: "Kontaktieren Sie den Administrator",
+  mentionErrorCode: "Erwähnen Sie diesen Fehlercode: failed-precondition",
+  databaseQuotaExceeded: "Datenbank-Kontingent überschritten. Bitte versuchen Sie es später erneut.",
+  waitFewHoursTryAgain: "Warten Sie einige Stunden und versuchen Sie es erneut",
+  contactSupportQuotaIncrease: "Kontaktieren Sie den Support für eine Kontingenterhöhung",
+  connectionInterrupted: "Verbindung unterbrochen. Überprüfen Sie Ihre Internetverbindung.",
+  tryDifferentBrowser: "Versuchen Sie einen anderen Browser, wenn das Problem weiterhin besteht",
+  networkProblem: "Netzwerkproblem. Überprüfen Sie Ihre Internetverbindung.",
+  tryAgainFewMinutes: "Versuchen Sie es in wenigen Minuten erneut",
+  
+  // Device & Platform Specific
+  deviceMobile: "mobil",
+  deviceTablet: "tablet",
+  deviceDesktop: "desktop",
+  osIos: "ios",
+  osAndroid: "android",
+  osWindows: "windows",
+  osMacos: "macos",
+  osLinux: "linux",
+  osUnknown: "unbekannt",
+  platformAndroid: "android",
+  platformWebos: "webos",
+  platformIphone: "iphone",
+  platformIpad: "ipad",
+  platformIpod: "ipod",
+  platformBlackberry: "blackberry",
+  platformWindowsPhone: "windows phone",
+  platformMobile: "mobil",
+  platformOperaMini: "opera mini",
+  
+  // Audio/Media Related
+  mimeAudioWebm: "audio/webm",
+  mimeAudioMp4: "audio/mp4",
+  mimeAudioAac: "audio/aac",
+  mimeAudioMpeg: "audio/mpeg",
+  codecAudioWebmOpus: "audio/webm; codecs=opus",
+  recordingStateRecording: "aufnahme",
+  recordingStatePaused: "pausiert",
+  recordingStateStopped: "gestoppt",
+  recordingStateError: "fehler",
+  mediaRecorderInactive: "inaktiv",
+  mediaRecorderSuspended: "ausgesetzt",
+  
+  // Error Messages & Validation
+  errorOnlyImageFiles: "Nur Bilddateien sind erlaubt (JPG, PNG, JPEG, WEBP, GIF).",
+  errorDailySessionLimit: "Tägliches Sitzungslimit erreicht.",
+  errorApiKeyNotAvailable: "API-Schlüssel nicht verfügbar. Bitte wenden Sie sich an den Administrator.",
+  errorTokenLimitImageAnalysis: "Token-Limit für Bildanalyse erreicht.",
+  errorTokenLimit: "Token-Limit erreicht.",
+  errorTooManyPasteActions: "Zu viele Einfügeaktionen. Versuchen Sie es in einer Minute erneut.",
+  errorInvalidText: "Ungültiger Text: {error}",
+  errorNoValidTextPasted: "Kein gültiger Text eingefügt. Fügen Sie zuerst Text aus Ihrer Zwischenablage ein.",
+  
+  // Loading States
+  loadingAnalyzingImage: "Bild wird analysiert...",
+  loadingAnalyzingImageWithAI: "Bild wird mit KI analysiert...",
+  loadingProcessingPastedText: "Eingefügter Text wird verarbeitet...",
+  loadingWebExpertAnalysis: "Webseiten werden mit WebExpert geladen und analysiert...",
+  loadingWebPageExtraction: "Webseite wird geladen und Text extrahiert...",
+
+  // Modal Content & Help Text
+  helpLanguageSelection: "Die Auswahl der Sprache für das Quelldokument/die Aufnahme hilft der KI, es besser zu verstehen.",
+  buttonClose: "Schließen",
+  waitlistAlreadyLoggedIn: "Sie sind bereits angemeldet, die Warteliste ist nur für neue Einladungen.",
+  waitlistAlreadyRegistered: "Sie haben sich bereits in dieser Sitzung für die Warteliste angemeldet.",
+  waitlistInvalidEmail: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+  waitlistThankYou: "Vielen Dank für Ihre Anmeldung! Das RecapHorizon-Team wird sich so schnell wie möglich bei Ihnen melden. Wir schätzen Ihr Interesse!",
+
+  // Business Logic Messages
+  waitlistErrorAdding: "Beim Hinzufügen zur Warteliste ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+  waitlistAccessDenied: "Zugriff verweigert. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+  waitlistNetworkError: "Netzwerkfehler. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+  waitlistSuspiciousActivity: "Verdächtige Aktivität erkannt. Bitte versuchen Sie es später erneut.",
+  waitlistEmailBlocked: "Diese E-Mail-Adresse ist aufgrund wiederholter Einreichungen vorübergehend gesperrt.",
+
+  // Admin Functions
+  adminNoAccess: "Kein Zugriff auf Wartelisten-Verwaltung. Admin-Rechte erforderlich.",
+  adminSelectUsers: "Wählen Sie zuerst Benutzer zum Aktivieren aus.",
+  adminUsersActivated: "Benutzer erfolgreich aktiviert!",
+  adminActivationError: "Fehler beim Aktivieren von Benutzern.",
+  adminUserRemoved: "Benutzer erfolgreich von der Warteliste entfernt.",
+  adminRemovalError: "Fehler beim Entfernen des Benutzers von der Warteliste.",
+
+  // Email Templates
+  emailInvitationSubject: "Einladung für RecapHorizon - Sie können jetzt ein Konto erstellen!",
+  emailInvitationBody: "Lieber Benutzer,\n\nGroßartige Neuigkeiten! Sie wurden eingeladen, RecapHorizon beizutreten.\n\nSie können jetzt Ihr Konto erstellen und unsere Plattform nutzen.\n\nKlicken Sie hier, um zu beginnen: [Registrierungslink]\n\nWillkommen bei RecapHorizon!\n\nMit freundlichen Grüßen,\nDas RecapHorizon-Team",
+  emailClientOpened: "E-Mail-Client für {email} geöffnet!",
+  emailNoValidEmails: "Keine gültigen E-Mails gefunden.",
+
+  // Console Messages & Technical Errors
+  errorUpdateSessionCount: "SessionCount konnte nicht aktualisiert werden:",
+  errorImageAnalysis: "Fehler bei der Bildanalyse:",
+  errorImageProcessing: "Fehler beim Verarbeiten des Bildes:",
+  errorReadMsgFile: "MSG-Dateidaten konnten nicht gelesen werden",
+  errorParsingEml: "Fehler beim Parsen von EML:",
+  errorParsingMsg: "Fehler beim Parsen von MSG:",
+  errorProcessingMsg: "Fehler beim Verarbeiten der MSG-Datei:",
+  errorProcessingEml: "Fehler beim Verarbeiten der EML-Datei:",
+
+  // Startup Validation Console Messages
+  startupValidationStart: "🚀 RecapHorizon Startup-Validierung wird gestartet...",
+  validatingFirebaseConfig: "🔍 Firebase-Konfiguration wird validiert...",
+  firebaseConfigOk: "✅ Firebase-Konfiguration: OK",
+  firebaseConfigFailed: "❌ Firebase-Konfiguration fehlgeschlagen:",
+  validatingFirestoreHealth: "🔍 Firestore-Gesundheit wird validiert...",
+  firestoreHealthOk: "✅ Firestore-Gesundheit: OK",
+  firestoreHealthIssues: "⚠️ Firestore-Gesundheitsprobleme:",
+  firestoreHealthError: "❌ Firestore-Gesundheitsprüfung Fehler:",
+  validatingGoogleSpeechApi: "🔍 Google Speech API wird validiert...",
+  googleSpeechApiOk: "✅ Google Speech API: OK",
+  googleSpeechApiIssues: "⚠️ Google Speech API Probleme:",
+  googleSpeechApiError: "❌ Google Speech API Validierungsfehler:",
+  googleSpeechApiNotConfigured: "ℹ️ Google Speech API Schlüssel nicht konfiguriert (Entwicklungsmodus)",
+  performingEnvironmentChecks: "🔍 Zusätzliche Umgebungsprüfungen werden durchgeführt...",
+  startupValidationCompleted: "🎉 Startup-Validierung erfolgreich abgeschlossen!",
+  servicesStatus: "📊 Service-Status:",
+  nonCriticalWarnings: "⚠️ Nicht-kritische Warnungen:",
+  startupValidationFailed: "🚨 Startup-Validierung fehlgeschlagen!",
+  criticalIssues: "❌ Kritische Probleme:",
+  runningDevelopmentMode: "🔧 Läuft im Entwicklungsmodus",
+  mediaDevicesNotAvailable: "MediaDevices API nicht verfügbar - Audioaufnahme funktioniert möglicherweise nicht",
+  optionalEnvVarNotSet: "ℹ️ Optionale Umgebungsvariable {varName} nicht gesetzt",
+  startupReportTitle: "📋 **RecapHorizon Startup-Bericht**",
+  statusAppReady: "✅ **Status**: Anwendung ist einsatzbereit",
+  statusAppIssues: "⚠️ **Status**: Anwendung hat Probleme, kann aber laufen",
+  statusAppFailed: "❌ **Status**: Anwendung konnte nicht ordnungsgemäß gestartet werden",
+  
+  // Firestore Health Check Console Messages (removed duplicates)
+  userDocumentNotExist: "Benutzerdokument existiert nicht, Schreibberechtigungstest wird übersprungen",
+  
+  // Fetch Page Console Messages
+  fetchHtmlErrorExtractingMetadata: "[FetchHTML] Fehler beim Extrahieren von Metadaten:",
+  fetchMultipleHtmlFetching: "[FetchMultipleHTML] {urlCount} URLs werden mit max {maxConcurrent} gleichzeitigen Anfragen abgerufen",
+  fetchMultipleHtmlFailedToFetch: "[FetchMultipleHTML] Fehler beim Abrufen von {url}:",
+  fetchMultipleHtmlCompleted: "[FetchMultipleHTML] Abgeschlossen: {successful}/{total} erfolgreich",
+  extractTextErrorParsingHtml: "[ExtractText] Fehler beim Parsen von HTML:",
+  
+  // Firebase Console Messages
+  missingFirebaseEnvVars: "Erforderliche Firebase-Umgebungsvariablen fehlen:",
+  firebaseAppCheckNotInitialized: "Firebase App Check nicht initialisiert: kein Site-Schlüssel bereitgestellt...",
+  failedInitializeAppCheck: "Firebase App Check konnte nicht initialisiert werden:",
+  errorTrackingUserSession: "Fehler beim Verfolgen der Benutzersitzung:",
+  errorGettingUserSessionsToday: "Fehler beim Abrufen der heutigen Benutzersitzungen:",
+  errorGettingUserSessionsMonth: "Fehler beim Abrufen der Benutzersitzungen dieses Monats:",
+  errorUpdatingTokenUsage: "Fehler beim Aktualisieren der Token-Nutzung:",
+  errorGettingTokenUsageToday: "Fehler beim Abrufen der heutigen Token-Nutzung:",
+  errorGettingTotalTokenUsage: "Fehler beim Abrufen der gesamten Token-Nutzung:",
+  errorGettingUserPreferences: "Fehler beim Abrufen der Benutzereinstellungen:",
+  errorSavingUserPreferences: "Fehler beim Speichern der Benutzereinstellungen:",
+  
+  // Security Console Messages
+  failedStoreSessionSecurely: "Sitzung konnte nicht sicher gespeichert werden:",
+  failedLoadStoredSession: "Gespeicherte Sitzung konnte nicht geladen werden:",
+  failedLoadStoredSessions: "Gespeicherte Sitzungen konnten nicht geladen werden:",
+  failedRemoveStoredSession: "Gespeicherte Sitzung konnte nicht entfernt werden:",
+  couldNotGenerateSecureToken: "Sicherer Token konnte nicht generiert werden, Fallback auf zeitstempelbasiert:",
+  errorCreatingEmailConfirmation: "Fehler beim Erstellen der E-Mail-Bestätigung:",
+  errorVerifyingEmailConfirmation: "Fehler beim Verifizieren der E-Mail-Bestätigung:",
+  errorCheckingPendingConfirmation: "Fehler beim Prüfen der ausstehenden Bestätigung:",
+  couldNotCheckDuplicateEmails: "Doppelte E-Mails konnten nicht überprüft werden:",
+  errorCompletingWaitlistSignup: "Fehler beim Abschließen der Wartelisten-Anmeldung:",
+
+  // File Processing
+  imageAnalyzedLabel: "[BILD ANALYSIERT]",
+  fileInfoFilename: "Dateiname:",
+  fileInfoType: "Dateityp:",
+  fileInfoSize: "Dateigröße:",
+  aiAnalysisHeader: "=== KI-ANALYSE ===",
+  emailSubjectLabel: "Betreff:",
+
+  // Tab navigation
+  summaryTab: "Zusammenfassung",
+  executiveSummaryTab: "Executive Summary",
+  keywordsTab: "Schlüsselwörter",
+
+  // RecapHorizonPanel
+  itemsAppearHere: "Elemente erscheinen hier, sobald Inhalte aus den Registerkarten geladen werden.",
+
+  // Mobile Audio Help
+  androidLabel: "🤖 Android:",
+  extraTip: "Extra-Tipp:",
+
+  // Pricing Page
+  choosePerfectPlan: "Wählen Sie den perfekten Plan für Ihre KI-Transkriptionsbedürfnisse",
+
+  // Disclaimer Modal
+  aiIntelligence: "KI-Intelligenz",
+  aiIntelligenceDesc: "Die App integriert sich mit KI-Diensten. Die Qualität und Verfügbarkeit dieser Dienste hängen von den Bedingungen des KI-Anbieters ab und können variieren. Wir haben keine Kontrolle über die zugrunde liegenden KI-Modelle oder deren Ausgabe.",
+
+  // Token Usage Meter
+  tokensThisMonth: "Tokens diesen Monat",
+  used: "verwendet",
+  remaining: "verbleibend",
+  unlimitedTokens: "Unbegrenzte Tokens - keine Beschränkungen!",
+  approachingTokenLimit: "Sie nähern sich Ihrem monatlichen Token-Limit. Erwägen Sie ein Upgrade auf ein höheres Abonnement.",
+
+  // Expert Chat Modal
+  deeperAspectQuestion: "Möchten Sie tiefer in einen bestimmten Aspekt davon eintauchen?",
+  errorGeneratingAnswer: "Fehler beim Generieren der Antwort",
+
+  // Console Messages - Firestore Health Check, Fetch Page, Firebase, Security (removed duplicates)
+  // Additional unique keys for startup validator
+  firebaseConfigValidationFailed: "Firebase-Konfiguration kann nicht validiert werden",
+  firebaseValidationError: "❌ Firebase-Validierungsfehler:",
+  // firestoreHealthCheckFailed: duplicate removed
+  quickStartupCheckFailed: "Schnelle Startprüfung fehlgeschlagen:",
+  runningInDevMode: "🔧 Läuft im Entwicklungsmodus",
+
+  // Console Messages - Tab Cache Integration
+  debugSummaryTabClicked: "[DEBUG] Zusammenfassung-Tab angeklickt",
+  debugGeneratingNewSummary: "[DEBUG] Neue Zusammenfassung generieren...",
+  debugExecutiveSummaryTabClicked: "[DEBUG] Executive Summary-Tab angeklickt",
+  debugGeneratingNewExecutiveSummary: "[DEBUG] Neue Executive Summary generieren...",
+
+  // Console Messages - Tab Cache
+  tabCacheCheckingCache: "[TabCache] 🔍 Cache für {tabType} prüfen",
+  tabCacheCurrentState: "[TabCache] 📊 Aktueller Cache-Status:",
+  tabCacheUsingCached: "[TabCache] ✅ Gecachten Inhalt für {tabType} verwenden ({length} Zeichen)",
+  tabCacheGeneratingNew: "[TabCache] 🆕 Neuen Inhalt für {tabType} generieren",
+  tabCacheGenerated: "[TabCache] 📝 Inhalt für {tabType} generiert ({length} Zeichen)",
+  tabCacheCaching: "[TabCache] 💾 Inhalt für {tabType} cachen",
+  tabCacheUpdated: "[TabCache] 📈 Cache aktualisiert:",
+  tabCacheError: "[TabCache] ❌ Fehler beim Generieren von Inhalt für {tabType}:",
+  tabCacheCheckingSyncCache: "[TabCache] 🔍 Sync-Cache für {tabType} prüfen",
+  tabCacheUsingSyncCached: "[TabCache] ✅ Gecachten Sync-Inhalt für {tabType} verwenden",
+  tabCacheCachingNewSync: "[TabCache] 🆕 Neuen Sync-Inhalt für {tabType} cachen ({length} Zeichen)",
+  tabCacheCachedSync: "[TabCache] 💾 Sync-Inhalt für {tabType} gecacht",
+  tabCacheResetting: "[TabCache] 🔄 Alle gecachten Inhalte zurücksetzen",
+  tabCacheReset: "[TabCache] ✅ Cache vollständig zurückgesetzt",
+  tabCacheIsCached: "[TabCache] ❓ Ist {tabType} gecacht? {cached}",
+  tabCacheStatusOverview: "[TabCache] 📋 Cache-Status-Übersicht:",
+  tabCacheStatusItem: "  {key}: {status}",
+
+  // Technical Console Messages - API Validator
+  apiCallFailed: "API-Aufruf für {apiName} fehlgeschlagen:",
+  retryingApiCall: "Wiederholung von {apiName} in {delay}ms (Versuch {attempt}/{maxRetries})",
+  usingFallbackApi: "Fallback für {apiName} verwenden",
+  fallbackAlsoFailed: "Fallback für {apiName} ebenfalls fehlgeschlagen:",
+
+  // Technical Console Messages - Error Handler
+  errorHandlerLog: "[{errorId}] {errorType}:",
+  errorStackTrace: "Stack-Trace:",
+  failedToSendErrorLog: "Fehler beim Senden an Logging-Service:",
+
+  // Technical Console Messages - Token Manager
+  errorValidatingTokenUsage: "Fehler bei der Validierung der Token-Nutzung:",
+  errorRecordingTokenUsage: "Fehler beim Aufzeichnen der Token-Nutzung:",
+  errorGettingCurrentUsage: "Fehler beim Abrufen der aktuellen Nutzung:",
+  errorCheckingUsageWarnings: "Fehler beim Überprüfen der Nutzungswarnungen:",
+
+  // Technical Console Messages - Tab Cache (useTabCache)
+  tabCacheResettingAll: "[TabCache] 🔄 Alle gecachten Inhalte zurücksetzen",
+  tabCacheCompletelyReset: "[TabCache] ✅ Cache vollständig zurückgesetzt",
+  tabCacheIsTypeCached: "[TabCache] ❓ Ist {tabType} gecacht? {cached}",
+
+  // Technical Console Messages - Clipboard
+  clipboardToastMessage: "{type}: {message}",
+
+  // Expert Chat Console Messages
+  expertChatRateLimitExceeded: "Ratenlimit für Expert Chat überschritten",
+  expertChatInvalidMessage: "Ungültiger Nachrichteninhalt:",
+  expertChatTokenValidationFailed: "Token-Validierung fehlgeschlagen:",
+  expertChatFollowUpError: "Fehler beim Generieren der Nachfrage:",
+  expertChatTokenRecordingError: "Fehler beim Aufzeichnen der Token-Nutzung:",
+  expertChatError: "Expert Chat Fehler:",
+
+  // Email Composition Console Messages
+  emailMissingApiKey: "GEMINI_API_KEY Umgebungsvariable fehlt",
+  emailGenerationError: "Fehler beim Generieren der AI-E-Mail:",
+  
+  // App.tsx Error Messages
+  httpErrorStatus: "HTTP-Fehler! Status: {status}",
+  weakPasswordMinimum: "Passwort muss mindestens 6 Zeichen lang sein.",
+  accountCreationFailed: "Kontoerstellung fehlgeschlagen: {message}",
+  directFetchFailed: "Direkter Abruf fehlgeschlagen, Rückgriff auf CORS-Proxy:",
+  firebaseEmailInUse: "Diese E-Mail-Adresse wird bereits in Firebase verwendet. Versuchen Sie sich anzumelden, anstatt ein Konto zu erstellen."
 };

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ExpertConfiguration, ExpertChatMessage } from '../../types';
 import { GoogleGenAI, Chat } from '@google/genai';
 import { tokenCounter } from '../tokenCounter';
+import { SafeHtml } from '../utils/SafeHtml';
 
 interface ExpertChatModalProps {
   isOpen: boolean;
@@ -13,6 +14,8 @@ interface ExpertChatModalProps {
   apiKey: string;
   transcript?: string;
   updateTokensAndRefresh?: (promptTokens: number, responseTokens: number) => Promise<void>;
+  userId: string; // User ID for token validation
+  userTier: string; // User tier for token validation
 }
 
 const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
@@ -24,7 +27,9 @@ const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
   t,
   apiKey,
   transcript = '',
-  updateTokensAndRefresh
+  updateTokensAndRefresh,
+  userId,
+  userTier
 }) => {
   const [messages, setMessages] = useState<ExpertChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -49,39 +54,62 @@ const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
       const initialMessage: ExpertChatMessage = {
         id: Date.now().toString(),
         role: 'expert',
-        content: `Hallo! Ik ben je ${configuration.role.name} gespecialiseerd in ${configuration.branche.name}. Ik sta klaar om je te helpen met vragen over "${configuration.topic.name}". Wat zou je graag willen bespreken?`,
+        content: t('expertInitialMessage', 'Hello! I am your {role} specialized in {branche}. I\'m ready to help you with questions about "{topic}". What would you like to discuss?')
+          .replace('{role}', configuration.role.name)
+          .replace('{branche}', configuration.branche.name)
+          .replace('{topic}', configuration.topic.name),
         timestamp: new Date()
       };
       setMessages([initialMessage]);
-      setSuggestedQuestion('Kun je me meer vertellen over de belangrijkste aspecten van dit onderwerp?');
+      setSuggestedQuestion(t('expertInitialSuggestion', 'Can you tell me more about the key aspects of this topic?'));
     }
   }, [isOpen, configuration]);
 
   const generateSystemPrompt = () => {
-    return `Je bent een ${configuration.role.name}. Je expertise ligt binnen ${configuration.branche.name}. De discussie zal gaan over "${configuration.topic.name}".
-
-Jouw taak is om de gebruiker te begeleiden en te informeren binnen de grenzen van jouw rol, branche en het gekozen topic. Houd je strikt aan de afbakening van deze selecties. Geef GEEN antwoorden of informatie over onderwerpen die buiten deze specifieke context vallen. Als een vraag buiten je expertise valt, geef dan aan dat je daar geen antwoord op kunt geven binnen deze context.
-
-De outputtaal dient ALTIJD Nederlands te zijn.
-Je gedraagt je behulpzaam, professioneel en objectief. Houd de antwoorden relevant en to-the-point.
-
-Aanvullende richtlijnen:
-- Presenteer nooit gegenereerde, afgeleide, gespeculeerde of afgeleid content als feit.
-- Als je iets niet kunt verifiëren, zeg dan: "Ik kan dit niet verifiëren." of "Ik heb geen toegang tot die informatie." of "Mijn kennisbank bevat dat niet."
-- Label onverifieerde content aan het begin van een zin: [Inferentie] [Speculatie] [Onverifieerd]
-- Vraag om verduidelijking als informatie ontbreekt. Gok niet en vul geen gaten op.
-- Als een deel onverifieerd is, label dan de hele reactie.
-- Parafraseer of interpreteer mijn input niet tenzij ik erom vraag.
-- Voor beweringen over LLM-gedrag (inclusief jezelf), voeg toe: [Inferentie] of [Onverifieerd], met een notitie dat het gebaseerd is op waargenomen patronen.`;
+    return t('expertSystemPromptTemplate', {
+      role: configuration.role.name,
+      branche: configuration.branche.name,
+      topic: configuration.topic.name,
+      verificationGuideline: t('expertVerificationGuideline')
+    });
   };
 
   const sendMessage = async (messageContent: string) => {
     if (!messageContent.trim() || isLoading || !apiKey) return;
 
+    // Import security utilities and token manager
+    const { validateAndSanitizeForAI, rateLimiter } = await import('../utils/security');
+    const { tokenManager } = await import('../utils/tokenManager');
+    
+    // Rate limiting check (max 20 expert chat messages per minute)
+    const sessionId = 'expert_chat_' + Date.now().toString().slice(-6);
+    if (!rateLimiter.isAllowed(sessionId, 20, 60000)) {
+      console.error(t('expertChatRateLimitExceeded'));
+      return;
+    }
+    
+    // Validate and sanitize the message content
+    const validation = validateAndSanitizeForAI(messageContent, 10000); // 10KB limit for chat messages
+    if (!validation.isValid) {
+      console.error(t('expertChatInvalidMessage'), validation.error);
+      return;
+    }
+    
+    const sanitizedContent = validation.sanitized;
+    
+    // Validate token usage for chat message
+    const tokenEstimate = tokenManager.estimateTokens(sanitizedContent, 2);
+    const tokenValidation = await tokenManager.validateTokenUsage(userId, userTier, tokenEstimate.totalTokens);
+    
+    if (!tokenValidation.allowed) {
+      console.error(t('expertChatTokenValidationFailed'), tokenValidation.reason);
+      return;
+    }
+
     const userMessage: ExpertChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: messageContent.trim(),
+      content: sanitizedContent,
       timestamp: new Date()
     };
 
@@ -104,19 +132,15 @@ Aanvullende richtlijnen:
         });
         
         // Create expert system instruction based on configuration
-        const systemInstruction = `Je bent een Nederlandse expert ${configuration.role.name} gespecialiseerd in ${configuration.topic.name} binnen de ${configuration.branche.name} sector. 
-
-Je taak is om:
-1. Professionele en gedetailleerde antwoorden te geven in het Nederlands
-2. Specifieke inzichten te bieden vanuit je expertise in ${configuration.topic.name}
-3. Praktische adviezen te geven die relevant zijn voor de ${configuration.branche.name} sector
-4. De context van het transcript te gebruiken om gerichte analyses te maken
-5. Concrete aanbevelingen te doen gebaseerd op best practices in je vakgebied
-
-${transcript ? `Hier is het transcript waar de gebruiker vragen over heeft:\n\n---\n${transcript}\n---\n\nGebruik dit transcript als context voor je antwoorden.` : ''}
-
-
-Antwoord altijd in het Nederlands en vanuit je rol als ${configuration.role.name} expert.`;
+        const transcriptContext = transcript ? 
+          t('expertTranscriptContext', 'Here is the transcript the user has questions about:\n\n---\n{transcript}\n---\n\nUse this transcript as context for your answers.')
+            .replace('{transcript}', transcript) : '';
+        
+        const systemInstruction = t('expertSystemInstruction', 'You are an expert {role} specialized in {topic} within the {branche} sector.\n\nYour task is to:\n1. Provide professional and detailed answers in English\n2. Offer specific insights from your expertise in {topic}\n3. Give practical advice relevant to the {branche} sector\n4. Use the transcript context to make targeted analyses\n5. Make concrete recommendations based on best practices in your field\n\n{transcriptContext}\n\nAlways respond in English and from your role as a {role} expert.')
+          .replace('{role}', configuration.role.name)
+          .replace('{topic}', configuration.topic.name)
+          .replace('{branche}', configuration.branche.name)
+          .replace('{transcriptContext}', transcriptContext);
 
         chatInstanceRef.current = ai.chats.create({
           model: 'gemini-2.5-flash',
@@ -156,39 +180,41 @@ Antwoord altijd in het Nederlands en vanuit je rol als ${configuration.role.name
         }).join('\n\n');
         const lastResponse = fullResponse;
         
+        const followUpPrompt = t('expertFollowUpPrompt', 'You are a helpful assistant that generates relevant follow-up questions based on a chat conversation.\n\nHere is a recent chat conversation between a user and an expert:\n\n{recentMessages}\n\nLatest response from the expert:\n{lastResponse}\n\nGenerate one specific follow-up question that the user could ask to delve deeper into the content of this conversation. The question should be directly related to the discussed topics and help the user gain more insight.\n\nReturn only the question, without introduction or explanation.')
+          .replace('{recentMessages}', recentMessages)
+          .replace('{lastResponse}', lastResponse);
+        
         const followUpResponse = await followUpChat.sendMessage({
-          message: `Je bent een behulpzame assistent die een relevante vervolgvraag genereert op basis van een chatgesprek.
-
-Hier is een recent chatgesprek tussen een gebruiker en een expert:
-
-${recentMessages}
-
-Laatste antwoord van de expert:
-${lastResponse}
-
-Genereer één specifieke vervolgvraag die de gebruiker zou kunnen stellen om dieper in te gaan op de inhoud van dit gesprek. De vraag moet direct gerelateerd zijn aan de besproken onderwerpen en de gebruiker helpen om meer inzicht te krijgen.
-
-Geef alleen de vraag terug, zonder inleiding of uitleg.`
+          message: followUpPrompt
         });
         
         // Haal de tekst uit de response (text is een eigenschap, geen functie)
         const generatedQuestion = followUpResponse.text.trim();
         setSuggestedQuestion(generatedQuestion);
       } catch (error) {
-        console.error('Error generating follow-up question:', error);
-        setSuggestedQuestion('Wil je dieper ingaan op een specifiek aspect hiervan?');
+        console.error(t('expertChatFollowUpError'), error);
+        setSuggestedQuestion(t('deeperAspectQuestion'));
       }
 
       // Track token usage
+      const promptTokens = tokenCounter.countPromptTokens(messageContent.trim());
+      const responseTokens = tokenCounter.countResponseTokens(fullResponse);
+      
+      // Record token usage with user context
+      try {
+        await tokenManager.recordTokenUsage(userId, promptTokens, responseTokens);
+      } catch (error) {
+        console.error(t('expertChatTokenRecordingError'), error);
+      }
+      
+      // Also call the callback if provided for backward compatibility
       if (updateTokensAndRefresh) {
-        const promptTokens = tokenCounter.countPromptTokens(messageContent.trim());
-        const responseTokens = tokenCounter.countResponseTokens(fullResponse);
         await updateTokensAndRefresh(promptTokens, responseTokens);
       }
 
     } catch (error: any) {
-      console.error('Expert chat error:', error);
-      const errorMessage = `Fout bij het genereren van antwoord: ${error.message || 'Onbekende fout'}`;
+      console.error(t('expertChatError'), error);
+      const errorMessage = `${t('errorGeneratingAnswer')}: ${error.message || t('unknownError')}`;
       setMessages(prev => prev.map((msg, i) => 
         i === prev.length - 1 ? { ...msg, content: errorMessage } : msg
       ));
@@ -222,7 +248,7 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
     // Convert chat messages to transcript format for analysis
     const chatTranscript = messages
       .map(msg => {
-        const roleLabel = msg.role === 'user' ? 'Gebruiker' : 'Expert';
+        const roleLabel = msg.role === 'user' ? t('expertChatUser', 'User') : t('expertChatExpert', 'Expert');
         return `${roleLabel} (${msg.timestamp.toLocaleTimeString()}): ${msg.content}`;
       })
       .join('\n\n');
@@ -258,13 +284,13 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-              {t('expertChatTitle') || 'Ask the Expert Chat'}
+            <h3 className="text-xl font-medium text-slate-800 dark:text-slate-100 mb-2 tracking-tight">
+              {t('expertChatTitle', 'Ask the Expert Chat')}
             </h3>
             <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-400">
-              <span><strong>Rol:</strong> {configuration.role.name}</span>
-              <span><strong>Branche:</strong> {configuration.branche.name}</span>
-              <span><strong>Topic:</strong> {configuration.topic.name}</span>
+              <span><strong>{t('role')}:</strong> {configuration.role.name}</span>
+              <span><strong>{t('industry')}:</strong> {configuration.branche.name}</span>
+              <span><strong>{t('topic')}:</strong> {configuration.topic.name}</span>
             </div>
           </div>
           <button 
@@ -292,7 +318,12 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    <SafeHtml 
+                      content={message.content} 
+                      className="whitespace-pre-wrap" 
+                      allowBasicFormatting={true}
+                      maxLength={10000}
+                    />
                     <div className="text-xs opacity-70 mt-1">
                       {message.timestamp.toLocaleTimeString()}
                     </div>
@@ -321,7 +352,7 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={t('expertChatPlaceholder') || 'Typ je vraag hier...'}
+                  placeholder={t('expertChatPlaceholder', 'Typ je vraag hier...')}
                   className="flex-1 p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={2}
                   disabled={isLoading}
@@ -331,7 +362,7 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
                   disabled={!inputMessage.trim() || isLoading}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                 >
-                  {t('send') || 'Verstuur'}
+                  {t('send')}
                 </button>
               </div>
             </div>
@@ -339,8 +370,8 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
 
           {/* Sidebar with Suggested Questions */}
           <div className="w-80 border-l border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4">
-            <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-3">
-              {t('suggestedQuestions') || 'Vervolgvraag Suggestie'}
+            <h4 className="font-medium text-slate-800 dark:text-slate-100 mb-3">
+              {t('suggestedQuestions', 'Vervolgvraag Suggestie')}
             </h4>
             {suggestedQuestion && (
               <div className="space-y-3">
@@ -353,7 +384,7 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
                     disabled={isLoading}
                     className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm rounded transition-colors"
                   >
-                    {t('executeSuggestion') || 'Voer vervolgvraag uit'}
+                    {t('executeSuggestion', 'Voer vervolgvraag uit')}
                   </button>
                 </div>
               </div>
@@ -368,14 +399,14 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
               onClick={handleCancel}
               className="px-4 py-2 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-lg transition-colors"
             >
-              {t('chatCancel') || 'Chat Annuleren'}
+              {t('chatCancel', 'Chat Annuleren')}
             </button>
             <button
               onClick={handleAnalyze}
               disabled={messages.length <= 2 || messages.filter(m => m.role === 'user').length === 0 || messages.filter(m => m.role === 'expert').length <= 1}
               className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
             >
-              {t('toAnalysis') || 'Naar Analyse'}
+              {t('toAnalysis', 'Naar Analyse')}
             </button>
           </div>
         </div>
@@ -384,24 +415,24 @@ Geef alleen de vraag terug, zonder inleiding of uitleg.`
         {showAnalyzeConfirm && (
           <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
             <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md mx-4">
-              <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">
-                {t('confirmAnalysis') || 'Chat klaar, overgaan naar analyse?'}
+              <h4 className="text-lg font-medium text-slate-800 dark:text-slate-100 mb-3">
+                {t('confirmAnalysis', 'Chat klaar, overgaan naar analyse?')}
               </h4>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                {t('confirmAnalysisDesc') || 'De volledige chat wordt geanalyseerd en toegevoegd aan je RecapSmart analyse.'}
+                {t('confirmAnalysisDesc', 'De volledige chat wordt geanalyseerd en toegevoegd aan je RecapHorizon analyse.')}
               </p>
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setShowAnalyzeConfirm(false)}
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                 >
-                  {t('no') || 'Nee'}
+                  {t('no', 'Nee')}
                 </button>
                 <button
                   onClick={confirmAnalyze}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors"
                 >
-                  {t('yes') || 'Ja'}
+                  {t('yes', 'Ja')}
                 </button>
               </div>
             </div>

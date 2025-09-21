@@ -22,7 +22,8 @@ export enum SubscriptionTier {
 // Session types
 export enum SessionType {
   AUDIO_RECORDING = 'audio_recording',
-  FILE_UPLOAD = 'file_upload'
+  FILE_UPLOAD = 'file_upload',
+  EMAIL_IMPORT = 'email_import'
 }
 
 // Usage limits per tier
@@ -31,6 +32,8 @@ export interface TierLimits {
   maxSessionsPerDay: number;
   maxTranscriptLength: number; // in characters
   allowedFileTypes: string[];
+  maxTokensPerMonth: number; // monthly token limit
+  maxTokensPerDay: number; // daily token limit
 }
 
 // User subscription information
@@ -173,6 +176,12 @@ export interface ExplainOptions {
   complexityLevel: string;
   focusArea: string;
   format: string;
+}
+
+// Email options interface
+export interface EmailOptions {
+  tone: string;
+  length: string;
 }
 
 // Ask the Expert interfaces

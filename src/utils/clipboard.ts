@@ -1,3 +1,14 @@
+type TranslationFunction = (key: string, params?: Record<string, any>) => string;
+
+let t: TranslationFunction | undefined;
+
+/**
+ * Set the translation function for clipboard utilities
+ */
+export function setClipboardTranslation(translationFunction: TranslationFunction) {
+  t = translationFunction;
+}
+
 // Utility: copyToClipboard
 export async function copyToClipboard(text: string): Promise<void> {
   if (navigator && navigator.clipboard) {
@@ -15,5 +26,5 @@ export async function copyToClipboard(text: string): Promise<void> {
 // Utility: displayToast
 export function displayToast(message: string, type: 'success' | 'error' = 'success'): void {
   // Placeholder: Replace with your toast implementation
-  alert(`${type.toUpperCase()}: ${message}`);
+  alert(t ? t('clipboardToastMessage', { type: type.toUpperCase(), message }) : `${type.toUpperCase()}: ${message}`);
 }

@@ -1,11 +1,11 @@
-# RecapSmart - AI-Powered Meeting Transcription & Analysis
+# RecapHorizon - AI-Powered Meeting Transcription & Analysis
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/your-badge-id/deploy-status)](https://app.netlify.com/sites/your-site-name/deploys)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🚀 Overview
 
-RecapSmart is an advanced AI-powered application that transforms your meetings, webinars, and conversations into professional documents, presentations, and actionable insights. Built with cutting-edge AI technology, it provides real-time transcription, analysis, and document generation capabilities.
+RecapHorizon is an advanced AI-powered application that transforms your meetings, webinars, and conversations into professional documents, presentations, and actionable insights. Built with cutting-edge AI technology, it provides real-time transcription, analysis, and document generation capabilities.
 
 ## ✨ Key Features
 
@@ -46,8 +46,8 @@ RecapSmart is an advanced AI-powered application that transforms your meetings, 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/recapsmart.git
-   cd recapsmart
+   git clone https://github.com/yourusername/recaphorizon.git
+   cd recaphorizon
    ```
 
 2. **Install dependencies**
@@ -96,7 +96,7 @@ RecapSmart is an advanced AI-powered application that transforms your meetings, 
 
 ## 🌐 Multi-Language Support
 
-RecapSmart supports multiple languages:
+RecapHorizon supports multiple languages:
 - 🇳🇱 Dutch (Nederlands) - Primary
 - 🇬🇧 English
 - 🇩🇪 German (Deutsch)
@@ -164,10 +164,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- **Documentation**: [docs.recapsmart.app](https://docs.recapsmart.app)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/recapsmart/issues)
-- **Email**: support@recapsmart.app
-- **Discord**: [Join our community](https://discord.gg/recapsmart)
+- **Documentation**: [docs.recaphorizon.app](https://docs.recaphorizon.app)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/recaphorizon/issues)
+- **Email**: support@recaphorizon.app
+- **Discord**: [Join our community](https://discord.gg/recaphorizon)
 
 ## 🙏 Acknowledgments
 
@@ -181,10 +181,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Version**: 1.0.0
 - **Status**: Production Ready
 - **Last Updated**: December 2024
-- **Maintainers**: RecapSmart Team
+- **Maintainers**: RecapHorizon Team
 
 ---
 
-**Made with ❤️ by the RecapSmart Team**
+**Made with ❤️ by the RecapHorizon Team**
 
 *Transform your meetings into actionable insights with AI*

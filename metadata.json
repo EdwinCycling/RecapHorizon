@@ -1,6 +1,6 @@
 {
-  "name": "RecapSmart - AI Meeting Transcription & Analysis",
-  "short_name": "RecapSmart",
+  "name": "RecapHorizon - AI Meeting Transcription & Analysis",
+  "short_name": "RecapHorizon",
   "description": "AI-powered meeting transcription, analysis, and document generation tool. Transform meetings, webinars, and conversations into professional documents and insights.",
   "keywords": [
     "AI transcription",
@@ -12,9 +12,9 @@
     "voice recording",
     "meeting minutes"
   ],
-  "author": "RecapSmart",
+  "author": "RecapHorizon",
   "version": "1.0.0",
-  "homepage_url": "https://recapsmart.app",
+  "homepage_url": "https://recaphorizon.app",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#06b6d4",

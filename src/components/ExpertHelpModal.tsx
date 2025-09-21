@@ -18,7 +18,7 @@ export default function ExpertHelpModal({ isOpen, onClose, t }: ExpertHelpModalP
       <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
         <p>{t('expertHelpIntro')}</p>
         
-        <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+        <h3 className="font-medium text-slate-900 dark:text-slate-100">
           {t('expertHelpHowItWorks')}
         </h3>
         <ol className="list-decimal list-inside space-y-2 pl-4">
@@ -27,7 +27,7 @@ export default function ExpertHelpModal({ isOpen, onClose, t }: ExpertHelpModalP
           <li>{t('expertHelpStep3')}</li>
         </ol>
 
-        <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+        <h3 className="font-medium text-slate-900 dark:text-slate-100">
           {t('expertHelpTips')}
         </h3>
         <ul className="list-disc list-inside space-y-2 pl-4">

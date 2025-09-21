@@ -1,27 +1,43 @@
 {
-  "name": "recapsmart",
+  "name": "recaphorizon",
   "private": true,
-  "version": "0.8090",
+  "version": "0.8090.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:netlify": "npx netlify dev"
   },
   "dependencies": {
     "@google/genai": "^1.13.0",
     "@heroicons/react": "^2.2.0",
+    "@kenjiuno/msgreader": "^1.26.0-beta1",
+    "@vitejs/plugin-react": "^5.0.2",
+    "buffer": "^6.0.3",
+    "eml-parse-js": "^1.2.0-beta.0",
+    "events": "^3.3.0",
     "firebase": "^12.1.0",
     "jspdf": "^3.0.2",
     "mammoth": "^1.10.0",
     "mermaid": "^11.3.0",
     "pdfjs-dist": "^5.4.54",
     "pptxgenjs": "^3.12.0",
+    "process": "^0.11.10",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-i18next": "^15.7.3",
+    "react-icons": "^5.5.0",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "netlify": "^23.5.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

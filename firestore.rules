@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for security
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches('.*@.*\\..*');
+    }
+    
+    function isValidTimestamp(ts) {
+      return ts is timestamp;
+    }
+    
+    // User profiles - users can only access their own data
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      allow create: if isAuthenticated() && request.auth.uid == userId
+        && request.resource.data.keys().hasAll(['email', 'createdAt'])
+        && isValidEmail(request.resource.data.email)
+        && isValidTimestamp(request.resource.data.createdAt);
+    }
+    
+    // User sessions - users can only access their own sessions
+    match /user_sessions/{userId} {
+      allow read, write: if isOwner(userId);
+      allow create: if isAuthenticated() && request.auth.uid == userId
+        && request.resource.data.keys().hasAll(['dailyUsage', 'monthlyTokens'])
+        && request.resource.data.dailyUsage is map
+        && request.resource.data.monthlyTokens is map;
+    }
+    
+    // Transcripts - users can only access their own transcripts
+    match /transcripts/{transcriptId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'createdAt', 'content']) &&
+        isValidTimestamp(request.resource.data.createdAt);
+    }
+    
+    // Analyses - users can only access their own analyses
+    match /analyses/{analysisId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'createdAt', 'type']) &&
+        isValidTimestamp(request.resource.data.createdAt);
+    }
+    
+    // User preferences - users can only access their own preferences
+    match /userPreferences/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Token usage - users can only access their own usage docs
+    match /tokenUsage/{docId} {
+      // Allow read if the document belongs to the authenticated user
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Allow write if the target (existing or new) doc belongs to the authenticated user
+      allow write: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.userId == request.auth.uid)
+      );
+    }
+    
+    // Waitlist - allow creation with email validation, no read/update/delete
+    match /waitlist/{waitlistId} {
+      allow create: if request.resource.data.keys().hasAll(['email', 'createdAt']) &&
+        isValidEmail(request.resource.data.email) &&
+        isValidTimestamp(request.resource.data.createdAt) &&
+        request.resource.data.status == 'pending';
+      // No read, update, or delete allowed for privacy
+    }
+    
+    // Email confirmations - allow creation and limited read for verification
+    match /email_confirmations/{confirmationId} {
+      allow create: if request.resource.data.keys().hasAll(['email', 'token', 'createdAt', 'expiresAt']) &&
+        isValidEmail(request.resource.data.email) &&
+        request.resource.data.token is string &&
+        isValidTimestamp(request.resource.data.createdAt) &&
+        request.resource.data.expiresAt is number &&
+        request.resource.data.confirmed == false;
+      
+      // Allow read only for verification purposes (token-based)
+      allow read: if resource.data.token is string;
+      
+      // Allow update only to mark as confirmed
+      allow update: if resource.data.confirmed == false &&
+        request.resource.data.confirmed == true &&
+        request.resource.data.confirmedAt is number;
+    }
+    
+    // Subscription data - users can only read their own subscription info
+    match /subscriptions/{userId} {
+      allow read: if isOwner(userId);
+      // Subscription updates should be handled server-side only
+    }
+    
+    // Usage tracking - users can read their own usage, system can write
+    match /usage/{userId} {
+      allow read: if isOwner(userId);
+      // Usage updates should be handled server-side only
+    }
+    
+    // Admin collections - completely restricted
+    match /admin/{document=**} {
+      allow read, write: if false; // Admin access should be server-side only
+    }
+    
+    // System logs - completely restricted
+    match /logs/{document=**} {
+      allow read, write: if false; // Logs should be server-side only
+    }
+    
+    // Default deny rule for any unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

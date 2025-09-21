@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.8090.0",
+  "version": "0.80921.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

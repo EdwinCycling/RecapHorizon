@@ -6,6 +6,17 @@
 // Translation function type for internationalization
 type TranslationFunction = (key: string, fallback?: string) => string;
 
+// Extend Window interface for Firebase
+declare global {
+  interface Window {
+    firebase?: {
+      auth?: {
+        currentUser: any;
+      };
+    };
+  }
+}
+
 // Email validation regex - RFC 5322 compliant
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
@@ -786,7 +797,7 @@ class SessionManager {
   private config: SessionSecurityConfig = {
     maxSessionDuration: 8 * 60 * 60 * 1000, // 8 hours
     sessionTimeoutWarning: 5 * 60 * 1000, // 5 minutes before timeout
-    maxIdleTime: 30 * 60 * 1000, // 30 minutes
+    maxIdleTime: 121 * 60 * 1000, // 121 minutes - allows 120 minute recordings
     sessionRefreshInterval: 15 * 60 * 1000, // 15 minutes
     maxConcurrentSessions: 3
   };
@@ -853,6 +864,12 @@ class SessionManager {
     // Check if session is still active
     if (!session.isActive) {
       return { valid: false, reason: 'Session inactive' };
+    }
+
+    // Extra check: validate Firebase auth state sync
+    if (typeof window !== 'undefined' && window.firebase?.auth?.currentUser === null) {
+      this.invalidateSession(sessionId);
+      return { valid: false, reason: 'Firebase auth expired' };
     }
 
     return { valid: true, session };

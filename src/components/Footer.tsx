@@ -64,7 +64,7 @@ const Footer: React.FC<FooterProps> = ({ t, authState, setShowCookieModal, setSh
         </a>
       </div>
       <div className="flex items-center gap-2">
-                <span className="text-xs opacity-75">v.0.80820</span>
+                <span className="text-xs opacity-75">v.0.80921</span>
       </div>
     </div>
   </footer>

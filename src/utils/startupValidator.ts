@@ -81,32 +81,32 @@ export class StartupValidator {
       recommendations.push(...diagnostics.suggestedActions);
     }
 
-    // 3. Validate Google Speech API (if API key is available)
-    console.log(t?.('validatingGoogleSpeechApi') || '🔍 Validating Google Speech API...');
+    // 3. Validate Google Gemini AI API (if API key is available)
+    console.log(t?.('validatingGoogleSpeechApi') || '🔍 Validating Google Gemini AI API...');
     const googleApiKey = import.meta.env.VITE_GOOGLE_CLOUD_API_KEY;
     if (googleApiKey) {
       try {
         const speechApiValidation = await ApiValidator.validateGoogleSpeechApi(googleApiKey);
         if (speechApiValidation.isValid) {
           services.googleSpeechApi = true;
-          console.log(t?.('googleSpeechApiOk') || '✅ Google Speech API: OK');
+          console.log(t?.('googleSpeechApiOk') || '✅ Google Gemini AI API: OK');
         } else {
-          warnings.push(speechApiValidation.error || 'Google Speech API niet beschikbaar');
+          warnings.push(speechApiValidation.error || 'Google Gemini AI API niet beschikbaar');
           if (speechApiValidation.suggestion) {
             recommendations.push(speechApiValidation.suggestion);
           }
-          console.warn(t?.('googleSpeechApiIssues') || '⚠️ Google Speech API issues:', speechApiValidation.error);
+          console.warn(t?.('googleSpeechApiIssues') || '⚠️ Google Gemini AI API issues:', speechApiValidation.error);
         }
       } catch (error: any) {
-        warnings.push('Google Speech API validatie gefaald');
-        console.error(t?.('googleSpeechApiError') || '❌ Google Speech API validation error:', error);
+        warnings.push('Google Gemini AI API validatie gefaald');
+        console.error(t?.('googleSpeechApiError') || '❌ Google Gemini AI API validation error:', error);
       }
     } else {
-      // Only show Google Speech API warnings in development mode
+      // Only show Google Gemini AI API warnings in development mode
       if (import.meta.env.DEV) {
-        warnings.push('Google Speech API key niet geconfigureerd');
+        warnings.push('Google Gemini AI API key niet geconfigureerd');
         recommendations.push('Configureer VITE_GOOGLE_CLOUD_API_KEY voor transcriptie functionaliteit');
-        console.info(t?.('googleSpeechApiNotConfigured') || 'ℹ️ Google Speech API key not configured (development mode)');
+        console.info(t?.('googleSpeechApiNotConfigured') || 'ℹ️ Google Gemini AI API key not configured (development mode)');
       }
     }
 
@@ -227,7 +227,7 @@ export class StartupValidator {
     report += '🔧 **Services Status**:\n';
     report += `- Firebase: ${validation.services.firebase ? '✅' : '❌'}\n`;
     report += `- Firestore: ${validation.services.firestore ? '✅' : '❌'}\n`;
-    report += `- Google Speech API: ${validation.services.googleSpeechApi ? '✅' : '⚠️'}\n\n`;
+    report += `- Google Gemini AI API: ${validation.services.googleSpeechApi ? '✅' : '⚠️'}\n\n`;
 
     // Critical issues
     if (validation.criticalIssues.length > 0) {

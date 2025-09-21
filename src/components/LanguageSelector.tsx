@@ -80,18 +80,18 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         className={
           variant === 'header' || flagsOnly
             ? 'flex items-center justify-center h-9 w-9 bg-gray-200 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-opacity-80'
-            : 'w-full px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 border-2 border-cyan-200 dark:border-cyan-600 focus:border-cyan-400 dark:focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all duration-200 hover:shadow-lg hover:scale-105 font-medium text-left flex items-center justify-between'
+            : 'w-full px-3 sm:px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 border-2 border-cyan-200 dark:border-cyan-600 focus:border-cyan-400 dark:focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all duration-200 hover:shadow-lg hover:scale-105 font-medium text-left text-sm sm:text-base min-h-[44px] flex items-center justify-between'
         }
       >
         {flagsOnly || variant === 'header' ? (
           <span className="text-xl leading-none select-none">{value ? getFlagEmoji(value) : '🌐'}</span>
         ) : (
           <>
-            <span className={value ? 'text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}>
+            <span className={`${value ? 'text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} truncate`}>
               {value ? displayValue : placeholder}
             </span>
             <svg
-              className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 flex-shrink-0 ml-1 ${isOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

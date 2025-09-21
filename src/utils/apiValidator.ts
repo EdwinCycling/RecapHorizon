@@ -24,13 +24,13 @@ export class ApiValidator {
   }
 
   /**
-   * Validates Google Cloud Speech API configuration
+   * Validates Google Gemini AI API configuration
    */
   static async validateGoogleSpeechApi(apiKey: string): Promise<ApiValidationResult> {
     if (!apiKey || apiKey.trim() === '') {
       return {
         isValid: false,
-        error: 'Google Cloud Speech API key is niet geconfigureerd',
+        error: 'Google Gemini AI API key is niet geconfigureerd',
         suggestion: 'Voeg een geldige API key toe in de omgevingsvariabelen'
       };
     }
@@ -39,51 +39,48 @@ export class ApiValidator {
     if (!apiKey.startsWith('AIza') || apiKey.length < 35) {
       return {
         isValid: false,
-        error: 'Google Cloud Speech API key heeft een ongeldig formaat',
-        suggestion: 'Controleer of de API key correct is gekopieerd uit Google Cloud Console'
+        error: 'Google Gemini AI API key heeft een ongeldig formaat',
+        suggestion: 'Controleer of de API key correct is gekopieerd uit Google AI Studio'
       };
     }
 
     try {
-      // Test API availability with a minimal request
+      // Test API availability with a minimal request to Gemini AI
       const testResponse = await fetch(
-        `https://speech.googleapis.com/v1/speech:recognize?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            config: {
-              encoding: 'WEBM_OPUS',
-              sampleRateHertz: 48000,
-              languageCode: 'nl-NL',
-            },
-            audio: {
-              content: '', // Empty content for validation
-            },
+            contents: [{
+              parts: [{
+                text: 'Test'
+              }]
+            }]
           }),
         }
       );
 
-      if (testResponse.status === 400) {
-        // Expected error for empty audio content, but API key is valid
+      if (testResponse.status === 200) {
+        // API key is valid and working
         return { isValid: true };
       }
 
       if (testResponse.status === 403) {
         return {
           isValid: false,
-          error: 'Google Cloud Speech API toegang geweigerd',
-          suggestion: 'Controleer of de API key geldig is en Speech-to-Text API is ingeschakeld'
+          error: 'Google Gemini AI API toegang geweigerd',
+          suggestion: 'Controleer of de API key geldig is en Gemini AI API is ingeschakeld'
         };
       }
 
       if (testResponse.status === 429) {
         return {
           isValid: false,
-          error: 'Google Cloud Speech API quota overschreden',
-          suggestion: 'Wacht even en probeer opnieuw, of controleer je quota in Google Cloud Console'
+          error: 'Google Gemini AI API quota overschreden',
+          suggestion: 'Wacht even en probeer opnieuw, of controleer je quota in Google AI Studio'
         };
       }
 
@@ -91,7 +88,7 @@ export class ApiValidator {
     } catch (error) {
       return {
         isValid: false,
-        error: 'Kan geen verbinding maken met Google Cloud Speech API',
+        error: 'Kan geen verbinding maken met Google Gemini AI API',
         suggestion: 'Controleer je internetverbinding en firewall instellingen'
       };
     }

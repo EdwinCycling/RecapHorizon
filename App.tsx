@@ -1922,6 +1922,14 @@ ${getTranscriptSlice(transcript, 20000)}`;
                           console.error('Error loading user preferences:', error);
                         }
                         
+                        // Ensure user document exists before startup validation
+                        try {
+                          const { ensureUserDocument } = await import('./src/firebase');
+                          await ensureUserDocument(firebaseUser.uid, firebaseUser.email || undefined);
+                        } catch (error) {
+                          console.error('Error ensuring user document:', error);
+                        }
+                        
                         // Perform startup validation after user authentication
                         try {
                           const { StartupValidator } = await import('./src/utils/startupValidator');
@@ -2560,20 +2568,22 @@ ${getTranscriptSlice(transcript, 20000)}`;
       setPauseAccumulatedMs(0);
       setPauseStartMs(null);
 
-      // Start timer for duration tracking and subscription limits
+      // Start timer for duration tracking and subscription limits using actual time
       timerIntervalRef.current = window.setInterval(() => {
-        setDuration(prev => {
-          const next = prev + 1;
-          const tierLimits = subscriptionService.getTierLimits(effectiveTier);
-          if (tierLimits && next >= tierLimits.maxSessionDuration * 60) {
-            // Stop recording immediately at limit
-            audioRecorderRef.current?.stopRecording();
-            setStatus(RecordingStatus.STOPPED);
-            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-            displayToast(`Opname gestopt: je hebt de maximale opnametijd van ${tierLimits.maxSessionDuration} minuten bereikt.`, 'info');
-          }
-          return next;
-        });
+        const currentTime = Date.now();
+        const elapsedMs = currentTime - start - pauseAccumulatedMs - (pauseStartMs ? (currentTime - pauseStartMs) : 0);
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        
+        setDuration(elapsedSeconds);
+        
+        const tierLimits = subscriptionService.getTierLimits(effectiveTier);
+        if (tierLimits && elapsedSeconds >= tierLimits.maxSessionDuration * 60) {
+          // Stop recording immediately at limit
+          audioRecorderRef.current?.stopRecording();
+          setStatus(RecordingStatus.STOPPED);
+          if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+          displayToast(`Opname gestopt: je hebt de maximale opnametijd van ${tierLimits.maxSessionDuration} minuten bereikt.`, 'info');
+        }
       }, 1000);
 
     } catch (err: any) {
@@ -2612,8 +2622,13 @@ ${getTranscriptSlice(transcript, 20000)}`;
         setPauseAccumulatedMs(prev => prev + (pauseStartMs ? (Date.now() - pauseStartMs) : 0));
         setPauseStartMs(null);
         
-        // Restart timer
-        timerIntervalRef.current = window.setInterval(() => setDuration(prev => prev + 1), 1000);
+        // Restart timer using actual time calculation
+        timerIntervalRef.current = window.setInterval(() => {
+          const currentTime = Date.now();
+          const elapsedMs = currentTime - (recordingStartMs || Date.now()) - pauseAccumulatedMs - (pauseStartMs ? (currentTime - pauseStartMs) : 0);
+          const elapsedSeconds = Math.floor(elapsedMs / 1000);
+          setDuration(elapsedSeconds);
+        }, 1000);
     }
   };
 
@@ -8564,7 +8579,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                                 </svg>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">{t('sessionLang')}</label>
                                     <LanguageSelector
@@ -8933,10 +8948,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
     {/* Pricing Page */}
     {showPricingPage && (
       <PricingPage
-        isOpen={showPricingPage}
         onClose={() => setShowPricingPage(false)}
         currentTier={userSubscription}
-                onUpgrade={(tier: SubscriptionTier) => {
+        onUpgrade={(tier: SubscriptionTier) => {
           setUserSubscription(tier);
           setShowPricingPage(false);
           // TODO: Implement actual upgrade flow

@@ -89,10 +89,50 @@ if (import.meta.env.DEV) {
   // connectFirestoreEmulator(db, 'localhost', 8080);
 }
 
+// Helper function to create user document if it doesn't exist
+export const ensureUserDocument = async (userId: string, userEmail?: string): Promise<void> => {
+  try {
+    if (!userId) throw new Error(t('userIdEmptyInEnsureUser', 'userId is leeg in ensureUserDocument!'));
+    
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      // Create new user document with default values
+      const today = new Date().toISOString().split('T')[0];
+      const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+      
+      await setDoc(userRef, {
+        email: userEmail || '',
+        subscriptionTier: 'free',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastDailyUsageDate: today,
+        dailyAudioCount: 0,
+        dailyUploadCount: 0,
+        tokensMonth: currentMonth,
+        monthlyInputTokens: 0,
+        monthlyOutputTokens: 0,
+        sessionsMonth: currentMonth,
+        monthlySessionsCount: 0
+      });
+      
+      console.log(t('userDocumentCreated', 'Gebruikersdocument aangemaakt voor'), userId);
+    }
+  } catch (error) {
+    console.error(t('errorCreatingUserDocument', 'Fout bij aanmaken gebruikersdocument:'), error);
+    throw error;
+  }
+};
+
 // Helper function to get user subscription tier
 export const getUserSubscriptionTier = async (userId: string): Promise<string> => {
   try {
     if (!userId) throw new Error(t('userIdEmptyInSubscriptionTier', 'userId is leeg in getUserSubscriptionTier!'));
+    
+    // Ensure user document exists first
+    await ensureUserDocument(userId);
+    
     const userDoc = await getDoc(doc(db, 'users', userId));
     if (userDoc.exists()) {
       return userDoc.data()?.subscriptionTier || 'free';

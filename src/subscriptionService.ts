@@ -57,14 +57,14 @@ export const TIER_PRICING = {
     price: 5,
     currency: 'EUR',
     billingPeriod: 'month',
-    minTerm: 6,
+    minTerm: 0,
     cancelable: true
   },
   [SubscriptionTier.GOLD]: {
     price: 8,
     currency: 'EUR',
     billingPeriod: 'month',
-    minTerm: 6,
+    minTerm: 0,
     cancelable: true
   },
   [SubscriptionTier.ENTERPRISE]: {

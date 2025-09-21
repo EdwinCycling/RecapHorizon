@@ -17,12 +17,14 @@ export class AudioRecorder {
   private onStop?: (blob: Blob) => void;
   private isMobile: boolean = false;
   private t?: TranslationFunction;
+  private wakeLock: any = null; // Wake Lock to prevent screen sleep on mobile
 
   constructor(t?: TranslationFunction) {
     this.t = t;
     this.detectMobile();
     this.setupVisibilityListener();
     this.setupAudioContextListener();
+    this.checkForInterruptedRecording();
   }
 
   // Public getters for recording state
@@ -290,6 +292,9 @@ export class AudioRecorder {
       this._isPaused = false;
       this.onStateChange?.('recording');
       
+      // Request wake lock to prevent screen sleep on mobile
+      await this.requestWakeLock();
+      
       console.log(this.t?.('recordingStartedWithMimeType') || 'Recording started with MIME type:', mimeType);
     } catch (error) {
       console.error(this.t?.('failedToStartRecording') || 'Failed to start recording:', error);
@@ -328,18 +333,22 @@ export class AudioRecorder {
 
   // Stop recording and get the final audio
   async stopRecording(): Promise<Blob> {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       if (!this.mediaRecorder || !this._isRecording) {
         const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        // Release wake lock when recording stops
+        await this.releaseWakeLock();
         // Emit to consumer as well
         this.onStop?.(audioBlob);
         resolve(audioBlob);
         return;
       }
 
-      this.mediaRecorder.onstop = () => {
+      this.mediaRecorder.onstop = async () => {
         const mimeTypeInner = this.mediaRecorder?.mimeType || 'audio/webm';
         const audioBlob = new Blob(this.audioChunks, { type: mimeTypeInner });
+        // Release wake lock when recording stops
+        await this.releaseWakeLock();
         this.cleanup();
         // Emit to consumer
         this.onStop?.(audioBlob);
@@ -353,8 +362,11 @@ export class AudioRecorder {
   }
 
   // Clean up resources
-  public cleanup(): void {
+  public async cleanup(): Promise<void> {
     try {
+      // Release wake lock during cleanup
+      await this.releaseWakeLock();
+      
       if (this.stream) {
         this.stream.getTracks().forEach((track) => track.stop());
         this.stream = null;
@@ -382,6 +394,31 @@ export class AudioRecorder {
       } else if (!document.hidden && this._isRecording && this._isPaused) {
         console.log(this.t?.('tabVisibleResumingRecording') || 'Tab visible, resuming recording');
         this.resumeRecording();
+      }
+    });
+
+    // Handle page focus/blur for additional recovery
+    window.addEventListener('focus', () => {
+      if (this._isRecording && this._isPaused && !document.hidden) {
+        console.log(this.t?.('windowFocusResumingRecording') || 'Window focused, attempting to resume recording');
+        this.resumeRecording();
+      }
+    });
+
+    // Handle beforeunload to save recording state
+    window.addEventListener('beforeunload', () => {
+      if (this._isRecording) {
+        // Save recording state to localStorage for potential recovery
+        try {
+          localStorage.setItem('recapsmart_recording_interrupted', JSON.stringify({
+            timestamp: Date.now(),
+            wasRecording: this._isRecording,
+            wasPaused: this._isPaused,
+            chunksCount: this.audioChunks.length
+          }));
+        } catch (e) {
+          console.warn('Failed to save recording state:', e);
+        }
       }
     });
   }
@@ -420,6 +457,85 @@ export class AudioRecorder {
   // Get current audio chunks (for real-time processing)
   getCurrentChunks(): Blob[] {
     return [...this.audioChunks];
+  }
+
+  // Request wake lock to prevent screen sleep during recording
+  private async requestWakeLock(): Promise<void> {
+    if (!this.isMobile || !('wakeLock' in navigator)) {
+      return; // Wake Lock API not available or not needed
+    }
+
+    try {
+      this.wakeLock = await (navigator as any).wakeLock.request('screen');
+      console.log(this.t?.('wakeLockAcquired') || 'Wake lock acquired - screen will stay on during recording');
+      
+      this.wakeLock.addEventListener('release', () => {
+        console.log(this.t?.('wakeLockReleased') || 'Wake lock released');
+      });
+    } catch (err) {
+      console.warn(this.t?.('wakeLockFailed') || 'Failed to acquire wake lock:', err);
+    }
+  }
+
+  // Release wake lock
+  private async releaseWakeLock(): Promise<void> {
+    if (this.wakeLock) {
+      try {
+        await this.wakeLock.release();
+        this.wakeLock = null;
+        console.log(this.t?.('wakeLockReleased') || 'Wake lock released');
+      } catch (err) {
+        console.warn(this.t?.('wakeLockReleaseFailed') || 'Failed to release wake lock:', err);
+      }
+    }
+  }
+
+  // Check for interrupted recording and offer recovery
+  private checkForInterruptedRecording(): void {
+    try {
+      const interruptedState = localStorage.getItem('recapsmart_recording_interrupted');
+      if (interruptedState) {
+        const state = JSON.parse(interruptedState);
+        const timeSinceInterruption = Date.now() - state.timestamp;
+        
+        // Only offer recovery if interruption was recent (within 5 minutes)
+        if (timeSinceInterruption < 5 * 60 * 1000 && state.wasRecording) {
+          console.log(this.t?.('recordingInterruptionDetected') || 'Recording interruption detected, recovery available');
+          
+          // Notify parent component about potential recovery
+          if (this.onStateChange) {
+            // Use a custom state to indicate recovery is available
+            setTimeout(() => {
+              this.onStateChange?.('recovery_available' as any);
+            }, 1000);
+          }
+        }
+        
+        // Clean up the interrupted state
+        localStorage.removeItem('recapsmart_recording_interrupted');
+      }
+    } catch (e) {
+      console.warn('Failed to check for interrupted recording:', e);
+      // Clean up potentially corrupted data
+      localStorage.removeItem('recapsmart_recording_interrupted');
+    }
+  }
+
+  // Attempt to recover from interruption
+  public async recoverFromInterruption(): Promise<boolean> {
+    try {
+      console.log(this.t?.('attemptingRecordingRecovery') || 'Attempting to recover recording...');
+      
+      // Try to restart recording
+      await this.startRecording();
+      
+      console.log(this.t?.('recordingRecoverySuccessful') || 'Recording recovery successful');
+      return true;
+    } catch (error) {
+      console.error(this.t?.('recordingRecoveryFailed') || 'Recording recovery failed:', error);
+      this.onError?.(error as Error);
+      return false;
+    }
   }
 
   // Force cleanup (call when component unmounts)

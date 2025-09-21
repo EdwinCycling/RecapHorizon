@@ -3,17 +3,14 @@ import { SubscriptionTier, TierLimits } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 
 interface PricingPageProps {
-  isOpen: boolean;
   currentTier: SubscriptionTier;
   onUpgrade: (tier: SubscriptionTier) => void;
-  onClose: () => void;
+  onClose?: () => void;
   t: (key: string, params?: any) => string; // Add translation function
   showComingSoonModal: () => void; // Add function to show coming soon modal
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrade, onClose, t, showComingSoonModal }) => {
-  if (!isOpen) return null;
-  
+const PricingPage: React.FC<PricingPageProps> = ({ currentTier, onUpgrade, onClose, t, showComingSoonModal }) => {
   // Get tier comparison - DIAMOND tier alleen tonen indien gewenst
   const tierComparison = subscriptionService.getTierComparison();
 
@@ -72,37 +69,38 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
     const extensions = fileTypes.filter(type => type.startsWith('.'));
     const mimeTypes = fileTypes.filter(type => !type.startsWith('.'));
     
-    let result = '';
+    // For mobile, show only extensions to keep it concise
     if (extensions.length > 0) {
-      result += extensions.join(', ');
+      return extensions.join(', ');
     }
-    if (mimeTypes.length > 0) {
-      if (result) result += ', ';
-      result += mimeTypes.join(', ');
-    }
-    return result || t('pricingOnlyTxt');
+    
+    // Fallback to mime types if no extensions
+    return mimeTypes.length > 0 ? mimeTypes.slice(0, 3).join(', ') + (mimeTypes.length > 3 ? '...' : '') : t('pricingOnlyTxt');
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-full w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-gray-50 z-50">
+      <div className="min-h-screen py-8 overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header with SEO-optimized title */}
-        <div className="flex justify-between items-center p-6 border-b">
+        <div className="flex justify-between items-center p-6 border-b bg-white rounded-t-lg">
           <div>
             <h1 className="text-3xl font-medium text-gray-800 tracking-tight">{t('pricingTitle')}</h1>
             <p className="text-gray-600 mt-2">{t('choosePerfectPlan')}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-medium"
-          >
-            ×
-          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 text-2xl font-medium"
+            >
+              ×
+            </button>
+          )}
         </div>
 
         {/* Current Tier Info */}
         {currentTier && (
-          <div className="p-6 bg-green-50 border-b">
+          <div className="p-6 bg-green-50 border-b bg-white">
             <div className="flex items-center">
               <span className="text-green-600 text-lg mr-2">✓</span>
               <span className="text-green-800">
@@ -116,25 +114,25 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
         )}
 
         {/* Pricing Cards */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 bg-white">
           {tierComparison.map((tier) => (
             <div
               key={tier.tier}
-              className={`border-2 rounded-lg p-6 transition-all duration-200 hover:shadow-lg ${
+              className={`border-2 rounded-lg p-4 sm:p-6 transition-all duration-200 hover:shadow-lg ${
                 tier.tier === currentTier ? 'ring-2 ring-blue-500 scale-105' : ''
               } ${getTierColor(tier.tier)}`}
             >
               {/* Tier Header */}
               <div className="text-center mb-6">
                 <div className="text-4xl mb-2">{getTierIcon(tier.tier)}</div>
-                <h3 className="text-2xl font-medium text-gray-800 mb-2">
+                <h3 className="text-xl sm:text-2xl font-medium text-gray-800 mb-2 break-words">
                   {tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1)}
                 </h3>
                 {(tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
                   <div className="text-xl font-medium text-cyan-600">{t('pricingComingSoon')}</div>
                 ) : tier.tier !== SubscriptionTier.ENTERPRISE ? (
                   <>
-                    <div className="text-4xl font-medium text-gray-800">
+                    <div className="text-2xl sm:text-4xl font-medium text-gray-800 break-words">
                       €{tier.price}
                       <span className="text-lg text-gray-600">{t('pricingPerMonth')}</span>
                     </div>
@@ -152,15 +150,15 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
               {/* Features */}
               <div className="space-y-4 mb-6">
                 <div className="flex items-center">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
+                  <span className="text-gray-700 text-sm">
                     {t('pricingMinutesPerSession', { minutes: tier.maxSessionDuration })}
                   </span>
                 </div>
                 
                 <div className="flex items-center">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
+                  <span className="text-gray-700 text-sm">
                     {tier.maxSessionsPerDay === -1 ? (
                       t('pricingUnlimited')
                     ) : (
@@ -170,8 +168,8 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                 </div>
 
                 <div className="flex items-center">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">
+                  <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
+                  <span className="text-gray-700 text-sm">
                     {tier.maxTranscriptLength === -1 ? (
                       t('pricingUnlimited')
                     ) : (
@@ -180,10 +178,11 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
                   </span>
                 </div>
                 
-                <div className="flex items-center">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">
-                    {t('pricingFileTypes', { types: formatFileTypes(tier.allowedFileTypes) })}
+                <div className="flex items-start">
+                  <span className="text-green-500 mr-2 mt-0.5 flex-shrink-0">✓</span>
+                  <span className="text-gray-700 text-sm break-words overflow-hidden">
+                    <span className="block">{t('pricingFileTypes').split(':')[0]}:</span>
+                    <span className="block text-xs mt-1 leading-relaxed">{formatFileTypes(tier.allowedFileTypes)}</span>
                   </span>
                 </div>
 
@@ -305,13 +304,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ isOpen, currentTier, onUpgrad
         </div>
 
         {/* Close Button */}
-        <div className="p-6 border-t border-gray-200 flex justify-end">
-          <button 
-            onClick={onClose} 
-            className="px-6 py-3 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors"
-          >
-            {t('close', 'Close')}
-          </button>
+        {onClose && (
+          <div className="p-6 border-t border-gray-200 flex justify-end bg-white rounded-b-lg">
+            <button 
+              onClick={onClose} 
+              className="px-6 py-3 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors"
+            >
+              {t('close', 'Close')}
+            </button>
+          </div>
+        )}
         </div>
       </div>
     </div>

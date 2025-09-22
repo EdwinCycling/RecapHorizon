@@ -8,7 +8,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxTranscriptLength: 5000,
     allowedFileTypes: ['.txt', 'text/plain'],
     maxTokensPerMonth: 10000, // 10k tokens per month
-    maxTokensPerDay: 500 // 500 tokens per day
+    maxTokensPerDay: 500, // 500 tokens per day
+    trialDurationDays: 28 // 4 weeks trial period
   },
   [SubscriptionTier.SILVER]: {
     maxSessionDuration: 60,
@@ -239,8 +240,54 @@ export class SubscriptionService {
     return Math.min(100, (currentUsage / maxTokens) * 100);
   }
 
-  // Validate session start
-  public validateSessionStart(tier: SubscriptionTier, sessionsToday: number): { allowed: boolean; reason?: string } {
+  // Check if trial period has expired for free users
+  public isTrialExpired(userSubscription: { tier: SubscriptionTier; startDate: Date; trialEndDate?: Date }): boolean {
+    if (userSubscription.tier !== SubscriptionTier.FREE) {
+      return false; // Non-free users don't have trial periods
+    }
+
+    if (!userSubscription.trialEndDate) {
+      // Calculate trial end date if not set
+      const trialDays = TIER_LIMITS[SubscriptionTier.FREE].trialDurationDays || 28;
+      const trialEndDate = new Date(userSubscription.startDate);
+      trialEndDate.setDate(trialEndDate.getDate() + trialDays);
+      return new Date() > trialEndDate;
+    }
+
+    return new Date() > userSubscription.trialEndDate;
+  }
+
+  // Calculate trial end date for free users
+  public calculateTrialEndDate(startDate: Date): Date {
+    const trialDays = TIER_LIMITS[SubscriptionTier.FREE].trialDurationDays || 28;
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + trialDays);
+    return endDate;
+  }
+
+  // Get remaining trial days for free users
+  public getRemainingTrialDays(userSubscription: { tier: SubscriptionTier; startDate: Date; trialEndDate?: Date }): number {
+    if (userSubscription.tier !== SubscriptionTier.FREE) {
+      return -1; // Not applicable for non-free users
+    }
+
+    const trialEndDate = userSubscription.trialEndDate || this.calculateTrialEndDate(userSubscription.startDate);
+    const now = new Date();
+    const diffTime = trialEndDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
+  }
+
+  // Validate session start (including trial expiry check)
+  public validateSessionStart(tier: SubscriptionTier, sessionsToday: number, userSubscription?: { tier: SubscriptionTier; startDate: Date; trialEndDate?: Date }): { allowed: boolean; reason?: string } {
+    // Check trial expiry for free users
+    if (tier === SubscriptionTier.FREE && userSubscription && this.isTrialExpired(userSubscription)) {
+      return {
+        allowed: false,
+        reason: 'Je gratis proefperiode van 4 weken is verlopen. Upgrade naar een betaald abonnement om door te gaan met het gebruik van RecapSmart.'
+      };
+    }
+
     if (!this.canStartNewSession(tier, sessionsToday)) {
       return {
         allowed: false,

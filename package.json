@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "dev:netlify": "npx netlify dev"
+    "dev:netlify": "npx netlify dev",
+    "init-tier-models": "cd scripts && node initializeTierModelConfigs.js"
   },
   "dependencies": {
     "@google/genai": "^1.13.0",

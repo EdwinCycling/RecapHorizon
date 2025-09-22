@@ -34,6 +34,7 @@ export interface TierLimits {
   allowedFileTypes: string[];
   maxTokensPerMonth: number; // monthly token limit
   maxTokensPerDay: number; // daily token limit
+  trialDurationDays?: number; // trial duration in days (only for FREE tier)
 }
 
 // User subscription information
@@ -41,8 +42,10 @@ export interface UserSubscription {
   tier: SubscriptionTier;
   startDate: Date;
   endDate?: Date;
+  trialEndDate?: Date; // for FREE tier trial period
   isActive: boolean;
   autoRenew: boolean;
+  isTrialExpired?: boolean; // indicates if trial period has ended
 }
 
 // Session tracking

@@ -204,7 +204,7 @@ export const nl = {
   featureToolkitTitle: "🛠️ AI-Assistent Toolkit",
   featureToolkitDesc: "RecapHorizon biedt een veelzijdige toolkit met functionaliteiten naast de audio-opname, ook bestand- en tekstanalyse, webpagina-import, en afbeeldingsverwerking, aangevuld met premium opties zoals e-mailimport en expertchat.",
   featurePWATitle: "📱 PWA Ondersteuning",
-  featurePWADesc: "RecapHorizon ondersteunt Progressive Web Apps (PWA's), wat betekent dat het offline beschikbaar is, snel laadt, en na installatie als een app op je apparaat werkt.",
+  featurePWADesc: "RecapHorizon ondersteunt Progressive Web Apps (PWA's), wat betekent dat het snel laadt, en na installatie als een app op je apparaat werkt.",
   privacyTitle: "🔒 Volledige Privacy Garantie",
   privacyLead: "Belangrijk: Je sessies worden NIET opgeslagen in onze database. Alle data blijft volledig lokaal op jouw apparaat.",
   privacyItemRecordings: "Opnames blijven lokaal",
@@ -613,6 +613,8 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   // Settings modal translations
   settings: "Instellingen",
   logout: "Uitloggen",
+  settingsPwaInstallation: "App Installatie",
+  settingsPwaInstallationDesc: "Installeer RecapSmart als app op je apparaat voor een betere ervaring",
 
   // Pricing page translations
   pricingTitle: "RecapHorizon Abonnementen",
@@ -646,6 +648,15 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   pricingDiamondAdmin: "Diamond Tier is exclusief voor admins en biedt alle functionaliteiten.",
   pricingQuestions: "Heb je vragen over de abonnementen? Neem contact op via",
   pricingSupportEmail: "support@recaphorizon.nl",
+  pricingAIModels: "AI Technologie",
+  pricingAIModelFree: "Geoptimaliseerde AI-modellen voor kosteneffectieve verwerking",
+  pricingAIModelSilver: "Verbeterde AI-modellen voor hogere kwaliteit",
+  pricingAIModelGold: "Geavanceerde AI-modellen met experimentele functies",
+  pricingAIModelDiamond: "Premium AI-modellen voor de hoogste kwaliteit resultaten",
+  pricingAIModelEnterprise: "Enterprise-grade AI-modellen voor maximale prestaties",
+  pricingFreeFor4Weeks: "Gratis voor 4 weken",
+  pricingTrialExpired: "Proefperiode verlopen",
+  pricingTrialEndsOn: "Proefperiode eindigt op {{date}} ({{days}} dagen over)",
 
   // Upgrade modal translations
   upgradeSubscription: "Upgrade Je Abonnement",

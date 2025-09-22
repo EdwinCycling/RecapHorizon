@@ -257,7 +257,7 @@ export const en = {
   featureToolkitTitle: "🛠️ AI Assistant Toolkit",
   featureToolkitDesc: "RecapHorizon offers a versatile toolkit with functionalities beyond audio recording, including file and text analysis, webpage import, and image processing, complemented by premium options like email import and expert chat.",
   featurePWATitle: "📱 PWA Support",
-  featurePWADesc: "RecapHorizon supports Progressive Web Apps (PWAs), which means it's available offline, loads quickly, and works like an app on your device after installation.",
+  featurePWADesc: "RecapHorizon supports Progressive Web Apps (PWAs), which means it loads quickly, and works like an app on your device after installation.",
   privacyTitle: "🔒 Full Privacy Guarantee",
   privacyLead: "Important: Your sessions are NOT stored in our database. All data stays fully local on your device.",
   privacyItemRecordings: "🎙️ Recordings stay local",
@@ -641,6 +641,8 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   // Settings modal translations
   settings: "Settings",
   logout: "Logout",
+  settingsPwaInstallation: "App Installation",
+  settingsPwaInstallationDesc: "Install RecapSmart as an app on your device for a better experience",
 
   // Pricing page translations
   pricingTitle: "RecapHorizon Subscriptions",
@@ -675,6 +677,15 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   pricingDiamondAdmin: "Diamond Tier is exclusive for admins and provides all features.",
   pricingQuestions: "Do you have questions about the subscriptions? Contact us via",
   pricingSupportEmail: "support@recaphorizon.nl",
+  pricingAIModels: "AI Technology",
+  pricingAIModelFree: "Optimized AI models for cost-effective processing",
+  pricingAIModelSilver: "Enhanced AI models for improved quality",
+  pricingAIModelGold: "Advanced AI models with experimental features",
+  pricingAIModelDiamond: "Premium AI models for highest quality results",
+  pricingAIModelEnterprise: "Enterprise-grade AI models for maximum performance",
+  pricingFreeFor4Weeks: "Free for 4 weeks",
+  pricingTrialExpired: "Trial period expired",
+  pricingTrialEndsOn: "Trial ends on {{date}} ({{days}} days left)",
 
   // Upgrade modal translations
   upgradeSubscription: "Upgrade Your Subscription",

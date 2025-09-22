@@ -5,6 +5,7 @@ import EmailPreviewModal from './EmailPreviewModal';
 import { GoogleGenAI } from '@google/genai';
 import { getGeminiCode } from '../languages';
 import { displayToast } from '../utils/clipboard';
+import modelManager from '../utils/modelManager';
 
 interface EmailCompositionTabProps {
   transcript: string;
@@ -286,8 +287,9 @@ OPDRACHT:\n${instructionRaw}\n\nGeef je antwoord uitsluiten in het volgende JSON
     }
     
     const ai = new GoogleGenAI({ apiKey });
+    const modelName = await modelManager.getModelForUser(userId, userTier, 'emailComposition');
     const response = await ai.models.generateContent({ 
-      model: 'gemini-2.5-flash', 
+      model: modelName, 
       contents: fullPrompt,
       config: { responseMimeType: 'application/json', responseSchema: { type: 'object', properties: { subject: { type: 'string' }, body: { type: 'string' } }, required: ['subject', 'body'] } }
     });

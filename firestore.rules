@@ -121,6 +121,12 @@ service cloud.firestore {
       allow read, write: if false; // Logs should be server-side only
     }
     
+    // Settings collection - read only for authenticated users, no writes allowed
+    match /settings/{document} {
+      allow read: if isAuthenticated();
+      allow write: if false; // No writes allowed to settings
+    }
+    
     // Default deny rule for any unmatched paths
     match /{document=**} {
       allow read, write: if false;

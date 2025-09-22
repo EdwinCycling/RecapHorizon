@@ -186,7 +186,7 @@ export const es = {
   featureToolkitTitle: "🛠️ Kit de Herramientas Asistente IA",
   featureToolkitDesc: "RecapHorizon ofrece un kit de herramientas versátil con funcionalidades más allá de la grabación de audio, incluyendo análisis de archivos y texto, importación de páginas web y procesamiento de imágenes, complementado con opciones premium como importación de correos electrónicos y chat experto.",
   featurePWATitle: "📱 Soporte PWA",
-  featurePWADesc: "RecapHorizon soporta Progressive Web Apps (PWAs), lo que significa que está disponible sin conexión, carga rápidamente y funciona como una aplicación en tu dispositivo después de la instalación.",
+  featurePWADesc: "RecapHorizon soporta Progressive Web Apps (PWAs), lo que significa que carga rápidamente y funciona como una aplicación en tu dispositivo después de la instalación.",
   privacyTitle: "🔒 Garantía Completa de Privacidad",
   privacyLead: "Importante: Tus sesiones NO se almacenan en nuestra base de datos. Todos los datos permanecen completamente locales en tu dispositivo.",
   privacyItemRecordings: "🎙️ Las grabaciones permanecen locales",
@@ -637,6 +637,8 @@ RecapHorizon: Más allá del caos, la esencia primero.`,
   // Settings modal translations
   settings: "Configuración",
   logout: "Cerrar sesión",
+  settingsPwaInstallation: "Instalación de App",
+  settingsPwaInstallationDesc: "Instala RecapSmart como una app en tu dispositivo para una mejor experiencia",
 
   // Pricing page translations
   pricingTitle: "Suscripciones de RecapHorizon",
@@ -671,6 +673,15 @@ RecapHorizon: Más allá del caos, la esencia primero.`,
   pricingDiamondAdmin: "El Tier Diamond es exclusivo para admins y proporciona todas las funciones.",
   pricingQuestions: "¿Tienes preguntas sobre las suscripciones? Contáctanos a través de",
   pricingSupportEmail: "support@recaphorizon.nl",
+  pricingAIModels: "Tecnología IA",
+  pricingAIModelFree: "Modelos de IA optimizados para procesamiento rentable",
+  pricingAIModelSilver: "Modelos de IA mejorados para mayor calidad",
+  pricingAIModelGold: "Modelos de IA avanzados con características experimentales",
+  pricingAIModelDiamond: "Modelos de IA premium para resultados de la más alta calidad",
+  pricingAIModelEnterprise: "Modelos de IA de nivel empresarial para máximo rendimiento",
+  pricingFreeFor4Weeks: "Gratis por 4 semanas",
+  pricingTrialExpired: "Período de prueba expirado",
+  pricingTrialEndsOn: "La prueba termina el {{date}} ({{days}} días restantes)",
 
   // Upgrade modal translations
   upgradeSubscription: "Actualizar Tu Suscripción",

@@ -68,7 +68,7 @@ export class AudioRecorder {
         try {
           micStream = await navigator.mediaDevices.getUserMedia({ 
             audio: { 
-              sampleRate: 8000, // Lower sample rate for better stability and reduced data
+              sampleRate: 16000, // Optimal sample rate for speech recognition (16kHz)
               channelCount: 1, // Mono is sufficient for transcription
               echoCancellation: true,
               noiseSuppression: true,
@@ -91,7 +91,7 @@ export class AudioRecorder {
           displayStream = await navigator.mediaDevices.getDisplayMedia({
             video: true,
             audio: { 
-              sampleRate: 8000, // Lower sample rate for better stability and reduced data
+              sampleRate: 16000, // Optimal sample rate for speech recognition (16kHz)
               channelCount: 1, // Mono is sufficient for transcription
               echoCancellation: true,
               noiseSuppression: true,
@@ -171,7 +171,7 @@ export class AudioRecorder {
               // Initialize MediaRecorder with optimized settings for transcription
               const mediaRecorderOptions: MediaRecorderOptions = {
                 mimeType,
-                audioBitsPerSecond: 16000 // 16kbps for maximum stability and minimal server load
+                audioBitsPerSecond: 64000 // Increased to 64kbps for better transcription quality while maintaining stability
               };
               
               // Fallback if audioBitsPerSecond is not supported
@@ -245,7 +245,7 @@ export class AudioRecorder {
       // Initialize MediaRecorder with optimized settings for transcription
       const mediaRecorderOptions: MediaRecorderOptions = {
         mimeType,
-        audioBitsPerSecond: 16000 // 16kbps for maximum stability and minimal server load
+        audioBitsPerSecond: 64000 // Increased to 64kbps for better transcription quality while maintaining stability
       };
       
       // Fallback if audioBitsPerSecond is not supported

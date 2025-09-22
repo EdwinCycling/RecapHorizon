@@ -12,6 +12,7 @@ import WaitlistModal from './src/components/WaitlistModal.tsx';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
 import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, EmailOptions, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
+import modelManager from './src/utils/modelManager';
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
 // Mermaid is ESM-only; import dynamically to avoid type issues
 let mermaid: typeof import('mermaid') | undefined;
@@ -1029,6 +1030,10 @@ export default function App() {
   const [isTTSEnabled, setIsTTSEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceInputPreview, setVoiceInputPreview] = useState<string>('');
+  
+  // Real-time transcription during recording
+  // Removed real-time transcription state variables
+  const realTimeRecognitionRef = useRef<SpeechRecognition | null>(null);
   const isListeningRef = useRef(isListening);
   useEffect(() => { isListeningRef.current = isListening }, [isListening]);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -1376,11 +1381,11 @@ export default function App() {
       }
       
       const ai = new GoogleGenAI({ apiKey: apiKey });
-      // Using Gemini 2.5 Flash - Google's latest and most advanced AI model
-      // This model provides excellent reasoning, coding, and text generation capabilities
+      // Using configured model for general analysis
+      const modelName = await modelManager.getModelForFunction('generalAnalysis');
       const sys = `You generate MCQs based on a transcript. Return ONLY a JSON array of objects with keys: question (string), options (array of {label, text}), correct_answer_label, correct_answer_text. Ensure exactly one correct answer per question. Labels are A, B, C, D but limited to requested count.`;
       const prompt = `${sys}\n\nConstraints: number_of_questions=${quizNumQuestions}, number_of_options=${quizNumOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
-      const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+      const res = await ai.models.generateContent({ model: modelName, contents: prompt });
       
       // Track token usage with TokenManager
       const promptTokens = tokenCounter.countPromptTokens(prompt);
@@ -1447,6 +1452,7 @@ export default function App() {
       }
       
       const ai = new GoogleGenAI({ apiKey: apiKey });
+      const modelName = await modelManager.getModelForFunction('businessCase');
       
       const businessCaseTypeDescriptions = {
         [t('costSavings')]: t('costSavingsDescription'),
@@ -1474,7 +1480,7 @@ Internet verificatie (grounding): ${useInternet ? 'Ja - vul aan met actuele mark
 Transcript:
 ${getTranscriptSlice(transcript, 20000)}`;
 
-      const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+      const res = await ai.models.generateContent({ model: modelName, contents: prompt });
       
       // Track token usage with TokenManager
       const promptTokens = tokenCounter.countPromptTokens(prompt);
@@ -1718,6 +1724,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [transcriptionProgress, setTranscriptionProgress] = useState<number | null>(null);
   const [isSegmentedTranscribing, setIsSegmentedTranscribing] = useState<boolean>(false);
   const cancelTranscriptionRef = useRef<boolean>(false);
+  const [audioTokenUsage, setAudioTokenUsage] = useState<{inputTokens: number, outputTokens: number, totalTokens: number} | null>(null);
 
   const handleCancelTranscription = () => {
     cancelTranscriptionRef.current = true;
@@ -2188,8 +2195,9 @@ ${getTranscriptSlice(transcript, 20000)}`;
     try {
         if (!chatInstanceRef.current) {
             const ai = new GoogleGenAI({ apiKey: apiKey });
+            const modelName = await modelManager.getModelForFunction('expertChat');
             chatInstanceRef.current = ai.chats.create({
-              model: 'gemini-2.5-flash',
+              model: modelName,
               history: chatHistory.map(msg => ({ role: msg.role, parts: [{ text: msg.text }] })),
               config: { systemInstruction: `You are a helpful assistant. The user has provided a transcript of a meeting. Answer their questions based on this transcript:\n\n---\n${transcript}\n---` },
             });
@@ -2321,6 +2329,11 @@ ${getTranscriptSlice(transcript, 20000)}`;
           speechRecognitionRef.current.stop();
       }
   }, [isListening]);
+
+  // Check Web Speech API availability
+  // Web Speech API functionaliteit verwijderd
+
+    // Real-time transcription functionality removed
 
 
   const drawVisualizer = useCallback(() => {
@@ -2484,6 +2497,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
     setStorytellingData(null);
     setBusinessCaseData(null);
     setQuizQuestions(null);
+    setAudioTokenUsage(null);
     setStatus(RecordingStatus.GETTING_PERMISSION);
     setError(null);
     setDuration(0);
@@ -3083,6 +3097,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 }
                 
                 const ai = new GoogleGenAI({ apiKey: apiKey });
+                const modelName = await modelManager.getModelForFunction('analysisGeneration');
                 const inputLanguage = getGeminiCode(language || 'en');
                 const analysisPrompt = `Analyze this image in detail and provide a comprehensive description in ${inputLanguage}. Include:
 
@@ -3098,7 +3113,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 const textPart = { text: analysisPrompt };
                 
                 const analysisResponse = await ai.models.generateContent({ 
-                  model: 'gemini-2.5-flash', 
+                  model: modelName, 
                   contents: { parts: [textPart, imagePart] } 
                 });
                 
@@ -3867,7 +3882,8 @@ const handleGenerateAnalysis = async (type: ViewType) => {
         const fullPrompt = `${prompt}\n\nHere is the text:\n\n${sanitizedTranscript}`;
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: fullPrompt });
+        const modelName = await modelManager.getModelForFunction('analysisGeneration');
+        const response = await ai.models.generateContent({ model: modelName, contents: fullPrompt });
 
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(fullPrompt);
@@ -3946,10 +3962,11 @@ const handleKeywordClick = async (keyword: string) => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `Provide a short and clear explanation of the term '${keyword}' in the context of the following **${inputLanguage}** transcript. Return the explanation in **${outputLanguage}**, no extra titles or formatting. Keep it concise. Transcript: --- ${transcript} ---`;
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const response = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
@@ -4017,6 +4034,7 @@ const handleGenerateKeywordAnalysis = async () => {
     
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `Analyze the following **${inputLanguage}** transcript in **${outputLanguage}**. Identify the most frequent and important keywords. Group these into 5-7 relevant topics. For each topic, provide a short descriptive name and a list of associated keywords. Return JSON only. Transcript: --- ${transcript} ---`;
@@ -4034,7 +4052,7 @@ const handleGenerateKeywordAnalysis = async () => {
         };
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: modelName,
             contents: prompt,
             config: { responseMimeType: "application/json", responseSchema: schema }
         });
@@ -4103,6 +4121,7 @@ const handleAnalyzeSentiment = async () => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `Analyze the sentiment of the following **${inputLanguage}** transcript in **${outputLanguage}**. Return a JSON object with: 1. 'summary': a short factual summary of the sentiments found (e.g., "The conversation was predominantly positive with some negative points about X."). 2. 'conclusion': an overall conclusion about the general tone and atmosphere of the conversation. Do NOT include the full transcript with tags. Transcript: --- ${transcript} ---`;
@@ -4117,7 +4136,7 @@ const handleAnalyzeSentiment = async () => {
         };
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: modelName,
             contents: prompt,
             config: { responseMimeType: "application/json", responseSchema: schema }
         });
@@ -4910,6 +4929,7 @@ const handleAnalyzeSentiment = async () => {
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
+        const modelName = await modelManager.getModelForFunction('pptExport');
         const prompt = `Je bent een AI-expert in het creëren van professionele, gestructureerde en visueel aantrekkelijke zakelijke presentaties op basis van een meeting-transcript. Je taak is om de volgende content te genereren en te structureren in een JSON-object dat voldoet aan het verstrekte schema.
 
 **Taal:** ${getGeminiCode(options.language)} - Alle titels en content moeten in deze taal zijn.
@@ -4983,7 +5003,7 @@ ${transcript}
             required: ["titleSlide", "introduction", "agenda", "mainContentSlides", "projectStatus", "learnings", "improvements", "todoList", "imageStylePrompt"]
         };
 
-        const contentResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: "application/json", responseSchema: presentationSchema } });
+        const contentResponse = await ai.models.generateContent({ model: modelName, contents: prompt, config: { responseMimeType: "application/json", responseSchema: presentationSchema } });
         
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
@@ -5100,6 +5120,13 @@ ${transcript}
     pptx.writeFile({ fileName });
     return { fileName, slideCount: (pptx as any).slides.length };
 };
+  // Web Speech API transcription (free alternative)
+  const handleWebSpeechTranscribe = async () => {
+    setError('Web Speech API kan alleen live opnames transcriberen, niet opgeslagen audio. Gebruik de AI transcriptie optie voor opgeslagen opnames.');
+    setStatus(RecordingStatus.ERROR);
+    displayToast('Web Speech API ondersteunt geen opgeslagen audio transcriptie', 'error');
+  };
+
   const handleTranscribe = async () => {
     if (!audioChunksRef.current.length) {
       // Probeer terug te vallen op audioURL als die bestaat
@@ -5188,14 +5215,49 @@ ${transcript}
         setIsSegmentedTranscribing(true);
         setTranscriptionProgress(0);
         
+        // Enhanced connection monitoring
+        const connectionMonitor = {
+          isOnline: navigator.onLine,
+          checkConnection: () => navigator.onLine,
+          waitForConnection: async (maxWaitMs = 30000) => {
+            const startTime = Date.now();
+            while (!navigator.onLine && (Date.now() - startTime) < maxWaitMs) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            return navigator.onLine;
+          }
+        };
+        
+        // Check initial connection
+        if (!connectionMonitor.checkConnection()) {
+          console.warn('⚠️ Geen internetverbinding gedetecteerd, wachten op verbinding...');
+          setLoadingText('Wachten op internetverbinding...');
+          const connected = await connectionMonitor.waitForConnection();
+          if (!connected) {
+            setError('Geen internetverbinding beschikbaar voor transcriptie');
+            setStatus(RecordingStatus.ERROR);
+            setLoadingText('');
+            return;
+          }
+        }
+        
         console.log(`🎙️ ${t('startingTranscription', { count: totalSegments })}`);
 
         const inputLanguage = getGeminiCode(language || 'en');
-        const transcribePrompt = `Transcribe this audio recording accurately. The spoken language is ${inputLanguage}.`;
+        const transcribePrompt = `Transcribe this audio recording with ABSOLUTE ACCURACY. Follow these strict rules:
+1. ONLY transcribe what is actually spoken in the audio - do NOT add, invent, or assume any content
+2. If audio is unclear or inaudible, mark it as [UNCLEAR] or [INAUDIBLE] - do NOT guess
+3. Preserve the exact words, pauses, and speech patterns as heard
+4. Do NOT correct grammar, add punctuation that wasn't clearly indicated, or "improve" the speech
+5. The spoken language is ${inputLanguage}
+6. If no speech is detected in a segment, respond with [NO SPEECH DETECTED]
+7. Stay strictly faithful to the audio content - accuracy over readability`;
 
         let combinedText = '';
         let consecutiveFailures = 0;
-        const maxConsecutiveFailures = 3; // Stop if 3 segments fail in a row
+        const maxConsecutiveFailures = 3;
+        let totalInputTokens = 0;
+        let totalOutputTokens = 0; // Stop if 3 segments fail in a row
 
         for (let i = 0; i < totalSegments; i++) {
           if (cancelTranscriptionRef.current) {
@@ -5220,10 +5282,11 @@ ${transcript}
             const maxRetries = 5; // Increased from 3 to 5
             let transcribeResponse;
             
+            const modelName = await modelManager.getModelForFunction('audioTranscription');
             while (retryCount <= maxRetries) {
               try {
                 transcribeResponse = await ai.models.generateContent({ 
-                  model: 'gemini-2.5-flash', 
+                  model: modelName, 
                   contents: { parts: [textPart, audioPart] } 
                 });
                 break; // Success, exit retry loop
@@ -5269,8 +5332,19 @@ ${transcript}
             
             // Track token usage with TokenManager per segment
             try {
-              const promptTokens = tokenCounter.countPromptTokens([textPart]);
-              const responseTokens = tokenCounter.countResponseTokens(segText || '');
+              // Use accurate API-based token counting when possible
+              let promptTokens, responseTokens;
+              try {
+                promptTokens = await tokenCounter.countTokensWithAPI(ai.models, [textPart]);
+                responseTokens = await tokenCounter.countTokensWithAPI(ai.models, segText || '');
+              } catch (apiError) {
+                // Fallback to estimation if API counting fails
+                promptTokens = tokenCounter.countPromptTokens([textPart]);
+                responseTokens = tokenCounter.countResponseTokens(segText || '');
+              }
+              
+              totalInputTokens += promptTokens;
+              totalOutputTokens += responseTokens;
               await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
             } catch (error) {
               console.error('Error recording token usage for transcription segment:', error);
@@ -5366,6 +5440,13 @@ ${transcript}
         // Final progress update
         setTranscriptionProgress(1);
         setLoadingText(t('transcribing') + ' - ' + t('processing'));
+
+        // Set audio token usage for display
+        setAudioTokenUsage({
+          inputTokens: totalInputTokens,
+          outputTokens: totalOutputTokens,
+          totalTokens: totalInputTokens + totalOutputTokens
+        });
 
         // Na volledige loop is transcript reeds opgebouwd via setTranscript per segment
       setSummary('');
@@ -5527,6 +5608,8 @@ ${transcript}
           )}
         </div>
 
+        {/* Real-time transcriptie UI verwijderd */}
+
         {/* Opname Controls */}
         <div className="flex justify-center gap-4">
           {status === RecordingStatus.RECORDING ? (
@@ -5661,14 +5744,15 @@ ${transcript}
             </div>
 
             {/* Actie knoppen */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+            <div className="flex flex-col gap-3 w-full max-w-md">
+              {/* Transcriptie knop */}
               <button 
                 onClick={handleTranscribe} 
                 disabled={isProcessing} 
-                className="flex-1 px-6 py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600 disabled:bg-slate-600 transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full px-6 py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600 disabled:bg-slate-600 transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <span>🚀</span>
-                {t('transcribeSession')}
+                Transcriberen
               </button>
               <button 
                 onClick={() => {
@@ -5704,9 +5788,11 @@ ${transcript}
               </button>
             </div>
             
-            <p className="text-xs text-slate-500 dark:text-slate-400 text-center max-w-md">
-              💡 Tip: Controleer je opname voordat je transcribeert. De annuleren knop wist alle sessiedata.
-            </p>
+            {/* Informatie over transcriptie */}
+            <div className="text-xs text-slate-500 dark:text-slate-400 text-center max-w-md space-y-2">
+              <p>🚀 <strong>AI transcriptie:</strong> Hoogwaardige transcriptie met AI technologie</p>
+              <p>⚠️ Tip: Controleer je opname voordat je transcribeert. De annuleren knop wist alle sessiedata.</p>
+            </div>
           </div>
         );
       default: return null;
@@ -5741,7 +5827,8 @@ ${transcript}
           setLoadingText('');
           return;
         }
-        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
         try {
@@ -5833,7 +5920,8 @@ ${transcript}
           setLoadingText('');
           return;
         }
-        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
         try {
@@ -5906,7 +5994,8 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
           setLoadingText('');
           return;
         }
-        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
         try {
@@ -5985,7 +6074,8 @@ IMPORTANT: Start DIRECTLY with the email content, without introduction or explan
           setLoadingText('');
           return;
         }
-        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
         try {
@@ -6062,7 +6152,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
         try {
@@ -6117,7 +6208,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
         try {
@@ -6197,7 +6289,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   }
                   
                   const ai = new GoogleGenAI({ apiKey: apiKey });
-                  const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+                  const modelName = await modelManager.getModelForFunction('generalAnalysis');
+                  const res = await ai.models.generateContent({ model: modelName, contents: prompt });
                   
                   // Track token usage with TokenManager
                   try {
@@ -6350,10 +6443,11 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
               try {
                 setLoadingText(t('generating', { type: 'Mindmap' }));
                 const ai = new GoogleGenAI({ apiKey: apiKey });
-                // Using Gemini 2.5 Flash for mindmap generation
+                // Using ModelManager for mindmap generation
+                const modelName = await modelManager.getModelForFunction('generalAnalysis');
                 const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
                 const prompt = `${sys}\n\nTranscript:\n${transcript.slice(0, 12000)}`;
-                const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+                const res = await ai.models.generateContent({ model: modelName, contents: prompt });
                 const raw = res.text || '';
                 const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
                 if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
@@ -7222,6 +7316,25 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             </div>
                         </div>
                     )}
+                    {activeView === 'transcript' && audioTokenUsage && (
+                        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <h3 className="text-sm font-semibold text-green-800 dark:text-green-200 mb-3">🔢 Token Usage for Audio Transcription:</h3>
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div className="text-center">
+                                    <div className="font-medium text-green-700 dark:text-green-300">Input Tokens</div>
+                                    <div className="text-lg font-bold text-green-800 dark:text-green-200">{audioTokenUsage.inputTokens.toLocaleString()}</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="font-medium text-green-700 dark:text-green-300">Output Tokens</div>
+                                    <div className="text-lg font-bold text-green-800 dark:text-green-200">{audioTokenUsage.outputTokens.toLocaleString()}</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="font-medium text-green-700 dark:text-green-300">Total Tokens</div>
+                                    <div className="text-lg font-bold text-green-800 dark:text-green-200">{audioTokenUsage.totalTokens.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <pre className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">
                         {renderMarkdown(content || t('noContent'))}
                     </pre>
@@ -7271,8 +7384,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     }
                     
                     const ai = new GoogleGenAI({ apiKey: apiKey });
+                    const modelName = await modelManager.getModelForFunction('generalAnalysis');
                     const prompt = `${sys}\n\nConstraints: number_of_questions=${numQuestions}, number_of_options=${numOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
-                    const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+                    const res = await ai.models.generateContent({ model: modelName, contents: prompt });
                     
                     // Track token usage with TokenManager
                     const promptTokens = tokenCounter.countPromptTokens(prompt);
@@ -8063,7 +8177,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-xl w-full m-4 p-0 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('webPageHelpTitle')}</h3>
-              <button onClick={() => systemAudioHelp.close()} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <button onClick={() => setShowWebPageHelp(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
@@ -8076,7 +8190,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 <li>{t('webPageHelpStep4')}</li>
               </ul>
               <div className="pt-2 flex justify-end">
-                <button onClick={() => systemAudioHelp.close()} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+                <button onClick={() => setShowWebPageHelp(false)} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
               </div>
             </div>
           </div>
@@ -8143,6 +8257,33 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             
             <div className="space-y-6">
               {/* API Key beheer verwijderd – sleutel komt uit .env.local */}
+
+              {/* PWA Installatie Sectie */}
+              {showPwaBanner && (
+                <div>
+                  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('settingsPwaInstallation')}</h4>
+                  <div className="p-4 bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-800 rounded-lg">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm text-cyan-900 dark:text-cyan-200 mb-1">
+                          {t('pwaInstallBannerText')}
+                        </p>
+                        <p className="text-xs text-cyan-700 dark:text-cyan-300">
+                          {t('settingsPwaInstallationDesc')}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={handlePwaIgnore} className="px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                          {t('pwaIgnore')}
+                        </button>
+                        <button onClick={handlePwaInstall} className="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors text-sm">
+                          {t('pwaInstall')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Anonimisatie Regels Sectie */}
               <div>

@@ -181,7 +181,7 @@ export const de = {
   featureToolkitTitle: "🛠️ KI-Assistent Toolkit",
   featureToolkitDesc: "RecapHorizon bietet ein vielseitiges Toolkit mit Funktionalitäten über die Audioaufnahme hinaus, einschließlich Datei- und Textanalyse, Webseiten-Import und Bildverarbeitung, ergänzt durch Premium-Optionen wie E-Mail-Import und Experten-Chat.",
   featurePWATitle: "📱 PWA-Unterstützung",
-  featurePWADesc: "RecapHorizon unterstützt Progressive Web Apps (PWAs), was bedeutet, dass es offline verfügbar ist, schnell lädt und nach der Installation wie eine App auf Ihrem Gerät funktioniert.",
+  featurePWADesc: "RecapHorizon unterstützt Progressive Web Apps (PWAs), was bedeutet, dass es schnell lädt und nach der Installation wie eine App auf Ihrem Gerät funktioniert.",
   privacyTitle: "🔒 Vollständige Datenschutzgarantie",
   privacyLead: "Wichtig: Ihre Sitzungen werden NICHT in unserer Datenbank gespeichert. Alle Daten bleiben vollständig lokal auf Ihrem Gerät.",
   privacyItemRecordings: "🎙️ Aufnahmen bleiben lokal",
@@ -652,6 +652,8 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   // Settings modal translations
   settings: "Einstellungen",
   logout: "Abmelden",
+  settingsPwaInstallation: "App-Installation",
+  settingsPwaInstallationDesc: "Installieren Sie RecapSmart als App auf Ihrem Gerät für eine bessere Erfahrung",
 
   // Pricing page translations
   pricingTitle: "RecapHorizon Abonnements",
@@ -686,6 +688,15 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   pricingDiamondAdmin: "Diamond Tier ist exklusiv für Admins und bietet alle Funktionen.",
   pricingQuestions: "Haben Sie Fragen zu den Abonnements? Kontaktieren Sie uns über",
   pricingSupportEmail: "support@recaphorizon.nl",
+  pricingAIModels: "KI-Technologie",
+  pricingAIModelFree: "Optimierte KI-Modelle für kosteneffiziente Verarbeitung",
+  pricingAIModelSilver: "Verbesserte KI-Modelle für höhere Qualität",
+  pricingAIModelGold: "Erweiterte KI-Modelle mit experimentellen Funktionen",
+  pricingAIModelDiamond: "Premium-KI-Modelle für höchste Qualitätsergebnisse",
+  pricingAIModelEnterprise: "Enterprise-KI-Modelle für maximale Leistung",
+  pricingFreeFor4Weeks: "Kostenlos für 4 Wochen",
+  pricingTrialExpired: "Testperiode abgelaufen",
+  pricingTrialEndsOn: "Testperiode endet am {{date}} ({{days}} Tage übrig)",
 
   // Upgrade modal translations
   upgradeSubscription: "Abonnement Upgraden",

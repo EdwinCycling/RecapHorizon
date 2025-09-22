@@ -3,6 +3,9 @@
  * Protects against XSS, injection attacks, and other security vulnerabilities
  */
 
+// Import Firebase auth for session validation
+import { auth } from '../firebase';
+
 // Translation function type for internationalization
 type TranslationFunction = (key: string, fallback?: string) => string;
 
@@ -837,6 +840,8 @@ class SessionManager {
     // Store session securely in localStorage with encryption
     this.storeSessionSecurely(session, t);
 
+    console.log('[SessionManager] New session created:', sessionId);
+
     return session;
   }
 
@@ -866,10 +871,13 @@ class SessionManager {
       return { valid: false, reason: 'Session inactive' };
     }
 
-    // Extra check: validate Firebase auth state sync
-    if (typeof window !== 'undefined' && window.firebase?.auth?.currentUser === null) {
+    // Check Firebase auth state
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser || currentUser.uid !== session.userId) {
+      console.log('🔥 Firebase auth mismatch - invalidating session');
       this.invalidateSession(sessionId);
-      return { valid: false, reason: 'Firebase auth expired' };
+      return { valid: false, reason: 'Firebase auth expired or user mismatch' };
     }
 
     return { valid: true, session };

@@ -3,6 +3,7 @@ import { ExpertConfiguration, ExpertChatMessage } from '../../types';
 import { GoogleGenAI, Chat } from '@google/genai';
 import { tokenCounter } from '../tokenCounter';
 import { SafeHtml } from '../utils/SafeHtml';
+import modelManager from '../utils/modelManager';
 
 interface ExpertChatModalProps {
   isOpen: boolean;
@@ -142,8 +143,9 @@ const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
           .replace('{branche}', configuration.branche.name)
           .replace('{transcriptContext}', transcriptContext);
 
+        const modelName = await modelManager.getModelForUser(userId, userTier, 'expertChat');
         chatInstanceRef.current = ai.chats.create({
-          model: 'gemini-2.5-flash',
+          model: modelName,
           history: messages.map(msg => ({ 
             role: msg.role === 'assistant' || msg.role === 'expert' ? 'model' : msg.role, 
             parts: [{ text: msg.content }] 
@@ -169,8 +171,9 @@ const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
         const ai = new GoogleGenAI({ 
           apiKey
         });
+        const modelName = await modelManager.getModelForUser(userId, userTier, 'expertChat');
         const followUpChat = ai.chats.create({
-          model: 'gemini-2.5-flash',
+          model: modelName,
         });
         
         // Get the last few messages for context (up to 3)

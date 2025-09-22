@@ -111,7 +111,7 @@ export const en = {
   blog: "Blog",
   startOrUpload: "Start Session",
   notionOption: "Notion Page",
-  notionOptionDesc: "Secure server-side Notion API integration. Your Notion secret is stored on the server only—never in the browser. Select a page to import text for analysis.",
+  notionOptionDesc: "Analyse your Notion page(s).",
   notionSearchHelp: "Search your Notion workspace securely via our server-side integration. Your Notion secret is never exposed to the browser.",
   notionWorkspace: "Notion Workspace",
   notConnected: "Not connected",

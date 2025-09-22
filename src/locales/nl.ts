@@ -96,7 +96,7 @@ export const nl = {
   blog: "Blog",
   startOrUpload: "Start Sessie",
   notionOption: "Notion Pagina",
-  notionOptionDesc: "Beveiligde server-side Notion API integratie. Jouw Notion secret staat alleen op de server — nooit in de browser. Selecteer een pagina om tekst te importeren voor analyse.",
+  notionOptionDesc: "Analyseer jouw Notion pagina(s).",
   notionSearchHelp: "Zoek veilig in je Notion workspace via onze server-side integratie. Je Notion secret wordt nooit blootgesteld in de browser.",
   notionWorkspace: "Notion Workspace",
   notConnected: "Niet verbonden",

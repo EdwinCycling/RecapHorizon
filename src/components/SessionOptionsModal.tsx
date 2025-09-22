@@ -64,13 +64,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             {/* Audio Recording Option */}
             <div 
               onClick={!isReadOnly ? () => { onStartRecording(); onClose(); } : undefined}
-              className={`border-2 border-blue-200 dark:border-blue-700 rounded-xl p-8 bg-blue-50 dark:bg-blue-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              className={`border-2 border-blue-200 dark:border-blue-700 rounded-xl p-4 bg-blue-50 dark:bg-blue-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
-              <div className="text-center mb-4">
+              <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎤</div>
                 <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionAudio')}</h3>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-2">
                 {t('sessionOptionAudioDesc')}
               </p>
             </div>
@@ -78,13 +78,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             {/* File Upload Option */}
             <div 
               onClick={!isReadOnly ? () => { onUploadFile(); onClose(); } : undefined}
-              className={`border-2 border-green-200 dark:border-green-700 rounded-xl p-8 bg-green-50 dark:bg-green-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              className={`border-2 border-green-200 dark:border-green-700 rounded-xl p-4 bg-green-50 dark:bg-green-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
-              <div className="text-center mb-4">
+              <div className="text-center mb-2">
                 <div className="text-4xl mb-2">📄</div>
                 <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionFile')}</h3>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-3">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-1">
                 {t('sessionOptionFileDesc')}
               </p>
               <div className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-line">
@@ -95,13 +95,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             {/* Paste Text Option */}
             <div 
               onClick={!isReadOnly ? () => { onPasteText(); onClose(); } : undefined}
-              className={`border-2 border-purple-200 dark:border-purple-700 rounded-xl p-8 bg-purple-50 dark:bg-purple-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              className={`border-2 border-purple-200 dark:border-purple-700 rounded-xl p-4 bg-purple-50 dark:bg-purple-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
-              <div className="text-center mb-4">
+              <div className="text-center mb-2">
                 <div className="text-4xl mb-2">📋</div>
                 <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionPaste')}</h3>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-2">
                 {t('sessionOptionPasteDesc')}
               </p>
             </div>
@@ -109,13 +109,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             {/* Web Page Option */}
             <div 
               onClick={!isReadOnly ? () => { onWebPage(); onClose(); } : undefined}
-              className={`border-2 border-orange-200 dark:border-orange-700 rounded-xl p-8 bg-orange-50 dark:bg-orange-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              className={`border-2 border-orange-200 dark:border-orange-700 rounded-xl p-4 bg-orange-50 dark:bg-orange-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
-              <div className="text-center mb-4">
+              <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🌐</div>
                 <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionWebPage')}</h3>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-2">
                 {t('sessionOptionWebPageDesc')}
               </p>
             </div>
@@ -123,13 +123,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             {/* Image Upload Option */}
             <div 
               onClick={!isReadOnly ? () => { onUploadImage(); onClose(); } : undefined}
-              className={`border-2 border-pink-200 dark:border-pink-700 rounded-xl p-8 bg-pink-50 dark:bg-pink-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-pink-300 dark:hover:border-pink-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              className={`border-2 border-pink-200 dark:border-pink-700 rounded-xl p-4 bg-pink-50 dark:bg-pink-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-pink-300 dark:hover:border-pink-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
             >
-              <div className="text-center mb-4">
+              <div className="text-center mb-2">
                 <div className="text-4xl mb-2">📸</div>
                 <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionImage')}</h3>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-3">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-1">
                 {t('sessionOptionImageDesc')}
               </p>
               <div className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-line">
@@ -139,13 +139,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Email Import Option */}
             <div 
-              className="border-2 border-purple-200 dark:border-purple-700 rounded-xl p-8 bg-purple-50 dark:bg-purple-900/20"
+              className="border-2 border-purple-200 dark:border-purple-700 rounded-xl p-4 bg-purple-50 dark:bg-purple-900/20"
             >
-              <div className="text-center mb-4">
+              <div className="text-center mb-2">
                 <div className="text-4xl mb-2">📧</div>
                 <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('emailImportOption')}</h3>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-2">
                 {t('emailImportOptionDesc')}
               </p>
             </div>
@@ -158,13 +158,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                   onClose();
                 }
               } : undefined}
-              className={`border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-8 bg-yellow-50 dark:bg-yellow-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200 ${
+              className={`border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-4 bg-yellow-50 dark:bg-yellow-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200 ${
                 userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase()) 
                   ? '' 
                   : 'opacity-70'
               }`}
             >
-              <div className="text-center mb-4">
+              <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🧠</div>
                 <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('sessionOptionExpert')}</h3>
                 {!(userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) && (
@@ -173,7 +173,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                   </div>
                 )}
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-2">
                 {t('sessionOptionExpertDesc')}
               </p>
             </div>
@@ -181,24 +181,21 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             {/* Analyse Notion Option (help-only) */}
             {isDiamond && (
               <div 
-                className="border-2 border-slate-300 dark:border-slate-600 rounded-xl p-8 bg-white dark:bg-slate-900/30"
+                className="border-2 border-slate-300 dark:border-slate-600 rounded-xl p-4 bg-white dark:bg-slate-900/30"
               >
-                <div className="text-center mb-4">
-                  <div className="mb-3 flex items-center justify-center">
+                <div className="text-center mb-2">
+                  <div className="mb-2 flex items-center justify-center">
                     {/* Notion logo (inline SVG) */}
                     <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true" className="drop-shadow-sm">
                       <rect x="10" y="10" width="80" height="80" rx="10" fill="#111111" />
                       <path d="M35 70V30h6l18 26V30h6v40h-6L41 44v26h-6z" fill="#ffffff"/>
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('notionOption') || 'Analyse Notion'}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {t('notionOptionDesc') || 'Verbind via een beveiligde server integratie (Notion API). De geheime sleutel blijft alleen op de server — nooit in je browser. Kies een pagina om tekst in te lezen voor analyse.'}
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">{t('notionOption') || 'Analyse Notion'}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    {t('notionOptionDesc') || 'Analyseer jouw Notion pagina(s).'}
                   </p>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-                  {t('notionOptionDesc') || 'Autoriseer Notion, kies een pagina en importeer notities naar je transcript.'}
-                </p>
               </div>
             )}
           </div>

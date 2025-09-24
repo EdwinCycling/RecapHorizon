@@ -1948,9 +1948,9 @@ ${getTranscriptSlice(transcript, 20000)}`;
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
     }
-    // Cleanup AudioRecorder
+    // Cleanup AudioRecorder - gebruik destroy() voor volledige cleanup inclusief wakeLock
     if (audioRecorderRef.current) {
-      audioRecorderRef.current.cleanup();
+      audioRecorderRef.current.destroy();
       audioRecorderRef.current = null;
     }
     streamsRef.current.forEach(stream => stream.getTracks().forEach(track => track.stop()));

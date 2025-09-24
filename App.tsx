@@ -1682,7 +1682,18 @@ ${getTranscriptSlice(transcript, 20000)}`;
     }
 
     const uid = authState.user?.uid;
-    if (!uid || pwaInstalled || !pwaPromptEvent) {
+    if (!uid || pwaInstalled) {
+      setShowPwaBanner(false);
+      return;
+    }
+
+    // Check if iOS Safari (supports PWA but no beforeinstallprompt event)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isInStandaloneMode = (navigator as any).standalone === true;
+    const isIOSSafari = isIOS && !isInStandaloneMode;
+
+    // Show banner if we have a prompt event (Android/Chrome) or if it's iOS Safari
+    if (!pwaPromptEvent && !isIOSSafari) {
       setShowPwaBanner(false);
       return;
     }
@@ -1706,6 +1717,19 @@ ${getTranscriptSlice(transcript, 20000)}`;
   };
 
   const handlePwaInstall = async () => {
+    // Check if iOS Safari (no beforeinstallprompt event available)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isInStandaloneMode = (navigator as any).standalone === true;
+    const isIOSSafari = isIOS && !isInStandaloneMode;
+
+    if (isIOSSafari) {
+      // Show iOS installation instructions
+      alert(`${t('pwaInstallIosTitle')}\n\n${t('pwaInstallIosStep1')} ${t('pwaInstallIosShareIcon')}\n${t('pwaInstallIosStep2')}\n${t('pwaInstallIosStep3')}`);
+      handlePwaIgnore();
+      return;
+    }
+
+    // Standard PWA installation for other browsers
     if (!pwaPromptEvent) return;
     try {
       await pwaPromptEvent.prompt();

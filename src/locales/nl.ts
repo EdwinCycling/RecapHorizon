@@ -49,6 +49,11 @@ export const nl = {
   pwaAlreadyInstalled: "RecapHorizon is al geïnstalleerd als app op je apparaat.",
   pwaInstalledStatus: "Geïnstalleerd",
   pwaNotAvailable: "Installatie niet beschikbaar",
+  pwaInstallIosTitle: "Installeer RecapHorizon op iOS",
+  pwaInstallIosStep1: "1. Tik op het deel-icoon",
+  pwaInstallIosStep2: "2. Scroll naar beneden en tik op 'Voeg toe aan beginscherm'",
+  pwaInstallIosStep3: "3. Tik op 'Voeg toe' om te bevestigen",
+  pwaInstallIosShareIcon: "📤",
 
   reset: "Reset",
   startNewSession: "Nieuwe Sessie",

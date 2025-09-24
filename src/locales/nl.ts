@@ -46,6 +46,9 @@ export const nl = {
   pwaInstallBannerText: "Installeer RecapHorizon als app voor snelle toegang via je taakbalk.",
   pwaIgnore: "Negeer",
   pwaInstall: "Installeren",
+  pwaAlreadyInstalled: "RecapHorizon is al geïnstalleerd als app op je apparaat.",
+  pwaInstalledStatus: "Geïnstalleerd",
+  pwaNotAvailable: "Installatie niet beschikbaar",
 
   reset: "Reset",
   startNewSession: "Nieuwe Sessie",
@@ -371,10 +374,28 @@ export const nl = {
   // Error messages
   passwordsDoNotMatch: "Wachtwoorden komen niet overeen",
   passwordTooShort: "Wachtwoord moet minimaal 6 karakters bevatten",
+  // Password validation
+  passwordRequirements: "Wachtwoord vereisten:",
+  passwordMinLength: "Minimaal 8 karakters",
+  passwordSpecialChar: "Minimaal 1 speciaal teken (!@#$%^&*)",
+  passwordUppercase: "Minimaal 1 hoofdletter",
+  passwordLowercase: "Minimaal 1 kleine letter",
+  passwordNumber: "Minimaal 1 cijfer",
+  passwordStrengthWeak: "Zwak",
+  passwordStrengthMedium: "Gemiddeld",
+  passwordStrengthStrong: "Sterk",
+  passwordStrengthVeryStrong: "Zeer sterk",
+  allRequirementsMet: "Alle vereisten voldaan",
   // Login form additional texts
   confirmPassword: "Bevestig Wachtwoord",
   passwordAppSpecific: "Dit wachtwoord is specifiek voor deze app",
   forgotPassword: "Wachtwoord vergeten?",
+  // Password reset messages
+  passwordResetEmailSent: "Wachtwoord reset e-mail is verzonden! Controleer je inbox.",
+  passwordResetUserNotFound: "Er is geen account gevonden met dit e-mailadres.",
+  passwordResetTooManyRequests: "Te veel verzoeken. Probeer het over enkele minuten opnieuw.",
+  passwordResetError: "Er is een fout opgetreden bij het verzenden van de reset e-mail. Probeer het opnieuw.",
+  passwordResetInvalidEmail: "Voer eerst een geldig e-mailadres in.",
   // FAQ translations
   faqTitle: "Veelgestelde Vragen",
   faqSubtitle: "Alles wat je moet weten over RecapHorizon. Van basis functionaliteit tot geavanceerde AI-features, privacy-instellingen en praktische gebruikssituaties.",
@@ -745,6 +766,32 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   settingsTipSafe: "• Veilig: Fuzzy matching vervangt NOOIT delen van andere woorden (bijv. \"jan\" in \"januari\" blijft intact)",
   settingsCancel: "Annuleren",
   settingsSave: "Opslaan",
+  
+  // Transcription settings
+  settingsTranscriptionTitle: "Transcriptie Instellingen",
+  settingsTranscriptionQuality: "Transcriptie Kwaliteit",
+  settingsTranscriptionQualityDesc: "Kies tussen snelheid en kwaliteit voor audio transcriptie",
+  settingsQualityHigh: "Hoge Kwaliteit (langzamer)",
+  settingsQualityBalanced: "Gebalanceerd",
+  settingsQualityFast: "Snel (lagere kwaliteit)",
+  settingsAudioCompression: "Audio Compressie",
+  settingsAudioCompressionDesc: "Comprimeer audio bestanden om transcriptie te versnellen",
+  settingsCompressionEnabled: "Compressie ingeschakeld",
+  settingsStopRecordingAfterCapture: "Stop Opname na Vastleggen",
+  settingsStopRecordingDesc: "Stop audio opname automatisch na het vastleggen (aanbevolen voor mobiele apparaten)",
+  settingsAutoStopEnabled: "Automatisch stoppen ingeschakeld",
+  
+  // Transcriptie instellingen
+  transcriptionSettings: "Transcriptie Instellingen",
+  transcriptionQuality: "Transcriptie Kwaliteit",
+  transcriptionQualityHigh: "Hoog (langzamer, beste kwaliteit)",
+  transcriptionQualityBalanced: "Gebalanceerd (aanbevolen)",
+  transcriptionQualityFast: "Snel (sneller, lagere kwaliteit)",
+  audioCompression: "Audio Compressie",
+  audioCompressionDescription: "Comprimeer audio om bestandsgrootte te verkleinen",
+  autoStopRecording: "Automatisch Stoppen na Opname",
+  autoStopRecordingDescription: "Stop audio opname automatisch na vastleggen (aanbevolen voor mobiel)",
+  compressingAudio: "Audio wordt gecomprimeerd...",
   
   // Loading text
   loading: "Laden...",
@@ -1403,6 +1450,8 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   // UI states (additional)
   error: "Fout",
   download: "Download",
+  downloadAudio: "Download audio",
+  audioDeleteWarning: "Let op: De originele audio opname wordt verwijderd zodra het transcriptieproces start.",
   actions: "Acties",
   signUpWithEmail: "Meld je aan met je email adres",
   addToWaitlist: "We plaatsen je op de wachtlijst",
@@ -1873,5 +1922,51 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   // User Document Creation Messages
   userIdEmptyInEnsureUser: "userId is leeg in ensureUserDocument!",
   userDocumentCreated: "Gebruikersdocument aangemaakt voor",
-  errorCreatingUserDocument: "Fout bij aanmaken gebruikersdocument:"
+  errorCreatingUserDocument: "Fout bij aanmaken gebruikersdocument:",
+
+  // Settings Tab Translations
+  settingsTabGeneral: "Algemeen",
+  settingsTabSubscription: "Abonnement",
+  settingsTabTranscription: "Transcriptie",
+  settingsTabAnonymization: "Anonimisatie",
+
+  // Subscription Tab Translations
+  subscriptionCurrentPlan: "Huidig Abonnement",
+  subscriptionFreeTier: "Gratis proefperiode - 28 dagen",
+  subscriptionPaidTier: "Betaald abonnement",
+  subscriptionNextBilling: "Volgende facturering",
+  subscriptionTrialEnds: "Proefperiode eindigt",
+  subscriptionManagement: "Abonnement Beheer",
+  subscriptionViewPricing: "Bekijk Prijzen",
+  subscriptionViewPricingDesc: "Vergelijk alle beschikbare abonnementen",
+  subscriptionUpgrade: "Upgrade Abonnement",
+  subscriptionUpgradeDesc: "Krijg toegang tot meer functies",
+  subscriptionChangeplan: "Wijzig Abonnement",
+  subscriptionChangeplanDesc: "Upgrade of downgrade je huidige plan",
+  subscriptionManageBilling: "Beheer Facturering",
+  subscriptionManageBillingDesc: "Bekijk factuurgeschiedenis, wijzig betaalmethoden en beheer je abonnement",
+  subscriptionPortalError: "Er is een fout opgetreden bij het openen van de billing portal. Probeer het opnieuw.",
+  subscriptionCancel: "Abonnement Opzeggen",
+  subscriptionCancelDesc: "Zeg je abonnement op - blijft actief tot einde periode",
+  subscriptionCancelConfirm: "Weet je zeker dat je je abonnement wilt opzeggen? Je behoudt toegang tot je huidige functies tot het einde van je factureringsperiode.",
+  subscriptionCancelPending: "Je opzegging is ingediend. Je abonnement blijft actief tot het einde van je huidige factureringsperiode.",
+  subscriptionStopRecapHorizon: "Stop RecapHorizon",
+  subscriptionStopRecapHorizonDesc: "Beheer je Diamond abonnement via het Stripe portal",
+  subscriptionScheduledChanges: "Geplande Wijzigingen",
+  subscriptionScheduledCancel: "Abonnement wordt geannuleerd",
+  subscriptionScheduledDowngrade: "Downgrade naar {tier}",
+  subscriptionEffectiveDate: "Ingangsdatum",
+
+  // Tier Names
+  tierFree: "Gratis",
+  tierSilver: "Silver",
+  tierGold: "Gold",
+  tierDiamond: "Diamond",
+  tierEnterprise: "Enterprise",
+
+  // Subscription Management
+  manageSubscription: "Abonnement Beheren",
+
+  // Stripe Payment Footnote
+  pricingStripeFootnote: "Betalingen worden veilig verwerkt via <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, wereldleider in betrouwbare en veilige online betaaloplossingen."
 };

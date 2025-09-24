@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
       plugins: [react()],
       server: {
         port: 3000,
-        strictPort: true, // Forceer poort 3000; fail als deze bezet is
+        strictPort: false, // Probeer andere poorten als 3000 bezet is
         host: true, // Dit zorgt ervoor dat de server toegankelijk is vanaf andere apparaten op je netwerk
         open: false, // Open browser niet automatisch
         cors: true, // Enable CORS for development

@@ -1,33 +1,390 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
+import { Language } from '../locales';
+import NotificationModal from './NotificationModal';
 
 interface LoginFormProps {
-  onLogin: (email?: string, password?: string) => void;
-  onCreateAccount: (email?: string, password?: string) => void;
-  onPasswordReset: (email?: string) => void;
-  onClose: () => void;
-  t: (key: string) => string;
+  handleLogin: (email: string, password: string) => void;
+  handleCreateAccount: (email: string, password: string) => void;
+  handleForgotPassword: (email: string) => void;
+  uiLang: Language;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onCreateAccount, onPasswordReset, onClose, t }) => {
-  // Dummy form for demonstration purposes
+interface PasswordRequirement {
+  id: string;
+  label: string;
+  test: (password: string) => boolean;
+}
+
+interface PasswordValidation {
+  minLength: boolean;
+  hasSpecialChar: boolean;
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumber: boolean;
+  allValid: boolean;
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount, handleForgotPassword, uiLang }) => {
+  const { t } = useTranslation(uiLang);
+  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
+    minLength: false,
+    hasSpecialChar: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    allValid: false
+  });
+  const [confirmPasswordValid, setConfirmPasswordValid] = useState(false);
+  const [isEmailValid, setIsEmailValid] = useState(false);
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+  }>({ isOpen: false, title: '', message: '', type: 'info' });
+
+  const passwordRequirements: PasswordRequirement[] = [
+    {
+      id: 'minLength',
+      label: t('passwordMinLength'),
+      test: (pwd: string) => pwd.length >= 8
+    },
+    {
+      id: 'hasSpecialChar',
+      label: t('passwordSpecialChar'),
+      test: (pwd: string) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd)
+    },
+    {
+      id: 'hasUppercase',
+      label: t('passwordUppercase'),
+      test: (pwd: string) => /[A-Z]/.test(pwd)
+    },
+    {
+      id: 'hasLowercase',
+      label: t('passwordLowercase'),
+      test: (pwd: string) => /[a-z]/.test(pwd)
+    },
+    {
+      id: 'hasNumber',
+      label: t('passwordNumber'),
+      test: (pwd: string) => /[0-9]/.test(pwd)
+    }
+  ];
+
+  const validatePassword = (pwd: string) => {
+    const validation: PasswordValidation = {
+      minLength: pwd.length >= 8,
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(pwd),
+      hasUppercase: /[A-Z]/.test(pwd),
+      hasLowercase: /[a-z]/.test(pwd),
+      hasNumber: /[0-9]/.test(pwd),
+      allValid: false
+    };
+    
+    validation.allValid = validation.minLength && validation.hasSpecialChar && 
+                         validation.hasUppercase && validation.hasLowercase && validation.hasNumber;
+    
+    setPasswordValidation(validation);
+  };
+
+  const getPasswordStrength = () => {
+    const score = Object.values(passwordValidation).filter(Boolean).length - 1; // -1 for allValid
+    if (score <= 1) return { text: t('passwordStrengthWeak'), color: '#ef4444' };
+    if (score <= 2) return { text: t('passwordStrengthMedium'), color: '#f59e0b' };
+    if (score <= 4) return { text: t('passwordStrengthStrong'), color: '#10b981' };
+    return { text: t('passwordStrengthVeryStrong'), color: '#059669' };
+  };
+
+  useEffect(() => {
+    if (password) {
+      validatePassword(password);
+    }
+  }, [password]);
+
+  // Email validation function
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) && email.includes('@') && email.includes('.');
+  };
+
+  useEffect(() => {
+    setConfirmPasswordValid(confirmPassword !== '' && confirmPassword === password);
+  }, [confirmPassword, password]);
+
+  useEffect(() => {
+    setIsEmailValid(validateEmail(email));
+  }, [email]);
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+  };
+
+  const canCreateAccount = () => {
+    return email.trim() !== '' && passwordValidation.allValid && confirmPasswordValid;
+  };
+
+  const canLogin = () => {
+    return isEmailValid && password.trim() !== '';
+  };
+
+  const handleSubmitLogin = () => {
+    if (canLogin()) {
+      handleLogin(email, password);
+    }
+  };
+
+  const handleSubmitCreateAccount = () => {
+    if (canCreateAccount()) {
+      handleCreateAccount(email, password);
+    }
+  };
+
+  const handleForgotPasswordClick = async () => {
+    if (isEmailValid) {
+      try {
+        await handleForgotPassword(email);
+        setNotification({
+          isOpen: true,
+          title: t('forgotPassword'),
+          message: t('passwordResetEmailSent'),
+          type: 'success'
+        });
+      } catch (error: any) {
+        console.error('Password reset error:', error);
+        let errorMessage = t('passwordResetError');
+        if (error.message?.includes('auth/user-not-found')) {
+          errorMessage = t('passwordResetUserNotFound');
+        } else if (error.message?.includes('auth/too-many-requests')) {
+          errorMessage = t('passwordResetTooManyRequests');
+        }
+        setNotification({
+          isOpen: true,
+          title: t('forgotPassword'),
+          message: errorMessage,
+          type: 'error'
+        });
+      }
+    } else {
+      setNotification({
+        isOpen: true,
+        title: t('forgotPassword'),
+        message: t('passwordResetInvalidEmail'),
+        type: 'error'
+      });
+    }
+  };
+
+  const strengthInfo = getPasswordStrength();
+
   return (
-    <div>
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          onLogin();
-        }}
-        className="space-y-4"
-      >
-        <input type="email" placeholder={t('email', 'Email')} className="w-full p-2 border rounded" required />
-        <input type="password" placeholder={t('password', 'Password')} className="w-full p-2 border rounded" required />
-        <div className="flex gap-2">
-          <button type="submit" className="px-4 py-2 bg-cyan-600 text-white rounded">{t('login', 'Login')}</button>
-          <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={onCreateAccount}>{t('createAccount', 'Create Account')}</button>
-          <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={onPasswordReset}>{t('forgotPassword', 'Forgot Password?')}</button>
+    <div className="login-form" style={{ maxWidth: '400px', margin: '0 auto', padding: '20px' }}>
+      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+        <button 
+          onClick={() => setIsCreateMode(false)}
+          style={{
+            padding: '8px 16px',
+            marginRight: '8px',
+            backgroundColor: !isCreateMode ? '#3b82f6' : '#e5e7eb',
+            color: !isCreateMode ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          {t('login')}
+        </button>
+        <button 
+          onClick={() => setIsCreateMode(true)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: isCreateMode ? '#3b82f6' : '#e5e7eb',
+            color: isCreateMode ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          {t('accountCreate')}
+        </button>
+      </div>
+
+      <div style={{ marginBottom: '16px' }}>
+        <input 
+          type="email" 
+          placeholder={t('email')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+      </div>
+
+      <div style={{ marginBottom: '16px' }}>
+        <input 
+          type="password" 
+          placeholder={t('password')}
+          value={password}
+          onChange={handlePasswordChange}
+          disabled={!isEmailValid}
+          className={`w-full p-3 border rounded text-sm ${
+            !isEmailValid 
+              ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
+              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-text'
+          } placeholder-gray-500 dark:placeholder-gray-400`}
+        />
+        
+        {isCreateMode && password && (
+          <div style={{ marginTop: '8px', fontSize: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span>{t('passwordRequirements')}</span>
+              <span style={{ color: strengthInfo.color, fontWeight: 'bold' }}>
+                {strengthInfo.text}
+              </span>
+            </div>
+            
+            {passwordRequirements.map((req) => {
+              const isValid = req.test(password);
+              return (
+                <div key={req.id} style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  marginBottom: '4px',
+                  color: isValid ? '#10b981' : '#6b7280'
+                }}>
+                  <span style={{ 
+                    marginRight: '8px', 
+                    fontSize: '16px',
+                    color: isValid ? '#10b981' : '#ef4444'
+                  }}>
+                    {isValid ? '✓' : '✗'}
+                  </span>
+                  <span style={{ fontSize: '12px' }}>{req.label}</span>
+                </div>
+              );
+            })}
+            
+            {passwordValidation.allValid && (
+              <div style={{ 
+                marginTop: '8px', 
+                padding: '8px', 
+                backgroundColor: '#d1fae5', 
+                borderRadius: '4px',
+                color: '#065f46',
+                fontSize: '12px',
+                textAlign: 'center'
+              }}>
+                ✓ {t('allRequirementsMet')}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {isCreateMode && (
+        <div style={{ marginBottom: '16px' }}>
+          <input 
+            type="password" 
+            placeholder={t('confirmPassword')}
+            value={confirmPassword}
+            onChange={handleConfirmPasswordChange}
+            disabled={!isEmailValid}
+            className={`w-full p-3 rounded text-sm ${
+              confirmPassword && !confirmPasswordValid 
+                ? 'border border-red-500 dark:border-red-400' 
+                : 'border border-gray-300 dark:border-gray-600'
+            } ${
+              !isEmailValid 
+                ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
+                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-text'
+            } placeholder-gray-500 dark:placeholder-gray-400`}
+          />
+          {confirmPassword && !confirmPasswordValid && (
+            <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+              {t('passwordsDoNotMatch')}
+            </div>
+          )}
+          {confirmPassword && confirmPasswordValid && (
+            <div style={{ color: '#10b981', fontSize: '12px', marginTop: '4px' }}>
+              ✓ {t('passwordsDoNotMatch').replace('niet', '').replace('do not', '').replace('ne correspondent pas', 'correspondent').replace('não coincidem', 'coincidem').replace('no coinciden', 'coinciden').replace('nicht überein', 'überein')}
+            </div>
+          )}
         </div>
-      </form>
-      <button onClick={onClose} className="mt-4 text-cyan-600 underline">{t('close', 'Close')}</button>
+      )}
+
+      <div style={{ marginBottom: '16px' }}>
+        {isCreateMode ? (
+          <button 
+            onClick={handleSubmitCreateAccount}
+            disabled={!canCreateAccount()}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: canCreateAccount() ? '#10b981' : '#d1d5db',
+              color: canCreateAccount() ? 'white' : '#6b7280',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '14px',
+              cursor: canCreateAccount() ? 'pointer' : 'not-allowed',
+              fontWeight: 'bold'
+            }}
+          >
+            {t('accountCreate')}
+          </button>
+        ) : (
+          <button 
+            onClick={handleSubmitLogin}
+            disabled={!canLogin()}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: canLogin() ? '#3b82f6' : '#d1d5db',
+              color: canLogin() ? 'white' : '#6b7280',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '14px',
+              cursor: canLogin() ? 'pointer' : 'not-allowed',
+              fontWeight: 'bold'
+            }}
+          >
+            {t('login')}
+          </button>
+        )}
+      </div>
+
+      {!isCreateMode && (
+        <div style={{ textAlign: 'center' }}>
+          <button 
+             onClick={handleForgotPasswordClick}
+             style={{
+               background: 'none',
+               border: 'none',
+               color: '#3b82f6',
+               textDecoration: 'underline',
+               cursor: 'pointer',
+               fontSize: '14px'
+             }}
+           >
+            {t('forgotPassword')}
+          </button>
+        </div>
+      )}
+      
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={() => setNotification({ ...notification, isOpen: false })}
+        title={notification.title}
+        message={notification.message}
+        type={notification.type}
+      />
     </div>
   );
 };

@@ -46,6 +46,18 @@ export interface UserSubscription {
   isActive: boolean;
   autoRenew: boolean;
   isTrialExpired?: boolean; // indicates if trial period has ended
+  // Stripe integration fields
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  nextBillingDate?: Date;
+  currentSubscriptionStartDate?: Date;
+  currentSubscriptionStatus: 'active' | 'past_due' | 'cancelled' | 'expired';
+  scheduledTierChange?: {
+    tier: SubscriptionTier;
+    effectiveDate: Date;
+    action: 'downgrade' | 'cancel';
+  };
 }
 
 // Session tracking
@@ -226,4 +238,62 @@ export interface ExpertChatSession {
   suggestedFollowUp?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Stripe-related interfaces
+export interface StripePricingTier {
+  id: string;
+  tier: SubscriptionTier;
+  billingCycle: 'monthly' | 'annual';
+  priceEur: number;
+  stripeProductId: string;
+  stripePriceId: string;
+  effectiveDate: Date;
+  description: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface StripeWebhookLog {
+  id: string;
+  eventId: string;
+  eventType: string;
+  processed: boolean;
+  processingError?: string;
+  rawData: Record<string, any>;
+  createdAt: Date;
+  processedAt?: Date;
+}
+
+// Extended user document interface for database
+export interface UserDocument {
+  id: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  isAdmin?: boolean;
+  lastLogin?: Date;
+  subscriptionTier: SubscriptionTier;
+  currentSubscriptionStatus: 'active' | 'past_due' | 'cancelled' | 'expired';
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  nextBillingDate?: Date;
+  currentSubscriptionStartDate?: Date;
+  scheduledTierChange?: {
+    tier: SubscriptionTier;
+    effectiveDate: Date;
+    action: 'downgrade' | 'cancel';
+  };
+  // Usage tracking fields (existing)
+  dailyAudioCount: number;
+  dailyUploadCount: number;
+  lastDailyUsageDate: string;
+  monthlyInputTokens: number;
+  monthlyOutputTokens: number;
+  monthlySessionsCount: number;
+  tokensMonth: string;
+  sessionsMonth: string;
 }

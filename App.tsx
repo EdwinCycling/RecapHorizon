@@ -8,7 +8,7 @@ import DisclaimerModal from './src/components/DisclaimerModal.tsx';
 import WaitlistModal from './src/components/WaitlistModal.tsx';
 // COMMENTED OUT: 2FA Email confirmation modal no longer needed
 // import { EmailConfirmationModal } from './src/components/EmailConfirmationModal';
-// import LoginModal from './src/components/LoginModal';
+import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
 import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, EmailOptions, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
@@ -43,6 +43,10 @@ import { readEml } from 'eml-parse-js';
 import MsgReader from '@kenjiuno/msgreader';
 import EmailCompositionTab, { EmailData } from './src/components/EmailCompositionTab.tsx';
 import TokenUsageMeter from './src/components/TokenUsageMeter.tsx';
+import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.tsx';
+import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
+import CustomerPortalReturnScreen from './src/components/CustomerPortalReturnScreen.tsx';
+import { stripeService } from './src/services/stripeService';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -92,6 +96,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, type MonthlyTokensUsage } from './src/firebase';
 import { sessionManager, UserSession } from './src/utils/security';
+import LoginForm from './src/components/LoginForm';
 import SessionTimeoutWarning from './src/components/SessionTimeoutWarning.tsx';
 import { useSessionActivity } from './src/hooks/useSessionActivity';
 import { errorHandler, ErrorType } from './src/utils/errorHandler';
@@ -196,6 +201,12 @@ const SettingsIcon: React.FC<{ className?: string }> = ({ className }) => (
         <circle cx="12" cy="12" r="3"/>
     </svg>
 );
+const CreditCardIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <rect width="20" height="14" x="2" y="5" rx="2"/>
+        <line x1="2" x2="22" y1="10" y2="10"/>
+    </svg>
+);
 
 // New icons for sentiment, mindmap, and storytelling
 const SentimentIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -262,200 +273,10 @@ const LoadingSpinner: React.FC<{ className?: string; text?: string }> = ({ class
     </div>
 );
 
-// Login Form Component
-const LoginForm: React.FC<{
-  onLogin: (email: string, password: string) => Promise<void>;
-  onCreateAccount: (email: string, password: string) => Promise<void>;
-  onPasswordReset: (email: string) => Promise<boolean>;
-  onClose: () => void;
-  t: (key: string, params?: Record<string, string | number>) => string;
-}> = ({ onLogin, onCreateAccount, onPasswordReset, onClose, t }) => {
-  const [mode, setMode] = useState<'login' | 'create' | 'reset'>('login');
-  const [email, setEmail] = useState(() => {
-    // Load last used email from localStorage
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('last_email') || '';
-    }
-    return '';
-  });
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
 
-    try {
-      if (mode === 'login') {
-        // Save email to localStorage
-        localStorage.setItem('last_email', email);
-        await onLogin(email, password);
-      } else if (mode === 'create') {
-        if (password !== confirmPassword) {
-          throw new Error(t('passwordsDoNotMatch'));
-        }
-        if (password.length < 6) {
-          throw new Error(t('passwordTooShort'));
-        }
-        // Save email to localStorage
-        localStorage.setItem('last_email', email);
-        await onCreateAccount(email, password);
-      } else if (mode === 'reset') {
-        await onPasswordReset(email);
-        setSuccess(t('passwordResetEmailSent'));
-        setTimeout(() => setMode('login'), 2000);
-      }
-    } catch (error: any) {
-      setError(error.message || t('generalError'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="p-3 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-500/30 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-      
-      {success && (
-        <div className="p-3 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-500/30 rounded-lg text-sm">
-          {success}
-        </div>
-      )}
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          {t('email')}
-        </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-          placeholder={t('emailPlaceholder')}
-        />
-      </div>
-
-      {mode !== 'reset' && (
-        <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          {t('password')}
-        </label>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoFocus={!!email} // Auto-focus if email is pre-filled
-              className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder={t('passwordPlaceholder')}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-            >
-              {showPassword ? '👁️' : '👁️‍🗨️'}
-            </button>
-          </div>
-          {mode === 'create' && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {t('passwordAppSpecific')}
-            </p>
-          )}
-        </div>
-      )}
-      {mode === 'create' && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            {t('confirmPassword')}
-          </label>
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder={t('passwordPlaceholder')}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-            >
-              {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-2">
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:bg-slate-400 transition-colors font-medium"
-        >
-          {isLoading ? (
-            <LoadingSpinner className="w-5 h-5" text="" />
-          ) : mode === 'login' ? t('loginNow') : mode === 'create' ? t('accountCreate') : t('resetSend')}
-        </button>
-      </div>
-
-      <div className="flex justify-between text-sm">
-        {mode === 'login' && (
-          <>
-            <button
-              type="button"
-              onClick={() => setMode('create')}
-              className="text-cyan-500 hover:text-cyan-600 transition-colors"
-            >
-              {t('accountCreate')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('reset')}
-              className="text-cyan-500 hover:text-cyan-600 transition-colors"
-            >
-              {t('forgotPassword')}
-            </button>
-          </>
-        )}
-        
-        {mode === 'create' && (
-          <button
-            type="button"
-            onClick={() => setMode('login')}
-            className="text-cyan-500 hover:text-cyan-600 transition-colors"
-          >                            {t('backToLogin')}
-          </button>
-        )}
-        
-        {mode === 'reset' && (
-          <button
-            type="button"
-            onClick={() => setMode('login')}
-            className="text-cyan-500 hover:text-cyan-600 transition-colors"
-          >
-            {t('backToLogin')}
-          </button>
-        )}
-      </div>
-    </form>
-  );
-};
 
 const SunIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -512,7 +333,7 @@ const LoadingOverlay: React.FC<{ text: string; progress?: number; cancelText?: s
                 </span>
               </div>
             </div>
-          )}
+                    )}
           {onCancel && (
             <div className="mt-4 flex justify-end">
               <button onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-md font-semibold hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors">
@@ -1129,6 +950,8 @@ export default function App() {
   const expertConfigModal = useModalState();
   const expertChatModal = useModalState();
   const expertHelpModal = useModalState();
+  const subscriptionSuccessModal = useModalState();
+  const customerPortalModal = useModalState();
   
   // Auth state
   const [authState, setAuthState] = useState<AuthState>({
@@ -1180,6 +1003,13 @@ export default function App() {
   // Expert chat state
   const [expertConfiguration, setExpertConfiguration] = useState<ExpertConfiguration | null>(null);
   
+  // Subscription success state
+  const [subscriptionSuccessTier, setSubscriptionSuccessTier] = useState<SubscriptionTier | null>(null);
+  const [subscriptionSuccessEmail, setSubscriptionSuccessEmail] = useState<string>('');
+  
+  // Customer portal return state
+  const [showCustomerPortalReturn, setShowCustomerPortalReturn] = useState<boolean>(false);
+  
   // Load saved language preferences from localStorage on initial load
   useEffect(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -1187,6 +1017,48 @@ export default function App() {
       const savedOutputLang = window.localStorage.getItem('outputLang');
       if (savedSessionLang) setLanguage(savedSessionLang);
       if (savedOutputLang) setOutputLang(savedOutputLang);
+    }
+  }, []);
+
+  // Check for subscription success URL parameters
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      
+      if (sessionId && window.location.pathname.includes('subscription-success')) {
+        // Extract tier and email from localStorage or URL
+        const tier = localStorage.getItem('checkout_tier') as SubscriptionTier;
+        const email = localStorage.getItem('checkout_email') || authState.user?.email || '';
+        
+        if (tier && email) {
+          setSubscriptionSuccessTier(tier);
+          setSubscriptionSuccessEmail(email);
+          subscriptionSuccessModal.open();
+          
+          // Clean up localStorage
+          localStorage.removeItem('checkout_tier');
+          localStorage.removeItem('checkout_email');
+          
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    }
+  }, [authState.user, subscriptionSuccessModal]);
+  
+  // Check for customer portal return URL parameters
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const portalReturn = urlParams.get('portal_return');
+      
+      if (portalReturn === 'true') {
+        setShowCustomerPortalReturn(true);
+        
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
   }, []);
   
@@ -1619,6 +1491,34 @@ ${getTranscriptSlice(transcript, 20000)}`;
   // Anonymization state
   const [isAnonymized, setIsAnonymized] = useState(false);
   const [anonymizationReport, setAnonymizationReport] = useState<string | null>(null);
+  
+  // Settings tab state
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'transcription' | 'anonymization' | 'subscription'>('general');
+
+  // Transcription settings state
+  const [transcriptionQuality, setTranscriptionQuality] = useState<'high' | 'balanced' | 'fast'>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('transcription_quality');
+      return (saved as 'high' | 'balanced' | 'fast') || 'fast';
+    }
+    return 'fast';
+  });
+  
+  const [audioCompressionEnabled, setAudioCompressionEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('audio_compression_enabled');
+      return saved === 'true';
+    }
+    return true;
+  });
+  
+  const [autoStopRecordingEnabled, setAutoStopRecordingEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('auto_stop_recording_enabled');
+      return saved === 'true';
+    }
+    return true;
+  });
   
   // Keyword explanation state
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
@@ -2519,7 +2419,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
             // Sla binnenkomende chunks op voor transcribe
             audioChunksRef.current = chunks ? [...chunks] : [];
           },
-          onStop: (audioBlob: Blob) => {
+          onStop: async (audioBlob: Blob) => {
             // Zorg dat we chunks hebben, ook als alleen eindblob binnenkomt
             if ((!audioChunksRef.current || audioChunksRef.current.length === 0) && audioBlob && audioBlob.size > 0) {
               audioChunksRef.current = [audioBlob];
@@ -2531,6 +2431,16 @@ ${getTranscriptSlice(transcript, 20000)}`;
             sessionManager.setRecordingStatus(sessionId, false);
             if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
             timerIntervalRef.current = null;
+            
+            // Automatisch cleanup als instelling is ingeschakeld (voor mobiele compatibiliteit)
+            if (autoStopRecordingEnabled && audioRecorderRef.current) {
+              try {
+                await audioRecorderRef.current.cleanup();
+                console.log('✅ Audio recorder automatisch gestopt en opgeruimd');
+              } catch (error) {
+                console.warn('⚠️ Fout bij automatisch opruimen audio recorder:', error);
+              }
+            }
           },
           onError: (error: Error) => {
             const userError = errorHandler.handleError(error, ErrorType.UNKNOWN, {
@@ -2646,13 +2556,25 @@ ${getTranscriptSlice(transcript, 20000)}`;
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (audioRecorderRef.current && (status === RecordingStatus.RECORDING || status === RecordingStatus.PAUSED)) {
-      audioRecorderRef.current.stopRecording();
-      // Update session recording status
-      sessionManager.setRecordingStatus(sessionId, false);
-      // status and audio URL will be updated by callbacks
-      setPauseStartMs(null);
+      try {
+        // Stop recording and ensure complete cleanup
+        await audioRecorderRef.current.stopRecording();
+        
+        // Force cleanup to release all resources including wakeLock
+        await audioRecorderRef.current.cleanup();
+        
+        // Update session recording status
+        sessionManager.setRecordingStatus(sessionId, false);
+        
+        // Clear pause state
+        setPauseStartMs(null);
+        
+        console.log('✅ Audio opname volledig gestopt en alle resources vrijgegeven');
+      } catch (error) {
+        console.error('❌ Fout bij stoppen van audio opname:', error);
+      }
     }
   };
     // Text extraction functions
@@ -4204,6 +4126,21 @@ const handleAnalyzeSentiment = async () => {
     localStorage.setItem('anonymization_rules', JSON.stringify(anonymizationRules));
     settingsModal.close();
   };
+  
+  const saveTranscriptionSettings = () => {
+    localStorage.setItem('transcription_quality', transcriptionQuality);
+    localStorage.setItem('audio_compression_enabled', audioCompressionEnabled.toString());
+    localStorage.setItem('auto_stop_recording_enabled', autoStopRecordingEnabled.toString());
+    settingsModal.close();
+  };
+  
+  const saveAllSettings = () => {
+    localStorage.setItem('anonymization_rules', JSON.stringify(anonymizationRules));
+    localStorage.setItem('transcription_quality', transcriptionQuality);
+    localStorage.setItem('audio_compression_enabled', audioCompressionEnabled.toString());
+    localStorage.setItem('auto_stop_recording_enabled', autoStopRecordingEnabled.toString());
+    settingsModal.close();
+  };
 
   const getNextEmployeeNumber = (rules: AnonymizationRule[]): number => {
     const employeeRules = rules.filter(rule => 
@@ -5127,6 +5064,126 @@ ${transcript}
     displayToast('Web Speech API ondersteunt geen opgeslagen audio transcriptie', 'error');
   };
 
+  // Audio compressie functie
+  const compressAudioChunks = async (chunks: Blob[]): Promise<Blob[]> => {
+    try {
+      // Combineer alle chunks tot één blob
+      const combinedBlob = new Blob(chunks, { type: chunks[0]?.type || 'audio/webm' });
+      
+      // Maak een audio element om de audio te laden
+      const audioElement = new Audio();
+      const audioUrl = URL.createObjectURL(combinedBlob);
+      audioElement.src = audioUrl;
+      
+      return new Promise((resolve, reject) => {
+        audioElement.onloadedmetadata = async () => {
+          try {
+            // Maak een audio context voor compressie
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const response = await fetch(audioUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // Reduceer sample rate voor compressie (van 44.1kHz naar 16kHz)
+            const targetSampleRate = 16000;
+            const ratio = audioBuffer.sampleRate / targetSampleRate;
+            const newLength = Math.round(audioBuffer.length / ratio);
+            
+            // Maak een nieuwe buffer met lagere sample rate
+            const compressedBuffer = audioContext.createBuffer(
+              1, // Mono voor kleinere bestandsgrootte
+              newLength,
+              targetSampleRate
+            );
+            
+            const originalData = audioBuffer.getChannelData(0);
+            const compressedData = compressedBuffer.getChannelData(0);
+            
+            // Downsample de audio data
+            for (let i = 0; i < newLength; i++) {
+              const originalIndex = Math.round(i * ratio);
+              compressedData[i] = originalData[originalIndex] || 0;
+            }
+            
+            // Converteer terug naar blob
+            const offlineContext = new OfflineAudioContext(
+              1,
+              compressedBuffer.length,
+              targetSampleRate
+            );
+            
+            const source = offlineContext.createBufferSource();
+            source.buffer = compressedBuffer;
+            source.connect(offlineContext.destination);
+            source.start();
+            
+            const renderedBuffer = await offlineContext.startRendering();
+            
+            // Converteer naar WAV format voor betere compressie
+            const wavBlob = audioBufferToWav(renderedBuffer);
+            
+            // Cleanup
+            URL.revokeObjectURL(audioUrl);
+            audioContext.close();
+            
+            console.log(`🗜️ Audio gecomprimeerd: ${(combinedBlob.size / 1024 / 1024).toFixed(2)}MB → ${(wavBlob.size / 1024 / 1024).toFixed(2)}MB`);
+            resolve([wavBlob]);
+          } catch (error) {
+            URL.revokeObjectURL(audioUrl);
+            reject(error);
+          }
+        };
+        
+        audioElement.onerror = () => {
+          URL.revokeObjectURL(audioUrl);
+          reject(new Error('Kon audio niet laden voor compressie'));
+        };
+      });
+    } catch (error) {
+      console.error('Audio compressie fout:', error);
+      return chunks; // Geef originele chunks terug bij fout
+    }
+  };
+  
+  // Helper functie om AudioBuffer naar WAV te converteren
+  const audioBufferToWav = (buffer: AudioBuffer): Blob => {
+    const length = buffer.length;
+    const arrayBuffer = new ArrayBuffer(44 + length * 2);
+    const view = new DataView(arrayBuffer);
+    
+    // WAV header
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + length * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, buffer.sampleRate, true);
+    view.setUint32(28, buffer.sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, length * 2, true);
+    
+    // Audio data
+    const channelData = buffer.getChannelData(0);
+    let offset = 44;
+    for (let i = 0; i < length; i++) {
+      const sample = Math.max(-1, Math.min(1, channelData[i]));
+      view.setInt16(offset, sample * 0x7FFF, true);
+      offset += 2;
+    }
+    
+    return new Blob([arrayBuffer], { type: 'audio/wav' });
+  };
+
   const handleTranscribe = async () => {
     if (!audioChunksRef.current.length) {
       // Probeer terug te vallen op audioURL als die bestaat
@@ -5152,6 +5209,17 @@ ${transcript}
     setError(null);
     setAnonymizationReport(null);
     setTranscript(''); setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
+    
+    // Audio compressie als ingeschakeld
+    if (audioCompressionEnabled) {
+      try {
+        setLoadingText(t('compressingAudio', 'Audio wordt gecomprimeerd...'));
+        audioChunksRef.current = await compressAudioChunks(audioChunksRef.current);
+        console.log('✅ Audio succesvol gecomprimeerd');
+      } catch (error) {
+        console.warn('⚠️ Audio compressie gefaald, doorgaan met originele audio:', error);
+      }
+    }
     
     // Initialize progress tracking immediately
     setIsSegmentedTranscribing(true);
@@ -5195,8 +5263,16 @@ ${transcript}
         const chunks = audioChunksRef.current;
         const mimeType = (chunks?.[0] as any)?.type || 'audio/webm';
 
-        // 1-minuut segmenten (op basis van 1s chunks uit MediaRecorder) - verkleind voor betere stabiliteit
-        const segmentSeconds = 60;
+        // Dynamische segment grootte op basis van transcriptie kwaliteit
+        const getSegmentSeconds = () => {
+          switch (transcriptionQuality) {
+            case 'fast': return 20; // Kleinere segmenten voor snelheid
+            case 'high': return 45; // Grotere segmenten voor kwaliteit
+            case 'balanced':
+            default: return 30; // Gebalanceerd
+          }
+        };
+        const segmentSeconds = getSegmentSeconds();
         const hasSecondResolution = chunks.length > 1; // wanneer MediaRecorder 1s chunks leverde
         const totalSegments = hasSecondResolution ? Math.ceil(chunks.length / segmentSeconds) : 1;
 
@@ -5408,12 +5484,19 @@ ${transcript}
           // Update progress UI after processing
           setTranscriptionProgress((i + 1) / totalSegments);
           
-          // Enhanced progressive delay between segments to reduce server load
+          // Dynamische delays op basis van transcriptie kwaliteit
           if (i < totalSegments - 1) {
-            // Shorter delays for 1-minute segments to keep total time reasonable
-            const baseDelay = 3000; // Reduced base delay to 3 seconds for shorter segments
-            const progressiveDelay = Math.min(baseDelay + (i * 500), 8000); // Max 8 seconds
-            const jitterDelay = Math.random() * 2000; // Add 0-2s random jitter
+            const getDelaySettings = () => {
+              switch (transcriptionQuality) {
+                case 'fast': return { base: 800, max: 2000, jitter: 200 }; // Zeer snel
+                case 'high': return { base: 2000, max: 6000, jitter: 800 }; // Langzamer voor kwaliteit
+                case 'balanced':
+                default: return { base: 1500, max: 4000, jitter: 500 }; // Gebalanceerd
+              }
+            };
+            const delaySettings = getDelaySettings();
+            const progressiveDelay = Math.min(delaySettings.base + (i * 200), delaySettings.max);
+            const jitterDelay = Math.random() * delaySettings.jitter;
             const totalDelay = progressiveDelay + jitterDelay;
             
             console.log(`⏱️ ${t('waitingForNextSegment', { ms: Math.round(totalDelay) })}`);
@@ -5547,16 +5630,58 @@ ${transcript}
   };
 
   const renderRecordingView = () => {
+    // Calculate recording percentage based on user tier
+    const getCurrentTierMaxDuration = () => {
+      const tierLimits = {
+        'free': 15,
+        'silver': 60,
+        'gold': 90,
+        'enterprise': 90,
+        'diamond': 120
+      };
+      return tierLimits[userSubscription] || 15;
+    };
+
+    const maxDurationMinutes = getCurrentTierMaxDuration();
+    const currentDurationMinutes = computeRecordingElapsedMs() / (1000 * 60);
+    const recordingPercentage = Math.min((currentDurationMinutes / maxDurationMinutes) * 100, 100);
+    
+    // Determine percentage color
+    const getPercentageColor = (percentage) => {
+      if (percentage < 75) return 'text-green-600';
+      if (percentage < 90) return 'text-orange-500';
+      return 'text-red-600';
+    };
+
+    const getPercentageBarColor = (percentage) => {
+      if (percentage < 75) return 'bg-green-500';
+      if (percentage < 90) return 'bg-orange-500';
+      return 'bg-red-500';
+    };
+
     return (
               <div className="w-full max-w-6xl bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 space-y-6">
         {/* Header */}
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-            {status === RecordingStatus.RECORDING ? 'Opname' : 'Gepauzeerd'}
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">
+            Audio opname
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
-            {status === RecordingStatus.RECORDING ? 'Opname bezig...' : 'Opname gepauzeerd'}
-          </p>
+          
+          {/* Recording Progress Bar */}
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-slate-600 dark:text-slate-400">Opnametijd</span>
+              <span className={`text-sm font-semibold ${getPercentageColor(recordingPercentage)}`}>
+                {Math.round(recordingPercentage)}% ({Math.round(currentDurationMinutes)}/{maxDurationMinutes} min)
+              </span>
+            </div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3">
+              <div 
+                className={`h-3 rounded-full transition-all duration-300 ${getPercentageBarColor(recordingPercentage)}`}
+                style={{ width: `${recordingPercentage}%` }}
+              ></div>
+            </div>
+          </div>
         </div>
 
         {/* Recording Tijden */}
@@ -5600,12 +5725,7 @@ ${transcript}
               aria-label="Invoerniveau"
             />
           </div>
-          {/* Hint bij geen audio-invoer */}
-          {showNoInputHint && (
-            <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-              Geen audio gedetecteerd – controleer je microfoon of zet systeemgeluid aan.
-            </div>
-          )}
+
         </div>
 
         {/* Real-time transcriptie UI verwijderd */}
@@ -5653,18 +5773,37 @@ ${transcript}
           ) : null}
         </div>
 
-        {/* Status Info */}
-        <div className="text-center text-sm text-slate-500 dark:text-slate-400">
+        {/* Enhanced Status Info */}
+        <div className="text-center text-sm">
           {status === RecordingStatus.RECORDING && (
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-              <span>Opname actief</span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-red-600 dark:text-red-400 font-medium">Opname actief</span>
+              </div>
+              {avgInputLevel > 0.01 ? (
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs">Audio gedetecteerd</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-orange-500 dark:text-orange-400">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span className="text-xs">Geen audio gedetecteerd</span>
+                </div>
+              )}
             </div>
           )}
           {status === RecordingStatus.PAUSED && (
             <div className="flex items-center justify-center gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span>Opname gepauzeerd</span>
+              <span className="text-yellow-600 dark:text-yellow-400 font-medium">Opname gepauzeerd</span>
+            </div>
+          )}
+          {recordingPercentage >= 100 && (
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+              <span className="text-red-600 dark:text-red-400 font-medium text-xs">Maximale opnametijd bereikt!</span>
             </div>
           )}
         </div>
@@ -5737,10 +5876,35 @@ ${transcript}
                 }}
               />
               {audioURL && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
-                  🎧 Luister je opname terug voordat je transcribeert
-                </p>
+                <div className="mt-2 text-center space-y-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    🎧 Luister je opname terug voordat je transcribeert
+                  </p>
+                  <button 
+                    onClick={() => {
+                      if (audioURL) {
+                        const a = document.createElement('a');
+                        a.href = audioURL;
+                        a.download = `opname-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        displayToast(t('downloadAudio') + ' gestart', 'success');
+                      }
+                    }}
+                    className="text-xs text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 underline"
+                  >
+                    📥 {t('downloadAudio')}
+                  </button>
+                </div>
               )}
+            </div>
+
+            {/* Waarschuwing over audio verwijdering */}
+            <div className="w-full max-w-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+              <p className="text-xs text-yellow-800 dark:text-yellow-200 text-center">
+                ⚠️ {t('audioDeleteWarning')}
+              </p>
             </div>
 
             {/* Actie knoppen */}
@@ -7674,8 +7838,17 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     </button>
                   )}
                   
+
+                  
                   {/* Settings button - always visible when logged in */}
-                  <button onClick={() => settingsModal.open()} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                  <button onClick={() => {
+                    if (userSubscription && userSubscription !== 'free') {
+                      setActiveSettingsTab('subscription');
+                    } else {
+                      setActiveSettingsTab('general');
+                    }
+                    settingsModal.open();
+                  }} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
                     <SettingsIcon className="w-5 h-5"/> 
                     <span>{t('settings')}</span>
                   </button>
@@ -7696,8 +7869,17 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     </button>
                   )}
                   
+
+                  
                   {/* Settings button */}
-                  <button onClick={() => settingsModal.open()} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                  <button onClick={() => {
+                    if (userSubscription && userSubscription !== 'free') {
+                      setActiveSettingsTab('subscription');
+                    } else {
+                      setActiveSettingsTab('general');
+                    }
+                    settingsModal.open();
+                  }} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
                     <SettingsIcon className="w-5 h-5"/> 
                     <span>{t('settings')}</span>
                   </button>
@@ -7741,7 +7923,14 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   </button>
                   
                   {/* Settings button */}
-                  <button onClick={() => settingsModal.open()} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
+                  <button onClick={() => {
+                    if (userSubscription && userSubscription !== 'free') {
+                      setActiveSettingsTab('subscription');
+                    } else {
+                      setActiveSettingsTab('general');
+                    }
+                    settingsModal.open();
+                  }} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
                     <SettingsIcon className="w-5 h-5"/> 
                     <span>{t('settings')}</span>
                   </button>
@@ -8242,11 +8431,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       )}
 
       {/* Settings Modal */}
-      {settingsModal.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-4xl w-full m-4 p-6 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-6">
-              <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('settingsTitle')}</h3>
+      {(() => {
+        const locale = outputLang ? getBcp47Code(outputLang) : 'nl-NL';
+        return settingsModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101] p-2 sm:p-4">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-4xl w-full max-w-[95vw] sm:max-w-4xl p-4 sm:p-6 max-h-[90vh] sm:max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-bold text-cyan-500 dark:text-cyan-400">{t('settingsTitle')}</h3>
               <button 
                 onClick={() => settingsModal.close()}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
@@ -8255,36 +8446,364 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
               </button>
             </div>
             
+            {/* Tab Navigation */}
+            <div className="flex flex-wrap border-b border-gray-200 dark:border-slate-600 mb-4 sm:mb-6 -mx-1">
+              <button
+                onClick={() => setActiveSettingsTab('general')}
+                className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors mx-1 ${
+                  activeSettingsTab === 'general'
+                    ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                {t('settingsTabGeneral')}
+              </button>
+              <button
+                onClick={() => setActiveSettingsTab('subscription')}
+                className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors mx-1 ${
+                  activeSettingsTab === 'subscription'
+                    ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                {t('settingsTabSubscription')}
+              </button>
+              <button
+                onClick={() => setActiveSettingsTab('transcription')}
+                className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors mx-1 ${
+                  activeSettingsTab === 'transcription'
+                    ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                {t('settingsTabTranscription')}
+              </button>
+              <button
+                onClick={() => setActiveSettingsTab('anonymization')}
+                className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors mx-1 ${
+                  activeSettingsTab === 'anonymization'
+                    ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                {t('settingsTabAnonymization')}
+              </button>
+            </div>
+            
             <div className="space-y-6">
-              {/* API Key beheer verwijderd – sleutel komt uit .env.local */}
-
-              {/* PWA Installatie Sectie */}
-              {showPwaBanner && (
-                <div>
-                  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('settingsPwaInstallation')}</h4>
-                  <div className="p-4 bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-800 rounded-lg">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-sm text-cyan-900 dark:text-cyan-200 mb-1">
-                          {t('pwaInstallBannerText')}
-                        </p>
-                        <p className="text-xs text-cyan-700 dark:text-cyan-300">
-                          {t('settingsPwaInstallationDesc')}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={handlePwaIgnore} className="px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
-                          {t('pwaIgnore')}
-                        </button>
-                        <button onClick={handlePwaInstall} className="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors text-sm">
-                          {t('pwaInstall')}
-                        </button>
-                      </div>
+              {/* Algemeen Tab */}
+              {activeSettingsTab === 'general' && (
+                <>
+                  {/* PWA Installatie Sectie */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('settingsPwaInstallation')}</h4>
+                <div className="p-3 sm:p-4 bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-800 rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                    <div>
+                      <p className="text-sm text-cyan-900 dark:text-cyan-200 mb-1">
+                        {pwaInstalled ? t('pwaAlreadyInstalled') : t('pwaInstallBannerText')}
+                      </p>
+                      <p className="text-xs text-cyan-700 dark:text-cyan-300">
+                        {t('settingsPwaInstallationDesc')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!pwaInstalled && pwaPromptEvent ? (
+                        <>
+                          <button onClick={handlePwaIgnore} className="px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                            {t('pwaIgnore')}
+                          </button>
+                          <button onClick={handlePwaInstall} className="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors text-sm">
+                            {t('pwaInstall')}
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          {pwaInstalled ? t('pwaInstalledStatus') : t('pwaNotAvailable')}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
+              </div>
+                </>  
               )}
 
+              {/* Subscription Tab */}
+              {activeSettingsTab === 'subscription' && (
+                <>
+                  {/* Current Subscription Info */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('subscriptionCurrentPlan')}</h4>
+                    <div className="p-3 sm:p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/30 dark:to-blue-900/30 border border-cyan-200 dark:border-cyan-800 rounded-lg">
+                      <div className="space-y-4">
+                        {/* Plan Info */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                          <div>
+                            <p className="text-lg font-semibold text-cyan-900 dark:text-cyan-200 mb-1">
+                              {t(`tier${userSubscription.charAt(0).toUpperCase() + userSubscription.slice(1)}`)}
+                            </p>
+                            <p className="text-sm text-cyan-700 dark:text-cyan-300">
+                              {userSubscription === 'free' ? t('subscriptionFreeTier') : t('subscriptionPaidTier')}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              authState.user?.currentSubscriptionStatus === 'active' 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : authState.user?.currentSubscriptionStatus === 'past_due'
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                            }`}>
+                              {authState.user?.currentSubscriptionStatus || 'active'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Subscription Details Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-4 border-t border-cyan-200 dark:border-cyan-700">
+                          {/* Account Email */}
+                          <div>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                              {t('subscriptionEmail')}
+                            </p>
+                            <p className="text-sm text-slate-700 dark:text-slate-300">
+                              {authState.user?.email}
+                            </p>
+                          </div>
+                          
+                          {/* Start Date */}
+                          {authState.user?.currentSubscriptionStartDate && (
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                                {t('subscriptionStartDate')}
+                              </p>
+                              <p className="text-sm text-slate-700 dark:text-slate-300">
+                                {new Date(authState.user.currentSubscriptionStartDate.seconds * 1000).toLocaleDateString(locale, { 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Next Billing Date */}
+                          {userSubscription !== 'free' && authState.user?.nextBillingDate && (
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                                {t('subscriptionNextBilling')}
+                              </p>
+                              <p className="text-sm text-slate-700 dark:text-slate-300">
+                                {new Date(authState.user.nextBillingDate.seconds * 1000).toLocaleDateString(locale, { 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Trial End Date for Free Users */}
+                          {userSubscription === 'free' && authState.user?.createdAt && (
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                                {t('subscriptionTrialEnds')}
+                              </p>
+                              <p className="text-sm text-slate-700 dark:text-slate-300">
+                                {new Date(authState.user.createdAt.seconds * 1000 + (28 * 24 * 60 * 60 * 1000)).toLocaleDateString(locale, { 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Stripe Customer ID (for debugging/support) */}
+                          {authState.user?.stripeCustomerId && (
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                                Customer ID
+                              </p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                                {authState.user.stripeCustomerId}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Account Created */}
+                          {authState.user?.createdAt && (
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                                {t('subscriptionAccountCreated')}
+                              </p>
+                              <p className="text-sm text-slate-700 dark:text-slate-300">
+                                {new Date(authState.user.createdAt.seconds * 1000).toLocaleDateString(locale, { 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Scheduled Changes */}
+                        {authState.user?.scheduledTierChange && (
+                          <div className="pt-4 border-t border-cyan-200 dark:border-cyan-700">
+                            <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                                {t('subscriptionScheduledChange')}
+                              </p>
+                              <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                                {t(`subscriptionScheduled${authState.user.scheduledTierChange.action.charAt(0).toUpperCase() + authState.user.scheduledTierChange.action.slice(1)}`)}: {authState.user.scheduledTierChange.tier} op {new Date(authState.user.scheduledTierChange.effectiveDate).toLocaleDateString(locale)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Subscription Actions */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('subscriptionManagement')}</h4>
+                    <div className="space-y-3">
+                      {/* View Pricing */}
+                      <button
+                        onClick={() => {
+                          settingsModal.close();
+                          setShowPricingPage(true);
+                        }}
+                        className="w-full p-3 sm:p-4 text-left bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-slate-800 dark:text-slate-200">{t('subscriptionViewPricing')}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t('subscriptionViewPricingDesc')}</p>
+                          </div>
+                          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </button>
+
+                      {/* Upgrade/Downgrade */}
+                      {userSubscription !== 'diamond' && (
+                        <button
+                          onClick={() => {
+                            settingsModal.close();
+                            upgradeModal.open();
+                          }}
+                          className="w-full p-3 sm:p-4 text-left bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="font-medium text-slate-800 dark:text-slate-200">
+                                {userSubscription === 'free' ? t('subscriptionUpgrade') : t('subscriptionChangeplan')}
+                              </p>
+                              <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {userSubscription === 'free' ? t('subscriptionUpgradeDesc') : t('subscriptionChangeplanDesc')}
+                              </p>
+                            </div>
+                            <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </button>
+                      )}
+
+                      {/* Manage Billing (Customer Portal) */}
+                      {userSubscription !== 'free' && authState.user?.stripeCustomerId && (
+                        <button
+                          onClick={() => {
+                            settingsModal.close();
+                            customerPortalModal.open();
+                          }}
+                          className="w-full p-3 sm:p-4 text-left bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="font-medium text-slate-800 dark:text-slate-200">{t('subscriptionManageBilling')}</p>
+                              <p className="text-sm text-slate-500 dark:text-slate-400">{t('subscriptionManageBillingDesc')}</p>
+                            </div>
+                            <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </div>
+                        </button>
+                      )}
+
+                      {/* Cancel Subscription */}
+                      {userSubscription !== 'free' && (
+                        <button
+                          onClick={() => {
+                            if (userSubscription === 'diamond') {
+                              // Voor Diamond gebruikers: direct naar Customer Portal
+                              settingsModal.close();
+                              customerPortalModal.open();
+                            } else {
+                              // Voor andere gebruikers: bevestiging en dan Customer Portal
+                              if (confirm(t('subscriptionCancelConfirm'))) {
+                                settingsModal.close();
+                                customerPortalModal.open();
+                              }
+                            }
+                          }}
+                          className="w-full p-3 sm:p-4 text-left bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="font-medium text-red-800 dark:text-red-300">
+                                {userSubscription === 'diamond' ? t('subscriptionStopRecapHorizon') : t('subscriptionCancel')}
+                              </p>
+                              <p className="text-sm text-red-600 dark:text-red-400">
+                                {userSubscription === 'diamond' ? t('subscriptionStopRecapHorizonDesc') : t('subscriptionCancelDesc')}
+                              </p>
+                            </div>
+                            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Scheduled Changes */}
+                  {authState.user?.scheduledTierChange && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('subscriptionScheduledChanges')}</h4>
+                      <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                          <div>
+                            <p className="font-medium text-yellow-800 dark:text-yellow-300">
+                              {authState.user.scheduledTierChange.action === 'cancel' 
+                                ? t('subscriptionScheduledCancel') 
+                                : t('subscriptionScheduledDowngrade', { tier: authState.user.scheduledTierChange.tier })}
+                            </p>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
+                              {t('subscriptionEffectiveDate')}: {new Date(authState.user.scheduledTierChange.effectiveDate.seconds * 1000).toLocaleDateString(locale, { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>  
+              )}
+
+              {/* Anonimisatie Tab */}
+              {activeSettingsTab === 'anonymization' && (
+                <>
               {/* Anonimisatie Regels Sectie */}
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -8372,6 +8891,97 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   </ul>
                 </div>
               </div>
+                </>  
+              )}
+              
+              {/* Transcriptie Tab */}
+              {activeSettingsTab === 'transcription' && (
+                <>
+              {/* Transcriptie Instellingen Sectie */}
+              <div>
+                <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t('settingsTranscriptionTitle')}</h4>
+                
+                <div className="space-y-6">
+                  {/* Transcriptie Kwaliteit */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      {t('settingsTranscriptionQuality')}
+                    </label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t('settingsTranscriptionQualityDesc')}</p>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="transcriptionQuality"
+                          value="high"
+                          checked={transcriptionQuality === 'high'}
+                          onChange={(e) => setTranscriptionQuality(e.target.value as 'high' | 'balanced' | 'fast')}
+                          className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 focus:ring-cyan-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{t('settingsQualityHigh')}</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="transcriptionQuality"
+                          value="balanced"
+                          checked={transcriptionQuality === 'balanced'}
+                          onChange={(e) => setTranscriptionQuality(e.target.value as 'high' | 'balanced' | 'fast')}
+                          className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 focus:ring-cyan-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{t('settingsQualityBalanced')}</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="transcriptionQuality"
+                          value="fast"
+                          checked={transcriptionQuality === 'fast'}
+                          onChange={(e) => setTranscriptionQuality(e.target.value as 'high' | 'balanced' | 'fast')}
+                          className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 focus:ring-cyan-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{t('settingsQualityFast')}</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Audio Compressie */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      {t('settingsAudioCompression')}
+                    </label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t('settingsAudioCompressionDesc')}</p>
+                    <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={audioCompressionEnabled}
+                        onChange={(e) => setAudioCompressionEnabled(e.target.checked)}
+                        className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 focus:ring-2"
+                      />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('settingsCompressionEnabled')}</span>
+                    </label>
+                  </div>
+                  
+                  {/* Auto Stop Opname */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      {t('settingsStopRecordingAfterCapture')}
+                    </label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t('settingsStopRecordingDesc')}</p>
+                    <label className="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={autoStopRecordingEnabled}
+                        onChange={(e) => setAutoStopRecordingEnabled(e.target.checked)}
+                        className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 focus:ring-2"
+                      />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">{t('settingsAutoStopEnabled')}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+                </>  
+              )}
               
               {/* Actie Knoppen */}
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
@@ -8382,7 +8992,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   {t('settingsCancel')}
                 </button>
                 <button
-                  onClick={saveAnonymizationRules}
+                  onClick={saveAllSettings}
                   className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors font-medium"
                 >
                   {t('settingsSave')}
@@ -8391,9 +9001,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
-      {/* Cookie Consent Banner */}
       {showCookieConsent && (
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 p-4 z-50 shadow-lg">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -8459,11 +9069,10 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   <div id="login-section" className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 xl:p-10 shadow-sm">
                     <h2 className="text-2xl font-semibold mb-4 text-slate-900 dark:text-slate-100">{t('login')}</h2>
                     <LoginForm 
-                      onLogin={handleLogin}
-                      onCreateAccount={handleCreateAccount}
-                      onPasswordReset={handlePasswordReset}
-                      onClose={() => {}}
-                      t={t}
+                      handleLogin={handleLogin}
+                      handleCreateAccount={handleCreateAccount}
+                      handleForgotPassword={handlePasswordReset}
+                      uiLang={uiLang}
                     />
                   </div>
                   {/* Toegang op uitnodiging (rechts, minder prominent) */}
@@ -9091,6 +9700,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       <PricingPage
         onClose={() => setShowPricingPage(false)}
         currentTier={userSubscription}
+        userId={user?.uid || ''}
+        userEmail={user?.email || ''}
         onUpgrade={(tier: SubscriptionTier) => {
           setUserSubscription(tier);
           setShowPricingPage(false);
@@ -9245,6 +9856,36 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
        <ExpertHelpModal
          isOpen={expertHelpModal.isOpen}
          onClose={expertHelpModal.close}
+         t={t}
+       />
+     )}
+
+     {/* Subscription Success Modal */}
+     {subscriptionSuccessModal.isOpen && subscriptionSuccessTier && (
+       <SubscriptionSuccessModal
+         isOpen={subscriptionSuccessModal.isOpen}
+         onClose={subscriptionSuccessModal.close}
+         tier={subscriptionSuccessTier}
+         userEmail={subscriptionSuccessEmail}
+         renewalDate={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}
+         t={t}
+       />
+     )}
+
+     {/* Customer Portal Modal */}
+     {customerPortalModal.isOpen && (
+       <CustomerPortalModal
+         isOpen={customerPortalModal.isOpen}
+         onClose={customerPortalModal.close}
+         customerId={authState.user?.stripeCustomerId}
+         userTier={userSubscription}
+       />
+     )}
+
+     {/* Customer Portal Return Screen */}
+     {showCustomerPortalReturn && (
+       <CustomerPortalReturnScreen
+         onClose={() => setShowCustomerPortalReturn(false)}
          t={t}
        />
      )}

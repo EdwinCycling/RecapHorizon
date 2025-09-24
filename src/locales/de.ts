@@ -30,6 +30,9 @@ export const de = {
   pwaInstallBannerText: "Installiere RecapHorizon als App für schnellen Zugriff über deine Taskleiste.",
   pwaIgnore: "Ignorieren",
   pwaInstall: "Installieren",
+  pwaAlreadyInstalled: "RecapHorizon ist bereits als App auf Ihrem Gerät installiert.",
+  pwaInstalledStatus: "Installiert",
+  pwaNotAvailable: "Installation nicht verfügbar",
 
   reset: "Zurücksetzen",
   startNewSession: "Neue Sitzung",
@@ -348,6 +351,18 @@ export const de = {
   // Error messages
   passwordsDoNotMatch: "Passwörter stimmen nicht überein",
   passwordTooShort: "Passwort muss mindestens 6 Zeichen lang sein",
+  // Password validation
+  passwordRequirements: "Passwort-Anforderungen:",
+  passwordMinLength: "Mindestens 8 Zeichen",
+  passwordSpecialChar: "Mindestens 1 Sonderzeichen (!@#$%^&*)",
+  passwordUppercase: "Mindestens 1 Großbuchstabe",
+  passwordLowercase: "Mindestens 1 Kleinbuchstabe",
+  passwordNumber: "Mindestens 1 Zahl",
+  passwordStrengthWeak: "Schwach",
+  passwordStrengthMedium: "Mittel",
+  passwordStrengthStrong: "Stark",
+  passwordStrengthVeryStrong: "Sehr stark",
+  allRequirementsMet: "Alle Anforderungen erfüllt",
   // Login form additional texts
   confirmPassword: "Passwort bestätigen",
   passwordAppSpecific: "Dieses Passwort ist spezifisch für diese App",
@@ -1240,6 +1255,8 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   currentTier: "Aktuelle Stufe:",
   viewPricing: "Preise anzeigen",
   download: "Herunterladen",
+  downloadAudio: "Audio herunterladen",
+  audioDeleteWarning: "Hinweis: Die ursprüngliche Audioaufnahme wird gelöscht, sobald der Transkriptionsprozess startet.",
   actions: "Aktionen",
 
   // Waitlist modal
@@ -1688,5 +1705,43 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   weakPasswordMinimum: "Passwort muss mindestens 6 Zeichen lang sein.",
   accountCreationFailed: "Kontoerstellung fehlgeschlagen: {message}",
   directFetchFailed: "Direkter Abruf fehlgeschlagen, Rückgriff auf CORS-Proxy:",
-  firebaseEmailInUse: "Diese E-Mail-Adresse wird bereits in Firebase verwendet. Versuchen Sie sich anzumelden, anstatt ein Konto zu erstellen."
+  firebaseEmailInUse: "Diese E-Mail-Adresse wird bereits in Firebase verwendet. Versuchen Sie sich anzumelden, anstatt ein Konto zu erstellen.",
+
+  // Settings Tab Translations
+  settingsTabGeneral: "Allgemein",
+  settingsTabSubscription: "Abonnement",
+  settingsTabTranscription: "Transkription",
+  settingsTabAnonymization: "Anonymisierung",
+
+  // Subscription Tab Translations
+  subscriptionCurrentPlan: "Aktuelles Abonnement",
+  subscriptionFreeTier: "Kostenlose Testversion - 28 Tage",
+  subscriptionPaidTier: "Bezahltes Abonnement",
+  subscriptionNextBilling: "Nächste Abrechnung",
+  subscriptionTrialEnds: "Testversion endet",
+  subscriptionManagement: "Abonnement-Verwaltung",
+  subscriptionViewPricing: "Preise Anzeigen",
+  subscriptionViewPricingDesc: "Alle verfügbaren Pläne vergleichen",
+  subscriptionUpgrade: "Abonnement Upgraden",
+  subscriptionUpgradeDesc: "Zugang zu mehr Funktionen erhalten",
+  subscriptionChangeplan: "Plan Ändern",
+  subscriptionChangeplanDesc: "Ihren aktuellen Plan upgraden oder downgraden",
+  subscriptionCancel: "Abonnement Kündigen",
+  subscriptionCancelDesc: "Ihr Abonnement kündigen - bleibt bis zum Ende der Periode aktiv",
+  subscriptionCancelConfirm: "Sind Sie sicher, dass Sie Ihr Abonnement kündigen möchten? Sie behalten den Zugang zu Ihren aktuellen Funktionen bis zum Ende Ihrer Abrechnungsperiode.",
+  subscriptionCancelPending: "Ihre Kündigung wurde eingereicht. Ihr Abonnement bleibt bis zum Ende Ihrer aktuellen Abrechnungsperiode aktiv.",
+  subscriptionScheduledChanges: "Geplante Änderungen",
+  subscriptionScheduledCancel: "Abonnement wird gekündigt",
+  subscriptionScheduledDowngrade: "Downgrade auf {tier}",
+  subscriptionEffectiveDate: "Wirksamkeitsdatum",
+
+  // Tier Names
+  tierFree: "Kostenlos",
+  tierSilver: "Silber",
+  tierGold: "Gold",
+  tierDiamond: "Diamant",
+  tierEnterprise: "Enterprise",
+
+  // Pricing Stripe Footnote
+  pricingStripeFootnote: "Zahlungen werden sicher über <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a> verarbeitet, dem Weltmarktführer für vertrauensvolle und sichere Online-Zahlungslösungen."
 };

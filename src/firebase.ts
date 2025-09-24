@@ -105,6 +105,13 @@ export const ensureUserDocument = async (userId: string, userEmail?: string): Pr
       await setDoc(userRef, {
         email: userEmail || '',
         subscriptionTier: 'free',
+        currentSubscriptionStatus: 'active',
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        stripePriceId: null,
+        nextBillingDate: null,
+        currentSubscriptionStartDate: null,
+        scheduledTierChange: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         lastDailyUsageDate: today,
@@ -494,6 +501,238 @@ export const saveUserPreferences = async (userId: string, preferences: Partial<U
     await setDoc(userPrefsRef, updatedPrefs);
   } catch (error) {
     console.error(t('errorSavingUserPreferences', 'Error saving user preferences:'), error);
+  }
+};
+
+// Stripe subscription management functions
+export const updateUserStripeData = async (userId: string, stripeData: {
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  subscriptionTier?: string;
+  currentSubscriptionStatus?: string;
+  nextBillingDate?: Date;
+  currentSubscriptionStartDate?: Date;
+}): Promise<void> => {
+  try {
+    if (!userId) throw new Error(t('userIdEmptyInStripeUpdate', 'userId is leeg in updateUserStripeData!'));
+    
+    const userRef = doc(db, 'users', userId);
+    const updateData: any = {
+      updatedAt: serverTimestamp()
+    };
+    
+    if (stripeData.stripeCustomerId !== undefined) updateData.stripeCustomerId = stripeData.stripeCustomerId;
+    if (stripeData.stripeSubscriptionId !== undefined) updateData.stripeSubscriptionId = stripeData.stripeSubscriptionId;
+    if (stripeData.stripePriceId !== undefined) updateData.stripePriceId = stripeData.stripePriceId;
+    if (stripeData.subscriptionTier !== undefined) updateData.subscriptionTier = stripeData.subscriptionTier;
+    if (stripeData.currentSubscriptionStatus !== undefined) updateData.currentSubscriptionStatus = stripeData.currentSubscriptionStatus;
+    if (stripeData.nextBillingDate !== undefined) updateData.nextBillingDate = stripeData.nextBillingDate;
+    if (stripeData.currentSubscriptionStartDate !== undefined) updateData.currentSubscriptionStartDate = stripeData.currentSubscriptionStartDate;
+    
+    await updateDoc(userRef, updateData);
+    console.log(t('stripeDataUpdated', 'Stripe gegevens bijgewerkt voor gebruiker'), userId);
+  } catch (error) {
+    console.error(t('errorUpdatingStripeData', 'Fout bij bijwerken Stripe gegevens:'), error);
+    throw error;
+  }
+};
+
+export const getUserStripeData = async (userId: string): Promise<{
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  stripePriceId: string | null;
+  currentSubscriptionStatus: string;
+  nextBillingDate: Date | null;
+  currentSubscriptionStartDate: Date | null;
+  scheduledTierChange: any | null;
+} | null> => {
+  try {
+    if (!userId) throw new Error(t('userIdEmptyInStripeGet', 'userId is leeg in getUserStripeData!'));
+    
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      return {
+        stripeCustomerId: data.stripeCustomerId || null,
+        stripeSubscriptionId: data.stripeSubscriptionId || null,
+        stripePriceId: data.stripePriceId || null,
+        currentSubscriptionStatus: data.currentSubscriptionStatus || 'active',
+        nextBillingDate: data.nextBillingDate ? data.nextBillingDate.toDate() : null,
+        currentSubscriptionStartDate: data.currentSubscriptionStartDate ? data.currentSubscriptionStartDate.toDate() : null,
+        scheduledTierChange: data.scheduledTierChange || null
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error(t('errorGettingStripeData', 'Fout bij ophalen Stripe gegevens:'), error);
+    return null;
+  }
+};
+
+export const scheduleSubscriptionTierChange = async (userId: string, tierChange: {
+  tier: string;
+  effectiveDate: Date;
+  action: 'downgrade' | 'cancel';
+}): Promise<void> => {
+  try {
+    if (!userId) throw new Error(t('userIdEmptyInScheduleChange', 'userId is leeg in scheduleSubscriptionTierChange!'));
+    
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      scheduledTierChange: {
+        tier: tierChange.tier,
+        effectiveDate: tierChange.effectiveDate,
+        action: tierChange.action
+      },
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log(t('tierChangeScheduled', 'Tier wijziging gepland voor gebruiker'), userId);
+  } catch (error) {
+    console.error(t('errorSchedulingTierChange', 'Fout bij plannen tier wijziging:'), error);
+    throw error;
+  }
+};
+
+export const clearScheduledTierChange = async (userId: string): Promise<void> => {
+  try {
+    if (!userId) throw new Error(t('userIdEmptyInClearSchedule', 'userId is leeg in clearScheduledTierChange!'));
+    
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      scheduledTierChange: null,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log(t('tierChangeCleared', 'Geplande tier wijziging gewist voor gebruiker'), userId);
+  } catch (error) {
+    console.error(t('errorClearingTierChange', 'Fout bij wissen geplande tier wijziging:'), error);
+    throw error;
+  }
+};
+
+// Pricing tiers management functions
+export const createPricingTier = async (tierData: {
+  tier: string;
+  billingCycle: string;
+  priceEur: number;
+  stripeProductId: string;
+  stripePriceId: string;
+  description: string;
+  isActive: boolean;
+}): Promise<void> => {
+  try {
+    const pricingTiersRef = collection(db, 'pricing_tiers');
+    await addDoc(pricingTiersRef, {
+      ...tierData,
+      effectiveDate: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log(t('pricingTierCreated', 'Pricing tier aangemaakt:'), tierData.tier);
+  } catch (error) {
+    console.error(t('errorCreatingPricingTier', 'Fout bij aanmaken pricing tier:'), error);
+    throw error;
+  }
+};
+
+export const getPricingTiers = async (): Promise<any[]> => {
+  try {
+    const pricingTiersRef = collection(db, 'pricing_tiers');
+    const q = query(pricingTiersRef, where('isActive', '==', true));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error(t('errorGettingPricingTiers', 'Fout bij ophalen pricing tiers:'), error);
+    return [];
+  }
+};
+
+export const getPricingTierByStripePrice = async (stripePriceId: string): Promise<any | null> => {
+  try {
+    const pricingTiersRef = collection(db, 'pricing_tiers');
+    const q = query(pricingTiersRef, where('stripePriceId', '==', stripePriceId), where('isActive', '==', true));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return {
+        id: doc.id,
+        ...doc.data()
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error(t('errorGettingPricingTierByStripe', 'Fout bij ophalen pricing tier via Stripe ID:'), error);
+    return null;
+  }
+};
+
+// Stripe webhook logging functions
+export const logStripeWebhook = async (webhookData: {
+  eventId: string;
+  eventType: string;
+  rawPayload: any;
+  processed: boolean;
+  processingError?: string;
+}): Promise<void> => {
+  try {
+    const webhooksRef = collection(db, 'stripe_webhooks');
+    await addDoc(webhooksRef, {
+      ...webhookData,
+      receivedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    });
+    
+    console.log(t('stripeWebhookLogged', 'Stripe webhook gelogd:'), webhookData.eventType);
+  } catch (error) {
+    console.error(t('errorLoggingStripeWebhook', 'Fout bij loggen Stripe webhook:'), error);
+    throw error;
+  }
+};
+
+export const updateWebhookProcessingStatus = async (webhookId: string, processed: boolean, processingError?: string): Promise<void> => {
+  try {
+    const webhookRef = doc(db, 'stripe_webhooks', webhookId);
+    const updateData: any = {
+      processed,
+      processedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    if (processingError) {
+      updateData.processingError = processingError;
+    }
+    
+    await updateDoc(webhookRef, updateData);
+    console.log(t('webhookStatusUpdated', 'Webhook status bijgewerkt:'), webhookId);
+  } catch (error) {
+    console.error(t('errorUpdatingWebhookStatus', 'Fout bij bijwerken webhook status:'), error);
+    throw error;
+  }
+};
+
+export const getUnprocessedWebhooks = async (): Promise<any[]> => {
+  try {
+    const webhooksRef = collection(db, 'stripe_webhooks');
+    const q = query(webhooksRef, where('processed', '==', false));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error(t('errorGettingUnprocessedWebhooks', 'Fout bij ophalen onverwerkte webhooks:'), error);
+    return [];
   }
 };
 

@@ -27,9 +27,12 @@ export const pt = {
   summarizing: "A resumir...",
   processing: "A processar...",
   appTitle: "RecapHorizon",
-  pwaInstallBannerText: "Instale o RecapHorizon como app para acesso rápido a partir da barra de tarefas.",
+  pwaInstallBannerText: "Instale o RecapHorizon como aplicativo para acesso rápido da sua barra de tarefas.",
   pwaIgnore: "Ignorar",
   pwaInstall: "Instalar",
+  pwaAlreadyInstalled: "RecapHorizon já está instalado como aplicativo no seu dispositivo.",
+  pwaInstalledStatus: "Instalado",
+  pwaNotAvailable: "Instalação não disponível",
 
   reset: "Repor",
   startNewSession: "Nova Sessão",
@@ -344,6 +347,18 @@ export const pt = {
   // Error messages
   passwordsDoNotMatch: "As palavras-passe não coincidem",
   passwordTooShort: "A palavra-passe deve ter pelo menos 6 caracteres",
+  // Password validation
+  passwordRequirements: "Requisitos da palavra-passe:",
+  passwordMinLength: "Pelo menos 8 caracteres",
+  passwordSpecialChar: "Pelo menos 1 caractere especial (!@#$%^&*)",
+  passwordUppercase: "Pelo menos 1 letra maiúscula",
+  passwordLowercase: "Pelo menos 1 letra minúscula",
+  passwordNumber: "Pelo menos 1 número",
+  passwordStrengthWeak: "Fraca",
+  passwordStrengthMedium: "Média",
+  passwordStrengthStrong: "Forte",
+  passwordStrengthVeryStrong: "Muito forte",
+  allRequirementsMet: "Todos os requisitos atendidos",
   // Login form additional texts
   confirmPassword: "Confirmar Palavra-passe",
   passwordAppSpecific: "Esta palavra-passe é específica para esta aplicação",
@@ -1230,6 +1245,8 @@ RecapHorizon: Além do caos, a essência primeiro.`,
   // UI states (additional)
   error: "Erro",
   download: "Download",
+  downloadAudio: "Download áudio",
+  audioDeleteWarning: "Nota: A gravação de áudio original será excluída assim que o processo de transcrição começar.",
   actions: "Ações",
   howWaitlistWorks: "Como funciona a lista de espera?",
   signUpWithEmail: "Inscreva-se com seu endereço de e-mail",
@@ -1702,5 +1719,43 @@ RecapHorizon: Além do caos, a essência primeiro.`,
   weakPasswordMinimum: "A senha deve ter pelo menos 6 caracteres.",
   accountCreationFailed: "Falha na criação da conta: {message}",
   directFetchFailed: "Falha na busca direta, recorrendo ao proxy CORS:",
-  firebaseEmailInUse: "Este endereço de e-mail já está em uso no Firebase. Tente fazer login em vez de criar uma conta."
+  firebaseEmailInUse: "Este endereço de e-mail já está em uso no Firebase. Tente fazer login em vez de criar uma conta.",
+
+  // Settings Tab Translations
+  settingsTabGeneral: "Geral",
+  settingsTabSubscription: "Assinatura",
+  settingsTabTranscription: "Transcrição",
+  settingsTabAnonymization: "Anonimização",
+
+  // Subscription Tab Translations
+  subscriptionCurrentPlan: "Assinatura Atual",
+  subscriptionFreeTier: "Teste gratuito - 28 dias",
+  subscriptionPaidTier: "Assinatura paga",
+  subscriptionNextBilling: "Próxima cobrança",
+  subscriptionTrialEnds: "Fim do teste",
+  subscriptionManagement: "Gerenciamento de Assinatura",
+  subscriptionViewPricing: "Ver Preços",
+  subscriptionViewPricingDesc: "Comparar todos os planos disponíveis",
+  subscriptionUpgrade: "Atualizar Assinatura",
+  subscriptionUpgradeDesc: "Obter acesso a mais recursos",
+  subscriptionChangeplan: "Alterar Plano",
+  subscriptionChangeplanDesc: "Atualizar ou fazer downgrade do seu plano atual",
+  subscriptionCancel: "Cancelar Assinatura",
+  subscriptionCancelDesc: "Cancelar sua assinatura - permanece ativa até o final do período",
+  subscriptionCancelConfirm: "Tem certeza de que deseja cancelar sua assinatura? Você manterá o acesso aos seus recursos atuais até o final do seu período de cobrança.",
+  subscriptionCancelPending: "Seu cancelamento foi enviado. Sua assinatura permanecerá ativa até o final do seu período de cobrança atual.",
+  subscriptionScheduledChanges: "Alterações Programadas",
+  subscriptionScheduledCancel: "A assinatura será cancelada",
+  subscriptionScheduledDowngrade: "Downgrade para {tier}",
+  subscriptionEffectiveDate: "Data de vigência",
+
+  // Tier Names
+  tierFree: "Grátis",
+  tierSilver: "Prata",
+  tierGold: "Ouro",
+  tierDiamond: "Diamante",
+  tierEnterprise: "Empresa",
+
+  // Pricing Stripe Footnote
+  pricingStripeFootnote: "Os pagamentos são processados com segurança via <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, líder mundial em soluções de pagamento online confiáveis e seguras."
 };

@@ -1,0 +1,10 @@
+{
+  "name": "recaphorizon-netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for RecapHorizon",
+  "type": "module",
+  "dependencies": {
+    "stripe": "^14.21.0",
+    "firebase": "^10.7.1"
+  }
+}

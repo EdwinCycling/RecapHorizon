@@ -16,6 +16,19 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
+# PWA Headers for Service Worker and Manifest
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=86400"
+
 # Cache static assets for better performance
 [[headers]]
   for = "/images/*"
@@ -60,9 +73,7 @@
   status = 301
 
 [dev]
-  command = "npm run dev"
   port = 8888
   targetPort = 3000
-  framework = "vite"
 
 

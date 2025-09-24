@@ -55,14 +55,14 @@ export const TIER_PRICING = {
     cancelable: true
   },
   [SubscriptionTier.SILVER]: {
-    price: 5,
+    price: 6,
     currency: 'EUR',
     billingPeriod: 'month',
     minTerm: 0,
     cancelable: true
   },
   [SubscriptionTier.GOLD]: {
-    price: 8,
+    price: 10,
     currency: 'EUR',
     billingPeriod: 'month',
     minTerm: 0,
@@ -240,58 +240,87 @@ export class SubscriptionService {
     return Math.min(100, (currentUsage / maxTokens) * 100);
   }
 
-  // Check if trial period has expired for free users
+  // Check if Free Tier 4-week period has expired (dynamic check)
+  public isFreeTierExpired(userCreatedAt: Date): boolean {
+    const now = new Date();
+    const fourWeeksInMs = 4 * 7 * 24 * 60 * 60 * 1000; // 4 weeks in milliseconds
+    const trialEndDate = new Date(userCreatedAt.getTime() + fourWeeksInMs);
+    return now > trialEndDate;
+  }
+
+  // Get remaining days in Free Tier period
+  public getRemainingFreeTierDays(userCreatedAt: Date): number {
+    const now = new Date();
+    const fourWeeksInMs = 4 * 7 * 24 * 60 * 60 * 1000;
+    const trialEndDate = new Date(userCreatedAt.getTime() + fourWeeksInMs);
+    const remainingMs = trialEndDate.getTime() - now.getTime();
+    const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+    return Math.max(0, remainingDays);
+  }
+
+  // Validate if user can perform crucial action (AI processing)
+  public validateCrucialAction(userTier: SubscriptionTier, userCreatedAt: Date, userSubscriptionStatus: string): { allowed: boolean; reason?: string } {
+    // For paid tiers, check subscription status
+    if (userTier !== SubscriptionTier.FREE) {
+      if (userSubscriptionStatus !== 'active') {
+        return {
+          allowed: false,
+          reason: 'Je betaalde abonnement is niet actief. Controleer je betalingsgegevens of neem contact op met support.'
+        };
+      }
+      return { allowed: true };
+    }
+
+    // For Free Tier, check 4-week limit dynamically
+    if (this.isFreeTierExpired(userCreatedAt)) {
+      const remainingDays = this.getRemainingFreeTierDays(userCreatedAt);
+      return {
+        allowed: false,
+        reason: `Je gratis proefperiode van 4 weken is verlopen. Upgrade naar een betaald abonnement om door te gaan met RecapHorizon. Resterende dagen: ${remainingDays}`
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  // Check if trial period has expired for free users (legacy method - kept for compatibility)
   public isTrialExpired(userSubscription: { tier: SubscriptionTier; startDate: Date; trialEndDate?: Date }): boolean {
     if (userSubscription.tier !== SubscriptionTier.FREE) {
       return false; // Non-free users don't have trial periods
     }
 
-    if (!userSubscription.trialEndDate) {
-      // Calculate trial end date if not set
-      const trialDays = TIER_LIMITS[SubscriptionTier.FREE].trialDurationDays || 28;
-      const trialEndDate = new Date(userSubscription.startDate);
-      trialEndDate.setDate(trialEndDate.getDate() + trialDays);
-      return new Date() > trialEndDate;
-    }
-
-    return new Date() > userSubscription.trialEndDate;
+    // Use new dynamic check
+    return this.isFreeTierExpired(userSubscription.startDate);
   }
 
-  // Calculate trial end date for free users
+  // Calculate trial end date (legacy method - kept for compatibility)
   public calculateTrialEndDate(startDate: Date): Date {
-    const trialDays = TIER_LIMITS[SubscriptionTier.FREE].trialDurationDays || 28;
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + trialDays);
-    return endDate;
+    const fourWeeksInMs = 4 * 7 * 24 * 60 * 60 * 1000;
+    return new Date(startDate.getTime() + fourWeeksInMs);
   }
 
-  // Get remaining trial days for free users
+  // Get remaining trial days (legacy method - kept for compatibility)
   public getRemainingTrialDays(userSubscription: { tier: SubscriptionTier; startDate: Date; trialEndDate?: Date }): number {
     if (userSubscription.tier !== SubscriptionTier.FREE) {
-      return -1; // Not applicable for non-free users
+      return 0;
     }
-
-    const trialEndDate = userSubscription.trialEndDate || this.calculateTrialEndDate(userSubscription.startDate);
-    const now = new Date();
-    const diffTime = trialEndDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
+    return this.getRemainingFreeTierDays(userSubscription.startDate);
   }
 
-  // Validate session start (including trial expiry check)
-  public validateSessionStart(tier: SubscriptionTier, sessionsToday: number, userSubscription?: { tier: SubscriptionTier; startDate: Date; trialEndDate?: Date }): { allowed: boolean; reason?: string } {
-    // Check trial expiry for free users
-    if (tier === SubscriptionTier.FREE && userSubscription && this.isTrialExpired(userSubscription)) {
-      return {
-        allowed: false,
-        reason: 'Je gratis proefperiode van 4 weken is verlopen. Upgrade naar een betaald abonnement om door te gaan met het gebruik van RecapSmart.'
-      };
+  // Enhanced session validation with Free Tier check
+  public validateSessionStart(tier: SubscriptionTier, sessionsToday: number, userCreatedAt: Date, userSubscriptionStatus: string = 'active'): { allowed: boolean; reason?: string } {
+    // First check crucial action validation (Free Tier expiry + subscription status)
+    const crucialActionCheck = this.validateCrucialAction(tier, userCreatedAt, userSubscriptionStatus);
+    if (!crucialActionCheck.allowed) {
+      return crucialActionCheck;
     }
 
+    // Then check session limits
     if (!this.canStartNewSession(tier, sessionsToday)) {
+      const limits = this.getTierLimits(tier);
       return {
         allowed: false,
-        reason: `Je hebt je dagelijkse limiet van ${TIER_LIMITS[tier].maxSessionsPerDay} sessie(s) bereikt. Probeer morgen opnieuw, of upgrade naar een hogere tier voor meer sessies.`
+        reason: `Je hebt je dagelijkse sessielimiet van ${limits.maxSessionsPerDay} sessies bereikt. Probeer morgen opnieuw of upgrade naar een hogere tier.`
       };
     }
 

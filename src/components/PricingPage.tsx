@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SubscriptionTier, TierLimits, UserSubscription } from '../../types';
 import { subscriptionService } from '../subscriptionService';
+import { stripeService } from '../services/stripeService';
 
 interface PricingPageProps {
   currentTier: SubscriptionTier;
-  userSubscription?: UserSubscription; // Add user subscription data
+  userSubscription?: UserSubscription;
   onUpgrade: (tier: SubscriptionTier) => void;
   onClose?: () => void;
-  t: (key: string, params?: any) => string; // Add translation function
-  showComingSoonModal: () => void; // Add function to show coming soon modal
+  t: (key: string, params?: any) => string;
+  userId: string;
+  userEmail: string;
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription, onUpgrade, onClose, t, showComingSoonModal }) => {
+const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription, onUpgrade, onClose, t, userId, userEmail }) => {
+  const [isLoading, setIsLoading] = useState<string | null>(null);
   // Get tier comparison - DIAMOND tier alleen tonen indien gewenst
   const tierComparison = subscriptionService.getTierComparison();
 
@@ -96,6 +99,53 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
     }
   };
 
+  const handleUpgrade = async (tier: SubscriptionTier) => {
+    if (tier === SubscriptionTier.FREE || tier === SubscriptionTier.DIAMOND) {
+      return;
+    }
+
+    if (tier === SubscriptionTier.ENTERPRISE) {
+      // Voor Enterprise tier, toon contact informatie
+      alert(t('pricingEnterpriseContact', 'Please contact us for Enterprise pricing at enterprise@recapsmart.com'));
+      return;
+    }
+
+    setIsLoading(tier);
+    
+    try {
+      await stripeService.redirectToCheckout(tier, userId, userEmail);
+    } catch (error) {
+      console.error('Error redirecting to checkout:', error);
+      alert(t('pricingCheckoutError', 'Er is een fout opgetreden bij het starten van de checkout. Probeer het opnieuw.'));
+      setIsLoading(null);
+    }
+  };
+
+  const getPriceDisplay = (tier: SubscriptionTier) => {
+    // Deze prijzen moeten overeenkomen met je Stripe prijzen (alleen monthly)
+    const prices = {
+      [SubscriptionTier.SILVER]: 6,
+      [SubscriptionTier.GOLD]: 10
+    };
+
+    if (tier === SubscriptionTier.FREE) {
+      return t('pricingFree', 'Gratis');
+    }
+
+    if (tier === SubscriptionTier.DIAMOND) {
+      return t('pricingAdminOnly', 'Admin Only');
+    }
+
+    if (tier === SubscriptionTier.ENTERPRISE) {
+      return t('pricingPriceOnRequest', 'Prijs op aanvraag');
+    }
+
+    const price = prices[tier];
+    if (!price) return '';
+
+    return `€${price}${t('pricingPerMonth', '/maand')}`;
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 z-50 overflow-hidden">
       <div className="h-full overflow-y-auto">
@@ -115,6 +165,8 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
             </button>
           )}
         </div>
+
+
 
         {/* Current Tier Info */}
         {currentTier && (
@@ -168,31 +220,21 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                 <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-white mb-2 break-words">
                   {tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1)}
                 </h3>
-                {(tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
-                  <div className="text-xl font-medium text-cyan-600 dark:text-cyan-400">{t('pricingComingSoon')}</div>
-                ) : tier.tier !== SubscriptionTier.ENTERPRISE ? (
-                  <>
-                    <div className="text-2xl sm:text-4xl font-medium text-gray-800 dark:text-white break-words">
-                      €{tier.price}
-                      {(tier.tier as SubscriptionTier) !== SubscriptionTier.FREE && (
-                        <span className="text-lg text-gray-600 dark:text-gray-300">{t('pricingPerMonth')}</span>
-                      )}
-                    </div>
-                    {/* Free for 4 weeks text for FREE tier */}
-                    {(tier.tier as SubscriptionTier) === SubscriptionTier.FREE && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {t('pricingFreeFor4Weeks', 'Gratis voor 4 weken')}
-                      </div>
-                    )}
-                    {tier.minTerm > 0 && (
-                      <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                        {t('pricingMinTerm', { months: tier.minTerm })}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-xl font-medium text-gray-800 dark:text-white">{t('pricingPriceOnRequest')}</div>
+                <div className="text-2xl sm:text-4xl font-medium text-gray-800 dark:text-white break-words">
+                  {getPriceDisplay(tier.tier as SubscriptionTier)}
+                </div>
+                {/* Free for 4 weeks text for FREE tier */}
+                {(tier.tier as SubscriptionTier) === SubscriptionTier.FREE && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {t('pricingFreeFor4Weeks', 'Gratis voor 4 weken')}
+                  </div>
                 )}
+                {(tier.tier as SubscriptionTier) === SubscriptionTier.ENTERPRISE && (
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    {t('pricingContactUs', 'Neem contact met ons op')}
+                  </div>
+                )}
+
               </div>
 
               {/* Features */}
@@ -336,10 +378,29 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                   </button>
                 ) : (
                   <button
-                    onClick={() => showComingSoonModal()}
-                    className={`w-full py-3 px-6 text-white rounded font-medium transition-colors ${getTierButtonColor(tier.tier)}`}
+                    onClick={() => handleUpgrade(tier.tier as SubscriptionTier)}
+                    disabled={isLoading === tier.tier}
+                    className={`w-full py-3 px-6 text-white rounded font-medium transition-colors ${
+                      isLoading === tier.tier 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : getTierButtonColor(tier.tier)
+                    }`}
                   >
-                    {tier.tier === SubscriptionTier.FREE ? t('pricingStartFree') : (tier.tier === SubscriptionTier.ENTERPRISE ? t('pricingContactEnterprise') : t('pricingUpgradeTo', { tier: tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1) }))}
+                    {isLoading === tier.tier ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {t('pricingProcessing', 'Verwerken...')}
+                      </span>
+                    ) : (
+                      tier.tier === SubscriptionTier.FREE 
+                        ? t('pricingStartFree') 
+                        : tier.tier === SubscriptionTier.ENTERPRISE 
+                          ? t('pricingContactEnterprise') 
+                          : t('pricingUpgradeTo', { tier: tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1) })
+                    )}
                   </button>
                 )}
               </div>
@@ -348,6 +409,14 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
         </div>
 
 
+
+        {/* Stripe Payment Footnote */}
+        <div className="px-6 py-4 text-center bg-white dark:bg-gray-800">
+          <p 
+            className="text-xs text-gray-500 dark:text-gray-400"
+            dangerouslySetInnerHTML={{ __html: t('pricingStripeFootnote') }}
+          />
+        </div>
 
         {/* Close Button */}
         {onClose && (

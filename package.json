@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.80921.0",
+  "version": "0.90924.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "eml-parse-js": "^1.2.0-beta.0",
     "events": "^3.3.0",
     "firebase": "^12.1.0",
+    "firebase-admin": "^13.5.0",
     "jspdf": "^3.0.2",
     "mammoth": "^1.10.0",
     "mermaid": "^11.3.0",

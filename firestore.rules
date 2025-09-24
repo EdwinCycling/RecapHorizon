@@ -127,6 +127,17 @@ service cloud.firestore {
       allow write: if false; // No writes allowed to settings
     }
     
+    // Pricing tiers - read only for authenticated users
+    match /pricing_tiers/{tierId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Pricing tiers should be managed server-side only
+    }
+    
+    // Stripe webhooks - completely restricted (server-side only)
+    match /stripe_webhooks/{webhookId} {
+      allow read, write: if false; // Webhook processing should be server-side only
+    }
+    
     // Default deny rule for any unmatched paths
     match /{document=**} {
       allow read, write: if false;

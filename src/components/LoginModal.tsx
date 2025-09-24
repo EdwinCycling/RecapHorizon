@@ -1,6 +1,7 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import LoginForm from './LoginForm';
+import { Language } from '../locales';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -8,10 +9,11 @@ interface LoginModalProps {
   t: (key: string) => string;
   handleLogin: (...args: any[]) => void;
   handleCreateAccount: (...args: any[]) => void;
-  handlePasswordReset: (...args: any[]) => void;
+  handlePasswordReset: (email: string) => void;
+  uiLang: Language;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, t, handleLogin, handleCreateAccount, handlePasswordReset }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, t, handleLogin, handleCreateAccount, handlePasswordReset, uiLang }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
@@ -26,11 +28,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, t, handleLogin
           </button>
         </div>
         <LoginForm 
-          onLogin={handleLogin}
-          onCreateAccount={handleCreateAccount}
-          onPasswordReset={handlePasswordReset}
-          onClose={onClose}
-          t={t}
+          handleLogin={handleLogin}
+          handleCreateAccount={handleCreateAccount}
+          handleForgotPassword={handlePasswordReset}
+          uiLang={uiLang}
         />
       </div>
     </div>

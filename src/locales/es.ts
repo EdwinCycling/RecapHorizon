@@ -30,6 +30,9 @@ export const es = {
   pwaInstallBannerText: "Instala RecapHorizon como aplicación para acceso rápido desde la barra de tareas.",
   pwaIgnore: "Ignorar",
   pwaInstall: "Instalar",
+  pwaAlreadyInstalled: "RecapHorizon ya está instalado como aplicación en tu dispositivo.",
+  pwaInstalledStatus: "Instalado",
+  pwaNotAvailable: "Instalación no disponible",
 
   reset: "Reiniciar",
   startNewSession: "Iniciar Nueva Sesión",
@@ -353,6 +356,18 @@ export const es = {
   // Error messages
   passwordsDoNotMatch: "Las contraseñas no coinciden",
   passwordTooShort: "La contraseña debe tener al menos 6 caracteres",
+  // Password validation
+  passwordRequirements: "Requisitos de contraseña:",
+  passwordMinLength: "Al menos 8 caracteres",
+  passwordSpecialChar: "Al menos 1 carácter especial (!@#$%^&*)",
+  passwordUppercase: "Al menos 1 letra mayúscula",
+  passwordLowercase: "Al menos 1 letra minúscula",
+  passwordNumber: "Al menos 1 número",
+  passwordStrengthWeak: "Débil",
+  passwordStrengthMedium: "Medio",
+  passwordStrengthStrong: "Fuerte",
+  passwordStrengthVeryStrong: "Muy fuerte",
+  allRequirementsMet: "Todos los requisitos cumplidos",
   // Login form additional texts
   confirmPassword: "Confirmar Contraseña",
   passwordAppSpecific: "Esta contraseña es específica para esta aplicación",
@@ -1229,6 +1244,8 @@ RecapHorizon: Más allá del caos, la esencia primero.`,
   // UI states (additional)
   error: "Error",
   download: "Descargar",
+  downloadAudio: "Descargar audio",
+  audioDeleteWarning: "Nota: La grabación de audio original se eliminará una vez que comience el proceso de transcripción.",
   actions: "Acciones",
 
   // Waitlist modal
@@ -1700,5 +1717,43 @@ RecapHorizon: Más allá del caos, la esencia primero.`,
   weakPasswordMinimum: "La contraseña debe tener al menos 6 caracteres.",
   accountCreationFailed: "Falló la creación de cuenta: {message}",
   directFetchFailed: "Falló la obtención directa, recurriendo al proxy CORS:",
-  firebaseEmailInUse: "Esta dirección de correo electrónico ya está en uso en Firebase. Intente iniciar sesión en lugar de crear una cuenta."
+  firebaseEmailInUse: "Esta dirección de correo electrónico ya está en uso en Firebase. Intente iniciar sesión en lugar de crear una cuenta.",
+
+  // Settings Tab Translations
+  settingsTabGeneral: "General",
+  settingsTabSubscription: "Suscripción",
+  settingsTabTranscription: "Transcripción",
+  settingsTabAnonymization: "Anonimización",
+
+  // Subscription Tab Translations
+  subscriptionCurrentPlan: "Suscripción Actual",
+  subscriptionFreeTier: "Prueba gratuita - 28 días",
+  subscriptionPaidTier: "Suscripción de pago",
+  subscriptionNextBilling: "Próxima facturación",
+  subscriptionTrialEnds: "Fin de la prueba",
+  subscriptionManagement: "Gestión de Suscripción",
+  subscriptionViewPricing: "Ver Precios",
+  subscriptionViewPricingDesc: "Comparar todos los planes disponibles",
+  subscriptionUpgrade: "Actualizar Suscripción",
+  subscriptionUpgradeDesc: "Obtener acceso a más funciones",
+  subscriptionChangeplan: "Cambiar Plan",
+  subscriptionChangeplanDesc: "Actualizar o degradar su plan actual",
+  subscriptionCancel: "Cancelar Suscripción",
+  subscriptionCancelDesc: "Cancelar su suscripción - permanece activa hasta el final del período",
+  subscriptionCancelConfirm: "¿Está seguro de que desea cancelar su suscripción? Mantendrá el acceso a sus funciones actuales hasta el final de su período de facturación.",
+  subscriptionCancelPending: "Su cancelación ha sido enviada. Su suscripción permanecerá activa hasta el final de su período de facturación actual.",
+  subscriptionScheduledChanges: "Cambios Programados",
+  subscriptionScheduledCancel: "La suscripción será cancelada",
+  subscriptionScheduledDowngrade: "Degradación a {tier}",
+  subscriptionEffectiveDate: "Fecha de vigencia",
+
+  // Tier Names
+  tierFree: "Gratis",
+  tierSilver: "Plata",
+  tierGold: "Oro",
+  tierDiamond: "Diamante",
+  tierEnterprise: "Empresa",
+
+  // Pricing Stripe Footnote
+  pricingStripeFootnote: "Los pagos se procesan de forma segura a través de <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, el líder mundial en soluciones de pago en línea confiables y seguras."
 };

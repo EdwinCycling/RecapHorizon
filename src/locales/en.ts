@@ -42,6 +42,9 @@ export const en = {
   pwaInstallBannerText: "Install RecapHorizon as an app for quick access from your taskbar.",
   pwaIgnore: "Ignore",
   pwaInstall: "Install",
+  pwaAlreadyInstalled: "RecapHorizon is already installed as an app on your device.",
+  pwaInstalledStatus: "Installed",
+  pwaNotAvailable: "Installation not available",
 
   reset: "Reset",
   startNewSession: "Start New Session",
@@ -424,6 +427,18 @@ export const en = {
   // Error messages
   passwordsDoNotMatch: "Passwords do not match",
   passwordTooShort: "Password must be at least 6 characters",
+  // Password validation
+  passwordRequirements: "Password requirements:",
+  passwordMinLength: "At least 8 characters",
+  passwordSpecialChar: "At least 1 special character (!@#$%^&*)",
+  passwordUppercase: "At least 1 uppercase letter",
+  passwordLowercase: "At least 1 lowercase letter",
+  passwordNumber: "At least 1 number",
+  passwordStrengthWeak: "Weak",
+  passwordStrengthMedium: "Medium",
+  passwordStrengthStrong: "Strong",
+  passwordStrengthVeryStrong: "Very Strong",
+  allRequirementsMet: "All requirements met",
   // Login form additional texts
   confirmPassword: "Confirm Password",
   passwordAppSpecific: "This password is specific to this app",
@@ -1377,6 +1392,8 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   notApplicable: "N/A",
   // UI states (additional)
   download: "Download",
+  downloadAudio: "Download audio",
+  audioDeleteWarning: "Note: The original audio recording will be deleted once the transcription process starts.",
   actions: "Actions",
 
   // Waitlist modal
@@ -1805,4 +1822,47 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   accountCreationFailed: "Account creation failed: {message}",
   directFetchFailed: "Direct fetch failed, falling back to CORS proxy:",
   firebaseEmailInUse: "This email address is already in use in Firebase. Try logging in instead of creating an account.",
+
+  // Settings Tab Translations
+  settingsTabGeneral: "General",
+  settingsTabSubscription: "Subscription",
+  settingsTabTranscription: "Transcription",
+  settingsTabAnonymization: "Anonymization",
+
+  // Subscription Tab Translations
+  subscriptionCurrentPlan: "Current Subscription",
+  subscriptionFreeTier: "Free trial - 28 days",
+  subscriptionPaidTier: "Paid subscription",
+  subscriptionNextBilling: "Next billing",
+  subscriptionTrialEnds: "Trial ends",
+  subscriptionManagement: "Subscription Management",
+  subscriptionViewPricing: "View Pricing",
+  subscriptionViewPricingDesc: "Compare all available plans",
+  subscriptionUpgrade: "Upgrade Subscription",
+  subscriptionUpgradeDesc: "Get access to more features",
+  subscriptionChangeplan: "Change Plan",
+  subscriptionChangeplanDesc: "Upgrade or downgrade your current plan",
+  subscriptionManageBilling: "Manage Billing",
+  subscriptionManageBillingDesc: "View billing history, change payment methods, and manage your subscription",
+  subscriptionPortalError: "An error occurred while opening the billing portal. Please try again.",
+  subscriptionCancel: "Cancel Subscription",
+  subscriptionCancelDesc: "Cancel your subscription - remains active until end of period",
+  subscriptionCancelConfirm: "Are you sure you want to cancel your subscription? You'll retain access to your current features until the end of your billing period.",
+  subscriptionCancelPending: "Your cancellation has been submitted. Your subscription will remain active until the end of your current billing period.",
+  subscriptionStopRecapHorizon: "Stop RecapHorizon",
+  subscriptionStopRecapHorizonDesc: "Manage your Diamond subscription via Stripe portal",
+  subscriptionScheduledChanges: "Scheduled Changes",
+  subscriptionScheduledCancel: "Subscription will be cancelled",
+  subscriptionScheduledDowngrade: "Downgrade to {tier}",
+  subscriptionEffectiveDate: "Effective date",
+
+  // Tier Names
+  tierFree: "Free",
+  tierSilver: "Silver",
+  tierGold: "Gold",
+  tierDiamond: "Diamond",
+  tierEnterprise: "Enterprise",
+
+  // Pricing Stripe Footnote
+  pricingStripeFootnote: "Payments are securely processed via <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, the world leader in trusted and secure online payment solutions."
 };

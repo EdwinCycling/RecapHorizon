@@ -15,12 +15,41 @@ export interface ApiValidationResult {
 
 export class ApiValidator {
   public static t?: TranslationFunction;
+  private static apiValidationCache = new Map<string, { result: ApiValidationResult; timestamp: number }>();
+  private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   /**
    * Set the translation function for the ApiValidator
    */
   static setTranslation(translationFunction: TranslationFunction) {
     this.t = translationFunction;
+  }
+
+  /**
+   * Check if cached validation result is still valid
+   */
+  private static isCacheValid(cacheKey: string): boolean {
+    const cached = this.apiValidationCache.get(cacheKey);
+    if (!cached) return false;
+    return Date.now() - cached.timestamp < this.CACHE_DURATION;
+  }
+
+  /**
+   * Get cached validation result
+   */
+  private static getCachedResult(cacheKey: string): ApiValidationResult | null {
+    const cached = this.apiValidationCache.get(cacheKey);
+    return cached ? cached.result : null;
+  }
+
+  /**
+   * Cache validation result
+   */
+  private static setCachedResult(cacheKey: string, result: ApiValidationResult): void {
+    this.apiValidationCache.set(cacheKey, {
+      result,
+      timestamp: Date.now()
+    });
   }
 
   /**
@@ -44,6 +73,15 @@ export class ApiValidator {
       };
     }
 
+    // Check cache first
+    const cacheKey = `google_speech_${apiKey.substring(0, 10)}`; // Use first 10 chars as cache key
+    if (this.isCacheValid(cacheKey)) {
+      const cachedResult = this.getCachedResult(cacheKey);
+      if (cachedResult) {
+        return cachedResult;
+      }
+    }
+
     try {
       // Test API availability with a minimal request to Gemini AI
       const testResponse = await fetch(
@@ -65,32 +103,43 @@ export class ApiValidator {
 
       if (testResponse.status === 200) {
         // API key is valid and working
-        return { isValid: true };
+        const result = { isValid: true };
+        this.setCachedResult(cacheKey, result);
+        return result;
       }
 
       if (testResponse.status === 403) {
-        return {
+        const result = {
           isValid: false,
           error: 'Google Gemini AI API toegang geweigerd',
           suggestion: 'Controleer of de API key geldig is en Gemini AI API is ingeschakeld'
         };
+        this.setCachedResult(cacheKey, result);
+        return result;
       }
 
       if (testResponse.status === 429) {
-        return {
+        const result = {
           isValid: false,
           error: 'Google Gemini AI API quota overschreden',
           suggestion: 'Wacht even en probeer opnieuw, of controleer je quota in Google AI Studio'
         };
+        this.setCachedResult(cacheKey, result);
+        return result;
       }
 
-      return { isValid: true };
+      const result = { isValid: true };
+       this.setCachedResult(cacheKey, result);
+       return result;
     } catch (error) {
-      return {
+      const result = {
         isValid: false,
         error: 'Kan geen verbinding maken met Google Gemini AI API',
         suggestion: 'Controleer je internetverbinding en firewall instellingen'
       };
+      // Cache error results for a shorter duration to allow for quick retry
+      this.setCachedResult(cacheKey, result);
+      return result;
     }
   }
 

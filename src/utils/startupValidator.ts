@@ -22,10 +22,21 @@ export interface StartupValidationResult {
 }
 
 export class StartupValidator {
+  private static validationCache = new Map<string, { result: StartupValidationResult; timestamp: number }>();
+  private static readonly CACHE_DURATION = 3 * 60 * 1000; // 3 minutes
+
   /**
    * Comprehensive startup validation
    */
   static async validateStartup(userId?: string, t?: TranslationFunction): Promise<StartupValidationResult> {
+    // Check cache first
+    const cacheKey = `startup_${userId || 'anonymous'}`;
+    const cached = this.validationCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      console.log('🔄 Using cached startup validation result');
+      return cached.result;
+    }
+    
     console.log(t?.('startupValidationStart') || '🚀 Starting RecapHorizon startup validation...');
     
     const criticalIssues: string[] = [];
@@ -129,13 +140,21 @@ export class StartupValidator {
       console.error(t?.('servicesStatus') || '📊 Services status:', services);
     }
 
-    return {
+    const result = {
       isReady,
       criticalIssues,
       warnings,
       services,
       recommendations
     };
+    
+    // Cache the result
+    this.validationCache.set(cacheKey, {
+      result,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   /**

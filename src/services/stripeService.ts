@@ -32,7 +32,7 @@ class StripeService {
   constructor() {
     // Voor development gebruik je localhost, voor productie je Netlify URL
     this.baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://your-app.netlify.app/.netlify/functions' 
+      ? 'https://recaphorizon.netlify.app/.netlify/functions' 
       : 'http://localhost:9999/.netlify/functions';
   }
 

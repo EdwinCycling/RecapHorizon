@@ -31,6 +31,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
     minLength: false,
     hasSpecialChar: false,
@@ -47,6 +50,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
     message: string;
     type: 'success' | 'error' | 'info';
   }>({ isOpen: false, title: '', message: '', type: 'info' });
+
+  // Load saved email on component mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Save/remove email based on remember me checkbox
+  useEffect(() => {
+    if (rememberMe && email) {
+      localStorage.setItem('rememberedEmail', email);
+    } else {
+      localStorage.removeItem('rememberedEmail');
+    }
+  }, [rememberMe, email]);
 
   const passwordRequirements: PasswordRequirement[] = [
     {
@@ -189,33 +210,42 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
   return (
     <div className="login-form" style={{ maxWidth: '400px', margin: '0 auto', padding: '20px' }}>
       <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-        <button 
-          onClick={() => setIsCreateMode(false)}
-          style={{
-            padding: '8px 16px',
-            marginRight: '8px',
-            backgroundColor: !isCreateMode ? '#3b82f6' : '#e5e7eb',
-            color: !isCreateMode ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          {t('login')}
-        </button>
-        <button 
-          onClick={() => setIsCreateMode(true)}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: isCreateMode ? '#3b82f6' : '#e5e7eb',
-            color: isCreateMode ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          {t('accountCreate')}
-        </button>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
+          gap: window.innerWidth <= 768 ? '12px' : '8px',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <button 
+            onClick={() => setIsCreateMode(false)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: !isCreateMode ? '#3b82f6' : '#e5e7eb',
+              color: !isCreateMode ? 'white' : '#374151',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              minWidth: window.innerWidth <= 768 ? '200px' : 'auto'
+            }}
+          >
+            {t('login')}
+          </button>
+          <button 
+            onClick={() => setIsCreateMode(true)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: isCreateMode ? '#3b82f6' : '#e5e7eb',
+              color: isCreateMode ? 'white' : '#374151',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              minWidth: window.innerWidth <= 768 ? '200px' : 'auto'
+            }}
+          >
+            {t('accountCreate')}
+          </button>
+        </div>
       </div>
 
       <div style={{ marginBottom: '16px' }}>
@@ -229,18 +259,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
       </div>
 
       <div style={{ marginBottom: '16px' }}>
-        <input 
-          type="password" 
-          placeholder={t('password')}
-          value={password}
-          onChange={handlePasswordChange}
-          disabled={!isEmailValid}
-          className={`w-full p-3 border rounded text-sm ${
-            !isEmailValid 
-              ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
-              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-text'
-          } placeholder-gray-500 dark:placeholder-gray-400`}
-        />
+        <div style={{ position: 'relative' }}>
+          <input 
+            type={showPassword ? 'text' : 'password'}
+            placeholder={t('password')}
+            value={password}
+            onChange={handlePasswordChange}
+            className="w-full p-3 pr-10 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: 'absolute',
+              right: '8px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#6b7280',
+              fontSize: '16px'
+            }}
+          >
+            {showPassword ? '🙈' : '👁️'}
+          </button>
+        </div>
         
         {isCreateMode && password && (
           <div style={{ marginTop: '8px', fontSize: '12px' }}>
@@ -289,24 +333,64 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
         )}
       </div>
 
+      {!isCreateMode && (
+        <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            id="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            style={{
+              marginRight: '8px',
+              cursor: 'pointer'
+            }}
+          />
+          <label
+            htmlFor="rememberMe"
+            style={{
+              fontSize: '14px',
+              cursor: 'pointer',
+              color: '#374151'
+            }}
+            className="text-gray-700 dark:text-gray-300"
+          >
+            {t('rememberMe') || 'Onthoud mij'}
+          </label>
+        </div>
+      )}
+
       {isCreateMode && (
         <div style={{ marginBottom: '16px' }}>
-          <input 
-            type="password" 
-            placeholder={t('confirmPassword')}
-            value={confirmPassword}
-            onChange={handleConfirmPasswordChange}
-            disabled={!isEmailValid}
-            className={`w-full p-3 rounded text-sm ${
-              confirmPassword && !confirmPasswordValid 
-                ? 'border border-red-500 dark:border-red-400' 
-                : 'border border-gray-300 dark:border-gray-600'
-            } ${
-              !isEmailValid 
-                ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
-                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-text'
-            } placeholder-gray-500 dark:placeholder-gray-400`}
-          />
+          <div style={{ position: 'relative' }}>
+            <input 
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder={t('confirmPassword')}
+              value={confirmPassword}
+              onChange={handleConfirmPasswordChange}
+              className={`w-full p-3 pr-10 rounded text-sm ${
+                confirmPassword && !confirmPasswordValid 
+                  ? 'border border-red-500 dark:border-red-400' 
+                  : 'border border-gray-300 dark:border-gray-600'
+              } bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#6b7280',
+                fontSize: '16px'
+              }}
+            >
+              {showConfirmPassword ? '🙈' : '👁️'}
+            </button>
+          </div>
           {confirmPassword && !confirmPasswordValid && (
             <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
               {t('passwordsDoNotMatch')}
@@ -352,7 +436,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
               borderRadius: '4px',
               fontSize: '14px',
               cursor: canLogin() ? 'pointer' : 'not-allowed',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              marginBottom: '12px'
             }}
           >
             {t('login')}

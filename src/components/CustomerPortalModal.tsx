@@ -1,6 +1,7 @@
 import React from 'react';
 import Modal from './Modal';
 import { useTranslation } from '../hooks/useTranslation';
+import { SubscriptionTier } from '../../types';
 import { stripeService } from '../services/stripeService';
 
 interface CustomerPortalModalProps {
@@ -27,8 +28,7 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
     }
 
     try {
-      const returnUrl = `${window.location.origin}?portal_return=true`;
-      await stripeService.redirectToCustomerPortal(customerId, returnUrl);
+      await stripeService.redirectToCustomerPortal(customerId);
     } catch (error) {
       console.error('Error opening customer portal:', error);
     }

@@ -336,8 +336,9 @@ export const fr = {
   exportUsersToCsv: "Exporter les Utilisateurs vers CSV",
   exportFunctionalityDesc: "Exportez les données pour analyse et administration",
   // Login form translations
-  email: "E-mail",
+  email: "Email",
   password: "Mot de passe",
+  rememberMe: "Se souvenir de moi",
   accountCreate: "Créer un Compte",
   resetSend: "Envoyer la Réinitialisation",
   // Privacy window bullets

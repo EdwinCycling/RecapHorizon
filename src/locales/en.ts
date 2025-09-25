@@ -432,6 +432,7 @@ export const en = {
   // Login form translations
   email: "Email",
   password: "Password",
+  rememberMe: "Remember me",
   accountCreate: "Create Account",
   resetSend: "Send Reset",
   // Privacy window bullets

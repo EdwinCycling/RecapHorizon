@@ -333,6 +333,7 @@ export const de = {
   // Login form translations
   email: "E-Mail",
   password: "Passwort",
+  rememberMe: "Angemeldet bleiben",
   accountCreate: "Konto erstellen",
   resetSend: "Zurücksetzen senden",
   // Privacy window bullets

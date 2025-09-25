@@ -384,6 +384,7 @@ export const nl = {
   // Login form vertalingen
   email: "E-mail",
   password: "Wachtwoord",
+  rememberMe: "Onthoud mij",
   accountCreate: "Account Aanmaken",
   resetSend: "Reset Versturen",
   // Privacy venster bullets

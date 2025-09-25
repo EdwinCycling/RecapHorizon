@@ -338,6 +338,7 @@ export const es = {
   // Login form translations
   email: "Correo Electrónico",
   password: "Contraseña",
+  rememberMe: "Recordarme",
   accountCreate: "Crear Cuenta",
   resetSend: "Enviar Restablecimiento",
   // Privacy window bullets

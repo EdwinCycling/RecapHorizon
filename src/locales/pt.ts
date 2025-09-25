@@ -329,6 +329,7 @@ export const pt = {
   // Login form translations
   email: "E-mail",
   password: "Palavra-passe",
+  rememberMe: "Lembrar-me",
   accountCreate: "Criar Conta",
   resetSend: "Enviar Reset",
   // Privacy window bullets

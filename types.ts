@@ -174,6 +174,7 @@ export interface UserPreferences {
   userId: string;
   sessionLanguage: string; // Now supports all language codes
   outputLanguage: string; // Now supports all language codes
+  aiProvider?: string; // AI provider preference for Diamond/Enterprise users
   createdAt: Date;
   updatedAt: Date;
 }

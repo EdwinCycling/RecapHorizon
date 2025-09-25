@@ -259,7 +259,7 @@ export class SubscriptionService {
   }
 
   // Validate if user can perform crucial action (AI processing)
-  public validateCrucialAction(userTier: SubscriptionTier, userCreatedAt: Date, userSubscriptionStatus: string): { allowed: boolean; reason?: string } {
+  public validateCrucialAction(userTier: SubscriptionTier, userCreatedAt: Date, userSubscriptionStatus: string, hasHadPaidSubscription: boolean = false): { allowed: boolean; reason?: string } {
     // For paid tiers, check subscription status
     if (userTier !== SubscriptionTier.FREE) {
       if (userSubscriptionStatus !== 'active') {
@@ -271,7 +271,15 @@ export class SubscriptionService {
       return { allowed: true };
     }
 
-    // For Free Tier, check 4-week limit dynamically
+    // For Free Tier users who previously had a paid subscription, no trial period
+    if (hasHadPaidSubscription) {
+      return {
+        allowed: false,
+        reason: 'Je gratis proefperiode is niet meer beschikbaar na het annuleren van je betaalde abonnement. Upgrade naar een betaald abonnement om door te gaan met RecapHorizon.'
+      };
+    }
+
+    // For new Free Tier users, check 4-week limit dynamically
     if (this.isFreeTierExpired(userCreatedAt)) {
       const remainingDays = this.getRemainingFreeTierDays(userCreatedAt);
       return {
@@ -308,9 +316,9 @@ export class SubscriptionService {
   }
 
   // Enhanced session validation with Free Tier check
-  public validateSessionStart(tier: SubscriptionTier, sessionsToday: number, userCreatedAt: Date, userSubscriptionStatus: string = 'active'): { allowed: boolean; reason?: string } {
+  public validateSessionStart(tier: SubscriptionTier, sessionsToday: number, userCreatedAt: Date, userSubscriptionStatus: string = 'active', hasHadPaidSubscription: boolean = false): { allowed: boolean; reason?: string } {
     // First check crucial action validation (Free Tier expiry + subscription status)
-    const crucialActionCheck = this.validateCrucialAction(tier, userCreatedAt, userSubscriptionStatus);
+    const crucialActionCheck = this.validateCrucialAction(tier, userCreatedAt, userSubscriptionStatus, hasHadPaidSubscription);
     if (!crucialActionCheck.allowed) {
       return crucialActionCheck;
     }

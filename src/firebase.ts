@@ -112,6 +112,7 @@ export const ensureUserDocument = async (userId: string, userEmail?: string): Pr
         nextBillingDate: null,
         currentSubscriptionStartDate: null,
         scheduledTierChange: null,
+        hasHadPaidSubscription: false, // New users start with false
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         lastDailyUsageDate: today,

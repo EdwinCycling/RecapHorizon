@@ -6,7 +6,7 @@ STAP 1: Import de hook bovenaan je App.tsx
 */
 import React, { useState } from 'react';
 import { useTabCache } from './hooks/useTabCache';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from './hooks/useTranslation';
 
 /*
 STAP 2: Gebruik de hook in je App component

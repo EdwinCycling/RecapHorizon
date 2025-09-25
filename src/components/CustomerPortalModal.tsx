@@ -1,22 +1,24 @@
 import React from 'react';
 import Modal from './Modal';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../hooks/useTranslation';
 import { stripeService } from '../services/stripeService';
 
 interface CustomerPortalModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId?: string;
-  userTier?: string;
+  userTier: SubscriptionTier;
+  t: (key: string) => string;
 }
 
 const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
   isOpen,
   onClose,
   customerId,
-  userTier
+  userTier,
+  t: tProp,
 }) => {
-  const { t } = useTranslation();
+  const t = tProp;
 
   const handleOpenPortal = async () => {
     if (!customerId) {

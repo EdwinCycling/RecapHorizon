@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from './Modal';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface CustomerPortalReturnModalProps {
   isOpen: boolean;

@@ -22,17 +22,19 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
 
   useEffect(() => {
     const fetchTokenUsage = async () => {
+      // Wait for auth to be fully initialized
       if (!auth.currentUser) {
+        setIsLoading(false);
         return;
       }
 
       try {
         setIsLoading(true);
+        setError(null);
         const monthlyTokens = await getUserMonthlyTokens(auth.currentUser.uid);
         const sessionsData = await getUserMonthlySessions(auth.currentUser.uid);
         setMonthlyUsage(monthlyTokens.totalTokens);
         setMonthlySessions(sessionsData.sessions);
-        setError(null);
       } catch (err) {
         console.error('Error fetching token usage:', err);
         setError('Failed to load token usage data');
@@ -42,7 +44,7 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
     };
 
     fetchTokenUsage();
-  }, [userTier]);
+  }, [userTier, auth.currentUser]);
 
   const tierLimits = subscriptionService.getTierLimits(userTier);
   if (!tierLimits) {

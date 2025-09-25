@@ -18,6 +18,7 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
   const [error, setError] = useState<string | null>(null);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedPageTitle, setSelectedPageTitle] = useState<string | null>(null);
+
   const [connected, setConnected] = useState<boolean>(false);
 
   useEffect(() => {
@@ -154,9 +155,6 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
 
         {!connected ? (
           <div className="text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              {t('connectNotionHelp') || 'Connect your Notion account securely. We never expose your token to the browser; it is stored encrypted in an HttpOnly cookie.'}
-            </p>
             <button onClick={connect} className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white">
               {t('connectNotion') || 'Connect Notion'}
             </button>
@@ -166,10 +164,6 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
           </div>
         ) : (
           <>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              {t('notionSearchHelp') || 'Search your Notion workspace securely via our server-side integration. Your Notion secret is never exposed to the browser.'}
-            </p>
-
             <div className="space-y-3">
               <div className="flex gap-2">
                 <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search') || 'Search pages by title...'} className="flex-1 px-3 py-2 rounded-md border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 focus:outline-none" />

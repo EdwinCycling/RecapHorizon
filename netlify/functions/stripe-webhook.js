@@ -86,7 +86,8 @@ async function handleSubscriptionCreated(subscription) {
     currentSubscriptionStatus: subscription.status,
     currentSubscriptionStartDate: new Date(subscription.current_period_start * 1000),
     nextBillingDate: new Date(subscription.current_period_end * 1000),
-    subscriptionTier: getSubscriptionTier(subscription.items.data[0]?.price?.id)
+    subscriptionTier: getSubscriptionTier(subscription.items.data[0]?.price?.id),
+    hasHadPaidSubscription: true // Mark that this user has a paid subscription
   };
 
   await updateUserSubscription(subscription.customer, subscriptionData);
@@ -110,6 +111,7 @@ async function handleSubscriptionUpdated(subscription) {
       effectiveDate: new Date(subscription.current_period_end * 1000),
       reason: 'cancellation'
     };
+    subscriptionData.hasHadPaidSubscription = true; // Mark that this user had a paid subscription
   } else {
     // Clear any scheduled tier change if subscription is reactivated
     subscriptionData.scheduledTierChange = null;
@@ -127,7 +129,8 @@ async function handleSubscriptionDeleted(subscription) {
     stripePriceId: null,
     currentSubscriptionStatus: 'canceled',
     subscriptionTier: 'free',
-    scheduledTierChange: null
+    scheduledTierChange: null,
+    hasHadPaidSubscription: true // Mark that this user had a paid subscription
   };
 
   await updateUserSubscription(subscription.customer, subscriptionData);
@@ -158,6 +161,51 @@ async function handleInvoicePaymentFailed(invoice) {
     };
 
     await updateUserSubscription(invoice.customer, subscriptionData);
+  }
+}
+
+/**
+ * Handle checkout session completed event
+ */
+async function handleCheckoutSessionCompleted(session) {
+  try {
+    // Import Firebase functions
+    const { initializeApp } = await import('firebase/app');
+    const { getFirestore, collection, query, where, getDocs, updateDoc, doc, serverTimestamp } = await import('firebase/firestore');
+    
+    // Initialize Firebase (using environment variables)
+    const firebaseConfig = {
+      apiKey: process.env.FIREBASE_API_KEY,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.FIREBASE_APP_ID
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Find user by userId from session metadata
+    const userId = session.metadata?.userId;
+    if (!userId) {
+      console.warn('No userId found in checkout session metadata');
+      return;
+    }
+    
+    // Update user with Stripe customer ID
+    const userRef = doc(db, 'users', userId);
+    const updateData = {
+      stripeCustomerId: session.customer,
+      updatedAt: serverTimestamp()
+    };
+    
+    await updateDoc(userRef, updateData);
+    
+    console.log(`Stripe customer ID ${session.customer} linked to user ${userId}`);
+  } catch (error) {
+    console.error('Failed to handle checkout session completed:', error);
+    throw error;
   }
 }
 
@@ -209,6 +257,10 @@ export async function handler(event) {
   try {
     // Handle different event types
     switch (stripeEvent.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(stripeEvent.data.object);
+        break;
+
       case 'customer.subscription.created':
         await handleSubscriptionCreated(stripeEvent.data.object);
         break;

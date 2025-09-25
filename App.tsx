@@ -34,6 +34,7 @@ import ImageUploadHelpModal from './src/components/ImageUploadHelpModal.tsx';
 import EmailImportHelpModal from './src/components/EmailImportHelpModal.tsx';
 import EmailUploadModal from './src/components/EmailUploadModal.tsx';
 import NotionImportModal from './src/components/NotionImportModal.tsx';
+import NotionIntegrationHelpModal from './src/components/NotionIntegrationHelpModal.tsx';
 import FileUploadModal from './src/components/FileUploadModal.tsx';
 import ImageUploadModal from './src/components/ImageUploadModal.tsx';
 import { SafeUserText } from './src/utils/SafeHtml';
@@ -952,6 +953,7 @@ export default function App() {
   const expertHelpModal = useModalState();
   const subscriptionSuccessModal = useModalState();
   const customerPortalModal = useModalState();
+  const notionIntegrationHelpModal = useModalState();
   
   // Auth state
   const [authState, setAuthState] = useState<AuthState>({
@@ -2398,7 +2400,13 @@ ${getTranscriptSlice(transcript, 20000)}`;
     const effectiveTier = userSubscription;
     // Check subscription limits using total daily sessions across types
     const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
-    const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
+    const canStart = subscriptionService.validateSessionStart(
+      effectiveTier, 
+      totalSessionsToday,
+      authState.user?.createdAt || new Date(),
+      authState.user?.currentSubscriptionStatus || 'free',
+      authState.user?.hasHadPaidSubscription || false
+    );
     
     if (!canStart.allowed) {
         setError(canStart.reason || 'Subscription limit reached');
@@ -2825,7 +2833,13 @@ ${getTranscriptSlice(transcript, 20000)}`;
 
         // Enforce daily session limits before processing
         const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
-        const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
+        const canStart = subscriptionService.validateSessionStart(
+          effectiveTier, 
+          totalSessionsToday,
+          authState.user?.createdAt || new Date(),
+          authState.user?.currentSubscriptionStatus || 'free',
+          authState.user?.hasHadPaidSubscription || false
+        );
         if (!canStart.allowed) {
             setShowUpgradeModal(true);
             setError(canStart.reason || t('errorDailySessionLimit'));
@@ -2986,7 +3000,13 @@ ${getTranscriptSlice(transcript, 20000)}`;
 
         // Enforce daily session limits before processing
         const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
-        const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
+        const canStart = subscriptionService.validateSessionStart(
+          effectiveTier, 
+          totalSessionsToday,
+          authState.user?.createdAt || new Date(),
+          authState.user?.currentSubscriptionStatus || 'free',
+          authState.user?.hasHadPaidSubscription || false
+        );
         if (!canStart.allowed) {
             setShowUpgradeModal(true);
             setError(canStart.reason || t('errorDailySessionLimit'));
@@ -3196,7 +3216,13 @@ Provide a detailed analysis that could be used for further AI processing and ana
 
             // Check daily session limit
             const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
-            const canStart = subscriptionService.validateSessionStart(userSubscription, totalSessionsToday);
+            const canStart = subscriptionService.validateSessionStart(
+              userSubscription, 
+              totalSessionsToday,
+              authState.user?.createdAt || new Date(),
+              authState.user?.currentSubscriptionStatus || 'free',
+              authState.user?.hasHadPaidSubscription || false
+            );
             if (!canStart.allowed) {
                 setError(canStart.reason || t('dailyLimitReached'));
                 resolve(null);
@@ -3301,7 +3327,13 @@ Provide a detailed analysis that could be used for further AI processing and ana
         
         // Enforce daily session limits before processing
         const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
-        const canStart = subscriptionService.validateSessionStart(effectiveTier, totalSessionsToday);
+        const canStart = subscriptionService.validateSessionStart(
+          effectiveTier, 
+          totalSessionsToday,
+          authState.user?.createdAt || new Date(),
+          authState.user?.currentSubscriptionStatus || 'free',
+          authState.user?.hasHadPaidSubscription || false
+        );
         if (!canStart.allowed) {
             setShowUpgradeModal(true);
             setError(canStart.reason || 'Dagelijkse sessielimiet bereikt.');
@@ -4148,14 +4180,12 @@ const handleAnalyzeSentiment = async () => {
 
   const saveAnonymizationRules = () => {
     localStorage.setItem('anonymization_rules', JSON.stringify(anonymizationRules));
-    settingsModal.close();
   };
   
   const saveTranscriptionSettings = () => {
     localStorage.setItem('transcription_quality', transcriptionQuality);
     localStorage.setItem('audio_compression_enabled', audioCompressionEnabled.toString());
     localStorage.setItem('auto_stop_recording_enabled', autoStopRecordingEnabled.toString());
-    settingsModal.close();
   };
   
   const saveAllSettings = () => {
@@ -8759,7 +8789,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         </button>
                       )}
 
-                      {/* Cancel Subscription */}
+                      {/* Manage Subscription */}
                       {userSubscription !== 'free' && (
                         <button
                           onClick={() => {
@@ -8775,19 +8805,40 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                               }
                             }
                           }}
-                          className="w-full p-3 sm:p-4 text-left bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                          disabled={userSubscription === 'diamond'}
+                          className={`w-full p-3 sm:p-4 text-left rounded-lg transition-colors ${
+                            userSubscription === 'diamond'
+                              ? 'bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-not-allowed opacity-60'
+                              : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer'
+                          }`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div>
-                              <p className="font-medium text-red-800 dark:text-red-300">
-                                {userSubscription === 'diamond' ? t('subscriptionStopRecapHorizon') : t('subscriptionCancel')}
+                              <p className={`font-medium ${
+                                userSubscription === 'diamond'
+                                  ? 'text-gray-600 dark:text-gray-400'
+                                  : 'text-blue-800 dark:text-blue-300'
+                              }`}>
+                                {t('manageSubscription')}
                               </p>
-                              <p className="text-sm text-red-600 dark:text-red-400">
-                                {userSubscription === 'diamond' ? t('subscriptionStopRecapHorizonDesc') : t('subscriptionCancelDesc')}
+                              <p className={`text-sm ${
+                                userSubscription === 'diamond'
+                                  ? 'text-gray-500 dark:text-gray-500'
+                                  : 'text-blue-600 dark:text-blue-400'
+                              }`}>
+                                {userSubscription === 'diamond' 
+                                  ? t('diamondSubscriptionManaged')
+                                  : t('manageSubscriptionDesc')
+                                }
                               </p>
                             </div>
-                            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <svg className={`w-5 h-5 ${
+                              userSubscription === 'diamond'
+                                ? 'text-gray-400 dark:text-gray-500'
+                                : 'text-blue-500'
+                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           </div>
                         </button>
@@ -9007,20 +9058,81 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 </>  
               )}
               
-              {/* Actie Knoppen */}
+              {/* Tab-specifieke Actie Knoppen */}
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
-                <button
-                  onClick={() => settingsModal.close()}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-700 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
-                >
-                  {t('settingsCancel')}
-                </button>
-                <button
-                  onClick={saveAllSettings}
-                  className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors font-medium"
-                >
-                  {t('settingsSave')}
-                </button>
+                {/* General Tab - alleen Close knop */}
+                {activeSettingsTab === 'general' && (
+                  <button
+                    onClick={() => settingsModal.close()}
+                    className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors font-medium"
+                  >
+                    {t('settingsClose')}
+                  </button>
+                )}
+                
+                {/* Subscription Tab - alleen Close knop (geen save nodig) */}
+                {activeSettingsTab === 'subscription' && (
+                  <button
+                    onClick={() => settingsModal.close()}
+                    className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors font-medium"
+                  >
+                    {t('settingsClose')}
+                  </button>
+                )}
+                
+                {/* Transcription Tab - Cancel en Save knoppen */}
+                {activeSettingsTab === 'transcription' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        // Reset transcription settings to original values
+                        setTranscriptionQuality(authState.user?.transcriptionQuality || 'balanced');
+                        setAudioCompressionEnabled(authState.user?.audioCompressionEnabled ?? true);
+                        setAutoStopRecordingEnabled(authState.user?.autoStopRecordingEnabled ?? false);
+                        settingsModal.close();
+                      }}
+                      className="px-4 py-2 text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-700 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+                    >
+                      {t('settingsCancel')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        saveTranscriptionSettings();
+                      }}
+                      className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors font-medium"
+                    >
+                      {t('settingsSave')}
+                    </button>
+                  </>
+                )}
+                
+                {/* Anonymization Tab - Cancel en Save knoppen */}
+                {activeSettingsTab === 'anonymization' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        // Reset anonymization rules to original values
+                        if (authState.user?.anonymizationRules) {
+                          setAnonymizationRules(authState.user.anonymizationRules);
+                        } else {
+                          setAnonymizationRules([]);
+                        }
+                        settingsModal.close();
+                      }}
+                      className="px-4 py-2 text-slate-600 dark:text-slate-400 bg-gray-200 dark:bg-slate-700 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+                    >
+                      {t('settingsCancel')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        saveAnonymizationRules();
+                      }}
+                      className="px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors font-medium"
+                    >
+                      {t('settingsSave')}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -9507,8 +9619,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                       {/* Notion help link */}
                                       {userSubscription === SubscriptionTier.DIAMOND && (
                                         <div className="mt-3 text-center">
-                                            <button onClick={() => { setSessionOptionsHelpMode(true); sessionOptionsModal.open(); }} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                                🧭 {t('notionSearchHelp')}
+                                            <button onClick={() => notionIntegrationHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                                🧭 {t('notionIntegrationInstall')}
                                             </button>
                                         </div>
                                       )}
@@ -9831,6 +9943,15 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       />
     )}
 
+    {/* Notion Integration Help Modal */}
+    {notionIntegrationHelpModal.isOpen && (
+      <NotionIntegrationHelpModal
+        isOpen={notionIntegrationHelpModal.isOpen}
+        onClose={notionIntegrationHelpModal.close}
+        t={t}
+      />
+    )}
+
     {/* Expert Configuration Modal */}
     {expertConfigModal.isOpen && (
       <ExpertConfigurationModal
@@ -9903,6 +10024,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
          onClose={customerPortalModal.close}
          customerId={authState.user?.stripeCustomerId}
          userTier={userSubscription}
+         t={t}
        />
      )}
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ImageUploadHelpModal from './ImageUploadHelpModal';
+import NotionIntegrationHelpModal from './NotionIntegrationHelpModal';
 
 interface SessionOptionsModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
   helpMode
 }) => {
   const [isImageHelpOpen, setIsImageHelpOpen] = useState(false);
+  const [isNotionHelpOpen, setIsNotionHelpOpen] = useState(false);
   const isReadOnly = Boolean(helpMode);
   const isDiamond = (userSubscription || '').toLowerCase() === 'diamond';
   
@@ -195,6 +197,17 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
                     {t('notionOptionDesc') || 'Analyseer jouw Notion pagina(s).'}
                   </p>
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsNotionHelpOpen(true);
+                      }}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm underline"
+                    >
+                      {t('notionIntegrationInstall')}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -228,6 +241,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
       <ImageUploadHelpModal
         isOpen={isImageHelpOpen}
         onClose={() => setIsImageHelpOpen(false)}
+        t={t}
+      />
+      
+      {/* Notion Integration Help Modal */}
+      <NotionIntegrationHelpModal
+        isOpen={isNotionHelpOpen}
+        onClose={() => setIsNotionHelpOpen(false)}
         t={t}
       />
     </div>

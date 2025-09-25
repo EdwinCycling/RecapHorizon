@@ -73,7 +73,7 @@ const TierModelConfigViewer: React.FC<TierModelConfigViewerProps> = ({ className
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(currentConfig).map(([functionName, modelName]) => {
-            const modelInfo = getModelDisplayInfo(modelName);
+            const modelInfo = getModelDisplayInfo(modelName as string);
             return (
               <div key={functionName} className="p-4 border rounded-lg bg-gray-50">
                 <h4 className="font-medium text-gray-800 mb-2">

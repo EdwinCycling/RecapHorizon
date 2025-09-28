@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.90924.0",
+  "version": "0.90928.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,6 +17,7 @@
     "@kenjiuno/msgreader": "^1.26.0-beta1",
     "@vitejs/plugin-react": "^5.0.2",
     "buffer": "^6.0.3",
+    "dotenv": "^17.2.2",
     "eml-parse-js": "^1.2.0-beta.0",
     "events": "^3.3.0",
     "firebase": "^12.1.0",

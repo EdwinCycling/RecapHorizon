@@ -36,12 +36,12 @@ async function updateUserSubscription(customerId, subscriptionData) {
     
     // Initialize Firebase (using environment variables)
     const firebaseConfig = {
-      apiKey: process.env.FIREBASE_API_KEY,
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.FIREBASE_APP_ID
+      apiKey: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
+      authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+      storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID
     };
     
     const app = initializeApp(firebaseConfig);
@@ -175,12 +175,12 @@ async function handleCheckoutSessionCompleted(session) {
     
     // Initialize Firebase (using environment variables)
     const firebaseConfig = {
-      apiKey: process.env.FIREBASE_API_KEY,
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.FIREBASE_APP_ID
+      apiKey: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
+      authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+      storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID
     };
     
     const app = initializeApp(firebaseConfig);
@@ -228,80 +228,112 @@ function getSubscriptionTier(priceId) {
 /**
  * Main webhook handler
  */
-export async function handler(event) {
-  // Only allow POST requests
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
-  const sig = event.headers['stripe-signature'];
-  let stripeEvent;
-
+export const handler = async (event, context) => {
+  console.log('Webhook received:', event.httpMethod, event.headers);
+  
   try {
-    // Verify webhook signature
-    stripeEvent = stripe.webhooks.constructEvent(event.body, sig, endpointSecret);
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Webhook signature verification failed' })
-    };
-  }
-
-  // Log the webhook event
-  await logWebhookEvent(stripeEvent);
-
-  try {
-    // Handle different event types
-    switch (stripeEvent.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(stripeEvent.data.object);
-        break;
-
-      case 'customer.subscription.created':
-        await handleSubscriptionCreated(stripeEvent.data.object);
-        break;
-
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(stripeEvent.data.object);
-        break;
-
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(stripeEvent.data.object);
-        break;
-
-      case 'invoice.payment_succeeded':
-        await handleInvoicePaymentSucceeded(stripeEvent.data.object);
-        break;
-
-      case 'invoice.payment_failed':
-        await handleInvoicePaymentFailed(stripeEvent.data.object);
-        break;
-
-      default:
-        console.log(`Unhandled event type: ${stripeEvent.type}`);
+    if (event.httpMethod !== 'POST') {
+      return {
+        statusCode: 405,
+        body: JSON.stringify({ error: 'Method not allowed' })
+      };
+    }
+    
+    // Check for required environment variables
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('Missing STRIPE_SECRET_KEY environment variable');
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Server configuration error' })
+      };
+    }
+    
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error('Missing STRIPE_WEBHOOK_SECRET environment variable');
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Server configuration error' })
+      };
     }
 
-    // Update webhook log status to processed
-    await logWebhookEvent(stripeEvent, 'processed');
+    const sig = event.headers['stripe-signature'];
+    let stripeEvent;
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ received: true })
-    };
+    try {
+      // Verify webhook signature
+      stripeEvent = stripe.webhooks.constructEvent(event.body, sig, endpointSecret);
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err.message);
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Webhook signature verification failed' })
+      };
+    }
+
+    // Check Firebase configuration
+     const firebaseApiKey = process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY;
+     const firebaseProjectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+     
+     if (!firebaseApiKey || !firebaseProjectId) {
+       console.error('Missing Firebase configuration environment variables');
+       return {
+         statusCode: 500,
+         body: JSON.stringify({ error: 'Firebase configuration error' })
+       };
+     }
+
+     // Log the webhook event
+     await logWebhookEvent(stripeEvent);
+ 
+     // Handle different event types
+      switch (stripeEvent.type) {
+       case 'checkout.session.completed':
+         await handleCheckoutSessionCompleted(stripeEvent.data.object);
+         break;
+
+       case 'customer.subscription.created':
+         await handleSubscriptionCreated(stripeEvent.data.object);
+         break;
+
+       case 'customer.subscription.updated':
+         await handleSubscriptionUpdated(stripeEvent.data.object);
+         break;
+
+       case 'customer.subscription.deleted':
+         await handleSubscriptionDeleted(stripeEvent.data.object);
+         break;
+
+       case 'invoice.payment_succeeded':
+         await handleInvoicePaymentSucceeded(stripeEvent.data.object);
+         break;
+
+       case 'invoice.payment_failed':
+         await handleInvoicePaymentFailed(stripeEvent.data.object);
+         break;
+
+       default:
+         console.log(`Unhandled event type: ${stripeEvent.type}`);
+     }
+
+     // Update webhook log status to processed
+     await logWebhookEvent(stripeEvent, 'processed');
+
+     return {
+       statusCode: 200,
+       body: JSON.stringify({ received: true })
+     };
 
   } catch (error) {
     console.error('Error processing webhook:', error);
     
     // Log the error
-    await logWebhookEvent(stripeEvent, 'error', error);
+    if (typeof stripeEvent !== 'undefined') {
+      await logWebhookEvent(stripeEvent, 'error', error);
+    }
 
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Internal server error' })
     };
   }
-}
+};

@@ -1802,4 +1802,15 @@ notionIntegrationTechItem3: "Nur Lesezugriff auf geteilte Inhalte",
 notionIntegrationTechItem4: "Keine dauerhafte Speicherung von Notion-Daten auf unseren Servern",
 notionIntegrationSecurityTitle: "Sicherheit & Datenschutz",
 notionIntegrationSecurityDesc: "Ihre Notion-Daten bleiben sicher, da wir nur auf explizit geteilte Seiten zugreifen und Ihr Token verschlüsselt gespeichert wird.",
+
+  // Usage Modal
+  usageOverview: "Nutzungsübersicht",
+  currentPlan: "Aktueller Plan",
+  tokenUsage: "Token-Nutzung",
+  sessionUsage: "Sitzungsnutzung",
+  unlimitedSessions: "Unbegrenzte Sitzungen",
+  loadingUsage: "Nutzungsdaten laden...",
+  upgradeForMore: "Upgrade für mehr",
+  upgradeDescription: "Upgraden Sie Ihr Abonnement für mehr Tokens und Sitzungen",
+  changePlan: "Plan Ändern"
 };

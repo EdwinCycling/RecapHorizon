@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SubscriptionTier } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 import { getTotalTokenUsage, getUserMonthlyTokens, getUserMonthlySessions, auth } from '../firebase';
+import Modal from './Modal';
 
 interface TokenUsageMeterProps {
   userTier?: SubscriptionTier;
@@ -18,7 +19,7 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
   const [monthlySessions, setMonthlySessions] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const fetchTokenUsage = async () => {
@@ -106,7 +107,7 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
     <div className="relative">
       {/* Compact Button */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => setShowModal(true)}
         className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-all duration-200 ${
           monthlyPercentage >= 80 
             ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/30'
@@ -120,99 +121,120 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
           {formatTokenCount(monthlyUsage)}/{isUnlimited ? '∞' : formatTokenCount(tierLimits.maxTokensPerMonth)}
         </span>
         <svg 
-          className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+          className="w-4 h-4 ml-1"
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </button>
 
-      {/* Slide Panel */}
-      {isExpanded && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg z-50 p-4">
+      {/* Usage Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={t('tokenUsageOverview') || 'Token Usage Overview'}
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-6">
           {/* Monthly Usage */}
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-base font-semibold text-slate-800 dark:text-slate-200">
                 {t('tokensThisMonth')}
-              </span>
-              <span className={`text-sm font-semibold ${isUnlimited ? 'text-green-600 dark:text-green-400' : getTextColor(monthlyPercentage)}`}>
+              </h4>
+              <span className={`text-lg font-bold ${isUnlimited ? 'text-green-600 dark:text-green-400' : getTextColor(monthlyPercentage)}`}>
                 {formatTokenCount(monthlyUsage)} / {isUnlimited ? '∞' : formatTokenCount(tierLimits.maxTokensPerMonth)}
               </span>
             </div>
             {!isUnlimited && (
               <>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-1">
+                <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3 mb-2">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(monthlyPercentage)}`}
+                    className={`h-3 rounded-full transition-all duration-300 ${getProgressBarColor(monthlyPercentage)}`}
                     style={{ width: `${Math.min(monthlyPercentage, 100)}%` }}
                   ></div>
                 </div>
-                <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400">
                   <span>
                     {monthlyPercentage.toFixed(1)}% {t('used')}
                   </span>
                   <span>
-                    ({formatTokenCount(remainingTokens)} {t('remaining')})
+                    {formatTokenCount(remainingTokens)} {t('remaining')}
                   </span>
                 </div>
               </>
             )}
             {isUnlimited && (
-              <div className="text-center text-xs text-green-600 dark:text-green-400 py-2">
+              <div className="text-center text-sm text-green-600 dark:text-green-400 py-3 bg-green-50 dark:bg-green-900/20 rounded-md">
                 ✨ {t('unlimitedTokens')}
               </div>
             )}
           </div>
 
           {/* Sessions This Month */}
-          <div className="mb-4">
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <h4 className="text-base font-semibold text-slate-800 dark:text-slate-200">
                 {t('sessionsThisMonth')}
-              </span>
-              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+              </h4>
+              <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                 {monthlySessions}
               </span>
             </div>
           </div>
 
           {/* Current Tier */}
-          <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            {t('currentTier')}: <span className="font-medium capitalize">{userTier}</span>
-            {onShowPricing ? (
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowPricing();
-                }}
-                className="ml-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline cursor-pointer bg-transparent border-none p-0"
-              >
-                {t('viewPricing')}
-              </button>
-            ) : (
-              <a 
-                href="/pricing" 
-                className="ml-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {t('viewPricing')}
-              </a>
-            )}
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <h4 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                {t('currentTier')}
+              </h4>
+              <span className="text-lg font-bold capitalize text-slate-700 dark:text-slate-300">
+                {userTier}
+              </span>
+            </div>
+            <div className="mt-3">
+              {onShowPricing ? (
+                <button 
+                  onClick={() => {
+                    setShowModal(false);
+                    onShowPricing();
+                  }}
+                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium"
+                >
+                  {t('viewPricing')}
+                </button>
+              ) : (
+                <a 
+                  href="/pricing" 
+                  className="block w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium text-center"
+                >
+                  {t('viewPricing')}
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Warning */}
           {monthlyPercentage >= 80 && (
-            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-3">
-              <p className="text-sm text-orange-800 dark:text-orange-200">
-                ⚠️ {t('approachingTokenLimit')}
-              </p>
+            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">⚠️</span>
+                <div>
+                  <h4 className="font-semibold text-orange-800 dark:text-orange-200 mb-1">
+                    {t('warningTitle') || 'Usage Warning'}
+                  </h4>
+                  <p className="text-sm text-orange-700 dark:text-orange-300">
+                    {t('approachingTokenLimit')}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

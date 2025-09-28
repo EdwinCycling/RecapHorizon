@@ -11,6 +11,7 @@ import WaitlistModal from './src/components/WaitlistModal.tsx';
 import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
 import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, EmailOptions, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
+import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 import modelManager from './src/utils/modelManager';
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
@@ -48,6 +49,7 @@ import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.
 import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
 import CustomerPortalReturnScreen from './src/components/CustomerPortalReturnScreen.tsx';
 import { stripeService } from './src/services/stripeService';
+import UsageModal from './src/components/UsageModal.tsx';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -95,7 +97,7 @@ import {
   deleteField,
   increment
 } from 'firebase/firestore';
-import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, type MonthlyTokensUsage } from './src/firebase';
+import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, getUserStripeData, type MonthlyTokensUsage } from './src/firebase';
 import { sessionManager, UserSession } from './src/utils/security';
 import LoginForm from './src/components/LoginForm';
 import SessionTimeoutWarning from './src/components/SessionTimeoutWarning.tsx';
@@ -304,6 +306,23 @@ const UkFlagIcon: React.FC<{ className?: string }> = ({ className }) => (
         <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6"/>
     </svg>
 );
+
+const MenuIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <line x1="4" x2="20" y1="6" y2="6"/>
+        <line x1="4" x2="20" y1="12" y2="12"/>
+        <line x1="4" x2="20" y1="18" y2="18"/>
+    </svg>
+);
+
+const LogoutIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" x2="9" y1="12" y2="12"/>
+    </svg>
+);
+
 
 
 // --- COMPONENTS ---
@@ -638,6 +657,7 @@ interface User {
   hashedApiKey?: string;
   apiKeyLastUpdated?: Date;
   subscriptionTier?: SubscriptionTier | string;
+  currentSubscriptionStatus?: 'active' | 'past_due' | 'cancelled' | 'expired';
 }
 
 interface AuthState {
@@ -657,6 +677,151 @@ import { tokenManager } from './src/utils/tokenManager';
 import UpgradeModal from './src/components/UpgradeModal.tsx';
 import PricingPage from './src/components/PricingPage.tsx';
 import FAQPage from './src/components/FAQPage.tsx';
+
+// Hamburger Menu Component
+const HamburgerMenu: React.FC<{
+  isOpen: boolean;
+  onToggle: () => void;
+  user: any;
+  onLogout: () => void;
+  onShowSettings: () => void;
+  onShowPricing: () => void;
+  onShowFAQ: () => void;
+  t: (key: string) => string;
+  theme: 'light' | 'dark';
+  userTier: SubscriptionTier;
+  showUsageModal: boolean;
+  setShowUsageModal: (show: boolean) => void;
+}> = ({ isOpen, onToggle, user, onLogout, onShowSettings, onShowPricing, onShowFAQ, t, theme, userTier, showUsageModal, setShowUsageModal }) => {
+  return (
+    <div className="relative">
+      {/* Hamburger Menu Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        className={`p-2 rounded-lg transition-colors ${
+          theme === 'dark'
+            ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+        }`}
+        aria-label="Menu"
+      >
+        <MenuIcon className="w-6 h-6" />
+      </button>
+
+      {/* Menu Dropdown */}
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={onToggle}
+          />
+          
+          {/* Menu Content */}
+          <div className={`hamburger-menu-content absolute right-0 top-full mt-2 w-64 rounded-lg shadow-lg z-50 ${
+            theme === 'dark'
+              ? 'bg-gray-800 border border-gray-700'
+              : 'bg-white border border-gray-200'
+          }`}>
+            <div className="py-2">
+              {/* Usage */}
+              {user && (
+                <button
+                  onClick={() => {
+                    setShowUsageModal(true);
+                    onToggle();
+                  }}
+                  className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors ${
+                    theme === 'dark'
+                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <ChartBarIcon className="w-5 h-5" />
+                  <span>{t('usage')}</span>
+                </button>
+              )}
+
+              {/* Settings */}
+              <button
+                onClick={() => {
+                  onShowSettings();
+                  onToggle();
+                }}
+                className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors ${
+                  theme === 'dark'
+                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <SettingsIcon className="w-5 h-5" />
+                <span>{t('settings')}</span>
+              </button>
+
+              {/* Pricing */}
+              <button
+                onClick={() => {
+                  onShowPricing();
+                  onToggle();
+                }}
+                className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors ${
+                  theme === 'dark'
+                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <CreditCardIcon className="w-5 h-5" />
+                <span>{t('pricing')}</span>
+              </button>
+
+              {/* FAQ */}
+              <button
+                onClick={() => {
+                  onShowFAQ();
+                  onToggle();
+                }}
+                className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors ${
+                  theme === 'dark'
+                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <QuestionMarkIcon className="w-5 h-5" />
+                <span>{t('faq')}</span>
+              </button>
+
+              {/* Logout */}
+              {user && (
+                <>
+                  <div className={`border-t my-2 ${
+                    theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                  }`} />
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      onToggle();
+                    }}
+                    className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors ${
+                      theme === 'dark'
+                        ? 'text-red-400 hover:bg-gray-700 hover:text-red-300'
+                        : 'text-red-600 hover:bg-gray-50 hover:text-red-700'
+                    }`}
+                  >
+                    <LogoutIcon className="w-5 h-5" />
+                    <span>{t('logout')}</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -860,7 +1025,24 @@ export default function App() {
   useEffect(() => { isListeningRef.current = isListening }, [isListening]);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [showInfoPage, setShowInfoPage] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getCachedTabContent, resetTabCache, isTabCached } = useTabCache();
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      // Don't close if clicking on the menu button or menu content
+      if (target.closest('[aria-label="Menu"]') || target.closest('.hamburger-menu-content')) {
+        return;
+      }
+      setIsMenuOpen(false);
+    };
+    if (isMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [isMenuOpen]);
 
   // Ensure audio context is resumed on user gesture on iOS
   useEffect(() => {
@@ -954,6 +1136,9 @@ export default function App() {
   const subscriptionSuccessModal = useModalState();
   const customerPortalModal = useModalState();
   const notionIntegrationHelpModal = useModalState();
+  
+  // Usage Modal state
+  const [showUsageModal, setShowUsageModal] = useState(false);
   
   // Auth state
   const [authState, setAuthState] = useState<AuthState>({
@@ -1795,6 +1980,16 @@ ${getTranscriptSlice(transcript, 20000)}`;
                     if (userDoc.exists()) {
                         const userData = userDoc.data() as User;
                         
+                        // Load Stripe data to get currentSubscriptionStatus
+                        try {
+                          const stripeData = await getUserStripeData(firebaseUser.uid);
+                          userData.currentSubscriptionStatus = stripeData.currentSubscriptionStatus;
+                        } catch (error) {
+                          console.error('Error loading Stripe data:', error);
+                          // Default to 'active' if we can't load Stripe data
+                          userData.currentSubscriptionStatus = 'active';
+                        }
+                        
                         // Check for existing valid session first
                         let session = sessionManager.getExistingValidSession(firebaseUser.uid);
                         
@@ -2404,7 +2599,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
       effectiveTier, 
       totalSessionsToday,
       authState.user?.createdAt || new Date(),
-      authState.user?.currentSubscriptionStatus || 'free',
+      authState.user?.currentSubscriptionStatus || 'active',
       authState.user?.hasHadPaidSubscription || false
     );
     
@@ -2837,7 +3032,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
           effectiveTier, 
           totalSessionsToday,
           authState.user?.createdAt || new Date(),
-          authState.user?.currentSubscriptionStatus || 'free',
+          authState.user?.currentSubscriptionStatus || 'active',
           authState.user?.hasHadPaidSubscription || false
         );
         if (!canStart.allowed) {
@@ -3004,7 +3199,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
           effectiveTier, 
           totalSessionsToday,
           authState.user?.createdAt || new Date(),
-          authState.user?.currentSubscriptionStatus || 'free',
+          authState.user?.currentSubscriptionStatus || 'active',
           authState.user?.hasHadPaidSubscription || false
         );
         if (!canStart.allowed) {
@@ -3220,7 +3415,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
               userSubscription, 
               totalSessionsToday,
               authState.user?.createdAt || new Date(),
-              authState.user?.currentSubscriptionStatus || 'free',
+              authState.user?.currentSubscriptionStatus || 'active',
               authState.user?.hasHadPaidSubscription || false
             );
             if (!canStart.allowed) {
@@ -3331,7 +3526,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
           effectiveTier, 
           totalSessionsToday,
           authState.user?.createdAt || new Date(),
-          authState.user?.currentSubscriptionStatus || 'free',
+          authState.user?.currentSubscriptionStatus || 'active',
           authState.user?.hasHadPaidSubscription || false
         );
         if (!canStart.allowed) {
@@ -4564,21 +4759,23 @@ const handleAnalyzeSentiment = async () => {
       const waitlistDocId = await computeEmailHashHex(normalizedEmail);
 
       try {
-        // Primary attempt: createdAt as Date + status 'pending'
+        // Primary attempt: createdAt as Date + status 'pending' + language
         await setDoc(doc(db, 'waitlist', waitlistDocId), {
           email: normalizedEmail,
           createdAt: new Date(),
-          status: 'pending'
+          status: 'pending',
+          language: uiLang
         }, { merge: false });
         wrote = true;
       } catch (e1: any) {
-        // Fallback: createdAt as serverTimestamp + status 'pending'
+        // Fallback: createdAt as serverTimestamp + status 'pending' + language
         if (e1 && typeof e1.message === 'string' && e1.message.includes('permission-denied')) {
           try {
             await setDoc(doc(db, 'waitlist', waitlistDocId), {
               email: normalizedEmail,
               createdAt: serverTimestamp(),
-              status: 'pending'
+              status: 'pending',
+              language: uiLang
             }, { merge: false });
             wrote = true;
           } catch (e2: any) {
@@ -7805,6 +8002,29 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       
       <header className="fixed top-2 sm:top-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-16px)] sm:w-auto">
         <div className="flex flex-wrap items-center justify-between sm:justify-start gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-md shadow-md mx-auto max-w-[94vw] sm:max-w-none">
+          {/* Hamburger Menu - moved to first position */}
+          <HamburgerMenu
+            isOpen={isMenuOpen}
+            onToggle={() => setIsMenuOpen(!isMenuOpen)}
+            user={authState.user}
+            onLogout={handleLogout}
+            onShowSettings={() => {
+              if (userSubscription && userSubscription !== 'free') {
+                setActiveSettingsTab('subscription');
+              } else {
+                setActiveSettingsTab('general');
+              }
+              settingsModal.open();
+            }}
+            onShowPricing={() => setShowPricingPage(true)}
+            onShowFAQ={() => setShowFAQPage(true)}
+            t={t}
+            theme={theme}
+            userTier={userSubscription || SubscriptionTier.FREE}
+            showUsageModal={showUsageModal}
+            setShowUsageModal={setShowUsageModal}
+          />
+          
           {/* Logo & brand */}
           {!showInfoPage && (
             <button onClick={() => setShowInfoPage(true)} className="flex items-center gap-2 min-w-0 hover:opacity-90">
@@ -7826,11 +8046,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           <button onClick={toggleTheme} title={theme === 'light' ? t('switchToDark') : t('switchToLight')} className="flex items-center justify-center h-9 w-9 bg-gray-200 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-opacity-80">
             {theme === 'light' ? <MoonIcon className="w-5 h-5"/> : <SunIcon className="w-5 h-5"/>}
           </button>
-          
-          {/* Token Usage Meter for logged in users */}
-          {authState.user && (
-            <TokenUsageMeter userTier={userSubscription} t={t} onShowPricing={() => setShowPricingPage(true)} />
-          )}
           
           {/* Conditional Buttons based on state */}
           {authState.user ? (
@@ -7891,21 +8106,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       <span>{t('startOrUpload')}</span>
                     </button>
                   )}
-                  
-
-                  
-                  {/* Settings button - always visible when logged in */}
-                  <button onClick={() => {
-                    if (userSubscription && userSubscription !== 'free') {
-                      setActiveSettingsTab('subscription');
-                    } else {
-                      setActiveSettingsTab('general');
-                    }
-                    settingsModal.open();
-                  }} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
-                    <SettingsIcon className="w-5 h-5"/> 
-                    <span>{t('settings')}</span>
-                  </button>
                 </>
               )}
               
@@ -7922,21 +8122,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       <span>{t('analyse')}</span>
                     </button>
                   )}
-                  
-
-                  
-                  {/* Settings button */}
-                  <button onClick={() => {
-                    if (userSubscription && userSubscription !== 'free') {
-                      setActiveSettingsTab('subscription');
-                    } else {
-                      setActiveSettingsTab('general');
-                    }
-                    settingsModal.open();
-                  }} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
-                    <SettingsIcon className="w-5 h-5"/> 
-                    <span>{t('settings')}</span>
-                  </button>
                 </>
               )}
               {/* Analyse Page - Logged in */}
@@ -7975,19 +8160,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     <ResetIcon className="w-5 h-5"/> 
                     <span>{t('startNewSession')}</span>
                   </button>
-                  
-                  {/* Settings button */}
-                  <button onClick={() => {
-                    if (userSubscription && userSubscription !== 'free') {
-                      setActiveSettingsTab('subscription');
-                    } else {
-                      setActiveSettingsTab('general');
-                    }
-                    settingsModal.open();
-                  }} className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]">
-                    <SettingsIcon className="w-5 h-5"/> 
-                    <span>{t('settings')}</span>
-                  </button>
                 </>
               )}
             </>
@@ -8004,23 +8176,25 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
               <span>{t('login')}</span>
             </button>
           )}
-          
-          {/* Logout button for logged in  */}
-          {authState.user && (
-            <button 
-              onClick={handleLogout} 
-              className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
-            >
-              <span>🚪</span>
-              <span>{t('logout')}</span>
-            </button>
-          )}
+
         </div>
       </header>
       
       <CookieModal isOpen={cookieModal.isOpen} onClose={cookieModal.close} t={t} />
 
       <DisclaimerModal isOpen={disclaimerModal.isOpen} onClose={disclaimerModal.close} t={t} />
+
+      <UsageModal 
+        isOpen={showUsageModal} 
+        onClose={() => setShowUsageModal(false)} 
+        userTier={userSubscription}
+        t={t}
+        theme={theme}
+        onShowPricing={() => {
+          setShowUsageModal(false);
+          setShowPricingPage(true);
+        }}
+      />
 
       <WaitlistModal isOpen={waitlistModal.isOpen} onClose={waitlistModal.close} t={t} waitlistEmail={waitlistEmail} setWaitlistEmail={setWaitlistEmail} addToWaitlist={addToWaitlist} />
 
@@ -9793,9 +9967,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           setShowCookieModal={cookieModal.open}
           setShowStoryModal={storyModal.open}
           setShowTeamModal={teamModal.open}
-          setShowFAQPage={setShowFAQPage}
           setShowDisclaimerModal={disclaimerModal.open}
-          setShowPricingPage={setShowPricingPage}
         />
 
     {/* Upgrade Modal */}

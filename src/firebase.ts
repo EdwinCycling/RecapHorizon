@@ -443,7 +443,8 @@ export const getTokenUsageThisMonth = async (userId: string): Promise<TokenUsage
     );
     
     const querySnapshot = await getDocs(tokenUsageQuery);
-    return querySnapshot.docs.map(doc => doc.data() as TokenUsage);
+    const results = querySnapshot.docs.map(doc => doc.data() as TokenUsage);
+    return results;
   } catch (error) {
     console.error(t('errorGettingTokenUsageThisMonth', 'Error getting token usage this month:'), error);
     return [];
@@ -452,18 +453,37 @@ export const getTokenUsageThisMonth = async (userId: string): Promise<TokenUsage
 
 
 
-export const getTotalTokenUsage = async (userId: string, period: 'monthly' | 'daily'): Promise<number> => {
+// Debug function to check if any token usage data exists
+export const debugTokenUsageData = async (userId: string): Promise<void> => {
+  try {
+    const todayUsage = await getTokenUsageToday(userId);
+    const monthlyUsage = await getTokenUsageThisMonth(userId);
+    const totalMonthly = monthlyUsage.reduce((sum, usage) => sum + (usage.totalTokens || 0), 0);
+  } catch (error) {
+    console.error('[debugTokenUsageData] Error:', error);
+  }
+};
+
+export const getTotalTokenUsage = async (userId: string, period: 'daily' | 'monthly' = 'monthly'): Promise<number> => {
+  console.warn('[getTotalTokenUsage] Starting with userId:', userId, 'period:', period);
+  
+  // Add debug check
+  await debugTokenUsageData(userId);
+  
   try {
     if (period === 'daily') {
-      const todayUsage = await getTokenUsageToday(userId);
-      return todayUsage?.totalTokens || 0;
+      const dailyUsage = await getTokenUsageToday(userId);
+      console.warn('[getTotalTokenUsage] Daily usage:', dailyUsage);
+      return dailyUsage?.totalTokens || 0;
     } else {
-      const monthlyUsage = await getTokenUsageThisMonth(userId);
-      const total = monthlyUsage.reduce((total, usage) => total + usage.totalTokens, 0);
+      const monthlyUsageArray = await getTokenUsageThisMonth(userId);
+      console.warn('[getTotalTokenUsage] Monthly usage array:', monthlyUsageArray);
+      const total = monthlyUsageArray.reduce((sum, usage) => sum + usage.totalTokens, 0);
+      console.warn('[getTotalTokenUsage] Total calculated:', total);
       return total;
     }
   } catch (error) {
-    console.error(t('errorGettingTotalTokenUsage', 'Error getting total token usage:'), error);
+    console.error('[getTotalTokenUsage] Error:', error);
     return 0;
   }
 };

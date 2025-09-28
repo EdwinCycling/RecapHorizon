@@ -7,12 +7,10 @@ type FooterProps = {
   setShowCookieModal: (v: boolean) => void,
   setShowStoryModal: (v: boolean) => void,
   setShowTeamModal: (v: boolean) => void,
-  setShowFAQPage: (v: boolean) => void,
   setShowDisclaimerModal: (v: boolean) => void,
-  setShowPricingPage: (v: boolean) => void,
 };
 
-const Footer: React.FC<FooterProps> = ({ t, authState, setShowCookieModal, setShowStoryModal, setShowTeamModal, setShowFAQPage, setShowDisclaimerModal, setShowPricingPage, }) => (
+const Footer: React.FC<FooterProps> = ({ t, authState, setShowCookieModal, setShowStoryModal, setShowTeamModal, setShowDisclaimerModal }) => (
   <footer className="w-full mt-16 pt-8 border-t border-gray-200 dark:border-slate-700">
     <div className="max-w-full mx-auto px-3 flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
       <div className="flex items-center gap-3">
@@ -41,27 +39,11 @@ const Footer: React.FC<FooterProps> = ({ t, authState, setShowCookieModal, setSh
         </a>
         <span className="hidden sm:inline">•</span>
         <a 
-          href="/faq" 
-          className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
-          onClick={e => { e.preventDefault(); setShowFAQPage(true); }}
-        >
-          FAQ
-        </a>
-        <span className="hidden sm:inline">•</span>
-        <a 
           href="/disclaimer" 
           className="hover:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer"
           onClick={e => { e.preventDefault(); setShowDisclaimerModal(true); }}
         >
           {t('disclaimer')}
-        </a>
-        <span className="hidden sm:inline">•</span>
-        <a 
-          href="/pricing" 
-          className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors cursor-pointer"
-          onClick={e => { e.preventDefault(); setShowPricingPage(true); }}
-        >
-          Pricing
         </a>
       </div>
       <div className="flex items-center gap-2">

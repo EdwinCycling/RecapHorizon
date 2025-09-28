@@ -1814,4 +1814,15 @@ notionIntegrationTechItem3: "Acceso de solo lectura al contenido compartido",
 notionIntegrationTechItem4: "Sin almacenamiento permanente de datos de Notion en nuestros servidores",
 notionIntegrationSecurityTitle: "Seguridad y Privacidad",
 notionIntegrationSecurityDesc: "Tus datos de Notion permanecen seguros porque solo accedemos a páginas explícitamente compartidas y tu token se almacena cifrado.",
+
+  // Usage Modal
+  usageOverview: "Resumen de uso",
+  currentPlan: "Plan Actual",
+  tokenUsage: "Uso de Tokens",
+  sessionUsage: "Uso de sesiones",
+  unlimitedSessions: "Sesiones ilimitadas",
+  loadingUsage: "Cargando datos de uso...",
+  upgradeForMore: "Actualizar para más",
+  upgradeDescription: "Obtén más tokens y funciones con un plan superior",
+  changePlan: "Cambiar Plan",
 };

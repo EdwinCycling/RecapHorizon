@@ -260,9 +260,16 @@ export class SubscriptionService {
 
   // Validate if user can perform crucial action (AI processing)
   public validateCrucialAction(userTier: SubscriptionTier, userCreatedAt: Date, userSubscriptionStatus: string, hasHadPaidSubscription: boolean = false): { allowed: boolean; reason?: string } {
+    // Debug: Log the current subscription status
+    console.log('🔍 Debug - User subscription status:', userSubscriptionStatus, 'User tier:', userTier);
+    
     // For paid tiers, check subscription status
     if (userTier !== SubscriptionTier.FREE) {
-      if (userSubscriptionStatus !== 'active') {
+      // Allow access for active and past_due subscriptions
+      // past_due means payment failed but subscription is still valid
+      const validStatuses = ['active', 'past_due'];
+      if (!validStatuses.includes(userSubscriptionStatus)) {
+        console.log('❌ Subscription validation failed - Status:', userSubscriptionStatus, 'Expected one of:', validStatuses);
         return {
           allowed: false,
           reason: 'Je betaalde abonnement is niet actief. Controleer je betalingsgegevens of neem contact op met support.'

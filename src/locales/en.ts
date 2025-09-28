@@ -1916,5 +1916,16 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   tierEnterprise: "Enterprise",
 
   // Pricing Stripe Footnote
-  pricingStripeFootnote: "Payments are securely processed via <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, the world leader in trusted and secure online payment solutions."
+  pricingStripeFootnote: "Payments are securely processed via <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, the world leader in trusted and secure online payment solutions.",
+
+  // Usage Modal
+  usageOverview: "Usage Overview",
+  currentPlan: "Current Plan",
+  tokenUsage: "Token Usage",
+  sessionUsage: "Session Usage",
+  unlimitedSessions: "Unlimited Sessions",
+  loadingUsage: "Loading usage data...",
+  upgradeForMore: "Upgrade for more",
+  upgradeDescription: "Upgrade your subscription for more tokens and sessions",
+  changePlan: "Change Plan"
 };

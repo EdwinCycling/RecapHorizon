@@ -2024,5 +2024,16 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   diamondSubscriptionManaged: "Diamond abonnementen worden beheerd door beheerders",
 
   // Stripe Payment Footnote
-  pricingStripeFootnote: "Betalingen worden veilig verwerkt via <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, wereldleider in betrouwbare en veilige online betaaloplossingen."
+  pricingStripeFootnote: "Betalingen worden veilig verwerkt via <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, wereldleider in betrouwbare en veilige online betaaloplossingen.",
+
+  // Usage Modal
+  usageOverview: "Gebruiksoverzicht",
+  currentPlan: "Huidig Plan",
+  tokenUsage: "Tokengebruik",
+  sessionUsage: "Sessiegebruik",
+  unlimitedSessions: "Onbeperkte sessies",
+  loadingUsage: "Gebruiksgegevens laden...",
+  upgradeForMore: "Upgrade voor meer",
+  upgradeDescription: "Upgrade je abonnement voor meer tokens en sessies",
+  changePlan: "Wijzig abonnement"
 };

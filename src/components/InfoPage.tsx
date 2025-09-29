@@ -5,7 +5,7 @@ import * as React from 'react';
 
 type Props = {
   t: (key: string, params?: Record<string, string | number>) => string;
-  addToWaitlist: (email: string) => void;
+  addToWaitlist: (email: string) => Promise<{ success: boolean; message: string; type: 'success' | 'error' | 'info' }>;
   onWaitlistMoreInfo?: () => void;
   waitlistEmail: string;
   setWaitlistEmail: (email: string) => void;
@@ -13,6 +13,27 @@ type Props = {
 };
 
 const InfoPage: React.FC<Props> = ({ t, addToWaitlist, onWaitlistMoreInfo, waitlistEmail, setWaitlistEmail, isLoggedIn }) => {
+  const [waitlistFeedback, setWaitlistFeedback] = React.useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    show: boolean;
+  }>({ message: '', type: 'info', show: false });
+
+  const handleWaitlistSubmit = async () => {
+    if (!waitlistEmail.trim()) return;
+    
+    const result = await addToWaitlist(waitlistEmail);
+    setWaitlistFeedback({
+      message: result.message,
+      type: result.type,
+      show: true
+    });
+    
+    if (result.success) {
+      setWaitlistEmail('');
+    }
+  };
+
   // The first three cards use the existing translations; the last two are new but also localized
   const infoCards = [
     {
@@ -55,28 +76,52 @@ const InfoPage: React.FC<Props> = ({ t, addToWaitlist, onWaitlistMoreInfo, waitl
         {/* Login / Waitlist section */}
         {!isLoggedIn && (
           <div className="flex-1 flex flex-col justify-center items-center">
-            <input
-              type="email"
-              value={waitlistEmail}
-              onChange={e => setWaitlistEmail(e.target.value)}
-              placeholder={t('emailPlaceholder')}
-              className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              required
-            />
-            <button
-              onClick={() => addToWaitlist(waitlistEmail)}
-              disabled={!waitlistEmail.trim()}
-              className="px-4 py-2 bg-cyan-600 text-white rounded-md font-medium hover:bg-cyan-700 disabled:bg-slate-400 transition-colors mt-2"
-            >
-              {t('waitlistSignUp')}
-            </button>
-            {onWaitlistMoreInfo && (
-              <button
-                onClick={() => onWaitlistMoreInfo()}
-                className="mt-3 text-cyan-700 dark:text-cyan-400 hover:underline text-sm"
-              >
-                {t('waitlistMoreInfo')}
-              </button>
+            {waitlistFeedback.show ? (
+              <div className="w-full max-w-md text-center">
+                <div className={`p-4 rounded-lg border ${
+                  waitlistFeedback.type === 'success' 
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200'
+                    : waitlistFeedback.type === 'error'
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                    : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200'
+                }`}>
+                  <p className="font-medium">{waitlistFeedback.message}</p>
+                </div>
+                {waitlistFeedback.type !== 'success' && (
+                  <button
+                    onClick={() => setWaitlistFeedback({ message: '', type: 'info', show: false })}
+                    className="mt-3 text-cyan-700 dark:text-cyan-400 hover:underline text-sm"
+                  >
+                    {t('tryAgain') || 'Probeer opnieuw'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <input
+                  type="email"
+                  value={waitlistEmail}
+                  onChange={e => setWaitlistEmail(e.target.value)}
+                  placeholder={t('emailPlaceholder')}
+                  className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  required
+                />
+                <button
+                  onClick={handleWaitlistSubmit}
+                  disabled={!waitlistEmail.trim()}
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-md font-medium hover:bg-cyan-700 disabled:bg-slate-400 transition-colors mt-2"
+                >
+                  {t('waitlistSignUp')}
+                </button>
+                {onWaitlistMoreInfo && (
+                  <button
+                    onClick={() => onWaitlistMoreInfo()}
+                    className="mt-3 text-cyan-700 dark:text-cyan-400 hover:underline text-sm"
+                  >
+                    {t('waitlistMoreInfo')}
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

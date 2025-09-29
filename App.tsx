@@ -721,7 +721,7 @@ const HamburgerMenu: React.FC<{
           />
           
           {/* Menu Content */}
-          <div className={`hamburger-menu-content absolute right-0 top-full mt-2 w-64 rounded-lg shadow-lg z-50 ${
+          <div className={`hamburger-menu-content absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-2 w-64 rounded-lg shadow-lg z-50 ${
             theme === 'dark'
               ? 'bg-gray-800 border border-gray-700'
               : 'bg-white border border-gray-200'
@@ -1655,6 +1655,11 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlist, setWaitlist] = useState<Array<{ email: string; timestamp: number }>>([]);
   const [selectedWaitlistUsers, setSelectedWaitlistUsers] = useState<string[]>([]);
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [waitlistFeedback, setWaitlistFeedback] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({ type: null, message: '' });
   // COMMENTED OUT: 2FA Email confirmation state no longer needed
   // const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState('');
@@ -1983,7 +1988,10 @@ ${getTranscriptSlice(transcript, 20000)}`;
                         // Load Stripe data to get currentSubscriptionStatus
                         try {
                           const stripeData = await getUserStripeData(firebaseUser.uid);
-                          userData.currentSubscriptionStatus = stripeData.currentSubscriptionStatus;
+                          const validStatuses = ['active', 'past_due', 'cancelled', 'expired'] as const;
+                          userData.currentSubscriptionStatus = validStatuses.includes(stripeData.currentSubscriptionStatus as any) 
+                            ? stripeData.currentSubscriptionStatus as 'active' | 'past_due' | 'cancelled' | 'expired'
+                            : 'active';
                         } catch (error) {
                           console.error('Error loading Stripe data:', error);
                           // Default to 'active' if we can't load Stripe data
@@ -4720,24 +4728,111 @@ const handleAnalyzeSentiment = async () => {
 
   // Simplified waitlist functions without 2FA email confirmation
   // Note: 2FA email confirmation system has been temporarily disabled
-  const addToWaitlist = async (email: string) => {
+  const addToWaitlist = async (email: string): Promise<{ success: boolean; message: string; type: 'success' | 'error' | 'info' }> => {
     // Prevent waitlist action when user is logged in
     if (authState.user) {
-      displayToast(t('waitlistAlreadyLoggedIn'), 'info');
-      return;
+      return {
+        success: false,
+        message: t('waitlistAlreadyLoggedIn'),
+        type: 'info'
+      };
     }
-    // Per-sessie beveiliging: slechts één aanmelding per browsersessie
-    const sessionGuardKey = 'waitlist_session_submitted';
+    // Enhanced email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return {
+        success: false,
+        message: t('waitlistInvalidEmail'),
+        type: 'error'
+      };
+    }
+
+    // Anti-misbruik maatregelen
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // 1. Email lengte controle (voorkomen van extreem lange emails)
+    if (normalizedEmail.length > 254) {
+      return {
+        success: false,
+        message: t('waitlistInvalidEmail'),
+        type: 'error'
+      };
+    }
+    
+    // 2. Verdachte patronen detectie
+    const suspiciousPatterns = [
+      /test.*test/i,
+      /fake.*fake/i,
+      /spam.*spam/i,
+      /\+.*\+.*\+/,  // Meerdere + tekens
+      /\.{3,}/,      // Meerdere punten achter elkaar
+      /@.*@/,        // Meerdere @ tekens
+    ];
+    
+    if (suspiciousPatterns.some(pattern => pattern.test(normalizedEmail))) {
+      // Voor privacy: geef gewoon success terug maar log het
+      console.warn('Suspicious email pattern detected:', normalizedEmail.substring(0, 3) + '***');
+      return {
+        success: true,
+        message: t('waitlistThankYou'),
+        type: 'success'
+      };
+    }
+    
+    // 3. Rate limiting per sessie (max 3 pogingen per 10 minuten)
+    const rateLimitKey = 'waitlist_attempts';
+    const rateLimitWindow = 10 * 60 * 1000; // 10 minuten
+    const maxAttempts = 3;
+    
+    try {
+      if (typeof window !== 'undefined') {
+        const attemptsData = sessionStorage.getItem(rateLimitKey);
+        if (attemptsData) {
+          const { count, timestamp } = JSON.parse(attemptsData);
+          const now = Date.now();
+          
+          if (now - timestamp < rateLimitWindow) {
+            if (count >= maxAttempts) {
+              return {
+                success: false,
+                message: t('waitlistRateLimit') || 'Te veel pogingen. Probeer later opnieuw.',
+                type: 'error'
+              };
+            }
+            // Update attempt count
+            sessionStorage.setItem(rateLimitKey, JSON.stringify({
+              count: count + 1,
+              timestamp: timestamp
+            }));
+          } else {
+            // Reset counter na window
+            sessionStorage.setItem(rateLimitKey, JSON.stringify({
+              count: 1,
+              timestamp: now
+            }));
+          }
+        } else {
+          // Eerste poging
+          sessionStorage.setItem(rateLimitKey, JSON.stringify({
+            count: 1,
+            timestamp: Date.now()
+          }));
+        }
+      }
+    } catch (e) {
+      // Silently continue if sessionStorage fails
+    }
+
+    // Per-email beveiliging: controleer of dit specifieke email al is ingediend in deze sessie
+    const sessionGuardKey = `waitlist_submitted_${btoa(normalizedEmail).replace(/[^a-zA-Z0-9]/g, '')}`;
     try {
       if (typeof window !== 'undefined' && sessionStorage.getItem(sessionGuardKey) === '1') {
-        displayToast(t('waitlistAlreadySubmitted'), 'info');
-        return;
-      }
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email || !emailRegex.test(email)) {
-        displayToast(t('waitlistInvalidEmail'), 'error');
-        return;
+        // Voor privacy: altijd dezelfde melding geven alsof het succesvol was
+        return {
+          success: true,
+          message: t('waitlistThankYou'),
+          type: 'success'
+        };
       }
 
       // Write directly to waitlist; Firestore rules do not allow reading this collection from the client
@@ -4787,11 +4882,6 @@ const handleAnalyzeSentiment = async () => {
       }
 
       if (wrote) {
-        setWaitlistEmail('');
-        displayToast(
-          t('waitlistThankYou'), 
-          'success'
-        );
         // Markeer deze sessie als voltooid, zodat er niet opnieuw kan worden ingezonden in dezelfde sessie
         try {
           if (typeof window !== 'undefined') sessionStorage.setItem(sessionGuardKey, '1');
@@ -4801,11 +4891,16 @@ const handleAnalyzeSentiment = async () => {
           email: email.substring(0, 3) + '***',
           timestamp: new Date().toISOString()
         });
+        
+        return {
+          success: true,
+          message: t('waitlistThankYou'),
+          type: 'success'
+        };
       }
       
     } catch (error) {
-      console.error('Error adding to waitlist:', error);
-      
+      console.error('❌ Error adding to waitlist:', error);
       // Enhanced error handling
       let errorMessage = t('waitlistErrorAdding');
       
@@ -4817,9 +4912,15 @@ const handleAnalyzeSentiment = async () => {
         }
       }
       
-      displayToast(errorMessage, 'error');
+      return {
+        success: false,
+        message: errorMessage,
+        type: 'error'
+      };
     }
   };
+
+
 
   // COMMENTED OUT: 2FA Email confirmation system
   /*
@@ -9399,13 +9500,59 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         required
                       />
                       <button
-                        onClick={() => addToWaitlist(waitlistEmail)}
-                        disabled={!waitlistEmail.trim()}
+                        onClick={async () => {
+                          if (!waitlistEmail.trim()) return;
+                          
+                          setWaitlistLoading(true);
+                          setWaitlistFeedback({ type: null, message: '' });
+                          
+                          try {
+                            const result = await addToWaitlist(waitlistEmail);
+                            setWaitlistFeedback({
+                              type: result.type as 'success' | 'error',
+                              message: result.message
+                            });
+                            
+                            // Auto-clear feedback after 5 seconds
+                            setTimeout(() => {
+                              setWaitlistFeedback({ type: null, message: '' });
+                            }, 5000);
+                            
+                            if (result.success) {
+                              setWaitlistEmail(''); // Clear email on success
+                            }
+                          } catch (error) {
+                            setWaitlistFeedback({
+                              type: 'error',
+                              message: t('waitlistErrorAdding') || 'Er is een fout opgetreden'
+                            });
+                            
+                            // Auto-clear error feedback after 5 seconds
+                            setTimeout(() => {
+                              setWaitlistFeedback({ type: null, message: '' });
+                            }, 5000);
+                          } finally {
+                            setWaitlistLoading(false);
+                          }
+                        }}
+                        disabled={!waitlistEmail.trim() || waitlistLoading}
                         className="px-4 py-2 bg-cyan-600 text-white rounded-md font-medium hover:bg-cyan-700 disabled:bg-slate-400 transition-colors"
                       >
-                        {t('waitlistSignUp')}
+                        {waitlistLoading ? t('loading') || 'Laden...' : t('waitlistSignUp')}
                       </button>
                     </div>
+                    
+                    {/* Feedback message */}
+                    {waitlistFeedback.type && (
+                      <div className={`mt-3 p-3 rounded-md text-sm ${
+                        waitlistFeedback.type === 'success' 
+                          ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
+                          : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+                      }`}>
+                        {waitlistFeedback.message}
+                      </div>
+                    )}
+                    
                     <button
                       onClick={() => {
                         if (!authState.user) {
@@ -10216,6 +10363,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
          onLogout={handleSessionExpired}
        />
      )}
+
+
    </main>
    </div>
   </>

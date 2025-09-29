@@ -1737,6 +1737,8 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   waitlistAlreadyLoggedIn: "Je bent al ingelogd, de wachtlijst is alleen voor nieuwe uitnodigingen.",
   waitlistAlreadyRegistered: "Je hebt je in deze sessie al aangemeld voor de wachtlijst.",
   waitlistInvalidEmail: "Voer een geldig e-mailadres in.",
+  waitlistConfirmationTitle: "Inschrijving Bevestigd",
+  waitlistConfirmationMessage: "Uw inschrijving is opgenomen in de administratie. U hoort zo snel mogelijk van ons. Bedankt!",
   waitlistThankYou: "Bedankt voor je aanmelding! Het RecapHorizon team neemt zo snel mogelijk contact met je op. We waarderen je interesse!",
 
   // Business Logic Messages

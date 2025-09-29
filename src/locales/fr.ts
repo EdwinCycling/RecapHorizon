@@ -1280,6 +1280,8 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   privacyStatement: "Nous ne stockons rien de vos sessions. Votre vie privée passe en premier.",
   directSignup: "Inscription directe",
   signUp: "S'inscrire",
+  waitlistConfirmationTitle: "Merci pour votre inscription !",
+  waitlistConfirmationMessage: "Votre inscription a été enregistrée dans notre administration. Vous entendrez de nous dès que possible. Merci !",
 
   // Expert configuration
   role: "Rôle :",

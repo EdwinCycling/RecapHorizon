@@ -1332,6 +1332,8 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   privacyFirst: "Wir speichern absolut nichts von Ihren Sitzungen. Ihre Privatsphäre steht an erster Stelle.",
   directSignup: "Direkte Anmeldung",
   signUp: "Anmelden",
+  waitlistConfirmationTitle: "Vielen Dank für Ihre Anmeldung!",
+  waitlistConfirmationMessage: "Ihre Anmeldung wurde in unsere Verwaltung aufgenommen. Sie hören so schnell wie möglich von uns. Vielen Dank!",
 
   // Console Messages & Errors
   basicConnectionOk: "✅ Grundverbindung: OK",

@@ -1285,6 +1285,8 @@ RecapHorizon: Más allá del caos, la esencia primero.`,
   privacyStatement: "No almacenamos nada de tus sesiones. Tu privacidad es lo primero.",
   directSignup: "Registro directo",
   signUp: "Registrarse",
+  waitlistConfirmationTitle: "¡Gracias por registrarte!",
+  waitlistConfirmationMessage: "Su registro ha sido incluido en nuestra administración. Escuchará de nosotros lo antes posible. ¡Gracias!",
 
   // Expert configuration
   role: "Rol:",

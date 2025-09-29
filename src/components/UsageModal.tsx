@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../contexts/ThemeContext';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { SubscriptionTier } from '../utils/aiProviderManager';
 import { subscriptionService } from '../subscriptionService';

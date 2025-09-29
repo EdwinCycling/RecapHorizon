@@ -200,6 +200,12 @@ export interface EmailOptions {
   length: string;
 }
 
+export interface SocialPostData {
+  post: string;
+  imageInstruction: string;
+  platform?: 'X / BlueSky' | 'Generic';
+}
+
 // Ask the Expert interfaces
 export interface ExpertTopic {
   id: string;

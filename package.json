@@ -4,7 +4,7 @@
   "version": "0.90928.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000",
     "build": "vite build",
     "preview": "vite preview",
     "dev:netlify": "npx netlify dev",
@@ -23,6 +23,7 @@
     "firebase": "^12.1.0",
     "firebase-admin": "^13.5.0",
     "jspdf": "^3.0.2",
+    "lucide-react": "^0.544.0",
     "mammoth": "^1.10.0",
     "mermaid": "^11.3.0",
     "pdfjs-dist": "^5.4.54",

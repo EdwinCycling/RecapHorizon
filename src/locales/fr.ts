@@ -1820,5 +1820,26 @@ notionIntegrationSecurityDesc: "Vos données Notion restent sécurisées car nou
   loadingUsage: "Chargement des données d'utilisation...",
   upgradeForMore: "Mettre à niveau pour plus",
   upgradeDescription: "Mettez à niveau votre abonnement pour plus de tokens et de sessions",
-  changePlan: "Changer de Plan"
+  changePlan: "Changer de Plan",
+
+  // Social Post translations
+  copySocialPost: "Copier le post social",
+  downloadSocialPost: "Télécharger le post social",
+  emailSocialPost: "Envoyer le post social par e-mail",
+  copyImageInstructions: "Copier les instructions d'image IA",
+  socialPostContent: "Contenu du Post Social",
+  aiImageInstructions: "Instructions d'Image IA",
+  socialPostCopied: "Post social copié dans le presse-papiers",
+  socialPostGenerate: "Générer un Post Social",
+  socialPostCount: "Nombre de posts",
+  socialPostCountLabel: "Sélectionner le nombre de posts (1-5)",
+  socialPostGenerating: "Génération des posts...",
+  socialPostCopyIndividual: "Copier ce post",
+  socialPostCopyAll: "Copier tous les posts",
+  socialPostGenerated: "Posts sociaux générés",
+  imageInstructionCopied: "Instruction d'image IA copiée dans le presse-papiers",
+  copyImageInstruction: "Copier l'instruction d'image",
+  aiImageInstruction: "Instruction d'Image IA",
+  aiImageInstructionDescription: "Ci-dessous une instruction pour créer une image correspondante. Copiez et collez ceci dans un outil IA de génération d'images.",
+  aiImageInstructionExample: "Par exemple avec"
 };

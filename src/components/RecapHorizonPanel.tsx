@@ -1,6 +1,7 @@
+import SocialPostXCard from './SocialPostXCard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
-import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData } from '../../types';
+import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData, SocialPostData } from '../../types';
 import { getBcp47Code } from '../languages';
 import EmailCompositionTab, { EmailData } from './EmailCompositionTab';
 
@@ -16,7 +17,7 @@ import EmailCompositionTab, { EmailData } from './EmailCompositionTab';
 
 
 
-type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email';
+type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email' | 'socialPost' | 'socialPostX';
 
 interface RecapItem {
 	id: string;
@@ -44,6 +45,8 @@ interface RecapHorizonPanelProps {
 	businessCaseData?: BusinessCaseData | null;
 	blogData?: string;
 	explainData?: ExplainData | null;
+	socialPostData?: SocialPostData | null;
+socialPostXData?: SocialPostData | null;
 	quizQuestions?: QuizQuestion[] | null;
 	quizIncludeAnswers?: boolean;
 	outputLanguage?: string; // Output language for BCP47 display
@@ -53,6 +56,10 @@ interface RecapHorizonPanelProps {
 	emailEnabled?: boolean;
 	onPreviewEmail?: (emailData: EmailData) => void;
 	onOpenMailto?: (emailData: EmailData) => void;
+
+	// Social Post functionality
+	onGenerateSocialPost?: (analysisType: 'socialPost' | 'socialPostX', postCount: number) => Promise<void>;
+	isGeneratingSocialPost?: boolean;
 
 	// Notifications
 	onNotify?: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -102,6 +109,8 @@ export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	businessCaseData,
 	blogData,
 	explainData,
+	socialPostData,
+  socialPostXData,
 	quizQuestions,
 	quizIncludeAnswers,
 	outputLanguage,
@@ -109,10 +118,13 @@ export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	emailEnabled,
 	onPreviewEmail,
 	onOpenMailto,
+	onGenerateSocialPost,
+	isGeneratingSocialPost,
 	onNotify,
 	startStamp,
 }) => {
 	const [isOpen, setIsOpen] = useState<boolean>(true);
+const [quizMenuOpen, setQuizMenuOpen] = useState<boolean>(false);
 	const [persistentItems, setPersistentItems] = useState<RecapItem[]>([]);
 	const [resultsCache, setResultsCache] = useState<{ [key in RecapItemType]?: string }>({});
 
@@ -173,6 +185,12 @@ useEffect(() => {
 		if (!!blogData && blogData.trim().length > 0) availableContent.add('blog');
 		if (!!explainData && explainData.explanation && explainData.explanation.trim().length > 0) availableContent.add('explain');
 		if (emailEnabled && !!emailAddresses && emailAddresses.length > 0) availableContent.add('email');
+		if (!!socialPostData && socialPostData.post && socialPostData.post.trim().length > 0) {
+      availableContent.add('socialPost');
+    }
+    if (!!socialPostXData && socialPostXData.post && socialPostXData.post.trim().length > 0) {
+      availableContent.add('socialPostX');
+    }
 
 		// Vind nieuwe content die nog niet is verwerkt
 		const newContent = Array.from(availableContent).filter(type => !processedContentRef.current.has(type));
@@ -198,6 +216,8 @@ useEffect(() => {
 					case 'blog': title = t('blog'); break;
 					case 'explain': title = t('explain'); break;
 					case 'email': title = t('emailFormTitle', 'E-mail Samenstelling'); break;
+					case 'socialPost': title = t('socialPost', 'Social Post'); break;
+          case 'socialPostX': title = t('socialPostX', 'X / BlueSky post'); break;
 				}
 				itemsToAdd.push({ id: type, type: type as RecapItemType, title, enabled: false });
 			});
@@ -207,7 +227,7 @@ useEffect(() => {
 			// Update welke content we hebben verwerkt
 			newContent.forEach(type => processedContentRef.current.add(type));
 		}
-	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData]);
+	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData, explainData, socialPostData]);
 
 	const hasAnyItem = persistentItems.length > 0;
 	const numEnabled = persistentItems.filter(i => i.enabled).length;
@@ -341,8 +361,30 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 				parts.push(explainData.explanation);
 				return { title: `## ${t('explain')}`, text: parts.join('\n') };
 			}
+			case 'socialPost': {
+				if (!socialPostData) return { title: `## ${t('socialPost')}`, text: '' };
+				const parts: string[] = [];
+				parts.push(socialPostData.post);
+				if (socialPostData.imageInstruction) {
+					parts.push('');
+					parts.push(`**AI Image Instructions:**`);
+					parts.push(socialPostData.imageInstruction);
+				}
+				return { title: `## ${t('socialPost')}`, text: parts.join('\n') };
+			}
+      case 'socialPostX': {
+				if (!socialPostXData) return { title: `## ${t('socialPostX')}`, text: '' };
+				const parts: string[] = [];
+				parts.push(socialPostXData.post);
+				if (socialPostXData.imageInstruction) {
+					parts.push('');
+					parts.push(`**AI Image Instructions:**`);
+					parts.push(socialPostXData.imageInstruction);
+				}
+				return { title: `## ${t('socialPostX')}`, text: parts.join('\n') };
+			}
 		}
-	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, quizQuestions, quizIncludeAnswers]);
+	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, socialPostData, quizQuestions, quizIncludeAnswers]);
 
 	const enabledItems = persistentItems.filter(i => i.enabled);
 
@@ -485,12 +527,40 @@ To send via email:
 												onChange={() => toggleItem(item.id)}
 												className="w-4 h-4 accent-cyan-600"
 											/>
-											<span className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.title}</span>
+                                        {item.type === 'socialPostX' ? (
+                                            <SocialPostXCard 
+                                                socialPostXData={socialPostXData || { post: '', imageInstruction: '', platform: 'X / BlueSky' }} 
+                                                onCopy={(content) => {
+                                                    navigator.clipboard.writeText(content);
+                                                    if (onNotify) onNotify(t('copiedToClipboard'), 'success');
+                                                }}
+                                                onGenerate={onGenerateSocialPost ? (count) => onGenerateSocialPost('socialPostX', count) : undefined}
+                                                isGenerating={isGeneratingSocialPost || false}
+                                                t={t} 
+                                            />
+                                        ) : (
+													<span className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.title}</span>
+                                        )}
 										</div>
-										<div className="flex items-center gap-1">
-											<ArrowButton direction="up" onClick={() => moveItem(index, 'up')} disabled={index === 0} t={t} />
-<ArrowButton direction="down" onClick={() => moveItem(index, 'down')} disabled={index === persistentItems.length - 1} t={t} />
-										</div>
+										{item.type === 'quiz' ? (
+											<div className="relative flex items-center gap-1">
+												<button onClick={() => setQuizMenuOpen(prev => !prev)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300">
+													<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+												</button>
+												{quizMenuOpen && (
+													<div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg z-10">
+														<button onClick={() => { handleExportText(); setQuizMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700">{t('exportToText')}</button>
+														<button onClick={() => { handleExportPdf(); setQuizMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700">{t('exportToPdf')}</button>
+														<button onClick={() => { handleMailComposed(); setQuizMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700">{t('copyForEmail')}</button>
+													</div>
+												)}
+											</div>
+										) : (
+											<div className="flex items-center gap-1">
+												<ArrowButton direction="up" onClick={() => moveItem(index, 'up')} disabled={index === 0} t={t} />
+												<ArrowButton direction="down" onClick={() => moveItem(index, 'down')} disabled={index === persistentItems.length - 1} t={t} />
+											</div>
+										)}
 									</li>
 								))}
 							</ul>
@@ -499,7 +569,7 @@ To send via email:
 								<div className="flex flex-wrap items-center gap-2 mt-3">
 									<button onClick={handleExportPdf} className="px-3 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium">{t('exportToPdf')}</button>
 									<button onClick={handleExportText} className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium">{t('exportToText')}</button>
-									<button onClick={handleMailComposed} className="px-3 py-2 rounded bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium">{t('copyForEmail')}</button>
+									<button onClick={handleMailComposed} className="px-3 py-2 rounded bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-800 text-white text-sm font-medium">{t('copyForEmail')}</button>
 								</div>
 							)}
 						</>

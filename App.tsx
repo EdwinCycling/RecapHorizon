@@ -10,8 +10,9 @@ import WaitlistModal from './src/components/WaitlistModal.tsx';
 // import { EmailConfirmationModal } from './src/components/EmailConfirmationModal';
 import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
-import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, EmailOptions, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
+import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, EmailOptions, SocialPostData, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
+ import { HiRefresh, HiClipboardCopy, HiDownload, HiMail, HiDotsHorizontal } from 'react-icons/hi';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 import modelManager from './src/utils/modelManager';
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
@@ -263,6 +264,12 @@ const MailIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
         <polyline points="22 6 12 13 2 6"/>
+    </svg>
+);
+
+const SocialPostIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
     </svg>
 );
 
@@ -613,7 +620,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'email';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'email' | 'socialPost' | 'socialPostX';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -990,10 +997,15 @@ export default function App() {
 
   const [activeView, setActiveView] = useState<ViewType>('transcript');
   const [activeTab, setActiveTab] = useState('Transcribe');
+  
+  // New dropdown navigation state
+  const [mainMode, setMainMode] = useState<'transcript' | 'analysis' | 'actions'>('transcript');
+  const [selectedAnalysis, setSelectedAnalysis] = useState<ViewType>('');
   const [loadingText, setLoadingText] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
   const [showActionButtons, setShowActionButtons] = useState<boolean>(false);
+  const [showImageActionButtons, setShowImageActionButtons] = useState<boolean>(false);
   const actionButtonsRef = useRef<HTMLDivElement>(null);
   
   // Close action buttons when clicking outside
@@ -1001,6 +1013,7 @@ export default function App() {
     const handleClickOutside = (event: MouseEvent) => {
       if (actionButtonsRef.current && !actionButtonsRef.current.contains(event.target as Node)) {
         setShowActionButtons(false);
+        setShowImageActionButtons(false);
       }
     };
 
@@ -1303,6 +1316,89 @@ export default function App() {
     const body = `## ${type}\n\n${emailContent}`;
     return { subject, body };
   };
+
+  const generateSocialPost = async (analysisType: 'socialPost' | 'socialPostX', content: string, postCount: number = 1) => {
+    setIsGenerating(true);
+    try {
+      const stamp = (() => {
+        const d = recordingStartMs ? new Date(recordingStartMs) : new Date();
+        return d.toLocaleString('nl-NL');
+      })();
+      
+      const posts = [];
+      
+      // Define max length based on analysis type
+      const maxLength = analysisType === 'socialPostX' ? 280 : 140;
+
+      // Split content into chunks for multiple posts
+      const contentChunks = [];
+      
+      if (postCount === 1) {
+        let socialContent = content;
+        if (content.length > maxLength) {
+          socialContent = content.substring(0, maxLength) + '...';
+        }
+        contentChunks.push(socialContent);
+      } else {
+        // Split content into multiple meaningful chunks
+        const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        const chunkSize = Math.ceil(sentences.length / postCount);
+        
+        for (let i = 0; i < postCount; i++) {
+          const start = i * chunkSize;
+          const end = Math.min((i + 1) * chunkSize, sentences.length);
+          let chunk = sentences.slice(start, end).join('. ').trim();
+          
+          if (chunk.length > maxLength) {
+            chunk = chunk.substring(0, maxLength) + '...';
+          }
+          contentChunks.push(chunk);
+        }
+      }
+
+      for (let i = 0; i < contentChunks.length; i++) {
+        const chunk = contentChunks[i];
+        const postNumber = postCount > 1 ? `(${i + 1}/${postCount})` : '';
+        
+        if (analysisType === 'socialPostX') {
+            // X/BlueSky format - no hashtags/emojis
+            posts.push(`${postNumber} ${chunk}`.trim());
+        } else {
+            // Original social post format
+            const prompt = `Maak een korte, aantrekkelijke social media post in het Nederlands van de volgende tekst. Voeg relevante emojis en hashtags toe. De post mag maximaal 140 karakters lang zijn. ${postNumber}\n\n${chunk}`;
+            if (!apiKey) {
+              throw new Error(t('apiKeyMissing', 'API key not available'));
+            }
+            const ai = new GoogleGenAI({ apiKey: apiKey });
+            const modelName = await modelManager.getModelForFunction('analysisGeneration');
+            const response = await ai.models.generateContent({ model: modelName, contents: prompt });
+            const result = response.text;
+            posts.push(result);
+        }
+      }
+
+      const socialPostResult = {
+        post: posts.join('\n\n'),
+        timestamp: stamp,
+      };
+
+      if (analysisType === 'socialPostX') {
+        setSocialPostXData(socialPostResult);
+      } else {
+        setSocialPostData(socialPostResult);
+      }
+
+    } catch (error) {
+      console.error("Error generating social post:", error);
+      errorHandler.handleError(error as any, ErrorType.UNKNOWN, { additionalContext: { context: 'generateSocialPost', message: t('errorGeneratingSocialPost') } });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+      
+
+
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
@@ -1380,6 +1476,7 @@ export default function App() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   // API key storage preference removed - all keys now stored in database only
   const [executiveSummaryData, setExecutiveSummaryData] = useState<ExecutiveSummaryData | null>(null);
   const [storytellingData, setStorytellingData] = useState<StorytellingData | null>(null);
@@ -1398,6 +1495,7 @@ export default function App() {
   const [quizNumQuestions, setQuizNumQuestions] = useState<number>(2);
   const [quizNumOptions, setQuizNumOptions] = useState<2 | 3 | 4>(3);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [quizError, setQuizError] = useState<string | null>(null);
 
   const getStartStamp = () => {
@@ -1741,6 +1839,9 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [emailOptions, setEmailOptions] = useState<EmailOptions>({ tone: '', length: '' });
   const [emailAddresses, setEmailAddresses] = useState<string[]>([]);
   const [emailContent, setEmailContent] = useState<string>('');
+  const [socialPostData, setSocialPostData] = useState<SocialPostData | null>(null);
+const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(null);
+  const [socialPostCount, setSocialPostCount] = useState<number>(1);
   const [sessionType, setSessionType] = useState<SessionType>(SessionType.AUDIO_RECORDING);
 
   // Deep translation helper for nested keys like 'storytellingTargetAudienceOptions.internalTeam'
@@ -3866,6 +3967,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
         // Controleer of er anonimisatie regels zijn ingesteld
         if (anonymizationRules.length === 0 || anonymizationRules.every(rule => !rule.originalText.trim())) {
             setError('Geen anonimisatie regels ingesteld. Stel eerst de regels in via het instellingen scherm.');
+            setActiveSettingsTab('anonymization'); // Set the correct tab
             settingsModal.open();
             return;
         }
@@ -3984,41 +4086,89 @@ Provide a comprehensive summary of the given text. Start with a catchy and relev
             return `From the **${inputLanguage}** text below, create a structured learning document in **${outputLanguage}** with: Key takeaways, ranked 1–5 stars (allow half-stars, ★½). Short explanations. Use clear headings and bullet points. Order from most to least important.`;
         case 'followUp':
             return `Based on the **${inputLanguage}** transcript below, generate 10 relevant follow-up questions in **${outputLanguage}** as a numbered list.`;
+        case 'socialPost':
+            return `Create a social media post in **${outputLanguage}** based on the **${inputLanguage}** transcript below. 
+
+Format the response as JSON with two fields:
+{
+  "post": "The social media post content",
+  "imageInstruction": "AI instruction for generating accompanying image"
+}
+
+For the "post" field:
+- Start with an engaging header using relevant emoticons
+- Create a semi-short message suitable for LinkedIn, Facebook, etc.
+- Include emoticons throughout the message to make it engaging
+- End with 3-10 relevant hashtags (use #hashtag format)
+- Keep the tone professional but engaging
+- Maximum length should be suitable for social media platforms
+
+For the "imageInstruction" field:
+- Create a detailed instruction for AI image generation
+- Describe what kind of image would complement the social media post
+- Include style, mood, colors, and visual elements
+- Make it specific enough for an AI to generate an appropriate image`;
+        case 'socialPostX':
+            return `Create a social media post in **${outputLanguage}** based on the **${inputLanguage}** transcript below. 
+
+Format the response as JSON with two fields:
+{
+  "post": "The social media post content",
+  "imageInstruction": "AI instruction for generating accompanying image"
+}
+
+For the "post" field:
+- Create a concise, clean message suitable for X (Twitter) and BlueSky
+- NO emoticons or emojis
+- NO hashtags
+- Keep the tone professional and direct
+- Maximum 280 characters
+- Focus on the key message without decorative elements
+- Use clear, impactful language
+
+For the "imageInstruction" field:
+- Create a detailed instruction for AI image generation
+- Describe what kind of image would complement the social media post
+- Include style, mood, colors, and visual elements
+- Make it specific enough for an AI to generate an appropriate image`;
         default: return '';
     }
 };
 
-const handleGenerateAnalysis = async (type: ViewType) => {
+const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => {
     setActiveView(type);
     if ((type === 'summary' && summary) || (type === 'faq' && faq) || (type === 'learning' && learningDoc) || (type === 'followUp' && followUpQuestions)) return; 
 
     // Import security utilities
     const { validateAndSanitizeForAI, rateLimiter } = await import('./src/utils/security');
-    
-    // Rate limiting check (max 10 analysis requests per minute)
+
     const sessionId = 'analysis_' + (auth.currentUser?.uid || 'anonymous');
     if (!rateLimiter.isAllowed(sessionId, 10, 60000)) {
         const errorMsg = 'Te veel analyseverzoeken. Probeer het over een minuut opnieuw.';
         setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
         return;
     }
-    
-    // Validate and sanitize transcript for AI processing
-    const validation = validateAndSanitizeForAI(transcript, 500000); // 500KB limit for analysis
+
+    const validation = validateAndSanitizeForAI(transcript, 500000);
     if (!validation.isValid) {
         const errorMsg = `Ongeldige transcript voor analyse: ${validation.error}`;
         setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
         return;
     }
-    
+
     const sanitizedTranscript = validation.sanitized;
-    
+
     if (!sanitizedTranscript.trim()) {
         const errorMsg = t('transcriptEmpty');
         setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
         return;
     }
-    
+
+    if (type === 'socialPost' || type === 'socialPostX') {
+        generateSocialPost(type, sanitizedTranscript, postCount);
+        return;
+    }
+
     if (!apiKey) {
         displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
         return;
@@ -4085,6 +4235,7 @@ const handleGenerateAnalysis = async (type: ViewType) => {
         else if (type === 'learning') setLearningDoc(resultText);
         else if (type === 'followUp') setFollowUpQuestions(resultText);
 
+
     } catch (err: any) {
         console.error(`Fout bij genereren ${type}:`, err);
         const errorText = t('generationFailed', { type }) + `: ${err.message || t('unknownError')}`;
@@ -4092,6 +4243,7 @@ const handleGenerateAnalysis = async (type: ViewType) => {
         else if (type === 'faq') setFaq(errorText);
         else if (type === 'learning') setLearningDoc(errorText);
         else if (type === 'followUp') setFollowUpQuestions(errorText);
+
     } finally {
         setLoadingText('');
     }
@@ -6892,10 +7044,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         { id: 'explain', type: 'view', icon: ExplainIcon, label: () => t('explain') },
         // Email tab - alleen zichtbaar voor Gold, Enterprise, Diamond en bij email import
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) ? 
-            [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : [])
+            [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : []),
+        // Social Post tab - alleen zichtbaar voor Gold, Enterprise, Diamond
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', email: emailContent || '' };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', email: emailContent || '', socialPost: socialPostData?.post || '', socialPostX: socialPostXData?.post || '' };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -6914,10 +7069,12 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         if (view === 'businessCase' && businessCaseData?.businessCase) { setActiveView('businessCase'); return; }
         if (view === 'explain' && explainData?.explanation) { setActiveView('explain'); return; }
         if (view === 'email' && emailContent) { setActiveView('email'); return; }
+        if (view === 'socialPost' && socialPostData?.post) { setActiveView('socialPost'); return; }
+        if (view === 'socialPostX' && socialPostXData?.post) { setActiveView('socialPostX'); return; }
 
         // If content doesn't exist, generate it
-        if (['summary', 'faq', 'learning', 'followUp'].includes(view)) {
-            handleGenerateAnalysis(view);
+        if (['summary', 'faq', 'learning', 'followUp', 'socialPost', 'socialPostX'].includes(view)) {
+            handleGenerateAnalysis(view, 1);
         } else if (view === 'exec') {
             handleGenerateExecutiveSummary();
         } else if (view === 'quiz') {
@@ -6929,7 +7086,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         } else if (view === 'storytelling') {
             handleOpenStorytellingQuestions();
         } else if (view === 'blog') {
-            handleGenerateBlog();
+            setActiveView('blog');
         } else if (view === 'businessCase') {
             // Initialize business case data if not exists
             if (!businessCaseData) {
@@ -6983,6 +7140,45 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         }
     };
     const renderContent = () => {
+        // Handle transcript mode
+        if (mainMode === 'transcript' && activeView === 'transcript') {
+            return (
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                    <div className="prose dark:prose-invert max-w-none">
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
+                            {t('transcript')}
+                        </h3>
+                        <div className="whitespace-pre-wrap text-slate-700 dark:text-slate-300 leading-relaxed">
+                            {transcript || t('noTranscriptAvailable')}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        
+        // Handle actions mode - show empty content area or action results
+        if (mainMode === 'actions') {
+            return (
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px]">
+                    <div className="text-center text-slate-500 dark:text-slate-400">
+                        <p>{t('selectActionAbove')}</p>
+                    </div>
+                </div>
+            );
+        }
+        
+        // Handle analysis mode with no specific analysis selected
+        if (mainMode === 'analysis' && !selectedAnalysis) {
+            return (
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px]">
+                    <div className="text-center text-slate-500 dark:text-slate-400">
+                        <p>Selecteer een analyse type hierboven om de resultaten te bekijken</p>
+                    </div>
+                </div>
+            );
+        }
+        
+        // Handle analysis mode - existing logic for analysis content
         if (activeView !== 'transcript' && activeView !== 'chat' && activeView !== 'podcast' && activeView !== 'sentiment' && loadingText && !analysisContent[activeView] && !keywordAnalysis) {
             return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
         }
@@ -7024,78 +7220,107 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 </div>
             );
             return (
-                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
-                    <div className="absolute top-4 right-4 flex gap-2">
-                        <button onClick={() => handleGenerateExecutiveSummary()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')}>
-                            🔄
-                        </button>
-                        <button onClick={async () => {
-                            const txt = (() => {
-                                const parts: string[] = [
-                                  `## ${t('executiveSummary')}`,
-                                  '',
-                                  `${t('objective')}: ${executiveSummaryData.objective}`,
-                                  `${t('situation')}: ${executiveSummaryData.situation}`,
-                                  `${t('complication')}: ${executiveSummaryData.complication}`,
-                                  `${t('resolution')}: ${executiveSummaryData.resolution}`,
-                                  `${t('benefits')}: ${executiveSummaryData.benefits}`,
-                                  `${t('callToAction')}: ${executiveSummaryData.call_to_action}`
-                                ];
-                                return parts.join('\n');
-                            })();
-                            try {
-                                await copyToClipboard(txt);
-                                displayToast(t('copiedToClipboard'), 'success');
-                            } catch {
-                                displayToast(t('copyFailed'), 'error');
-                            }
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                            <CopyIcon className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => {
-                            const txt = (() => {
-                                const parts: string[] = [
-                                  `## ${t('executiveSummary')}`,
-                                  '',
-                                  `${t('objective')}: ${executiveSummaryData.objective}`,
-                                  `${t('situation')}: ${executiveSummaryData.situation}`,
-                                  `${t('complication')}: ${executiveSummaryData.complication}`,
-                                  `${t('resolution')}: ${executiveSummaryData.resolution}`,
-                                  `${t('benefits')}: ${executiveSummaryData.benefits}`,
-                                  `${t('callToAction')}: ${executiveSummaryData.call_to_action}`
-                                ];
-                                return parts.join('\n');
-                            })();
-                            downloadTextFile(txt, 'executive-summary.txt');
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')}>
-                            ⬇️
-                        </button>
-                        <button onClick={() => {
-                            const content = (() => {
-                                const parts: string[] = [
-                                  `## ${t('executiveSummary')}`,
-                                  '',
-                                  `${t('objective')}: ${executiveSummaryData.objective}`,
-                                  `${t('situation')}: ${executiveSummaryData.situation}`,
-                                  `${t('complication')}: ${executiveSummaryData.complication}`,
-                                  `${t('resolution')}: ${executiveSummaryData.resolution}`,
-                                  `${t('benefits')}: ${executiveSummaryData.benefits}`,
-                                  `${t('callToAction')}: ${executiveSummaryData.call_to_action}`
-                                ];
-                                return parts.join('\n');
-                            })();
-                            const { subject, body } = generateEmailContent(t('executiveSummary'), content);
-                            copyToClipboardForEmail(subject, body);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyForEmail')}>
-                            ✉️
-                        </button>
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                    <div className="absolute top-4 right-8">
+                        <div 
+                            ref={actionButtonsRef}
+                            className="relative"
+                            onMouseEnter={() => setShowActionButtons(true)}
+                            onMouseLeave={() => setShowActionButtons(false)}
+                        >
+                            <button 
+                                className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                aria-label={t('actions')}
+                                onClick={() => setShowActionButtons(!showActionButtons)}
+                                title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="5" r="2"/>
+                                    <circle cx="12" cy="12" r="2"/>
+                                    <circle cx="12" cy="19" r="2"/>
+                                </svg>
+                            </button>
+                            {showActionButtons && (
+                                <div 
+                                    className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                    onMouseEnter={() => setShowActionButtons(true)}
+                                    onMouseLeave={() => setShowActionButtons(false)}
+                                >
+                                    <button onClick={() => handleGenerateExecutiveSummary()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                        🔄
+                                    </button>
+                                    <button onClick={async () => {
+                                        const txt = (() => {
+                                            const parts: string[] = [
+                                              `## ${t('executiveSummary')}`,
+                                              '',
+                                              `${t('objective')}: ${executiveSummaryData.objective}`,
+                                              `${t('situation')}: ${executiveSummaryData.situation}`,
+                                              `${t('complication')}: ${executiveSummaryData.complication}`,
+                                              `${t('resolution')}: ${executiveSummaryData.resolution}`,
+                                              `${t('benefits')}: ${executiveSummaryData.benefits}`,
+                                              `${t('callToAction')}: ${executiveSummaryData.call_to_action}`
+                                            ];
+                                            return parts.join('\n');
+                                        })();
+                                        try {
+                                            await copyToClipboard(txt);
+                                            displayToast(t('copiedToClipboard'), 'success');
+                                        } catch {
+                                            displayToast(t('copyFailed'), 'error');
+                                        }
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                        <CopyIcon className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={() => {
+                                        const txt = (() => {
+                                            const parts: string[] = [
+                                              `## ${t('executiveSummary')}`,
+                                              '',
+                                              `${t('objective')}: ${executiveSummaryData.objective}`,
+                                              `${t('situation')}: ${executiveSummaryData.situation}`,
+                                              `${t('complication')}: ${executiveSummaryData.complication}`,
+                                              `${t('resolution')}: ${executiveSummaryData.resolution}`,
+                                              `${t('benefits')}: ${executiveSummaryData.benefits}`,
+                                              `${t('callToAction')}: ${executiveSummaryData.call_to_action}`
+                                            ];
+                                            return parts.join('\n');
+                                        })();
+                                        downloadTextFile(txt, 'executive-summary.txt');
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')} title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                        ⬇️
+                                    </button>
+                                    <button onClick={() => {
+                                        const content = (() => {
+                                            const parts: string[] = [
+                                              `## ${t('executiveSummary')}`,
+                                              '',
+                                              `${t('objective')}: ${executiveSummaryData.objective}`,
+                                              `${t('situation')}: ${executiveSummaryData.situation}`,
+                                              `${t('complication')}: ${executiveSummaryData.complication}`,
+                                              `${t('resolution')}: ${executiveSummaryData.resolution}`,
+                                              `${t('benefits')}: ${executiveSummaryData.benefits}`,
+                                              `${t('callToAction')}: ${executiveSummaryData.call_to_action}`
+                                            ];
+                                            return parts.join('\n');
+                                        })();
+                                        const { subject, body } = generateEmailContent(t('executiveSummary'), content);
+                                        copyToClipboardForEmail(subject, body);
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyForEmail')} title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                        ✉️
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    {block(t('objective', 'Objective'), executiveSummaryData.objective)}
-                    {block(t('situation', 'Situation'), executiveSummaryData.situation)}
-                    {block(t('complication', 'Complication'), executiveSummaryData.complication)}
-                    {block(t('resolution', 'Resolution'), executiveSummaryData.resolution)}
-                    {block(t('benefits', 'Benefits'), executiveSummaryData.benefits)}
-                    {block(t('callToAction', 'Call to Action'), executiveSummaryData.call_to_action)}
+                    <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                        {block(t('objective', 'Objective'), executiveSummaryData.objective)}
+                        {block(t('situation', 'Situation'), executiveSummaryData.situation)}
+                        {block(t('complication', 'Complication'), executiveSummaryData.complication)}
+                        {block(t('resolution', 'Resolution'), executiveSummaryData.resolution)}
+                        {block(t('benefits', 'Benefits'), executiveSummaryData.benefits)}
+                        {block(t('callToAction', 'Call to Action'), executiveSummaryData.call_to_action)}
+                    </div>
                 </div>
             );
         }
@@ -7108,7 +7333,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('storytellingTargetAudience')}</label>
-                                <select value={storyOptions.targetAudience} onChange={(e) => setStoryOptions(s => ({ ...s, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={storyOptions.targetAudience} onChange={(e) => setStoryOptions(s => ({ ...s, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="">-</option>
                                     <option value={td('storytellingTargetAudienceOptions.internalTeam')}>{td('storytellingTargetAudienceOptions.internalTeam')}</option>
                                     <option value={td('storytellingTargetAudienceOptions.management')}>{td('storytellingTargetAudienceOptions.management')}</option>
@@ -7126,7 +7351,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('storytellingMainGoal')}</label>
-                                <select value={storyOptions.mainGoal} onChange={(e) => setStoryOptions(s => ({ ...s, mainGoal: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={storyOptions.mainGoal} onChange={(e) => setStoryOptions(s => ({ ...s, mainGoal: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="">-</option>
                                     <option value={td('storytellingMainGoalOptions.inform')}>{td('storytellingMainGoalOptions.inform')}</option>
                                     <option value={td('storytellingMainGoalOptions.motivate')}>{td('storytellingMainGoalOptions.motivate')}</option>
@@ -7144,7 +7369,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('storytellingToneStyle')}</label>
-                                <select value={storyOptions.toneStyle} onChange={(e) => setStoryOptions(s => ({ ...s, toneStyle: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={storyOptions.toneStyle} onChange={(e) => setStoryOptions(s => ({ ...s, toneStyle: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="">-</option>
                                     <option value={td('storytellingToneStyleOptions.formal')}>{td('storytellingToneStyleOptions.formal')}</option>
                                     <option value={td('storytellingToneStyleOptions.informal')}>{td('storytellingToneStyleOptions.informal')}</option>
@@ -7162,7 +7387,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('storytellingLength')}</label>
-                                <select value={storyOptions.length} onChange={(e) => setStoryOptions(s => ({ ...s, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={storyOptions.length} onChange={(e) => setStoryOptions(s => ({ ...s, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="">-</option>
                                     <option value={td('storytellingLengthOptions.short')}>{td('storytellingLengthOptions.short')}</option>
                                     <option value={td('storytellingLengthOptions.medium')}>{td('storytellingLengthOptions.medium')}</option>
@@ -7177,25 +7402,62 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
                     {/* Output */}
                     {storytellingData ? (
-                        <div className="relative">
-                            <div className="absolute top-0 right-0 flex gap-2">
-                                <button onClick={() => handleGenerateStorytelling(storyOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Opnieuw')}>
-                                    🔄
-                                </button>
-                                <button onClick={async () => {
-                                    try {
-                                        await copyToClipboard(storytellingData.story);
-                                        displayToast(t('copiedToClipboard'), 'success');
-                                    } catch {
-                                        displayToast(t('copyFailed'), 'error');
-                                    }
-                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                                    <CopyIcon className="w-5 h-5" />
-                                </button>
-                                <button onClick={() => downloadTextFile(storytellingData.story, 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')}>⬇️</button>
+                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                            <div className="absolute top-4 right-8">
+                                <div 
+                                    ref={actionButtonsRef}
+                                    className="relative"
+                                    onMouseEnter={() => setShowActionButtons(true)}
+                                    onMouseLeave={() => setShowActionButtons(false)}
+                                >
+                                    <button 
+                                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                        aria-label={t('actions')}
+                                        onClick={() => setShowActionButtons(!showActionButtons)}
+                                        title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                    >
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="5" r="2"/>
+                                            <circle cx="12" cy="12" r="2"/>
+                                            <circle cx="12" cy="19" r="2"/>
+                                        </svg>
+                                    </button>
+                                    {showActionButtons && (
+                                        <div 
+                                            className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                            onMouseEnter={() => setShowActionButtons(true)}
+                                            onMouseLeave={() => setShowActionButtons(false)}
+                                        >
+                                            <button onClick={() => handleGenerateStorytelling(storyOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                                🔄
+                                            </button>
+                                            <button onClick={async () => {
+                                                try {
+                                                    await copyToClipboard(storytellingData.story);
+                                                    displayToast(t('copiedToClipboard'), 'success');
+                                                } catch {
+                                                    displayToast(t('copyFailed'), 'error');
+                                                }
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                                <CopyIcon className="w-5 h-5" />
+                                            </button>
+                                            <button onClick={() => downloadTextFile(storytellingData.story, 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                                ⬇️
+                                            </button>
+                                            <button onClick={() => {
+                                                const { subject, body } = generateEmailContent(t('storytelling'), storytellingData.story);
+                                                copyToClipboardForEmail(subject, body);
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                                ✉️
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{t('storytelling')}</h4>
-                            <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{storytellingData.story}</p>
+                            <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                                <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{t('storytelling')}</h4>
+                                <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{storytellingData.story}</p>
+                            </div>
                         </div>
                     ) : (
                         <div className="text-slate-500 dark:text-slate-400">{t('noContent')}</div>
@@ -7213,7 +7475,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         </div>
                         <div>
                             <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('optionsPerQuestion')}</label>
-                            <select value={quizNumOptions} onChange={(e) => setQuizNumOptions(Number(e.target.value) as 2|3|4)} className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900">
+                            <select value={quizNumOptions} onChange={(e) => setQuizNumOptions(Number(e.target.value) as 2|3|4)} className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                 <option value={2}>2</option>
                                 <option value={3}>3</option>
                                 <option value={4}>4</option>
@@ -7225,51 +7487,97 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         </label>
                         <button onClick={handleGenerateQuiz} disabled={isGeneratingQuiz || !transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">{isGeneratingQuiz ? t('generatingQuiz') : t('generate')}</button>
                         {quizQuestions && quizQuestions.length > 0 && (
-                            <div className="ml-auto flex items-center gap-2">
-                                <button onClick={async () => {
-                                    const txt = (() => {
-                                        const parts: string[] = ['## Quizvragen', ''];
-                                        quizQuestions.forEach((q, idx) => {
-                                            parts.push(`${idx + 1}. ${q.question}`);
-                                            q.options.forEach(opt => parts.push(`  ${opt.label}) ${opt.text}`));
-                                            if (quizIncludeAnswers) parts.push(`  Correct antwoord: ${q.correct_answer_label} - ${q.correct_answer_text}`);
-                                            parts.push('');
-                                        });
-                                        return parts.join('\n');
-                                    })();
-                                    try { await navigator.clipboard.writeText(txt); displayToast(t('copy'), 'success'); } catch {}
-                                }} className="px-3 py-1.5 rounded bg-slate-800 text-white text-sm hover:bg-slate-900">{t('copy')}</button>
-                                <button onClick={() => {
-                                    const txt = (() => {
-                                        const parts: string[] = ['## Quizvragen', ''];
-                                        quizQuestions.forEach((q, idx) => {
-                                            parts.push(`${idx + 1}. ${q.question}`);
-                                            q.options.forEach(opt => parts.push(`  ${opt.label}) ${opt.text}`));
-                                            if (quizIncludeAnswers) parts.push(`  Correct antwoord: ${q.correct_answer_label} - ${q.correct_answer_text}`);
-                                            parts.push('');
-                                        });
-                                        return parts.join('\n');
-                                    })();
-                                    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement('a'); a.href = url; a.download = 'quizvragen.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-                                    displayToast(t('downloadTxt'), 'success');
-                                }} className="px-3 py-1.5 rounded bg-slate-700 text-white text-sm hover:bg-slate-800">{t('downloadTxt')}</button>
-                                <button onClick={() => {
-                                    const content = (() => {
-                                        const parts: string[] = ['## Quizvragen', ''];
-                                        if (!quizQuestions) return '';
-                                        quizQuestions.forEach((q, idx) => {
-                                            parts.push(`${idx + 1}. ${q.question}`);
-                                            q.options.forEach(opt => parts.push(`  ${opt.label}) ${opt.text}`));
-                                            if (quizIncludeAnswers) parts.push(`  Correct antwoord: ${q.correct_answer_label} - ${q.correct_answer_text}`);
-                                            parts.push('');
-                                        });
-                                        return parts.join('\n');
-                                    })();
-                                    const { subject, body } = generateEmailContent(t('quizQuestions', 'Quizvragen'), content);
-                                    copyToClipboardForEmail(subject, body);
-                                }} className="px-3 py-1.5 rounded bg-slate-600 text-white text-sm hover:bg-slate-700">{t('mail')}</button>
+                            <div className="ml-auto relative">
+                                <button 
+                                    onClick={() => setActiveDropdown(activeDropdown === 'quiz' ? null : 'quiz')}
+                                    className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-400"
+                                    title="Opties"
+                                >
+                                    <HiDotsHorizontal size={16} color="currentColor" />
+                                </button>
+                                {activeDropdown === 'quiz' && (
+                                    <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg py-1 z-50 min-w-[140px]">
+                                        <button 
+                                            onClick={() => {
+                                                handleGenerateQuiz();
+                                                setActiveDropdown(null);
+                                            }}
+                                            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                                            title="Opnieuw genereren"
+                                        >
+                                            <HiRefresh size={16} />
+                                            Opnieuw genereren
+                                        </button>
+                                        <button 
+                                            onClick={async () => {
+                                                const txt = (() => {
+                                                    const parts: string[] = ['## Quizvragen', ''];
+                                                    quizQuestions.forEach((q, idx) => {
+                                                        parts.push(`${idx + 1}. ${q.question}`);
+                                                        q.options.forEach(opt => parts.push(`  ${opt.label}) ${opt.text}`));
+                                                        if (quizIncludeAnswers) parts.push(`  Correct antwoord: ${q.correct_answer_label} - ${q.correct_answer_text}`);
+                                                        parts.push('');
+                                                    });
+                                                    return parts.join('\n');
+                                                })();
+                                                try { await navigator.clipboard.writeText(txt); displayToast(t('copy'), 'success'); } catch {}
+                                                setActiveDropdown(null);
+                                            }}
+                                            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                                            title="Kopiëren"
+                                        >
+                                            <HiClipboardCopy size={16} />
+                                            Kopiëren
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                const txt = (() => {
+                                                    const parts: string[] = ['## Quizvragen', ''];
+                                                    quizQuestions.forEach((q, idx) => {
+                                                        parts.push(`${idx + 1}. ${q.question}`);
+                                                        q.options.forEach(opt => parts.push(`  ${opt.label}) ${opt.text}`));
+                                                        if (quizIncludeAnswers) parts.push(`  Correct antwoord: ${q.correct_answer_label} - ${q.correct_answer_text}`);
+                                                        parts.push('');
+                                                    });
+                                                    return parts.join('\n');
+                                                })();
+                                                const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+                                                const url = URL.createObjectURL(blob);
+                                                const a = document.createElement('a'); a.href = url; a.download = 'quizvragen.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                                                displayToast(t('downloadTxt'), 'success');
+                                                setActiveDropdown(null);
+                                            }}
+                                            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                                            title="Downloaden"
+                                        >
+                                            <HiDownload size={16} />
+                                            Downloaden
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                const content = (() => {
+                                                    const parts: string[] = ['## Quizvragen', ''];
+                                                    if (!quizQuestions) return '';
+                                                    quizQuestions.forEach((q, idx) => {
+                                                        parts.push(`${idx + 1}. ${q.question}`);
+                                                        q.options.forEach(opt => parts.push(`  ${opt.label}) ${opt.text}`));
+                                                        if (quizIncludeAnswers) parts.push(`  Correct antwoord: ${q.correct_answer_label} - ${q.correct_answer_text}`);
+                                                        parts.push('');
+                                                    });
+                                                    return parts.join('\n');
+                                                })();
+                                                const { subject, body } = generateEmailContent(t('quizQuestions', 'Quizvragen'), content);
+                                                copyToClipboardForEmail(subject, body);
+                                                setActiveDropdown(null);
+                                            }}
+                                            className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                                            title="E-mailen"
+                                        >
+                                            <HiMail size={16} />
+                                            E-mailen
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -7313,25 +7621,25 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('blogTargetAudience')}:</label>
-                                <select value={blogOptions.targetAudience} onChange={(e) => setBlogOptions(b => ({ ...b, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={blogOptions.targetAudience} onChange={(e) => setBlogOptions(b => ({ ...b, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     {L.targetAudience.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('blogMainGoal')}:</label>
-                                <select value={blogOptions.mainGoal} onChange={(e) => setBlogOptions(b => ({ ...b, mainGoal: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={blogOptions.mainGoal} onChange={(e) => setBlogOptions(b => ({ ...b, mainGoal: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     {L.mainGoal.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('blogTone')}:</label>
-                                <select value={blogOptions.tone} onChange={(e) => setBlogOptions(b => ({ ...b, tone: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={blogOptions.tone} onChange={(e) => setBlogOptions(b => ({ ...b, tone: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     {L.tone.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('blogLength')}:</label>
-                                <select value={blogOptions.length} onChange={(e) => setBlogOptions(b => ({ ...b, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={blogOptions.length} onChange={(e) => setBlogOptions(b => ({ ...b, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     {L.length.map((v, i) => (<option key={i} value={v}>{v || '—'}</option>))}
                                 </select>
                             </div>
@@ -7345,25 +7653,62 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     {loadingText && !blogData ? (
                         <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[200px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>
                     ) : blogData ? (
-                        <div className="relative">
-                            <div className="absolute top-0 right-0 flex gap-2">
-                                <button onClick={handleGenerateBlog} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Opnieuw')}>
-                                    🔄
-                                </button>
-                                <button onClick={async () => {
-                                    try {
-                                        await copyToClipboard(blogData);
-                                        displayToast(t('copiedToClipboard'), 'success');
-                                    } catch {
-                                        displayToast(t('copyFailed'), 'error');
-                                    }
-                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                                    <CopyIcon className="w-5 h-5" />
-                                </button>
-                                <button onClick={() => downloadTextFile(blogData, 'blog.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">⬇️</button>
+                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                            <div className="absolute top-4 right-8">
+                                <div 
+                                    ref={actionButtonsRef}
+                                    className="relative"
+                                    onMouseEnter={() => setShowActionButtons(true)}
+                                    onMouseLeave={() => setShowActionButtons(false)}
+                                >
+                                    <button 
+                                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                        aria-label={t('actions')}
+                                        onClick={() => setShowActionButtons(!showActionButtons)}
+                                        title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                    >
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="5" r="2"/>
+                                            <circle cx="12" cy="12" r="2"/>
+                                            <circle cx="12" cy="19" r="2"/>
+                                        </svg>
+                                    </button>
+                                    {showActionButtons && (
+                                        <div 
+                                            className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                            onMouseEnter={() => setShowActionButtons(true)}
+                                            onMouseLeave={() => setShowActionButtons(false)}
+                                        >
+                                            <button onClick={handleGenerateBlog} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                                🔄
+                                            </button>
+                                            <button onClick={async () => {
+                                                try {
+                                                    await copyToClipboard(blogData);
+                                                    displayToast(t('copiedToClipboard'), 'success');
+                                                } catch {
+                                                    displayToast(t('copyFailed'), 'error');
+                                                }
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                                <CopyIcon className="w-5 h-5" />
+                                            </button>
+                                            <button onClick={() => downloadTextFile(blogData, 'blog.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                                ⬇️
+                                            </button>
+                                            <button onClick={() => {
+                                                const { subject, body } = generateEmailContent(t('blog'), blogData);
+                                                copyToClipboardForEmail(subject, body);
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                                ✉️
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="prose prose-slate dark:prose-invert max-w-none">
-                                {renderMarkdown(blogData)}
+                            <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                                <div className="prose prose-slate dark:prose-invert max-w-none">
+                                    {renderMarkdown(blogData)}
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -7381,23 +7726,50 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 const fullContent = `${t('sentimentSummary')}\n${sentimentAnalysisResult.summary}\n\n${t('sentimentConclusion')}\n${sentimentAnalysisResult.conclusion}`;
                 return (
                     <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                         <div className="absolute top-4 right-4 flex gap-2">
-                             <button onClick={() => handleAnalyzeSentiment()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')}>
-                                 🔄
-                             </button>
-                             <button onClick={() => copyToClipboard(fullContent)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                                 <CopyIcon className="w-5 h-5" />
-                             </button>
-                             <button onClick={() => downloadTextFile(fullContent, `sentiment.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
-                                 ⬇️
-                             </button>
-                             <button onClick={() => {
-                                 const { subject, body } = generateEmailContent(t('sentiment'), fullContent);
-                                 copyToClipboardForEmail(subject, body);
-                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
-                                 ✉️
-                             </button>
-                         </div>
+                        <div className="absolute top-4 right-8">
+                            <div 
+                                ref={actionButtonsRef}
+                                className="relative"
+                                onMouseEnter={() => setShowActionButtons(true)}
+                                onMouseLeave={() => setShowActionButtons(false)}
+                            >
+                                <button 
+                                    className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                    aria-label={t('actions')}
+                                    onClick={() => setShowActionButtons(!showActionButtons)}
+                                    title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                >
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="5" r="2"/>
+                                        <circle cx="12" cy="12" r="2"/>
+                                        <circle cx="12" cy="19" r="2"/>
+                                    </svg>
+                                </button>
+                                {showActionButtons && (
+                                    <div 
+                                        className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                        onMouseEnter={() => setShowActionButtons(true)}
+                                        onMouseLeave={() => setShowActionButtons(false)}
+                                    >
+                                        <button onClick={() => handleAnalyzeSentiment()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                            🔄
+                                        </button>
+                                        <button onClick={() => copyToClipboard(fullContent)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                            <CopyIcon className="w-5 h-5" />
+                                        </button>
+                                        <button onClick={() => downloadTextFile(fullContent, `sentiment.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                            ⬇️
+                                        </button>
+                                        <button onClick={() => {
+                                            const { subject, body } = generateEmailContent(t('sentiment'), fullContent);
+                                            copyToClipboardForEmail(subject, body);
+                                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                            ✉️
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                         <div className="overflow-y-auto max-h-[calc(70vh-120px)] space-y-6">
                             <div>
                                 <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{t('sentimentSummary')}</h4>
@@ -7417,56 +7789,83 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         if (activeView === 'keyword') {
             return (
                 <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                    <div className="absolute top-4 right-4 flex gap-2">
-                        <button onClick={() => handleGenerateKeywordAnalysis()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')}>
-                            🔄
-                        </button>
-                        <button onClick={() => {
-                            const txt = (() => {
-                                const parts: string[] = [`## ${t('keywordAnalysis')}`, ''];
-                                if (keywordAnalysis) {
-                                    keywordAnalysis.forEach(topic => {
-                                        if (topic.topic) parts.push(`- ${topic.topic}: ${topic.keywords.join(', ')}`);
-                                        else parts.push(`- ${topic.keywords.join(', ')}`);
-                                    });
-                                }
-                                return parts.join('\n');
-                            })();
-                            copyToClipboard(txt);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                            <CopyIcon className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => {
-                            const txt = (() => {
-                                const parts: string[] = [`## ${t('keywordAnalysis')}`, ''];
-                                if (keywordAnalysis) {
-                                    keywordAnalysis.forEach(topic => {
-                                        if (topic.topic) parts.push(`- ${topic.topic}: ${topic.keywords.join(', ')}`);
-                                        else parts.push(`- ${topic.keywords.join(', ')}`);
-                                    });
-                                }
-                                return parts.join('\n');
-                            })();
-                            downloadTextFile(txt, 'keyword-analysis.txt');
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
-                            ⬇️
-                        </button>
-                        <button onClick={() => {
-                            const content = (() => {
-                                const parts: string[] = [`## ${t('keywordAnalysis')}`, ''];
-                                if (keywordAnalysis) {
-                                    keywordAnalysis.forEach(topic => {
-                                        if (topic.topic) parts.push(`- ${topic.topic}: ${topic.keywords.join(', ')}`);
-                                        else parts.push(`- ${topic.keywords.join(', ')}`);
-                                    });
-                                }
-                                return parts.join('\n');
-                            })();
-                            const { subject, body } = generateEmailContent(t('keywordAnalysis'), content);
-                            copyToClipboardForEmail(subject, body);
-                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
-                            ✉️
-                        </button>
+                    <div className="absolute top-4 right-8">
+                        <div 
+                            ref={actionButtonsRef}
+                            className="relative"
+                            onMouseEnter={() => setShowActionButtons(true)}
+                            onMouseLeave={() => setShowActionButtons(false)}
+                        >
+                            <button 
+                                className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                aria-label={t('actions')}
+                                onClick={() => setShowActionButtons(!showActionButtons)}
+                                title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="5" r="2"/>
+                                    <circle cx="12" cy="12" r="2"/>
+                                    <circle cx="12" cy="19" r="2"/>
+                                </svg>
+                            </button>
+                            {showActionButtons && (
+                                <div 
+                                    className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                    onMouseEnter={() => setShowActionButtons(true)}
+                                    onMouseLeave={() => setShowActionButtons(false)}
+                                >
+                                    <button onClick={() => handleGenerateKeywordAnalysis()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                        🔄
+                                    </button>
+                                    <button onClick={() => {
+                                        const txt = (() => {
+                                            const parts: string[] = [`## ${t('keywordAnalysis')}`, ''];
+                                            if (keywordAnalysis) {
+                                                keywordAnalysis.forEach(topic => {
+                                                    if (topic.topic) parts.push(`- ${topic.topic}: ${topic.keywords.join(', ')}`);
+                                                    else parts.push(`- ${topic.keywords.join(', ')}`);
+                                                });
+                                            }
+                                            return parts.join('\n');
+                                        })();
+                                        copyToClipboard(txt);
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                        <CopyIcon className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={() => {
+                                        const txt = (() => {
+                                            const parts: string[] = [`## ${t('keywordAnalysis')}`, ''];
+                                            if (keywordAnalysis) {
+                                                keywordAnalysis.forEach(topic => {
+                                                    if (topic.topic) parts.push(`- ${topic.topic}: ${topic.keywords.join(', ')}`);
+                                                    else parts.push(`- ${topic.keywords.join(', ')}`);
+                                                });
+                                            }
+                                            return parts.join('\n');
+                                        })();
+                                        downloadTextFile(txt, 'keyword-analysis.txt');
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                        ⬇️
+                                    </button>
+                                    <button onClick={() => {
+                                        const content = (() => {
+                                            const parts: string[] = [`## ${t('keywordAnalysis')}`, ''];
+                                            if (keywordAnalysis) {
+                                                keywordAnalysis.forEach(topic => {
+                                                    if (topic.topic) parts.push(`- ${topic.topic}: ${topic.keywords.join(', ')}`);
+                                                    else parts.push(`- ${topic.keywords.join(', ')}`);
+                                                });
+                                            }
+                                            return parts.join('\n');
+                                        })();
+                                        const { subject, body } = generateEmailContent(t('keywordAnalysis'), content);
+                                        copyToClipboardForEmail(subject, body);
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                        ✉️
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     {loadingText && !keywordAnalysis && <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>}
                     {keywordAnalysis && keywordAnalysis.length === 0 && !loadingText && <p>{t('noContent')}</p>}
@@ -7683,18 +8082,17 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('explainComplexityLevel')}</label>
-                                <select value={explainOptions.complexityLevel} onChange={(e) => setExplainOptions(s => ({ ...s, complexityLevel: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={explainOptions.complexityLevel} onChange={(e) => setExplainOptions(s => ({ ...s, complexityLevel: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="Beginner (basisconcepten)">{t('explainComplexityBeginner')}</option>
                                     <option value="Algemeen publiek (duidelijke taal)">{t('explainComplexityGeneral')}</option>
                                     <option value="Teamleden (specifieke context)">{t('explainComplexityTeam')}</option>
                                     <option value="Expert (technisch/diepgaand)">{t('explainComplexityExpert')}</option>
                                     <option value="Kind van 5 (extreem eenvoudig)">{t('explainComplexityChild')}</option>
-                                    <option value="5-Year-Old (extremely simple)">{t('explainComplexityChildEn')}</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('explainFocusArea')}</label>
-                                <select value={explainOptions.focusArea} onChange={(e) => setExplainOptions(s => ({ ...s, focusArea: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={explainOptions.focusArea} onChange={(e) => setExplainOptions(s => ({ ...s, focusArea: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="Hoofdbesluiten">{t('explainFocusDecisions')}</option>
                                     <option value="Complexe concepten">{t('explainFocusConcepts')}</option>
                                     <option value="Actiepunten">{t('explainFocusActions')}</option>
@@ -7705,7 +8103,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('explainFormat')}</label>
-                                <select value={explainOptions.format} onChange={(e) => setExplainOptions(s => ({ ...s, format: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                <select value={explainOptions.format} onChange={(e) => setExplainOptions(s => ({ ...s, format: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="Korte paragraaf">{t('explainFormatParagraph')}</option>
                                     <option value="Opsomming (bullet points)">{t('explainFormatBullets')}</option>
                                     <option value="Vraag & Antwoord stijl">{t('explainFormatQa')}</option>
@@ -7722,19 +8120,55 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     {loadingText && !explainData?.explanation ? (
                         <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[200px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>
                     ) : explainData?.explanation ? (
-                        <div className="relative">
-                            <div className="absolute top-0 right-0 flex gap-2">
-                                <button onClick={() => copyToClipboard(explainData.explanation)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
-                                    <CopyIcon className="w-5 h-5" />
-                                </button>
-                                <button onClick={() => downloadTextFile(explainData.explanation, 'explain.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">⬇️</button>
-                                <button onClick={() => {
-                                    const { subject, body } = generateEmailContent(t('explain'), explainData.explanation);
-                                    copyToClipboardForEmail(subject, body);
-                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">✉️</button>
+                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                            <div className="absolute top-4 right-8">
+                                <div 
+                                    ref={actionButtonsRef}
+                                    className="relative"
+                                    onMouseEnter={() => setShowActionButtons(true)}
+                                    onMouseLeave={() => setShowActionButtons(false)}
+                                >
+                                    <button 
+                                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                        aria-label={t('actions')}
+                                        onClick={() => setShowActionButtons(!showActionButtons)}
+                                        title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                    >
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="5" r="2"/>
+                                            <circle cx="12" cy="12" r="2"/>
+                                            <circle cx="12" cy="19" r="2"/>
+                                        </svg>
+                                    </button>
+                                    {showActionButtons && (
+                                        <div 
+                                            className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                            onMouseEnter={() => setShowActionButtons(true)}
+                                            onMouseLeave={() => setShowActionButtons(false)}
+                                        >
+                                            <button onClick={() => handleGenerateExplain(explainOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                                🔄
+                                            </button>
+                                            <button onClick={() => copyToClipboard(explainData.explanation)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                                <CopyIcon className="w-5 h-5" />
+                                            </button>
+                                            <button onClick={() => downloadTextFile(explainData.explanation, 'explain.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                                ⬇️
+                                            </button>
+                                            <button onClick={() => {
+                                                const { subject, body } = generateEmailContent(t('explain'), explainData.explanation);
+                                                copyToClipboardForEmail(subject, body);
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                                ✉️
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="prose prose-slate dark:prose-invert max-w-none">
-                                {renderMarkdown(explainData.explanation)}
+                            <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                                <div className="prose prose-slate dark:prose-invert max-w-none">
+                                    {renderMarkdown(explainData.explanation)}
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -7744,10 +8178,122 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             );
         }
 
+        if (activeView === 'socialPost') {
+            if (!socialPostData) {
+                return <div className="text-slate-500 dark:text-slate-400 p-6">{t('noContent')}</div>;
+            }
+
+            // The post content is already parsed when stored, so we can use it directly
+            const cleanPostContent = socialPostData.post;
+
+            return (
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                    {/* Social Post Section */}
+                    <div className="mb-8">
+                        <div className="absolute top-4 right-8">
+                            <div 
+                                ref={actionButtonsRef}
+                                className="relative"
+                                onMouseEnter={() => setShowActionButtons(true)}
+                                onMouseLeave={() => setShowActionButtons(false)}
+                            >
+                                <button 
+                                    className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                    aria-label={t('actions')}
+                                    onClick={() => setShowActionButtons(!showActionButtons)}
+                                    title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                >
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="5" r="2"/>
+                                        <circle cx="12" cy="12" r="2"/>
+                                        <circle cx="12" cy="19" r="2"/>
+                                    </svg>
+                                </button>
+                                {showActionButtons && (
+                                    <div 
+                                        className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                        onMouseEnter={() => setShowActionButtons(true)}
+                                        onMouseLeave={() => setShowActionButtons(false)}
+                                    >
+                                        <button onClick={async () => await generateSocialPost('socialPost', transcript)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                            🔄
+                                        </button>
+                                        <button onClick={async () => {
+                                            try {
+                                                await copyToClipboard(cleanPostContent);
+                                                displayToast(t('socialPostCopied'), 'success');
+                                            } catch {
+                                                displayToast(t('copyFailed'), 'error');
+                                            }
+                                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copySocialPost')} title={window.innerWidth > 768 ? t('copySocialPost', 'Kopiëren') : undefined}>
+                                            <CopyIcon className="w-5 h-5" />
+                                        </button>
+                                        <button onClick={() => downloadTextFile(cleanPostContent, 'social-post.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                            ⬇️
+                                        </button>
+                                        <button onClick={() => {
+                                            const { subject, body } = generateEmailContent(t('socialPost'), cleanPostContent);
+                                            copyToClipboardForEmail(subject, body);
+                                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                            ✉️
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                            <div className="prose prose-slate dark:prose-invert max-w-none">
+                                <div className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                                    {cleanPostContent.split('\n').map((line, index) => (
+                                        <p key={index}>{line}</p>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* AI Image Instruction Section */}
+                    {socialPostData.imageInstruction && (
+                        <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{t('aiImageInstructions')}</h3>
+                                <button onClick={async () => {
+                                    try {
+                                        await copyToClipboard(socialPostData.imageInstruction);
+                                        displayToast(t('imageInstructionCopied'), 'success');
+                                    } catch {
+                                        displayToast(t('copyFailed'), 'error');
+                                    }
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyImageInstructions')} title={window.innerWidth > 768 ? t('copyImageInstructions', 'Kopiëren') : undefined}>
+                                    <CopyIcon className="w-5 h-5" />
+                                </button>
+                            </div>
+                            
+                            <div className="mb-4">
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                                    {t('aiImageInstructionDescription')}
+                                </p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    {t('aiImageInstructionExample')} <a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" className="text-cyan-600 dark:text-cyan-400 hover:underline">Google Gemini</a>
+                                </p>
+                            </div>
+                            
+                            <div className="prose prose-slate dark:prose-invert max-w-none">
+                                <div className="text-slate-700 dark:text-slate-300 text-sm bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700 whitespace-pre-wrap">
+                                    {socialPostData.imageInstruction}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         const content = analysisContent[activeView];
         return (
             <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-8">
                     <div 
                         ref={actionButtonsRef}
                         className="relative"
@@ -7758,6 +8304,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                             aria-label={t('actions')}
                             onClick={() => setShowActionButtons(!showActionButtons)}
+                            title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
                         >
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <circle cx="12" cy="5" r="2"/>
@@ -7793,17 +8340,17 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                         } else if (activeView === 'storytelling') {
                                             handleGenerateStorytelling();
                                         }
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
                                         🔄
                                     </button>
                                 )}
                                 <button onClick={async () => {
                                     await copyToClipboard(content);
                                     displayToast(t('contentCopied', 'Content copied to clipboard!'));
-                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
                                     <CopyIcon className="w-5 h-5" />
                                 </button>
-                                <button onClick={() => downloadTextFile(content, `${activeView}.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
+                                <button onClick={() => downloadTextFile(content, `${activeView}.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
                                     ⬇️
                                 </button>
                                 <button onClick={() => {
@@ -7812,7 +8359,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                     const fnName = found ? found.label() : activeView;
                                     const { subject, body } = generateEmailContent(fnName, content || '');
                                     copyToClipboardForEmail(subject, body);
-                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
                                     ✉️
                                 </button>
                             </div>
@@ -7876,11 +8423,15 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                  businessCaseData={businessCaseData}
                  blogData={blogData}
                  explainData={explainData}
+                 socialPostData={socialPostData}
+                    socialPostXData={socialPostXData}
                  quizQuestions={quizQuestions}
                  quizIncludeAnswers={quizIncludeAnswers}
                  startStamp={startStamp}
                  outputLanguage={outputLang}
                  onNotify={(msg, type) => displayToast(msg, type)}
+                 onGenerateSocialPost={generateSocialPost}
+                 isGeneratingSocialPost={isGenerating}
                  onGenerateQuiz={async ({ numQuestions, numOptions }) => {
                     // Check transcript length based on user tier
                     const effectiveTier = userSubscription;
@@ -7920,42 +8471,120 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     return arr;
                  }}
              />
-             <div className="flex flex-wrap items-center p-2 bg-gray-100/50 dark:bg-slate-800/50 rounded-t-lg border-b border-gray-300 dark:border-slate-700 gap-1">
-                {primaryActions.map(action => (
-                    <button
-                        key={action.id}
-                        onClick={() => action.type === 'view' ? handleTabClick(action.id as ViewType) : action.onClick()}
-                        disabled={action.disabled ? action.disabled() : isProcessing}
-                        className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all ${
-                            activeView === action.id && action.type === 'view'
-                                ? 'bg-cyan-500/20 text-cyan-500 dark:text-cyan-400'
-                                : 'text-slate-600 dark:text-slate-300 hover:bg-gray-200/50 dark:hover:bg-slate-700/50'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+             {/* Main Navigation Dropdown */}
+             <div className="p-4 bg-gray-100/50 dark:bg-slate-800/50 border-b border-gray-300 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Kies modus:
+                    </label>
+                    <select
+                        value={mainMode}
+                        onChange={(e) => {
+                            const newMode = e.target.value as 'transcript' | 'analysis' | 'actions';
+                            setMainMode(newMode);
+                            setError(null); // Clear error messages when switching modes
+                            // Update activeView based on mode selection
+                            if (newMode === 'transcript') {
+                                setActiveView('transcript');
+                            } else if (newMode === 'analysis') {
+                                setActiveView(selectedAnalysis);
+                            } else if (newMode === 'actions') {
+                                // Keep current view for actions mode
+                            }
+                        }}
+                        className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                     >
-                        <action.icon className="w-5 h-5" />
-                        {action.label()}
-                    </button>
-                ))}
-            </div>
-             <div className="flex flex-wrap items-center p-2 bg-gray-100/50 dark:bg-slate-800/50 rounded-t-lg border-b border-gray-300 dark:border-slate-700 gap-1">
-                {analysisActions.map(action => (
-                        <button
-                            key={action.id}
-                            onClick={() => action.type === 'view' ? handleTabClick(action.id as ViewType) : action.onClick()}
-                            disabled={action.disabled ? action.disabled() : isProcessing}
-                            className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all ${
-                                activeView === action.id && action.type === 'view'
-                                    ? 'bg-cyan-500/20 text-cyan-500 dark:text-cyan-400'
-                                    : 'text-slate-600 dark:text-slate-300 hover:bg-gray-200/50 dark:hover:bg-slate-700/50'
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        <option value="transcript">Transcript</option>
+                        <option value="analysis">Analyse Resultaten</option>
+                        <option value="actions">Acties & Export</option>
+                    </select>
+                </div>
+                
+                {/* Secondary Analysis Dropdown */}
+                {mainMode === 'analysis' && (
+                    <div className="flex items-center gap-3 mt-3">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Kies analyse:
+                        </label>
+                        <select
+                            value={selectedAnalysis}
+                            onChange={(e) => {
+                                const newAnalysis = e.target.value as ViewType;
+                                setSelectedAnalysis(newAnalysis);
+                                if (newAnalysis && newAnalysis !== 'socialPost' && newAnalysis !== 'socialPostX') {
+                                    setActiveView(newAnalysis);
+                                    handleTabClick(newAnalysis);
+                                } else if (newAnalysis) {
+                                    setActiveView(newAnalysis);
+                                }
+                                setError(null); // Clear error messages when switching analysis
+                            }}
+                            className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                         >
-                            <action.icon className="w-5 h-5" />
-                            {action.label()}
-                        </button>
-
-                ))}
+                            <option value="">-- Selecteer een analyse --</option>
+                            <option value="summary">{t('summary')}</option>
+                            <option value="exec">{t('executiveSummary')}</option>
+                            <option value="keyword">{t('keywordAnalysis')}</option>
+                            <option value="sentiment">{t('sentiment')}</option>
+                            <option value="faq">{t('faq')}</option>
+                            <option value="quiz">{t('quizQuestions')}</option>
+                            <option value="learning">{t('keyLearnings')}</option>
+                            <option value="followUp">{t('followUp')}</option>
+                            <option value="mindmap">{t('mindmap')}</option>
+                            <option value="storytelling">{t('storytelling')}</option>
+                            <option value="blog">{t('blog')}</option>
+                            <option value="explain">{t('explain')}</option>
+                            {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) && (
+                                <option value="email">{t('email')}</option>
+                            )}
+                            {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
+                                <option value="socialPost">{t('socialPost')}</option>
+                            )}
+                            {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
+                                <option value="socialPostX">{t('socialPostX')}</option>
+                            )}
+                        </select>
+                    </div>
+                )}
+                
+                {/* Actions Grid */}
+                {mainMode === 'actions' && (
+                    <div className="mt-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            {primaryActions.filter(action => action.type === 'action').map(action => (
+                                <button
+                                    key={action.id}
+                                    onClick={action.onClick}
+                                    disabled={action.disabled ? action.disabled() : isProcessing}
+                                    className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <action.icon className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        {action.label()}
+                                    </span>
+                                </button>
+                            ))}
+                            {/* Chat and Business Case buttons */}
+                            <button
+                                onClick={() => {
+                                    setActiveView('chat');
+                                    setMainMode('transcript'); // Switch back to transcript mode for chat
+                                }}
+                                disabled={isProcessing || !transcript.trim()}
+                                className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <ChatIcon className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {t('chat')}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
-            {renderContent()}
+            <div className="min-h-[60vh]">
+                {renderContent()}
+            </div>
         </div>
     );
   };

@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import admin from 'firebase-admin';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -7,6 +8,39 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 // Webhook endpoint secret for signature verification
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+// Initialize Firebase Admin SDK safely (server-side only)
+let adminInitialized = false;
+try {
+  if (!admin.apps.length) {
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountJson) {
+      console.error('Firebase Admin not initialized: missing FIREBASE_SERVICE_ACCOUNT or FIREBASE_SERVICE_ACCOUNT_KEY environment variable');
+    } else {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      const privateKey = (serviceAccount.private_key || '').replace(/\\n/g, '\n');
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: serviceAccount.project_id,
+          clientEmail: serviceAccount.client_email,
+          privateKey
+        })
+      });
+      adminInitialized = true;
+    }
+  } else {
+    adminInitialized = true;
+  }
+} catch (adminErr) {
+  console.error('Failed to initialize Firebase Admin SDK:', adminErr);
+}
+
+function getAdminDb() {
+  if (!adminInitialized) {
+    throw new Error('Firebase Admin is not initialized');
+  }
+  return admin.firestore();
+}
 
 /**
  * Log webhook event to console (simplified for development)
@@ -30,44 +64,32 @@ async function logWebhookEvent(event, status = 'received', error = null) {
  */
 async function updateUserSubscription(customerId, subscriptionData) {
   try {
-    // Import Firebase functions
-    const { initializeApp } = await import('firebase/app');
-    const { getFirestore, collection, query, where, getDocs, updateDoc, doc, serverTimestamp } = await import('firebase/firestore');
-    
-    // Initialize Firebase (using environment variables)
-    const firebaseConfig = {
-      apiKey: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
-      authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
-      storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
+    if (!customerId || typeof customerId !== 'string') {
+      throw new Error('Invalid Stripe customer ID');
+    }
+    const db = getAdminDb();
+
     // Find user by Stripe customer ID
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('stripeCustomerId', '==', customerId));
-    const querySnapshot = await getDocs(q);
-    
+    const usersRef = db.collection('users');
+    const q = usersRef.where('stripeCustomerId', '==', customerId).limit(1);
+    const querySnapshot = await q.get();
+
     if (querySnapshot.empty) {
       console.warn(`No user found with Stripe customer ID: ${customerId}`);
       return null;
     }
-    
+
     // Update the first matching user (should be unique)
     const userDoc = querySnapshot.docs[0];
-    const userRef = doc(db, 'users', userDoc.id);
-    
+    const userRef = usersRef.doc(userDoc.id);
+
     const updateData = {
       ...subscriptionData,
-      updatedAt: serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
-    
-    await updateDoc(userRef, updateData);
-    
+
+    await userRef.update(updateData);
+
     console.log(`Subscription updated for user ${userDoc.id} (customer ${customerId}):`, subscriptionData);
     return userDoc.id;
   } catch (error) {
@@ -169,39 +191,24 @@ async function handleInvoicePaymentFailed(invoice) {
  */
 async function handleCheckoutSessionCompleted(session) {
   try {
-    // Import Firebase functions
-    const { initializeApp } = await import('firebase/app');
-    const { getFirestore, collection, query, where, getDocs, updateDoc, doc, serverTimestamp } = await import('firebase/firestore');
-    
-    // Initialize Firebase (using environment variables)
-    const firebaseConfig = {
-      apiKey: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
-      authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
-      storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
+    const db = getAdminDb();
+
     // Find user by userId from session metadata
     const userId = session.metadata?.userId;
-    if (!userId) {
-      console.warn('No userId found in checkout session metadata');
+    if (!userId || typeof userId !== 'string') {
+      console.warn('No valid userId found in checkout session metadata');
       return;
     }
-    
+
     // Update user with Stripe customer ID
-    const userRef = doc(db, 'users', userId);
+    const userRef = db.collection('users').doc(userId);
     const updateData = {
       stripeCustomerId: session.customer,
-      updatedAt: serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
-    
-    await updateDoc(userRef, updateData);
-    
+
+    await userRef.set(updateData, { merge: true });
+
     console.log(`Stripe customer ID ${session.customer} linked to user ${userId}`);
   } catch (error) {
     console.error('Failed to handle checkout session completed:', error);
@@ -228,14 +235,14 @@ function getSubscriptionTier(priceId) {
 /**
  * Main webhook handler
  */
-export const handler = async (event, context) => {
+export async function handler(event) {
   console.log('Webhook received:', event.httpMethod, event.headers);
   
   try {
     if (event.httpMethod !== 'POST') {
       return {
         statusCode: 405,
-        body: JSON.stringify({ error: 'Method not allowed' })
+        body: JSON.stringify({ error: 'Error: Method not allowed' })
       };
     }
     
@@ -244,7 +251,7 @@ export const handler = async (event, context) => {
       console.error('Missing STRIPE_SECRET_KEY environment variable');
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Server configuration error' })
+        body: JSON.stringify({ error: 'Error: Server configuration error (missing STRIPE_SECRET_KEY)' })
       };
     }
     
@@ -252,76 +259,86 @@ export const handler = async (event, context) => {
       console.error('Missing STRIPE_WEBHOOK_SECRET environment variable');
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Server configuration error' })
+        body: JSON.stringify({ error: 'Error: Server configuration error (missing STRIPE_WEBHOOK_SECRET)' })
       };
     }
 
-    const sig = event.headers['stripe-signature'];
+    // Decode raw body correctly for Stripe signature verification
+    const rawBody = event.isBase64Encoded
+      ? Buffer.from(event.body || '', 'base64').toString('utf8')
+      : (event.body || '');
+
+    const sig = event.headers['stripe-signature'] || event.headers['Stripe-Signature'] || event.headers['STRIPE-SIGNATURE'];
+    if (!sig) {
+      console.error('Missing Stripe signature header');
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Error: Missing Stripe signature header' })
+      };
+    }
+
     let stripeEvent;
 
     try {
       // Verify webhook signature
-      stripeEvent = stripe.webhooks.constructEvent(event.body, sig, endpointSecret);
+      stripeEvent = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
     } catch (err) {
       console.error('Webhook signature verification failed:', err.message);
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Webhook signature verification failed' })
+        body: JSON.stringify({ error: 'Error: Webhook signature verification failed' })
       };
     }
 
-    // Check Firebase configuration
-     const firebaseApiKey = process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY;
-     const firebaseProjectId = process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
-     
-     if (!firebaseApiKey || !firebaseProjectId) {
-       console.error('Missing Firebase configuration environment variables');
-       return {
-         statusCode: 500,
-         body: JSON.stringify({ error: 'Firebase configuration error' })
-       };
-     }
+    // Check Firebase Admin configuration
+    if (!adminInitialized) {
+      console.error('Firebase Admin not initialized - ensure FIREBASE_SERVICE_ACCOUNT is set');
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Error: Firebase Admin configuration error (missing FIREBASE_SERVICE_ACCOUNT)' })
+      };
+    }
 
-     // Log the webhook event
-     await logWebhookEvent(stripeEvent);
+    // Log the webhook event
+    await logWebhookEvent(stripeEvent);
  
-     // Handle different event types
-      switch (stripeEvent.type) {
-       case 'checkout.session.completed':
-         await handleCheckoutSessionCompleted(stripeEvent.data.object);
-         break;
+    // Handle different event types
+    switch (stripeEvent.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(stripeEvent.data.object);
+        break;
 
-       case 'customer.subscription.created':
-         await handleSubscriptionCreated(stripeEvent.data.object);
-         break;
+      case 'customer.subscription.created':
+        await handleSubscriptionCreated(stripeEvent.data.object);
+        break;
 
-       case 'customer.subscription.updated':
-         await handleSubscriptionUpdated(stripeEvent.data.object);
-         break;
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(stripeEvent.data.object);
+        break;
 
-       case 'customer.subscription.deleted':
-         await handleSubscriptionDeleted(stripeEvent.data.object);
-         break;
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(stripeEvent.data.object);
+        break;
 
-       case 'invoice.payment_succeeded':
-         await handleInvoicePaymentSucceeded(stripeEvent.data.object);
-         break;
+      case 'invoice.payment_succeeded':
+        await handleInvoicePaymentSucceeded(stripeEvent.data.object);
+        break;
 
-       case 'invoice.payment_failed':
-         await handleInvoicePaymentFailed(stripeEvent.data.object);
-         break;
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(stripeEvent.data.object);
+        break;
 
-       default:
-         console.log(`Unhandled event type: ${stripeEvent.type}`);
-     }
+      default:
+        console.log(`Unhandled event type: ${stripeEvent.type}`);
+    }
 
-     // Update webhook log status to processed
-     await logWebhookEvent(stripeEvent, 'processed');
+    // Update webhook log status to processed
+    await logWebhookEvent(stripeEvent, 'processed');
 
-     return {
-       statusCode: 200,
-       body: JSON.stringify({ received: true })
-     };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ received: true })
+    };
 
   } catch (error) {
     console.error('Error processing webhook:', error);
@@ -333,7 +350,7 @@ export const handler = async (event, context) => {
 
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' })
+      body: JSON.stringify({ error: 'Error: Internal server error' })
     };
   }
-};
+}

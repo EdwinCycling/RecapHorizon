@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "stripe": "^14.21.0",
-    "firebase": "^10.7.1"
+    "firebase": "^10.7.1",
+    "firebase-admin": "^13.5.0"
   }
 }

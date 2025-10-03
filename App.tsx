@@ -15,6 +15,7 @@ import { ChartBarIcon } from '@heroicons/react/24/outline';
  import { HiRefresh, HiClipboardCopy, HiDownload, HiMail, HiDotsHorizontal } from 'react-icons/hi';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 import modelManager from './src/utils/modelManager';
+import { AIProviderManager, AIFunction, SubscriptionTier as ProviderSubscriptionTier } from './src/utils/aiProviderManager';
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
 // Mermaid is ESM-only; import dynamically to avoid type issues
 let mermaid: typeof import('mermaid') | undefined;
@@ -50,8 +51,9 @@ import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.
 import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
 import CustomerPortalReturnScreen from './src/components/CustomerPortalReturnScreen.tsx';
 import { stripeService } from './src/services/stripeService';
-import UsageModal from './src/components/UsageModal.tsx';
-import AudioLimitModal from './src/components/AudioLimitModal.tsx';
+import UsageModal from './src/components/UsageModal';
+import AudioLimitModal from './src/components/AudioLimitModal';
+import BlurredLoadingOverlay from './src/components/BlurredLoadingOverlay';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -1338,53 +1340,80 @@ export default function App() {
       const posts: string[] = [];
       
       if (analysisType === 'socialPostX') {
-        console.log('Generating X/BlueSky posts');
-        // X/BlueSky format - generate AI posts with max 200 characters
-        if (!apiKey) {
-          console.log('API key missing for X/BlueSky generation');
-          throw new Error(t('apiKeyMissing', 'API key not available'));
-        }
-        console.log('API key available for X/BlueSky generation');
-        
-        const ai = new GoogleGenAI({ apiKey: apiKey });
-        const { getModelByTier } = await import('./src/utils/tierModelService');
-        const modelName = await getModelByTier(userSubscription, 'analysisGeneration');
-        console.log('Using model:', modelName);
-        
+        console.log('Generating X/BlueSky posts via AIProviderManager');
+        const providerTier = (userSubscription as unknown as ProviderSubscriptionTier);
         for (let i = 0; i < postCount; i++) {
           const postNumber = postCount > 1 ? `${i + 1}/${postCount}` : '';
-          const prompt = `Maak een kort, krachtig X/BlueSky bericht in het Nederlands van de volgende tekst. Het bericht mag maximaal 200 karakters lang zijn (inclusief de teller). ${postNumber ? `Begin het bericht met "${postNumber} "` : ''}. Geen hashtags of emojis. Houd het zakelijk en informatief.\n\nTekst: ${content}`;
-          
-          console.log('Sending prompt to AI:', prompt.substring(0, 100) + '...');
-          const response = await ai.models.generateContent({ model: modelName, contents: prompt });
-          let result = response.text.trim();
+          const prompt = `Maak een kort, krachtig X/BlueSky bericht in het Nederlands van de volgende tekst. Het bericht mag maximaal 200 karakters lang zijn (inclusief de teller). ${postNumber ? `Begin het bericht met \"${postNumber} \"` : ''}. Geen hashtags of emojis. Houd het zakelijk en informatief.\n\nTekst: ${content}`;
+          console.log('Sending prompt to AI provider:', prompt.substring(0, 100) + '...');
+          const request = {
+            userId: authState.user?.uid || 'anonymous',
+            functionType: AIFunction.ANALYSIS_GENERATION,
+            userTier: providerTier,
+          };
+          let aiResponse;
+          let attempt = 0;
+          const maxRetries = 3;
+          while (attempt < maxRetries) {
+            try {
+              aiResponse = await AIProviderManager.generateContentWithProviderSelection(request, prompt);
+              break;
+            } catch (error) {
+              if ((error.statusCode || error.code) === 429 && attempt < maxRetries - 1) {
+                const delaySec = (error as any).retryDelaySec || 10;
+                console.log(`Rate limit hit for X/BlueSky post, retrying after ${delaySec} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, delaySec * 1000));
+                attempt++;
+              } else {
+                throw error;
+              }
+            }
+          }
+          if (!aiResponse) {
+            throw new Error('Failed to generate X/BlueSky post after retries');
+          }
+          if (i < postCount - 1) {
+            await new Promise(resolve => setTimeout(resolve, 10000));
+          }
+          let result = aiResponse.content.trim();
           console.log('AI response received:', result.substring(0, 100) + '...');
-          
-          // Ensure the post doesn't exceed 200 characters
           if (result.length > 200) {
             result = result.substring(0, 197) + '...';
           }
-          
           posts.push(result);
         }
       } else {
-        console.log('Generating LinkedIn post');
-        // Original LinkedIn social post format
-        if (!apiKey) {
-          console.log('API key missing for LinkedIn generation');
-          throw new Error(t('apiKeyMissing', 'API key not available'));
-        }
-        console.log('API key available for LinkedIn generation');
-        
-        const ai = new GoogleGenAI({ apiKey: apiKey });
-        const { getModelByTier } = await import('./src/utils/tierModelService');
-        const modelName = await getModelByTier(userSubscription, 'analysisGeneration');
-        console.log('Using model:', modelName);
+        console.log('Generating LinkedIn post via AIProviderManager');
+        const providerTier = (userSubscription as unknown as ProviderSubscriptionTier);
         const prompt = `Maak een korte, aantrekkelijke LinkedIn post in het Nederlands van de volgende tekst. Voeg relevante emojis en hashtags toe. De post mag maximaal 300 karakters lang zijn. Maak een titel en een bericht.\n\nTekst: ${content}`;
-        
-        console.log('Sending prompt to AI:', prompt.substring(0, 100) + '...');
-        const response = await ai.models.generateContent({ model: modelName, contents: prompt });
-        const result = response.text;
+        console.log('Sending prompt to AI provider:', prompt.substring(0, 100) + '...');
+        const request = {
+          userId: authState.user?.uid || 'anonymous',
+          functionType: AIFunction.ANALYSIS_GENERATION,
+          userTier: providerTier,
+        };
+        let aiResponse;
+        let attempt = 0;
+        const maxRetries = 3;
+        while (attempt < maxRetries) {
+          try {
+            aiResponse = await AIProviderManager.generateContentWithProviderSelection(request, prompt);
+            break;
+          } catch (error) {
+            if ((error.statusCode || error.code) === 429 && attempt < maxRetries - 1) {
+              const delaySec = (error as any).retryDelaySec || 10;
+              console.log(`Rate limit hit for LinkedIn post, retrying after ${delaySec} seconds...`);
+              await new Promise(resolve => setTimeout(resolve, delaySec * 1000));
+              attempt++;
+            } else {
+              throw error;
+            }
+          }
+        }
+        if (!aiResponse) {
+          throw new Error('Failed to generate LinkedIn post after retries');
+        }
+        const result = aiResponse.content;
         console.log('AI response received:', result.substring(0, 100) + '...');
         posts.push(result);
       }
@@ -7181,7 +7210,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         
         // Handle analysis mode - existing logic for analysis content
         if (activeView !== 'transcript' && activeView !== 'chat' && activeView !== 'podcast' && activeView !== 'sentiment' && loadingText && !analysisContent[activeView] && !keywordAnalysis) {
-            return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
+            return <BlurredLoadingOverlay text={`${loadingText}...`} />;
         }
         if (activeView === 'chat') {
             // Check if user has access to chat
@@ -7209,7 +7238,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         }
         if (activeView === 'exec') {
             if (!executiveSummaryData && loadingText) {
-                return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[300px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>;
+                return <BlurredLoadingOverlay text={`${loadingText}...`} />;
             }
             if (!executiveSummaryData) {
                 return <div className="flex items-center justify-center p-8 min-h-[300px] text-slate-500 dark:text-slate-400">{t('noContent')}</div>;
@@ -7652,7 +7681,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
                     {/* Output */}
                     {loadingText && !blogData ? (
-                        <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[200px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>
+                        <BlurredLoadingOverlay loadingText={`${loadingText}...`} />
                     ) : blogData ? (
                         <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
                             <div className="absolute top-4 right-8">
@@ -7721,7 +7750,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
         if (activeView === 'sentiment') {
             if ((isAnalyzingSentiment || loadingText) && !sentimentAnalysisResult) {
-                return <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[300px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText || t('analyzingSentiment')}...</div>;
+                return <BlurredLoadingOverlay loadingText={`${loadingText || t('analyzingSentiment')}...`} />;
             }
             if (sentimentAnalysisResult) {
                 const fullContent = `${t('sentimentSummary')}\n${sentimentAnalysisResult.summary}\n\n${t('sentimentConclusion')}\n${sentimentAnalysisResult.conclusion}`;
@@ -8119,7 +8148,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
                     {/* Output */}
                     {loadingText && !explainData?.explanation ? (
-                        <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300 min-h-[200px]"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>
+                        <BlurredLoadingOverlay loadingText={`${loadingText}...`} />
                     ) : explainData?.explanation ? (
                         <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
                             <div className="absolute top-4 right-8">
@@ -10097,9 +10126,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       )}
       <main className="w-full max-w-7xl xl:max-w-[90vw] 2xl:max-w-[85vw] mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 flex flex-col items-center gap-6 sm:gap-8 mt-20 sm:mt-12">
         {authState.isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <LoadingSpinner className="w-8 h-8" text={t('loading')} />
-          </div>
+          <BlurredLoadingOverlay loadingText={t('loading')} />
         ) : showInfoPage || !authState.user ? (
           <div className="text-center py-16 w-full max-w-7xl xl:max-w-[85vw] 2xl:max-w-[80vw] mx-auto">
             {/* Start new session knop bovenaan info pagina verwijderd */}

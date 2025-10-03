@@ -42,7 +42,7 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({ isOpen, onClose, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-lg w-full relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800" type="button" aria-label={t('close')}>
           <XMarkIcon className="h-6 w-6" />

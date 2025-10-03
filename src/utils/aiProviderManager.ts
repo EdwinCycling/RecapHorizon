@@ -314,18 +314,35 @@ export class AIProviderManager {
       throw new Error(`Rate limit exceeded for ${providerSelection.provider}. Try again in ${providerSelection.rateLimitStatus.retryAfter} seconds.`);
     }
 
-    // Get API key for the selected provider
-    const apiKey = this.getApiKey(providerSelection.provider);
+    // Get API key for the selected provider (support Vite env names)
+    let providerToUse = providerSelection.provider;
+    let modelToUse = providerSelection.model;
+    let apiKey = this.getApiKey(providerToUse);
 
-    
-    // Validate API key exists
+    // Validate API key exists; if missing and fallback available (non-FREE), try fallback provider
     if (!apiKey || apiKey.trim() === '') {
-      throw new Error(`API key not configured for ${providerSelection.provider}. Please set the appropriate environment variable.`);
+      if (providerSelection.fallbackAvailable && userTier !== SubscriptionTier.FREE) {
+        const fallbackProvider = providerToUse === AIProvider.GOOGLE_GEMINI 
+          ? AIProvider.OPENROUTER 
+          : AIProvider.GOOGLE_GEMINI;
+        const fallbackApiKey = this.getApiKey(fallbackProvider);
+        if (fallbackApiKey && fallbackApiKey.trim() !== '') {
+          providerToUse = fallbackProvider;
+          modelToUse = fallbackProvider === AIProvider.GOOGLE_GEMINI 
+            ? this.getDefaultGeminiModel(functionType)
+            : this.getDefaultOpenRouterModel(functionType);
+          apiKey = fallbackApiKey;
+        } else {
+          throw new Error(`API key not configured for ${providerSelection.provider}. Please set the appropriate environment variable.`);
+        }
+      } else {
+        throw new Error(`API key not configured for ${providerSelection.provider}. Please set the appropriate environment variable.`);
+      }
     }
     
     const config: AIProviderConfig = {
-      provider: providerSelection.provider,
-      model: providerSelection.model,
+      provider: providerToUse,
+      model: modelToUse,
       apiKey,
       temperature: 0.7,
       maxTokens: 4000
@@ -671,11 +688,15 @@ export class AIProviderManager {
    * Get API key for the specified provider
    */
   private static getApiKey(provider: AIProvider): string | undefined {
+    // Support both Node-style process.env (for tests) and Vite import.meta.env (browser)
+    const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) ? (import.meta as any).env : process.env as any;
     switch (provider) {
       case AIProvider.GOOGLE_GEMINI:
-        return process.env.REACT_APP_GEMINI_API_KEY;
+        // Prefer VITE_GEMINI_API_KEY or VITE_GOOGLE_CLOUD_API_KEY, fall back to GEMINI_API_KEY and REACT_APP_GEMINI_API_KEY
+        return env.VITE_GEMINI_API_KEY || env.VITE_GOOGLE_CLOUD_API_KEY || env.GEMINI_API_KEY || env.REACT_APP_GEMINI_API_KEY;
       case AIProvider.OPENROUTER:
-        return process.env.REACT_APP_OPENROUTER_API_KEY;
+        // Prefer VITE_OPENROUTER_API_KEY, fall back to REACT_APP_OPENROUTER_API_KEY
+        return env.VITE_OPENROUTER_API_KEY || env.REACT_APP_OPENROUTER_API_KEY;
       default:
         return undefined;
     }

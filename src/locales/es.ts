@@ -732,6 +732,8 @@ RecapHorizon: Más allá del caos, la esencia primero.`,
   sessionWillExpireIn: "Su sesión expirará en {timeRemaining}. ¿Le gustaría extender su sesión?",
   extending: "Extendiendo...",
   extendSession: "Extender sesión",
+  sessionExpired: "Su sesión ha expirado. Por favor, inicie sesión nuevamente.",
+  sessionExtended: "Sesión extendida exitosamente.",
 
   // Settings page translations
   settingsTitle: "⚙️ Configuración",
@@ -1847,5 +1849,27 @@ notionIntegrationSecurityDesc: "Tus datos de Notion permanecen seguros porque so
   copyImageInstruction: "Copiar instrucción de imagen",
   aiImageInstruction: "Instrucción de Imagen IA",
   aiImageInstructionDescription: "A continuación una instrucción para crear una imagen correspondiente. Copia y pega esto en una herramienta IA de generación de imágenes.",
-  aiImageInstructionExample: "Por ejemplo con"
+  aiImageInstructionExample: "Por ejemplo con",
+
+  // Audio Limit Modal
+
+  currentUsage: "Uso actual",
+  upgradeForMoreMinutes: "Actualizar para más minutos",
+  audioMinutesPerMonth: "{limit} minutos por mes",
+  upgradeTo: "Actualizar a {tier}",
+
+  goldTierContactSupport: "Contacta con soporte para opciones empresariales.",
+  viewAllPricingOptions: "Ver todas las opciones de precios",
+  monthlyAudioLimitExceeded: "Has alcanzado tu límite mensual de audio.",
+  freeMonthlyLimit: "Los usuarios gratuitos pueden grabar hasta 60 minutos por mes.",
+  silverMonthlyLimit: "Los usuarios Silver pueden grabar hasta 500 minutos por mes.",
+  goldMonthlyLimit: "Los usuarios Gold pueden grabar hasta 1000 minutos por mes.",
+
+  viewPricingOptions: "Ver Opciones de Precios",
+  minutesUsedThisMonth: "Minutos usados este mes",
+  minutesRemaining: "Minutos restantes",
+  monthlyUsage: "Uso mensual",
+  unlimitedAudio: "Audio ilimitado - ¡sin restricciones!",
+  approachingAudioLimit: "Te estás acercando a tu límite de audio mensual. Considera actualizar a un plan superior.",
+  sessionRecordingTime: "Tiempo de grabación de sesión"
 };

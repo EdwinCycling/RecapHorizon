@@ -1,6 +1,21 @@
 // Enhanced AudioRecorder for mobile device compatibility
 // Handles common web-specific interruptions and provides robust recording
 
+import { TFunction } from 'i18next';
+import { getUserMonthlyAudioMinutes, incrementUserMonthlyAudioMinutes, getUserSubscriptionTier } from '../firebase';
+import { SubscriptionTier, TierLimits } from '../../types';
+import { subscriptionService } from '../subscriptionService';
+
+export type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped' | 'error' | 'limit_reached';
+
+export interface AudioRecorderCallbacks {
+  onStateChange?: (state: RecordingState) => void;
+  onDataAvailable?: (chunks: Blob[]) => void;
+  onStop?: (audioBlob: Blob) => void;
+  onError?: (error: Error) => void;
+  onLimitReached?: (limitType: 'session' | 'monthly', tier: SubscriptionTier) => void;
+}
+
 type TranslationFunction = (key: string, fallback?: string) => string;
 
 export class AudioRecorder {
@@ -18,9 +33,27 @@ export class AudioRecorder {
   private isMobile: boolean = false;
   private t?: TranslationFunction;
   private wakeLock: any = null; // Wake Lock to prevent screen sleep on mobile
+  private userId: string | null = null;
+  private recordingStartTime: number = 0;
+  private limitCheckInterval: NodeJS.Timeout | null = null;
+  private userTier: SubscriptionTier = SubscriptionTier.FREE;
+  private tierLimits: TierLimits | null = null;
+  private monthlyMinutesUsed: number = 0;
+  public onLimitReached?: (limitType: 'session' | 'monthly', tier: SubscriptionTier) => void;
 
-  constructor(t?: TranslationFunction) {
+  constructor(t?: TranslationFunction, userId?: string, callbacks?: AudioRecorderCallbacks) {
     this.t = t;
+    this.userId = userId || null;
+    
+    // Set callbacks
+    if (callbacks) {
+      this.onStateChange = callbacks.onStateChange;
+      this.onDataAvailable = callbacks.onDataAvailable;
+      this.onStop = callbacks.onStop;
+      this.onError = callbacks.onError;
+      this.onLimitReached = callbacks.onLimitReached;
+    }
+    
     this.detectMobile();
     this.setupVisibilityListener();
     this.setupAudioContextListener();
@@ -51,11 +84,110 @@ export class AudioRecorder {
     this.onStop = callbacks.onStop;
   }
 
+  // Initialize user limits and tier information
+  private async initializeUserLimits(): Promise<void> {
+    if (!this.userId) {
+      console.warn('No userId provided, using Free tier limits');
+      this.userTier = SubscriptionTier.FREE;
+      this.tierLimits = subscriptionService.getTierLimits(this.userTier);
+      this.monthlyMinutesUsed = 0;
+      return;
+    }
+
+    try {
+      // Get user's subscription tier
+      this.userTier = await getUserSubscriptionTier(this.userId) as SubscriptionTier;
+      this.tierLimits = subscriptionService.getTierLimits(this.userTier);
+      
+      // Get current monthly usage
+      const monthlyUsage = await getUserMonthlyAudioMinutes(this.userId);
+      this.monthlyMinutesUsed = monthlyUsage.minutes;
+    } catch (error) {
+      console.error('Failed to initialize user limits:', error);
+      // Fallback to Free tier
+      this.userTier = SubscriptionTier.FREE;
+      this.tierLimits = subscriptionService.getTierLimits(this.userTier);
+      this.monthlyMinutesUsed = 0;
+    }
+  }
+
+  // Check if user can start recording (monthly limit check)
+  private async checkMonthlyLimit(): Promise<boolean> {
+    if (!this.tierLimits) return true;
+    
+    const monthlyLimitMinutes = this.tierLimits.maxMonthlyAudioMinutes || Infinity;
+    
+    if (this.monthlyMinutesUsed >= monthlyLimitMinutes) {
+      this.onLimitReached?.('monthly', this.userTier);
+      this.onStateChange?.('stopped');
+      return false;
+    }
+    
+    return true;
+  }
+
+  // Start limit checking during recording
+  private startLimitChecking(): void {
+    if (!this.tierLimits || !this.userId) return;
+    
+    this.limitCheckInterval = setInterval(() => {
+      const currentSessionMinutes = (Date.now() - this.recordingStartTime) / (1000 * 60);
+      const sessionLimitMinutes = this.tierLimits!.maxSessionDuration || Infinity;
+      const monthlyLimitMinutes = this.tierLimits!.maxMonthlyAudioMinutes || Infinity;
+      
+      // Check session limit
+      if (currentSessionMinutes >= sessionLimitMinutes) {
+        this.stopRecordingDueToLimit('session');
+        return;
+      }
+      
+      // Check monthly limit (current usage + current session)
+      const totalMinutes = this.monthlyMinutesUsed + currentSessionMinutes;
+      if (totalMinutes >= monthlyLimitMinutes) {
+        this.stopRecordingDueToLimit('monthly');
+        return;
+      }
+    }, 5000); // Check every 5 seconds
+  }
+
+  // Stop recording due to limit reached
+  private async stopRecordingDueToLimit(limitType: 'session' | 'monthly'): Promise<void> {
+    if (this.limitCheckInterval) {
+      clearInterval(this.limitCheckInterval);
+      this.limitCheckInterval = null;
+    }
+    
+    // Update usage before stopping
+    if (this.userId && this.recordingStartTime > 0) {
+      const sessionMinutes = (Date.now() - this.recordingStartTime) / (1000 * 60);
+      try {
+        await incrementUserMonthlyAudioMinutes(this.userId, sessionMinutes);
+      } catch (error) {
+        console.error('Failed to update audio minutes:', error);
+      }
+    }
+    
+    // Stop recording
+    await this.stopRecording();
+    
+    // Notify about limit reached
+    this.onLimitReached?.(limitType, this.userTier);
+    this.onStateChange?.('stopped');
+  }
+
   // Start recording with enhanced mobile support
   async startRecording(options?: {
     includeSystemAudio?: boolean;
     includeMicrophone?: boolean;
   }): Promise<void> {
+    // Initialize user limits first
+    await this.initializeUserLimits();
+    
+    // Check monthly limit before starting
+    const canRecord = await this.checkMonthlyLimit();
+    if (!canRecord) {
+      throw new Error(this.t?.('monthlyLimitReached') || 'Monthly recording limit reached');
+    }
     try {
       const { includeSystemAudio = true, includeMicrophone = true } = options || {};
       
@@ -76,8 +208,11 @@ export class AudioRecorder {
               // Additional constraints for better transcription quality
             } 
           });
-        } catch (error) {
+        } catch (error: any) {
           console.warn(this.t?.('microphoneAccessDenied') || 'Microphone access denied:', error);
+          if (error.name === 'NotAllowedError') {
+            console.error('[Violation] Permissions policy violation: microphone is not allowed in this document.');
+          }
           if (!includeSystemAudio) {
             throw new Error(this.t?.('microphoneAccessDenied') || 'Microphone access required but denied');
           }
@@ -122,11 +257,15 @@ export class AudioRecorder {
       const destination = this.audioContext.createMediaStreamDestination();
       let hasAudio = false;
 
+      // Create a gain node to mix multiple audio sources
+      const gainNode = this.audioContext.createGain();
+      gainNode.gain.value = 1.0;
+
       if (displayStream) {
         const displayAudioTracks = displayStream.getAudioTracks();
         if (displayAudioTracks.length > 0) {
           const displaySource = this.audioContext.createMediaStreamSource(new MediaStream(displayAudioTracks));
-          displaySource.connect(this.analyser);
+          displaySource.connect(gainNode);
           hasAudio = true;
         }
       }
@@ -135,7 +274,7 @@ export class AudioRecorder {
         const micAudioTracks = micStream.getAudioTracks();
         if (micAudioTracks.length > 0) {
           const micSource = this.audioContext.createMediaStreamSource(new MediaStream(micAudioTracks));
-          micSource.connect(this.analyser);
+          micSource.connect(gainNode);
           hasAudio = true;
         }
       }
@@ -144,8 +283,9 @@ export class AudioRecorder {
         throw new Error(this.t?.('noAudioSources') || 'No audio sources available');
       }
 
-      // Route analyser output to destination so it is recorded
-      this.analyser.connect(destination);
+      // Connect gain node to analyser and destination
+      gainNode.connect(this.analyser);
+      gainNode.connect(destination);
       this.stream = destination.stream;
 
       // On some mobile devices, audio tracks can end briefly; try to recover automatically
@@ -290,7 +430,11 @@ export class AudioRecorder {
       this.mediaRecorder.start(1000);
       this._isRecording = true;
       this._isPaused = false;
+      this.recordingStartTime = Date.now();
       this.onStateChange?.('recording');
+      
+      // Start limit checking
+      this.startLimitChecking();
       
       // Request wake lock to prevent screen sleep on mobile
       await this.requestWakeLock();
@@ -334,6 +478,22 @@ export class AudioRecorder {
   // Stop recording and get the final audio
   async stopRecording(): Promise<Blob> {
     return new Promise(async (resolve) => {
+      // Stop limit checking
+      if (this.limitCheckInterval) {
+        clearInterval(this.limitCheckInterval);
+        this.limitCheckInterval = null;
+      }
+      
+      // Update user's monthly audio minutes
+      if (this.userId && this.recordingStartTime > 0) {
+        const sessionMinutes = (Date.now() - this.recordingStartTime) / (1000 * 60);
+        try {
+          await incrementUserMonthlyAudioMinutes(this.userId, sessionMinutes);
+        } catch (error) {
+          console.error('Failed to update audio minutes:', error);
+        }
+      }
+      
       if (!this.mediaRecorder || !this._isRecording) {
         const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
         // Release wake lock when recording stops
@@ -364,6 +524,12 @@ export class AudioRecorder {
   // Clean up resources
   public async cleanup(): Promise<void> {
     try {
+      // Stop limit checking
+      if (this.limitCheckInterval) {
+        clearInterval(this.limitCheckInterval);
+        this.limitCheckInterval = null;
+      }
+      
       // Release wake lock during cleanup
       await this.releaseWakeLock();
       
@@ -380,6 +546,7 @@ export class AudioRecorder {
         this.audioContext = null;
       }
       this.mediaRecorder = null;
+      this.recordingStartTime = 0;
     } catch (e) {
       console.warn(this.t?.('cleanupError') || 'Cleanup error:', e);
     }

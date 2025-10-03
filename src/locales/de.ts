@@ -724,8 +724,7 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   businessCaseGeneratorFeature: "Business Case Generator",
   silverTier: "Silber",
   goldTier: "Gold",
-  upgradeToSilver: "Auf Silber upgraden",
-  upgradeToGold: "Auf Gold upgraden",
+
   subscriptionCancellable: "Alle Abonnements sind nach 6 Monaten monatlich kündbar.",
   supportContact: "Haben Sie Fragen? Kontaktieren Sie uns über support@recaphorizon.nl",
   later: "Später",
@@ -747,6 +746,8 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   sessionWillExpireIn: "Ihre Sitzung läuft in {timeRemaining} ab. Möchten Sie Ihre Sitzung verlängern?",
   extending: "Verlängern...",
   extendSession: "Sitzung verlängern",
+  sessionExpired: "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+  sessionExtended: "Sitzung erfolgreich verlängert.",
 
   // Settings page translations
   settingsTitle: "⚙️ Einstellungen",
@@ -1838,5 +1839,28 @@ notionIntegrationSecurityDesc: "Ihre Notion-Daten bleiben sicher, da wir nur auf
   copyImageInstruction: "Bildanweisung kopieren",
   aiImageInstruction: "KI-Bildanweisung",
   aiImageInstructionDescription: "Nachfolgend eine Anweisung zur Erstellung eines entsprechenden Bildes. Kopieren und fügen Sie diese in ein KI-Tool zur Bildgenerierung ein.",
-  aiImageInstructionExample: "Zum Beispiel mit"
+  aiImageInstructionExample: "Zum Beispiel mit",
+
+  // Audio Limit Modal
+
+  currentUsage: "Aktuelle Nutzung",
+  upgradeForMoreMinutes: "Upgrade für mehr Minuten",
+  audioMinutesPerMonth: "{limit} Minuten pro Monat",
+  upgradeTo: "Upgrade auf {tier}",
+
+  goldTierContactSupport: "Kontaktieren Sie den Support für Enterprise-Optionen.",
+  viewAllPricingOptions: "Alle Preisoptionen anzeigen",
+  monthlyAudioLimitExceeded: "Sie haben Ihr monatliches Audio-Limit erreicht.",
+  freeMonthlyLimit: "Kostenlose Benutzer können bis zu 60 Minuten pro Monat aufnehmen.",
+  silverMonthlyLimit: "Silver-Benutzer können bis zu 500 Minuten pro Monat aufnehmen.",
+  goldMonthlyLimit: "Gold-Benutzer können bis zu 1000 Minuten pro Monat aufnehmen.",
+  upgradeToSilver: "Auf Silber upgraden",
+  upgradeToGold: "Auf Gold upgraden",
+  viewPricingOptions: "Preisoptionen anzeigen",
+  minutesUsedThisMonth: "Diesen Monat verwendete Minuten",
+  minutesRemaining: "Verbleibende Minuten",
+  monthlyUsage: "Monatliche Nutzung",
+  unlimitedAudio: "Unbegrenzte Audio - keine Einschränkungen!",
+  approachingAudioLimit: "Sie nähern sich Ihrem monatlichen Audio-Limit. Erwägen Sie ein Upgrade auf einen höheren Plan.",
+  sessionRecordingTime: "Sitzungsaufnahmezeit"
 };

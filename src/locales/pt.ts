@@ -728,6 +728,8 @@ RecapHorizon: Além do caos, a essência primeiro.`,
   sessionWillExpireIn: "Sua sessão expirará em {timeRemaining}. Gostaria de estender sua sessão?",
   extending: "Estendendo...",
   extendSession: "Estender sessão",
+  sessionExpired: "Sua sessão expirou. Por favor, faça login novamente.",
+  sessionExtended: "Sessão estendida com sucesso.",
 
   // Settings page translations
   settingsTitle: "⚙️ Configurações",
@@ -1849,5 +1851,28 @@ notionIntegrationSecurityDesc: "Seus dados do Notion permanecem seguros porque s
   copyImageInstruction: "Copiar instrução de imagem",
   aiImageInstruction: "Instrução de Imagem IA",
   aiImageInstructionDescription: "Abaixo uma instrução para criar uma imagem correspondente. Copie e cole isso em uma ferramenta IA de geração de imagens.",
-  aiImageInstructionExample: "Por exemplo com"
+  aiImageInstructionExample: "Por exemplo com",
+
+  // Audio Limit Modal
+  audioLimitReached: "Limite de Áudio Atingido",
+  monthlyAudioLimitExceeded: "Você atingiu seu limite de áudio mensal.",
+  freeMonthlyLimit: "Usuários gratuitos podem gravar até 60 minutos por mês.",
+  silverMonthlyLimit: "Usuários Silver podem gravar até 500 minutos por mês.",
+  goldMonthlyLimit: "Usuários Gold podem gravar até 1000 minutos por mês.",
+  viewPricingOptions: "Ver Opções de Preços",
+  minutesUsedThisMonth: "Minutos usados este mês",
+  minutesRemaining: "Minutos restantes",
+  monthlyUsage: "Uso mensal",
+  unlimitedAudio: "Áudio ilimitado - sem restrições!",
+  approachingAudioLimit: "Você está se aproximando do seu limite de áudio mensal. Considere fazer upgrade para um plano superior.",
+  sessionRecordingTime: "Tempo de gravação da sessão",
+
+  // Additional Audio Limit Modal translations
+  currentUsage: "Uso atual",
+  upgradeForMoreMinutes: "Atualize para mais minutos",
+  audioMinutesPerMonth: "minutos de áudio por mês",
+  upgradeTo: "Atualizar para",
+
+  goldTierContactSupport: "Entre em contato com o suporte para opções empresariais.",
+  viewAllPricingOptions: "Ver todas as opções de preços"
 };

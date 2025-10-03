@@ -198,6 +198,21 @@ export const nl = {
   uploadTemplate: "Upload Sjabloon",
   templateUploaded: "Sjabloon: {name}",
   clearTemplate: "Wis sjabloon",
+
+  // Audio limit messages
+
+  currentUsage: "Huidig gebruik",
+  minutes: "minuten",
+  upgradeForMoreMinutes: "Upgrade voor meer minuten",
+  audioMinutesPerMonth: "{limit} minuten per maand",
+  upgradeTo: "Upgrade naar {tier}",
+
+  goldTierContactSupport: "Neem contact op met support voor enterprise opties.",
+  viewAllPricingOptions: "Bekijk alle prijsopties",
+
+  upgradeToGetMoreMinutes: "Upgrade je abonnement om meer audio minuten te krijgen.",
+  remainingAudioMinutes: "Resterende audio minuten: {remaining} van {total}",
+  audioUsageWarning: "Let op: Je hebt {percentage}% van je maandelijkse audio minuten gebruikt.",
   pptTemplateNote: "Opmerking: AI-afbeeldingen zijn uitgeschakeld bij gebruik van een aangepast sjabloon.",
   listenAlongTitle: "Luister mee met podcasts en YouTube",
   listenAlongBody: "Gebruik RecapHorizon om mee te luisteren met podcasts en YouTube-video's. Handig voor extra uitleg en om meer uit een uitzending te halen: zet systeemgeluid aan, speel de video of podcast af en laat RecapHorizon automatisch transcriberen en samenvatten.",
@@ -743,6 +758,8 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   sessionWillExpireIn: "Je sessie verloopt over {timeRemaining}. Wil je je sessie verlengen?",
   extending: "Verlengen...",
   extendSession: "Sessie verlengen",
+  sessionExpired: "Je sessie is verlopen. Log opnieuw in.",
+  sessionExtended: "Sessie succesvol verlengd.",
 
   // Settings page translations
   settingsTitle: "⚙️ Instellingen",
@@ -2020,8 +2037,6 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   subscriptionManagement: "Abonnement Beheer",
   subscriptionViewPricing: "Bekijk Prijzen",
   subscriptionViewPricingDesc: "Vergelijk alle beschikbare abonnementen",
-  subscriptionUpgrade: "Upgrade Abonnement",
-  subscriptionUpgradeDesc: "Krijg toegang tot meer functies",
   subscriptionChangeplan: "Wijzig Abonnement",
   subscriptionChangeplanDesc: "Upgrade of downgrade je huidige plan",
   subscriptionManageBilling: "Beheer Facturering",
@@ -2062,5 +2077,21 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   loadingUsage: "Gebruiksgegevens laden...",
   upgradeForMore: "Upgrade voor meer",
   upgradeDescription: "Upgrade je abonnement voor meer tokens en sessies",
-  changePlan: "Wijzig abonnement"
+  changePlan: "Wijzig abonnement",
+
+  // Audio Limit Modal
+  audioLimitReached: "Audio Limiet Bereikt",
+  monthlyAudioLimitExceeded: "Je hebt je maandelijkse audio limiet bereikt.",
+  freeMonthlyLimit: "Gratis gebruikers kunnen maximaal 60 minuten per maand opnemen.",
+  silverMonthlyLimit: "Silver gebruikers kunnen maximaal 500 minuten per maand opnemen.",
+  goldMonthlyLimit: "Gold gebruikers kunnen maximaal 1000 minuten per maand opnemen.",
+  viewPricingOptions: "Bekijk Prijsopties",
+  minutesUsedThisMonth: "Minuten gebruikt deze maand",
+  minutesRemaining: "Minuten resterend",
+  monthlyUsage: "Maandelijks gebruik",
+  sessionRecordingTime: "Sessie opnametijd",
+  
+  // Audio Usage Meter
+  unlimitedAudio: "Onbeperkte audio - geen beperkingen!",
+  approachingAudioLimit: "Je nadert je maandelijkse audio limiet. Overweeg een upgrade naar een hoger abonnement."
 };

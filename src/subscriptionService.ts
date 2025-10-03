@@ -9,6 +9,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     allowedFileTypes: ['.txt', 'text/plain'],
     maxTokensPerMonth: 10000, // 10k tokens per month
     maxTokensPerDay: 500, // 500 tokens per day
+    maxMonthlyAudioMinutes: 60, // 60 minutes per month
     trialDurationDays: 28 // 4 weeks trial period
   },
   [SubscriptionTier.SILVER]: {
@@ -17,7 +18,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxTranscriptLength: 15000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.eml', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'email'],
     maxTokensPerMonth: 50000, // 50k tokens per month
-    maxTokensPerDay: 2000 // 2k tokens per day
+    maxTokensPerDay: 2000, // 2k tokens per day
+    maxMonthlyAudioMinutes: 500 // 500 minutes per month
   },
   [SubscriptionTier.GOLD]: {
     maxSessionDuration: 90,
@@ -25,7 +27,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxTranscriptLength: 30000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
     maxTokensPerMonth: 150000, // 150k tokens per month
-    maxTokensPerDay: 6000 // 6k tokens per day
+    maxTokensPerDay: 6000, // 6k tokens per day
+    maxMonthlyAudioMinutes: 1000 // 1000 minutes per month
   },
   [SubscriptionTier.ENTERPRISE]: {
     maxSessionDuration: 90,
@@ -33,7 +36,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxTranscriptLength: 50000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
     maxTokensPerMonth: 500000, // 500k tokens per month
-    maxTokensPerDay: 20000 // 20k tokens per day
+    maxTokensPerDay: 20000, // 20k tokens per day
+    maxMonthlyAudioMinutes: -1 // unlimited
   },
   [SubscriptionTier.DIAMOND]: {
     maxSessionDuration: 120,
@@ -41,7 +45,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxTranscriptLength: -1, // unlimited
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
     maxTokensPerMonth: -1, // unlimited
-    maxTokensPerDay: -1 // unlimited
+    maxTokensPerDay: -1, // unlimited
+    maxMonthlyAudioMinutes: 2500 // 2500 minutes per month
   }
 };
 
@@ -238,6 +243,61 @@ export class SubscriptionService {
     
     if (maxTokens === -1) return 0; // unlimited
     return Math.min(100, (currentUsage / maxTokens) * 100);
+  }
+
+  // Audio recording limit methods
+  public isMonthlyAudioLimitReached(tier: SubscriptionTier, currentMonthlyMinutes: number): boolean {
+    const limits = this.getTierLimits(tier);
+    if (!limits.maxMonthlyAudioMinutes || limits.maxMonthlyAudioMinutes === -1) return false; // unlimited
+    return currentMonthlyMinutes >= limits.maxMonthlyAudioMinutes;
+  }
+
+  public getRemainingAudioMinutes(tier: SubscriptionTier, currentMonthlyMinutes: number): number {
+    const limits = this.getTierLimits(tier);
+    if (!limits.maxMonthlyAudioMinutes || limits.maxMonthlyAudioMinutes === -1) return -1; // unlimited
+    return Math.max(0, limits.maxMonthlyAudioMinutes - currentMonthlyMinutes);
+  }
+
+  public getAudioUsagePercentage(tier: SubscriptionTier, currentMonthlyMinutes: number): number {
+    const limits = this.getTierLimits(tier);
+    if (!limits.maxMonthlyAudioMinutes || limits.maxMonthlyAudioMinutes === -1) return 0; // unlimited
+    return Math.min(100, (currentMonthlyMinutes / limits.maxMonthlyAudioMinutes) * 100);
+  }
+
+  public validateAudioRecordingStart(tier: SubscriptionTier, currentMonthlyMinutes: number): { allowed: boolean; reason?: string } {
+    if (this.isMonthlyAudioLimitReached(tier, currentMonthlyMinutes)) {
+      const limits = this.getTierLimits(tier);
+      return {
+        allowed: false,
+        reason: `Je hebt je maandelijkse audio limiet van ${limits.maxMonthlyAudioMinutes} minuten bereikt. Upgrade naar een hogere tier voor meer opnametijd.`
+      };
+    }
+    return { allowed: true };
+  }
+
+  public getAudioUpgradeMessage(tier: SubscriptionTier): { message: string; upgradeUrl: string } {
+    switch (tier) {
+      case SubscriptionTier.FREE:
+        return {
+          message: 'Je hebt je maandelijkse audio limiet van 60 minuten bereikt. Upgrade naar Silver voor 500 minuten per maand.',
+          upgradeUrl: '/pricing?highlight=silver'
+        };
+      case SubscriptionTier.SILVER:
+        return {
+          message: 'Je hebt je maandelijkse audio limiet van 500 minuten bereikt. Upgrade naar Gold voor 1000 minuten per maand.',
+          upgradeUrl: '/pricing?highlight=gold'
+        };
+      case SubscriptionTier.GOLD:
+        return {
+          message: 'Je hebt je maandelijkse audio limiet van 1000 minuten bereikt. Bekijk onze Enterprise opties voor onbeperkte opnametijd.',
+          upgradeUrl: '/pricing'
+        };
+      default:
+        return {
+          message: 'Je hebt je maandelijkse audio limiet bereikt. Bekijk onze pricing opties.',
+          upgradeUrl: '/pricing'
+        };
+    }
   }
 
   // Check if Free Tier 4-week period has expired (dynamic check)

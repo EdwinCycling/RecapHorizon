@@ -29,12 +29,13 @@ export enum SessionType {
 // Usage limits per tier
 export interface TierLimits {
   maxSessionDuration: number; // in minutes
-  maxSessionsPerDay: number;
-  maxTranscriptLength: number; // in characters
+  maxSessionsPerDay: number; // -1 for unlimited
+  maxTranscriptLength: number; // in characters, -1 for unlimited
   allowedFileTypes: string[];
-  maxTokensPerMonth: number; // monthly token limit
-  maxTokensPerDay: number; // daily token limit
-  trialDurationDays?: number; // trial duration in days (only for FREE tier)
+  maxTokensPerMonth: number; // -1 for unlimited
+  maxTokensPerDay: number; // -1 for unlimited
+  maxMonthlyAudioMinutes?: number; // in minutes, -1 for unlimited
+  trialDurationDays?: number; // only for free tier
 }
 
 // User subscription information
@@ -201,8 +202,9 @@ export interface EmailOptions {
 }
 
 export interface SocialPostData {
-  post: string;
-  imageInstruction: string;
+  post: string | string[];
+  timestamp?: string;
+  imageInstruction?: string;
   platform?: 'X / BlueSky' | 'Generic';
 }
 
@@ -303,4 +305,8 @@ export interface UserDocument {
   monthlySessionsCount: number;
   tokensMonth: string;
   sessionsMonth: string;
+  // Monthly audio recording limits
+  monthlyAudioMinutes: number;
+  audioMinutesMonth: string; // YYYY-MM format for tracking month
+  lastAudioResetDate: Date;
 }

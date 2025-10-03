@@ -184,12 +184,30 @@ useEffect(() => {
 		if (!!blogData && blogData.trim().length > 0) availableContent.add('blog');
 		if (!!explainData && explainData.explanation && explainData.explanation.trim().length > 0) availableContent.add('explain');
 		if (emailEnabled && !!emailAddresses && emailAddresses.length > 0) availableContent.add('email');
-		if (!!socialPostData && socialPostData.post && socialPostData.post.trim().length > 0) {
-      availableContent.add('socialPost');
-    }
-    if (!!socialPostXData && socialPostXData.post && socialPostXData.post.trim().length > 0) {
-      availableContent.add('socialPostX');
-    }
+		// Social post (LinkedIn) - handle both string and array for backward compatibility
+		if (
+		  !!socialPostData &&
+		  !!socialPostData.post &&
+		  (
+		    Array.isArray(socialPostData.post)
+		      ? socialPostData.post.some(p => !!p && p.trim().length > 0)
+		      : socialPostData.post.trim().length > 0
+		  )
+		) {
+		  availableContent.add('socialPost');
+		}
+		// Social post (X / BlueSky) - handle both string and array
+		if (
+		  !!socialPostXData &&
+		  !!socialPostXData.post &&
+		  (
+		    Array.isArray(socialPostXData.post)
+		      ? socialPostXData.post.some(p => !!p && p.trim().length > 0)
+		      : socialPostXData.post.trim().length > 0
+		  )
+		) {
+		  availableContent.add('socialPostX');
+		}
 
 		// Vind nieuwe content die nog niet is verwerkt
 		const newContent = Array.from(availableContent).filter(type => !processedContentRef.current.has(type));

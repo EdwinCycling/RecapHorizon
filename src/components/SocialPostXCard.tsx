@@ -27,11 +27,16 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({ socialPostXData, onCo
     setDropdownOpen(false);
   };
 
-  // Parse multiple posts from socialPost content
-  const parsePosts = (content: string): string[] => {
+  // Handle both array and string formats for backward compatibility
+  const parsePosts = (content: string | string[]): string[] => {
     if (!content) return [];
     
-    // Split by numbered format (1/X, 2/X, etc.)
+    // If already an array, return it
+    if (Array.isArray(content)) {
+      return content.filter(post => post && post.trim());
+    }
+    
+    // If string, split by numbered format (1/X, 2/X, etc.)
     const posts = content.split(/\n?\d+\/\d+[\s\n]+/).filter(post => post.trim());
     
     // If no numbered format found, treat as single post

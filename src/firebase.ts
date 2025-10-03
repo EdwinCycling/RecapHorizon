@@ -284,6 +284,67 @@ export const getUserMonthlySessions = async (userId: string): Promise<MonthlySes
   return { month: currentMonth, sessions: 0 };
 };
 
+// Get user's monthly sessions count
+export const getUserMonthlySessionsCount = async (userId: string): Promise<number> => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      return 0;
+    }
+    
+    const userData = userDoc.data();
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+    
+    // Check if we need to reset monthly count
+    if (userData.sessionsMonth !== currentMonth) {
+      // Reset monthly count for new month
+      await updateDoc(userRef, {
+        monthlySessionsCount: 0,
+        sessionsMonth: currentMonth
+      });
+      return 0;
+    }
+    
+    return userData.monthlySessionsCount || 0;
+  } catch (error) {
+    console.error('Error getting user monthly sessions:', error);
+    return 0;
+  }
+};
+
+// Get user's monthly audio minutes
+export const getUserMonthlyAudioMinutesCount = async (userId: string): Promise<number> => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      return 0;
+    }
+    
+    const userData = userDoc.data();
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+    
+    // Check if we need to reset monthly count
+    if (userData.audioMinutesMonth !== currentMonth) {
+      // Reset monthly count for new month
+      await updateDoc(userRef, {
+        monthlyAudioMinutes: 0,
+        audioMinutesMonth: currentMonth,
+        lastAudioResetDate: new Date()
+      });
+      return 0;
+    }
+    
+    return userData.monthlyAudioMinutes || 0;
+  } catch (error) {
+    console.error('Error getting user monthly audio minutes:', error);
+    return 0;
+  }
+};
+
 export const incrementUserMonthlySessions = async (userId: string): Promise<void> => {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -293,6 +354,106 @@ export const incrementUserMonthlySessions = async (userId: string): Promise<void
   await updateDoc(userRef, { monthlySessionsCount: increment(1), updatedAt: serverTimestamp() }).catch(async () => {
     await setDoc(userRef, { monthlySessionsCount: 1, updatedAt: serverTimestamp() }, { merge: true });
   });
+};
+
+// Increment user's monthly audio minutes
+export const incrementUserMonthlyAudioMinutes = async (userId: string, minutes: number): Promise<void> => {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  const userRef = doc(db, 'users', userId);
+  
+  // Ensure we're tracking the current month
+  await setDoc(userRef, { audioMinutesMonth: currentMonth }, { merge: true });
+  
+  await updateDoc(userRef, {
+    monthlyAudioMinutes: increment(minutes),
+    updatedAt: serverTimestamp()
+  }).catch(async () => {
+    await setDoc(userRef, {
+      monthlyAudioMinutes: minutes,
+      audioMinutesMonth: currentMonth,
+      lastAudioResetDate: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  });
+};
+
+// Monthly audio minutes tracking (no history) on user document
+export interface MonthlyAudioUsage {
+  month: string; // YYYY-MM
+  minutes: number;
+}
+
+export const getUserMonthlyAudioMinutes = async (userId: string): Promise<MonthlyAudioUsage> => {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  const data = userSnap.exists() ? userSnap.data() as Record<string, unknown> : {};
+  
+  if (data.audioMinutesMonth === currentMonth) {
+    return { month: currentMonth, minutes: (data.monthlyAudioMinutes as number) || 0 };
+  }
+  
+  // Reset for a new month
+  await setDoc(userRef, {
+    audioMinutesMonth: currentMonth,
+    monthlyAudioMinutes: 0,
+    lastAudioResetDate: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+  
+  return { month: currentMonth, minutes: 0 };
+};
+
+export const addUserMonthlyAudioMinutes = async (userId: string, minutes: number): Promise<void> => {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  const userRef = doc(db, 'users', userId);
+  
+  // Ensure we're tracking the current month
+  await setDoc(userRef, { audioMinutesMonth: currentMonth }, { merge: true });
+  
+  await updateDoc(userRef, {
+    monthlyAudioMinutes: increment(minutes),
+    updatedAt: serverTimestamp()
+  }).catch(async () => {
+    await setDoc(userRef, {
+      monthlyAudioMinutes: minutes,
+      audioMinutesMonth: currentMonth,
+      lastAudioResetDate: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  });
+};
+
+// Helper function to get remaining audio minutes for user's tier
+export const getRemainingAudioMinutes = async (userId: string): Promise<{ remaining: number; total: number; used: number }> => {
+  try {
+    const userTier = await getUserSubscriptionTier(userId);
+    const monthlyUsage = await getUserMonthlyAudioMinutes(userId);
+    
+    // Define tier limits
+    const tierLimits = {
+      'Free': 60,
+      'Silver': 500,
+      'Gold': 1000,
+      'Enterprise': 2000,
+      'Diamond': 2000
+    };
+    
+    const totalAllowed = tierLimits[userTier as keyof typeof tierLimits] || 60;
+    const used = monthlyUsage.minutes;
+    const remaining = Math.max(0, totalAllowed - used);
+    
+    return { remaining, total: totalAllowed, used };
+  } catch (error) {
+    console.error('Error getting remaining audio minutes:', error);
+    return { remaining: 0, total: 60, used: 0 };
+  }
 };
 
 // Helper function to track user session

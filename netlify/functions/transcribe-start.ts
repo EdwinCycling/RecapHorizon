@@ -3,6 +3,7 @@ import { Handler, HandlerEvent } from '@netlify/functions';
 import axios from 'axios';
 import Busboy from 'busboy';
 import { Buffer } from 'buffer';
+// import { SubscriptionTier } from '../../src/types'; // Not needed in this function
 
 // Typen voor AssemblyAI responses
 interface AssemblyAIUploadResponse {

@@ -1,6 +1,7 @@
 // netlify/functions/transcribe-status.ts
 import { Handler } from '@netlify/functions';
 import axios from 'axios';
+// import { SubscriptionTier } from '../../src/types'; // Not needed in this function
 
 // Typen voor AssemblyAI responses
 interface AssemblyAITranscriptResponseFull {

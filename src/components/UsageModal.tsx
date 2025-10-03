@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { SubscriptionTier } from '../utils/aiProviderManager';
 import { subscriptionService } from '../subscriptionService';
-import { getTotalTokenUsage, getUserMonthlySessions } from '../firebase';
+import { getTotalTokenUsage, getUserMonthlySessions, getUserMonthlyAudioMinutes } from '../firebase';
 import { auth } from '../firebase';
 import Modal from './Modal';
+import AudioUsageMeter from './AudioUsageMeter';
 
 interface UsageModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ const UsageModal: React.FC<UsageModalProps> = ({
 }) => {
   const [monthlyUsage, setMonthlyUsage] = useState<number>(0);
   const [monthlySessions, setMonthlySessions] = useState<number>(0);
+  const [monthlyAudioUsage, setMonthlyAudioUsage] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,13 +43,15 @@ const UsageModal: React.FC<UsageModalProps> = ({
     setIsLoading(true);
     
     try {
-      const [usage, sessions] = await Promise.all([
+      const [usage, sessions, audioUsage] = await Promise.all([
         getTotalTokenUsage(auth.currentUser.uid, 'monthly'),
-        getUserMonthlySessions(auth.currentUser.uid)
+        getUserMonthlySessions(auth.currentUser.uid),
+        getUserMonthlyAudioMinutes(auth.currentUser.uid)
       ]);
       
       setMonthlyUsage(usage);
       setMonthlySessions(sessions.sessions);
+      setMonthlyAudioUsage(audioUsage.minutes);
     } catch (error) {
       console.error('Error loading usage data:', error);
     } finally {
@@ -160,6 +164,17 @@ const UsageModal: React.FC<UsageModalProps> = ({
                     </span>
                   </div>
                 )}
+              </div>
+
+              {/* Audio Usage Card */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
+                <AudioUsageMeter
+                  userTier={userTier}
+                  monthlyAudioUsage={monthlyAudioUsage}
+                  t={t}
+                  theme={theme}
+                  onShowPricing={onShowPricing}
+                />
               </div>
 
               {/* Session Usage Card */}

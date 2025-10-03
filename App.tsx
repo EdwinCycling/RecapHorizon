@@ -51,6 +51,7 @@ import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
 import CustomerPortalReturnScreen from './src/components/CustomerPortalReturnScreen.tsx';
 import { stripeService } from './src/services/stripeService';
 import UsageModal from './src/components/UsageModal.tsx';
+import AudioLimitModal from './src/components/AudioLimitModal.tsx';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -98,7 +99,7 @@ import {
   deleteField,
   increment
 } from 'firebase/firestore';
-import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, getUserStripeData, type MonthlyTokensUsage } from './src/firebase';
+import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, getUserStripeData, getUserMonthlyAudioMinutes, type MonthlyTokensUsage } from './src/firebase';
 import { sessionManager, UserSession } from './src/utils/security';
 import LoginForm from './src/components/LoginForm';
 import SessionTimeoutWarning from './src/components/SessionTimeoutWarning.tsx';
@@ -984,7 +985,9 @@ export default function App() {
 
 
   const [audioURL, setAudioURL] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState<string>('');
+  const [transcript, setTranscript] = useState<string>('Dit is een test transcript voor het testen van de Social Post functionaliteit. We bespreken belangrijke onderwerpen zoals digitale transformatie, kunstmatige intelligentie en de toekomst van werk. Deze content zou gebruikt moeten worden om een LinkedIn post te genereren.');
+  
+
   const [summary, setSummary] = useState<string>('');
   const [faq, setFaq] = useState<string>('');
   const [learningDoc, setLearningDoc] = useState<string>('');
@@ -1161,6 +1164,7 @@ export default function App() {
   // Session management state
   const [currentSession, setCurrentSession] = useState<UserSession | null>(null);
   const [sessionId, setSessionId] = useState<string>('');
+  const [isManualLogout, setIsManualLogout] = useState<boolean>(false);
   
   // Session logout handler
   const handleSessionExpired = useCallback(async () => {
@@ -1169,8 +1173,12 @@ export default function App() {
       setCurrentSession(null);
       setSessionId('');
       setAuthState({ user: null, isLoading: false });
-      // Show a message to user about session expiration
-      displayToast(t('sessionExpired'), 'warning');
+      // Only show session expired message if it's not a manual logout
+      if (!isManualLogout) {
+        displayToast(t('sessionExpired'), 'warning');
+      }
+      // Reset the manual logout flag
+      setIsManualLogout(false);
     } catch (error) {
       const userError = errorHandler.handleError(error, ErrorType.SESSION, {
         userId: currentSession?.userId,
@@ -1178,7 +1186,7 @@ export default function App() {
       });
       displayToast(userError.message, 'error');
     }
-  }, [t, currentSession, sessionId]);
+  }, [t, currentSession, sessionId, isManualLogout]);
   
   // Session extend handler
   const handleExtendSession = useCallback(() => {
@@ -1317,6 +1325,9 @@ export default function App() {
   };
 
   const generateSocialPost = async (analysisType: 'socialPost' | 'socialPostX', content: string, postCount: number = 1) => {
+    console.log('generateSocialPost called', { analysisType, contentType: typeof content, contentLength: typeof content === 'string' ? content.length : 0, postCount });
+    console.log('Content preview:', typeof content === 'string' ? content.substring(0, 100) + '...' : '[content is not a string]');
+    
     setIsGenerating(true);
     try {
       const stamp = (() => {
@@ -1324,74 +1335,126 @@ export default function App() {
         return d.toLocaleString('nl-NL');
       })();
       
-      const posts = [];
+      const posts: string[] = [];
       
-      // Define max length based on analysis type
-      const maxLength = analysisType === 'socialPostX' ? 280 : 140;
-
-      // Split content into chunks for multiple posts
-      const contentChunks = [];
-      
-      if (postCount === 1) {
-        let socialContent = content;
-        if (content.length > maxLength) {
-          socialContent = content.substring(0, maxLength) + '...';
+      if (analysisType === 'socialPostX') {
+        console.log('Generating X/BlueSky posts');
+        // X/BlueSky format - generate AI posts with max 200 characters
+        if (!apiKey) {
+          console.log('API key missing for X/BlueSky generation');
+          throw new Error(t('apiKeyMissing', 'API key not available'));
         }
-        contentChunks.push(socialContent);
-      } else {
-        // Split content into multiple meaningful chunks
-        const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
-        const chunkSize = Math.ceil(sentences.length / postCount);
+        console.log('API key available for X/BlueSky generation');
+        
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const { getModelByTier } = await import('./src/utils/tierModelService');
+        const modelName = await getModelByTier(userSubscription, 'analysisGeneration');
+        console.log('Using model:', modelName);
         
         for (let i = 0; i < postCount; i++) {
-          const start = i * chunkSize;
-          const end = Math.min((i + 1) * chunkSize, sentences.length);
-          let chunk = sentences.slice(start, end).join('. ').trim();
+          const postNumber = postCount > 1 ? `${i + 1}/${postCount}` : '';
+          const prompt = `Maak een kort, krachtig X/BlueSky bericht in het Nederlands van de volgende tekst. Het bericht mag maximaal 200 karakters lang zijn (inclusief de teller). ${postNumber ? `Begin het bericht met "${postNumber} "` : ''}. Geen hashtags of emojis. Houd het zakelijk en informatief.\n\nTekst: ${content}`;
           
-          if (chunk.length > maxLength) {
-            chunk = chunk.substring(0, maxLength) + '...';
+          console.log('Sending prompt to AI:', prompt.substring(0, 100) + '...');
+          const response = await ai.models.generateContent({ model: modelName, contents: prompt });
+          let result = response.text.trim();
+          console.log('AI response received:', result.substring(0, 100) + '...');
+          
+          // Ensure the post doesn't exceed 200 characters
+          if (result.length > 200) {
+            result = result.substring(0, 197) + '...';
           }
-          contentChunks.push(chunk);
+          
+          posts.push(result);
         }
-      }
-
-      for (let i = 0; i < contentChunks.length; i++) {
-        const chunk = contentChunks[i];
-        const postNumber = postCount > 1 ? `(${i + 1}/${postCount})` : '';
+      } else {
+        console.log('Generating LinkedIn post');
+        // Original LinkedIn social post format
+        if (!apiKey) {
+          console.log('API key missing for LinkedIn generation');
+          throw new Error(t('apiKeyMissing', 'API key not available'));
+        }
+        console.log('API key available for LinkedIn generation');
         
-        if (analysisType === 'socialPostX') {
-            // X/BlueSky format - no hashtags/emojis
-            posts.push(`${postNumber} ${chunk}`.trim());
-        } else {
-            // Original social post format
-            const prompt = `Maak een korte, aantrekkelijke social media post in het Nederlands van de volgende tekst. Voeg relevante emojis en hashtags toe. De post mag maximaal 140 karakters lang zijn. ${postNumber}\n\n${chunk}`;
-            if (!apiKey) {
-              throw new Error(t('apiKeyMissing', 'API key not available'));
-            }
-            const ai = new GoogleGenAI({ apiKey: apiKey });
-            const modelName = await modelManager.getModelForFunction('analysisGeneration');
-            const response = await ai.models.generateContent({ model: modelName, contents: prompt });
-            const result = response.text;
-            posts.push(result);
-        }
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const { getModelByTier } = await import('./src/utils/tierModelService');
+        const modelName = await getModelByTier(userSubscription, 'analysisGeneration');
+        console.log('Using model:', modelName);
+        const prompt = `Maak een korte, aantrekkelijke LinkedIn post in het Nederlands van de volgende tekst. Voeg relevante emojis en hashtags toe. De post mag maximaal 300 karakters lang zijn. Maak een titel en een bericht.\n\nTekst: ${content}`;
+        
+        console.log('Sending prompt to AI:', prompt.substring(0, 100) + '...');
+        const response = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const result = response.text;
+        console.log('AI response received:', result.substring(0, 100) + '...');
+        posts.push(result);
       }
 
       const socialPostResult = {
-        post: posts.join('\n\n'),
+        post: posts,
         timestamp: stamp,
+        platform: analysisType === 'socialPostX' ? 'X / BlueSky' : 'Generic',
+        imageInstruction: undefined,
       };
 
+      console.log('Saving social post data:', { analysisType, postsCount: posts.length });
+      
       if (analysisType === 'socialPostX') {
         setSocialPostXData(socialPostResult);
+        console.log('X/BlueSky data saved successfully');
       } else {
-        setSocialPostData(socialPostResult);
+        setSocialPostData({
+          post: Array.isArray(socialPostResult.post) ? (socialPostResult.post[0] || '') : socialPostResult.post,
+          timestamp: socialPostResult.timestamp,
+          platform: socialPostResult.platform,
+          imageInstruction: socialPostResult.imageInstruction,
+        });
+        console.log('LinkedIn data saved successfully');
       }
 
-    } catch (error) {
-      console.error("Error generating social post:", error);
-      errorHandler.handleError(error as any, ErrorType.UNKNOWN, { additionalContext: { context: 'generateSocialPost', message: t('errorGeneratingSocialPost') } });
+    } catch (error: any) {
+      // Parse status code and retry delay from Gemini API error (if available)
+      const rawMessage = typeof error?.message === 'string' ? error.message : '';
+      let statusCode: number | undefined = (error as any)?.statusCode || (error as any)?.code;
+      let retryDelaySec: number | undefined;
+
+      if (!statusCode && rawMessage) {
+        try {
+          const jsonStart = rawMessage.indexOf('{');
+          if (jsonStart >= 0) {
+            const parsed = JSON.parse(rawMessage.slice(jsonStart));
+            statusCode = parsed?.error?.code;
+            const details = Array.isArray(parsed?.error?.details) ? parsed.error.details : [];
+            const retryInfo = details.find((d: any) => (d['@type'] || '').includes('RetryInfo'));
+            const retryDelay = retryInfo?.retryDelay;
+            if (typeof retryDelay === 'string') {
+              const m = /([0-9]+)s/.exec(retryDelay);
+              if (m) retryDelaySec = parseInt(m[1], 10);
+            }
+          }
+        } catch {
+          // Ignore JSON parse errors and proceed with generic handling
+        }
+      }
+
+      // Use dedicated API error handler for rate limits (429)
+      const isRateLimit = statusCode === 429;
+      const userError = isRateLimit
+        ? errorHandler.handleApiError(error as any, 429, { endpoint: 'gemini generateContent' })
+        : errorHandler.handleError(error as any, ErrorType.UNKNOWN, { additionalContext: { context: 'generateSocialPost', message: t('errorGeneratingSocialPost') } });
+
+      // Fallback: clear, explicit error message (no complex recovery logic)
+      const delayText = retryDelaySec ? ` Please wait ~${retryDelaySec}s and try again.` : '';
+      const displayMessage = isRateLimit
+        ? `Error: Rate limit exceeded on Gemini API.${delayText}`
+        : `Error: ${userError.message}`;
+
+      displayToast(displayMessage, 'error');
+
+      console.error('Error generating social post:', error);
+      console.log('Error details:', { analysisType, contentLength: typeof content === 'string' ? content.length : 0, error: (error as any)?.message });
     } finally {
       setIsGenerating(false);
+      console.log('generateSocialPost completed');
     }
   };
 
@@ -1819,6 +1882,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [dailyAudioCount, setDailyAudioCount] = useState<number>(0);
   const [dailyUploadCount, setDailyUploadCount] = useState<number>(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showAudioLimitModal, setShowAudioLimitModal] = useState(false);
   const [showPricingPage, setShowPricingPage] = useState(false);
   const [sessionOptionsHelpMode, setSessionOptionsHelpMode] = useState(false);
 
@@ -2783,6 +2847,17 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
             } else if (state === 'error') {
               setStatus(RecordingStatus.ERROR);
             }
+          },
+          onLimitReached: (limitType: 'session' | 'monthly', tier: SubscriptionTier) => {
+            if (limitType === 'monthly') {
+              setShowAudioLimitModal(true);
+            } else {
+              // Session limit - show toast message
+              const tierLimits = subscriptionService.getTierLimits(tier);
+              if (tierLimits) {
+                displayToast(`Opname gestopt: je hebt de maximale opnametijd van ${tierLimits.maxSessionDuration} minuten bereikt.`, 'info');
+              }
+            }
           }
         });
       }
@@ -2813,7 +2888,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
       setPauseStartMs(null);
 
       // Start timer for duration tracking and subscription limits using actual time
-      timerIntervalRef.current = window.setInterval(() => {
+      timerIntervalRef.current = window.setInterval(async () => {
         const currentTime = Date.now();
         const elapsedMs = currentTime - start - pauseAccumulatedMs - (pauseStartMs ? (currentTime - pauseStartMs) : 0);
         const elapsedSeconds = Math.floor(elapsedMs / 1000);
@@ -2822,11 +2897,33 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
         
         const tierLimits = subscriptionService.getTierLimits(effectiveTier);
         if (tierLimits && elapsedSeconds >= tierLimits.maxSessionDuration * 60) {
-          // Stop recording immediately at limit
+          // Stop recording immediately at session limit
           audioRecorderRef.current?.stopRecording();
           setStatus(RecordingStatus.STOPPED);
           if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
           displayToast(`Opname gestopt: je hebt de maximale opnametijd van ${tierLimits.maxSessionDuration} minuten bereikt.`, 'info');
+          return;
+        }
+        
+        // Check monthly audio limit
+        if (authState.user && tierLimits?.maxMonthlyAudioMinutes) {
+          try {
+            const monthlyUsage = await getUserMonthlyAudioMinutes(authState.user.uid);
+            const currentUsage = monthlyUsage.minutes;
+            const currentSessionMinutes = Math.floor(elapsedSeconds / 60);
+            const projectedUsage = currentUsage + currentSessionMinutes;
+            
+            if (projectedUsage >= tierLimits.maxMonthlyAudioMinutes) {
+              // Stop recording immediately at monthly limit
+              audioRecorderRef.current?.stopRecording();
+              setStatus(RecordingStatus.STOPPED);
+              if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+              setShowAudioLimitModal(true);
+              return;
+            }
+          } catch (error) {
+            console.error('Error checking monthly audio limit:', error);
+          }
         }
       }, 1000);
 
@@ -4117,6 +4214,19 @@ For the "imageInstruction" field:
 };
 
 const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => {
+    console.log('DEBUG: handleGenerateAnalysis called with type:', type, 'transcript length:', transcript.length);
+    
+    // Additional debug for social media types
+    if (type === 'socialPost' || type === 'socialPostX') {
+        console.log('Social media analysis requested:', { type, postCount });
+        console.log('Transcript check:', {
+            exists: !!transcript,
+            length: transcript?.length || 0,
+            isEmpty: !transcript?.trim(),
+            preview: transcript?.substring(0, 50) + '...'
+        });
+    }
+    
     setActiveView(type);
     if ((type === 'summary' && summary) || (type === 'faq' && faq) || (type === 'learning' && learningDoc) || (type === 'followUp' && followUpQuestions)) return; 
 
@@ -4146,6 +4256,11 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     }
 
     if (type === 'socialPost' || type === 'socialPostX') {
+        console.log('Calling generateSocialPost with sanitized transcript:', {
+            type,
+            sanitizedLength: sanitizedTranscript?.length || 0,
+            postCount
+        });
         generateSocialPost(type, sanitizedTranscript, postCount);
         return;
     }
@@ -4755,6 +4870,8 @@ const handleAnalyzeSentiment = async () => {
 
   const handleLogout = async () => {
     try {
+      // Set flag to indicate this is a manual logout
+      setIsManualLogout(true);
       await signOut(auth);
       setAuthState({
         user: null,
@@ -4764,6 +4881,8 @@ const handleAnalyzeSentiment = async () => {
       reset();
     } catch (error: any) {
       console.error('Logout error:', error);
+      // Reset flag if logout fails
+      setIsManualLogout(false);
     }
   };
 
@@ -5991,6 +6110,18 @@ ${transcript}
       return tierLimits[userSubscription] || 15;
     };
 
+    // Get monthly audio limit for user tier
+    const getMonthlyAudioLimit = (tier: string) => {
+      const monthlyLimits = {
+        'free': 60,
+        'silver': 500,
+        'gold': 1000,
+        'enterprise': 1000,
+        'diamond': 2000
+      };
+      return monthlyLimits[tier] || 60;
+    };
+
     const maxDurationMinutes = getCurrentTierMaxDuration();
     const currentDurationMinutes = computeRecordingElapsedMs() / (1000 * 60);
     const recordingPercentage = Math.min((currentDurationMinutes / maxDurationMinutes) * 100, 100);
@@ -6019,7 +6150,7 @@ ${transcript}
           {/* Recording Progress Bar */}
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-600 dark:text-slate-400">Opnametijd</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">Sessie opnametijd</span>
               <span className={`text-sm font-semibold ${getPercentageColor(recordingPercentage)}`}>
                 {Math.round(recordingPercentage)}% ({Math.round(currentDurationMinutes)}/{maxDurationMinutes} min)
               </span>
@@ -6029,6 +6160,27 @@ ${transcript}
                 className={`h-3 rounded-full transition-all duration-300 ${getPercentageBarColor(recordingPercentage)}`}
                 style={{ width: `${recordingPercentage}%` }}
               ></div>
+            </div>
+          </div>
+
+          {/* Monthly Audio Usage */}
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-slate-600 dark:text-slate-400">Maandelijks gebruik</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                {authState.user?.monthlyAudioMinutes || 0}/{getMonthlyAudioLimit(userSubscription)} min
+              </span>
+            </div>
+            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+              <div 
+                className="h-2 rounded-full transition-all duration-300 bg-blue-500"
+                style={{ 
+                  width: `${Math.min(((authState.user?.monthlyAudioMinutes || 0) / getMonthlyAudioLimit(userSubscription)) * 100, 100)}%` 
+                }}
+              ></div>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Resterend: {Math.max(0, getMonthlyAudioLimit(userSubscription) - (authState.user?.monthlyAudioMinutes || 0))} minuten
             </div>
           </div>
         </div>
@@ -6892,10 +7044,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : []),
         // Social Post tab - alleen zichtbaar voor Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
-            [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
+            [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : []),
+        // Social Post X tab - alleen zichtbaar voor Gold, Enterprise, Diamond
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'socialPostX', type: 'view', icon: SocialPostIcon, label: () => t('socialPostX') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', email: emailContent || '', socialPost: socialPostData?.post || '', socialPostX: socialPostXData?.post || '' };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -6919,6 +7074,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
         // If content doesn't exist, generate it
         if (['summary', 'faq', 'learning', 'followUp', 'socialPost', 'socialPostX'].includes(view)) {
+            console.log('DEBUG: handleTabClick called for', view, 'transcript length:', transcript.length, 'transcript preview:', transcript.slice(0, 100));
             handleGenerateAnalysis(view, 1);
         } else if (view === 'exec') {
             handleGenerateExecutiveSummary();
@@ -8275,7 +8431,16 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                  startStamp={startStamp}
                  outputLanguage={outputLang}
                  onNotify={(msg, type) => displayToast(msg, type)}
-                 onGenerateSocialPost={generateSocialPost}
+                 onGenerateSocialPost={async (analysisType, count) => {
+                     const { validateAndSanitizeForAI } = await import('./src/utils/security');
+                     const validation = validateAndSanitizeForAI(transcript, 500000);
+                     if (!validation.isValid || !validation.sanitized.trim()) {
+                         displayToast(t('transcriptEmpty'), 'error');
+                         return;
+                     }
+                     console.log('onGenerateSocialPost called', { analysisType, count, sanitizedLength: validation.sanitized.length });
+                     await generateSocialPost(analysisType, validation.sanitized, count);
+                 }}
                  isGeneratingSocialPost={isGenerating}
                  onGenerateQuiz={async ({ numQuestions, numOptions }) => {
                     // Check transcript length based on user tier
@@ -8356,11 +8521,10 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             onChange={(e) => {
                                 const newAnalysis = e.target.value as ViewType;
                                 setSelectedAnalysis(newAnalysis);
-                                if (newAnalysis && newAnalysis !== 'socialPost' && newAnalysis !== 'socialPostX') {
+                                if (newAnalysis) {
+                                    console.log('Analysis dropdown changed:', newAnalysis);
                                     setActiveView(newAnalysis);
                                     handleTabClick(newAnalysis);
-                                } else if (newAnalysis) {
-                                    setActiveView(newAnalysis);
                                 }
                                 setError(null); // Clear error messages when switching analysis
                             }}
@@ -8772,6 +8936,18 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       />
 
       <WaitlistModal isOpen={waitlistModal.isOpen} onClose={waitlistModal.close} t={t} waitlistEmail={waitlistEmail} setWaitlistEmail={setWaitlistEmail} addToWaitlist={addToWaitlist} />
+
+      <AudioLimitModal 
+        isOpen={showAudioLimitModal} 
+        onClose={() => setShowAudioLimitModal(false)} 
+        userTier={userSubscription}
+        t={t}
+        theme={theme}
+        onShowPricing={() => {
+          setShowAudioLimitModal(false);
+          setShowPricingPage(true);
+        }}
+      />
 
 
       {/* Settings Modal */}

@@ -387,6 +387,21 @@ export const en = {
   optionsPerQuestion: "Options per question",
   includeAnswers: "Include answers",
   generate: "Generate",
+
+  // Audio limit messages
+
+  currentUsage: "Current usage",
+  minutes: "minutes",
+  upgradeForMoreMinutes: "Upgrade for more minutes",
+  audioMinutesPerMonth: "{limit} minutes per month",
+  upgradeTo: "Upgrade to {tier}",
+
+  goldTierContactSupport: "Contact support for enterprise options.",
+  viewAllPricingOptions: "View all pricing options",
+
+  upgradeToGetMoreMinutes: "Upgrade your subscription to get more audio minutes.",
+  remainingAudioMinutes: "Remaining audio minutes: {remaining} of {total}",
+  audioUsageWarning: "Warning: You have used {percentage}% of your monthly audio minutes.",
   regenerate: "Regenerate",
   // Use case texts for info page
   useCaseMeetingTitle: "Direct meeting summaries",
@@ -738,8 +753,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   businessCaseGeneratorFeature: "Business case generator",
   silverTier: "Silver",
   goldTier: "Gold",
-  upgradeToSilver: "Upgrade to Silver",
-  upgradeToGold: "Upgrade to Gold",
+
   subscriptionCancellable: "All subscriptions are cancellable monthly after 6 months.",
   supportContact: "Have questions? Contact us via support@recaphorizon.nl",
   later: "Later",
@@ -2093,5 +2107,23 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   loadingUsage: "Loading usage data...",
   upgradeForMore: "Upgrade for more",
   upgradeDescription: "Upgrade your subscription for more tokens and sessions",
-  changePlan: "Change Plan"
+  changePlan: "Change Plan",
+
+  // Audio Limit Modal
+  audioLimitReached: "Audio Limit Reached",
+  monthlyAudioLimitExceeded: "You have reached your monthly audio limit.",
+  freeMonthlyLimit: "Free users can record up to 60 minutes per month.",
+  silverMonthlyLimit: "Silver users can record up to 500 minutes per month.",
+  goldMonthlyLimit: "Gold users can record up to 1000 minutes per month.",
+  upgradeToSilver: "Upgrade to Silver",
+  upgradeToGold: "Upgrade to Gold",
+  viewPricingOptions: "View Pricing Options",
+  minutesUsedThisMonth: "Minutes used this month",
+  minutesRemaining: "Minutes remaining",
+  monthlyUsage: "Monthly usage",
+  sessionRecordingTime: "Session recording time",
+  
+  // Audio Usage Meter
+  unlimitedAudio: "Unlimited audio - no restrictions!",
+  approachingAudioLimit: "You are approaching your monthly audio limit. Consider upgrading to a higher plan."
 };

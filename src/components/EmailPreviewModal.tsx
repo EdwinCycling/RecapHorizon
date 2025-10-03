@@ -198,22 +198,16 @@ const MailtoButton: React.FC<MailtoButtonProps> = ({
   const [showInstructions, setShowInstructions] = useState(false);
 
   const generateMailtoLink = () => {
-    const params = new URLSearchParams();
+    const params: string[] = [];
     
-    if (ccEmails.length > 0) {
-      params.append('cc', ccEmails.join(','));
-    }
-    if (bccEmails.length > 0) {
-      params.append('bcc', bccEmails.join(','));
-    }
-    if (subject) {
-      params.append('subject', subject);
-    }
+    if (ccEmails.length > 0) params.push('cc=' + encodeURIComponent(ccEmails.join(',')));
+    if (bccEmails.length > 0) params.push('bcc=' + encodeURIComponent(bccEmails.join(',')));
+    if (subject) params.push('subject=' + encodeURIComponent(subject.replace(/\*\*|__|[_*`~]/g, '').trim()));
     if (body) {
-      params.append('body', body);
+      const normalizedBody = body.replace(/\r?\n/g, '\r\n');
+      params.push('body=' + encodeURIComponent(normalizedBody));
     }
-
-    const queryString = params.toString();
+    const queryString = params.join('&');
     return `mailto:${toEmails.join(',')}${queryString ? '?' + queryString : ''}`;
   };
 

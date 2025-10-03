@@ -752,6 +752,8 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   sessionWillExpireIn: "Votre session expirera dans {timeRemaining}. Souhaitez-vous prolonger votre session ?",
   extending: "Extension...",
   extendSession: "Prolonger la session",
+  sessionExpired: "Votre session a expiré. Veuillez vous reconnecter.",
+  sessionExtended: "Session prolongée avec succès.",
 
   // Settings page translations
   settingsTitle: "⚙️ Paramètres",
@@ -1842,5 +1844,19 @@ notionIntegrationSecurityDesc: "Vos données Notion restent sécurisées car nou
   copyImageInstruction: "Copier l'instruction d'image",
   aiImageInstruction: "Instruction d'Image IA",
   aiImageInstructionDescription: "Ci-dessous une instruction pour créer une image correspondante. Copiez et collez ceci dans un outil IA de génération d'images.",
-  aiImageInstructionExample: "Par exemple avec"
+  aiImageInstructionExample: "Par exemple avec",
+
+  // Audio Limit Modal
+  audioLimitReached: "Limite Audio Atteinte",
+  monthlyAudioLimitExceeded: "Vous avez atteint votre limite audio mensuelle.",
+  freeMonthlyLimit: "Les utilisateurs gratuits peuvent enregistrer jusqu'à 60 minutes par mois.",
+  silverMonthlyLimit: "Les utilisateurs Silver peuvent enregistrer jusqu'à 500 minutes par mois.",
+  goldMonthlyLimit: "Les utilisateurs Gold peuvent enregistrer jusqu'à 1000 minutes par mois.",
+  viewPricingOptions: "Voir les Options de Prix",
+  minutesUsedThisMonth: "Minutes utilisées ce mois",
+  minutesRemaining: "Minutes restantes",
+  monthlyUsage: "Utilisation mensuelle",
+  unlimitedAudio: "Audio illimité - aucune restriction!",
+  approachingAudioLimit: "Vous approchez de votre limite audio mensuelle. Envisagez de passer à un plan supérieur.",
+  sessionRecordingTime: "Temps d'enregistrement de session"
 };

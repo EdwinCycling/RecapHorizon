@@ -963,7 +963,6 @@ export default function App() {
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
-    console.log('Theme toggling from', theme, 'to', newTheme);
     setTheme(newTheme);
     
     // Direct toepassen van theme
@@ -2063,7 +2062,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                 document.documentElement.setAttribute('data-theme', 'dark');
                 document.body.setAttribute('data-theme', 'dark');
                 document.documentElement.style.colorScheme = 'dark';
-                console.log('Added dark class to document and body, set data-theme');
+
             } else {
                 document.documentElement.classList.remove('dark');
                 document.body.classList.remove('dark');
@@ -2182,7 +2181,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                               );
                             }
                           } else {
-                            console.log('✅ Startup validation completed successfully');
+
                           }
                           
                           // Show warnings as info toasts (non-blocking)
@@ -2568,12 +2567,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
 
   const drawVisualizer = useCallback(() => {
     if (!canvasRef.current || !analyserRef.current || (status !== RecordingStatus.RECORDING && status !== RecordingStatus.PAUSED)) {
-      console.log('Visualizer conditions not met:', {
-        hasCanvas: !!canvasRef.current,
-        hasAnalyser: !!analyserRef.current,
-        status,
-        expectedStatuses: [RecordingStatus.RECORDING, RecordingStatus.PAUSED]
-      });
+
       return;
     }
     
@@ -2588,11 +2582,11 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     const rect = canvas.getBoundingClientRect();
     if (canvas.width !== rect.width) {
       canvas.width = rect.width;
-      console.log('Canvas width updated:', rect.width);
+
     }
     if (canvas.height !== rect.height) {
       canvas.height = rect.height;
-      console.log('Canvas height updated:', rect.height);
+
     }
 
     const bufferLength = analyserRef.current.frequencyBinCount;
@@ -2642,17 +2636,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     canvasCtx.lineTo(canvas.width, canvas.height/2);
     canvasCtx.stroke();
     
-    // Debug info (alleen elke 30 frames om console niet te spammen)
-    if (!animationFrameIdRef.current || animationFrameIdRef.current % 30 === 0) {
-      console.log('Drawing visualizer:', {
-        canvasWidth: canvas.width,
-        canvasHeight: canvas.height,
-        bufferLength,
-        status,
-        hasAnalyser: !!analyserRef.current,
-        averageAmplitude: averageAmplitude.toFixed(2)
-      });
-    }
+
     
     // Als er geen audio is, toon een test patroon
     if (averageAmplitude < 1) {
@@ -2772,7 +2756,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
             if (autoStopRecordingEnabled && audioRecorderRef.current) {
               try {
                 await audioRecorderRef.current.cleanup();
-                console.log('✅ Audio recorder automatisch gestopt en opgeruimd');
+                // Audio recorder automatisch gestopt en opgeruimd
               } catch (error) {
                 console.warn('⚠️ Fout bij automatisch opruimen audio recorder:', error);
               }
@@ -2804,7 +2788,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
       }
       
       // Start recording with the new AudioRecorder
-      await audioRecorderRef.current.startRecording();
+      await audioRecorderRef.current.startRecording({ includeMicrophone: true, includeSystemAudio: true });
       
       // Update session recording status
       sessionManager.setRecordingStatus(sessionId, true);
@@ -2893,7 +2877,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
   };
 
   const stopRecording = async () => {
-    if (audioRecorderRef.current && (status === RecordingStatus.RECORDING || status === RecordingStatus.PAUSED)) {
+    if (audioRecorderRef.current) {
       try {
         // Stop recording and ensure complete cleanup
         await audioRecorderRef.current.stopRecording();
@@ -2907,7 +2891,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
         // Clear pause state
         setPauseStartMs(null);
         
-        console.log('✅ Audio opname volledig gestopt en alle resources vrijgegeven');
+        // Audio opname volledig gestopt en alle resources vrijgegeven
       } catch (error) {
         console.error('❌ Fout bij stoppen van audio opname:', error);
       }
@@ -3094,7 +3078,6 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                         
                         resolve(text.trim());
                     } catch (error: unknown) {
-                        console.error('DOCX parsing error:', error);
                         reject(new Error(`DOCX verwerking mislukt: ${(error as Error).message || 'onbekende fout'}`));
                     }
                 };
@@ -3777,13 +3760,13 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 // Filter out empty URLs
                 const validUrls = multipleUrls.filter(u => u.trim() !== '');
                 
-                console.log('Firecrawl API: Processing URLs:', validUrls);
+                // Firecrawl API: Processing URLs
                 
                 // Process multiple URLs using Firecrawl v2 API
                 const allResults = [];
                 
                 for (const singleUrl of validUrls) {
-                    console.log('Processing URL with Firecrawl v2:', singleUrl);
+                    // Processing URL with Firecrawl v2
                     
                     const response = await fetch('https://api.firecrawl.dev/v2/scrape', {
                         method: 'POST',
@@ -3801,16 +3784,16 @@ Provide a detailed analysis that could be used for further AI processing and ana
                         })
                     });
                     
-                    console.log(`Firecrawl v2 Response Status for ${singleUrl}:`, response.status);
+                    // Firecrawl v2 Response Status
                     
                     if (!response.ok) {
                         const errorText = await response.text();
-                        console.error(`Firecrawl v2 Error for ${singleUrl}:`, errorText);
+                        // Firecrawl v2 Error - continue with next URL
                         continue; // Skip this URL and continue with others
                     }
                     
                     const data = await response.json();
-                    console.log(`Firecrawl v2 Response Data for ${singleUrl}:`, data);
+                    // Firecrawl v2 Response Data processed
                     
                     if (data.success && data.data) {
                         // Prefer HTML content, fallback to markdown, then general content
@@ -3823,7 +3806,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                     }
                 }
                 
-                console.log('Firecrawl v2 API: Processed', allResults.length, 'URLs successfully');
+                // Firecrawl v2 API: URLs processed successfully
                 
                 if (allResults.length === 0) {
                     throw new Error(t('noContentRetrieved', 'No content could be retrieved from any of the provided URLs.'));
@@ -3849,8 +3832,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                         userAgent: "RecapHorizon/1.0 (Web Content Analyzer)"
                     });
                     
-                    console.log('Successfully fetched:', result.metadata?.title || 'Untitled');
-                    console.log('Content length:', result.content.length);
+                    // Successfully fetched content
                     
                     // Extract clean text from HTML
                     cleanText = extractTextFromHTML(result.content);
@@ -3860,7 +3842,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                     }
                     
                 } catch (fetchError) {
-                    console.warn(t('directFetchFailed', 'Direct fetch failed, falling back to CORS proxy:'), fetchError);
+                    // Direct fetch failed, falling back to CORS proxy
                     
                     // Fallback to CORS proxy method
                     const corsProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
@@ -4063,7 +4045,6 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 chatInstanceRef.current = null;
     
             } catch (err: any) {
-                console.error("Fout bij anonimiseren:", err);
                 setError(`${t('anonymizing')}: ${err.message || t('unknownError')}`);
             } finally {
                 setLoadingText('');
@@ -4691,7 +4672,7 @@ const handleAnalyzeSentiment = async () => {
         try {
           // Try to sign in to see if account exists
           await signInWithEmailAndPassword(auth, email, 'dummy-password');
-          console.log('Firebase Auth account exists, cannot create new one');
+          // Firebase Auth account exists, cannot create new one
           throw new Error(t('emailInUseFirebase', 'Dit email adres is al in gebruik in Firebase. Probeer in te loggen in plaats van een account aan te maken.'));
         } catch (authError: any) {
           if (authError.code === 'auth/wrong-password') {
@@ -4705,7 +4686,7 @@ const handleAnalyzeSentiment = async () => {
             // Account might exist but is corrupted - try to create new one
             // Invalid credential error, will attempt to create new Firebase Auth account
           } else {
-            console.log('Unexpected auth error:', authError);
+            // Unexpected auth error
             throw authError;
           }
         }
@@ -5038,11 +5019,7 @@ const handleAnalyzeSentiment = async () => {
         try {
           if (typeof window !== 'undefined') sessionStorage.setItem(sessionGuardKey, '1');
         } catch {}
-        // Log successful addition for monitoring (privacy-safe)
-        console.log('Waitlist addition successful:', {
-          email: email.substring(0, 3) + '***',
-          timestamp: new Date().toISOString()
-        });
+
         
         return {
           success: true,
@@ -5052,7 +5029,6 @@ const handleAnalyzeSentiment = async () => {
       }
       
     } catch (error) {
-      console.error('❌ Error adding to waitlist:', error);
       // Enhanced error handling
       let errorMessage = t('waitlistErrorAdding');
       
@@ -5132,7 +5108,7 @@ const handleAnalyzeSentiment = async () => {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
     } catch (error) {
-      console.warn('Could not generate session hash:', error);
+
       return 'unknown';
     }
   };
@@ -5141,7 +5117,6 @@ const handleAnalyzeSentiment = async () => {
     const bypass = options?.bypassAdminCheck === true;
     // Controleer of gebruiker admin is voor wachtlijst beheer
     if (!bypass && (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND)) {
-      console.error('Unauthorized access to loadWaitlist');
       return;
     }
 
@@ -5154,7 +5129,6 @@ const handleAnalyzeSentiment = async () => {
       }));
       setWaitlist(waitlistData);
     } catch (error: any) {
-      console.error('Error loading waitlist:', error);
       let msg = 'Fout bij laden van wachtlijst.';
       if (error.code === 'permission-denied' || error.message?.includes('insufficient permissions')) {
         msg = 'Fout: onvoldoende rechten om de wachtlijst te laden.';
@@ -5168,7 +5142,6 @@ const handleAnalyzeSentiment = async () => {
   const activateWaitlistUsers = async () => {
     // Controleer of gebruiker admin is
     if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
-      console.error('Unauthorized access to activateWaitlistUsers');
       displayToast(t('adminNoAccess'), 'error');
       return;
     }
@@ -5203,14 +5176,12 @@ const handleAnalyzeSentiment = async () => {
       setSelectedWaitlistUsers([]);
               displayToast(`${selectedWaitlistUsers.length} ${t('adminUsersActivated')}`, 'success');
     } catch (error) {
-      console.error('Error activating :', error);
               displayToast(t('adminErrorActivating'), 'error');
     }
   };
   const removeFromWaitlist = async (userId: string) => {
     // Controleer of gebruiker admin is
     if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
-      console.error('Unauthorized access to removeFromWaitlist');
       displayToast(t('adminNoAccess'), 'error');
       return;
     }
@@ -5689,20 +5660,32 @@ ${transcript}
   };
 
   const handleTranscribe = async () => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] handleTranscribe: Function called`);
+    console.log(`[${timestamp}] handleTranscribe: Audio chunks length:`, audioChunksRef.current.length);
+    console.log(`[${timestamp}] handleTranscribe: Audio URL exists:`, !!audioURL);
+    
     if (!audioChunksRef.current.length) {
+      console.log(`[${timestamp}] handleTranscribe: No audio chunks, trying fallback to audioURL`);
       // Probeer terug te vallen op audioURL als die bestaat
       if (audioURL) {
         try {
+          console.log(`[${timestamp}] handleTranscribe: Fetching audio from URL:`, audioURL);
           const fetched = await fetch(audioURL);
           const fetchedBlob = await fetched.blob();
+          console.log(`[${timestamp}] handleTranscribe: Fetched blob size:`, fetchedBlob.size);
           if (fetchedBlob && fetchedBlob.size > 0) {
             audioChunksRef.current = [fetchedBlob];
+            console.log(`[${timestamp}] handleTranscribe: Successfully set audio chunks from URL`);
           }
-        } catch {}
+        } catch (error) {
+          console.error(`[${timestamp}] handleTranscribe: Error fetching audio from URL:`, error);
+        }
       }
     }
 
     if (!audioChunksRef.current.length) {
+      console.log(`[${timestamp}] handleTranscribe: ERROR - No audio to transcribe`);
       setError(t("noAudioToTranscribe"));
       setStatus(RecordingStatus.ERROR);
       return;
@@ -5728,30 +5711,20 @@ ${transcript}
     // Initialize progress tracking immediately
     setIsSegmentedTranscribing(true);
     setTranscriptionProgress(0);
+    
+    const transcribeTimestamp = new Date().toISOString();
   
     try {
-        if (!apiKey) {
-            displayToast(t('apiKeyNotAvailable'), 'error');
-            return;
+        // Check internet connection
+        if (!navigator.onLine) {
+          setError('Geen internetverbinding beschikbaar voor transcriptie');
+          setStatus(RecordingStatus.ERROR);
+          setLoadingText('');
+          return;
         }
-
-        // Enhanced API validation
-        const { ApiValidator } = await import('./src/utils/apiValidator');
-        const apiValidation = await ApiValidator.validateGoogleSpeechApi(apiKey);
-        
-        if (!apiValidation.isValid) {
-            const errorMessage = `${apiValidation.error}${apiValidation.suggestion ? ` - ${apiValidation.suggestion}` : ''}`;
-            displayToast(errorMessage, 'error');
-            setStatus(RecordingStatus.ERROR);
-            setLoadingText('');
-            return;
-        }
-        
-        console.log('✅ Google Cloud Speech API validatie succesvol');
 
         // Validate token usage for transcription
-        // Estimate tokens based on audio duration (rough estimate: 1 minute = ~150 tokens)
-        const estimatedDurationMinutes = audioChunksRef.current.length / 60; // rough estimate
+        const estimatedDurationMinutes = audioChunksRef.current.length / 60;
         const estimatedTokens = Math.max(500, estimatedDurationMinutes * 150);
         const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
         
@@ -5763,328 +5736,200 @@ ${transcript}
             return;
         }
 
-        const ai = new GoogleGenAI({ apiKey: apiKey });
+        // Combine all audio chunks into one blob
         const chunks = audioChunksRef.current;
         const mimeType = (chunks?.[0] as any)?.type || 'audio/webm';
-
-        // Dynamische segment grootte op basis van transcriptie kwaliteit
-        const getSegmentSeconds = () => {
-          switch (transcriptionQuality) {
-            case 'fast': return 20; // Kleinere segmenten voor snelheid
-            case 'high': return 45; // Grotere segmenten voor kwaliteit
-            case 'balanced':
-            default: return 30; // Gebalanceerd
-          }
-        };
-        const segmentSeconds = getSegmentSeconds();
-        const hasSecondResolution = chunks.length > 1; // wanneer MediaRecorder 1s chunks leverde
-        const totalSegments = hasSecondResolution ? Math.ceil(chunks.length / segmentSeconds) : 1;
-
-        const getSegmentBlob = (index: number) => {
-          if (hasSecondResolution) {
-            const start = index * segmentSeconds;
-            const end = Math.min(start + segmentSeconds, chunks.length);
-            const slice = chunks.slice(start, end);
-            return new Blob(slice, { type: mimeType });
-          }
-          // fallback: geen seconde-resolutie -> hele blob in 1 segment
-          return new Blob(chunks, { type: mimeType });
-        };
-
+        const audioBlob = new Blob(chunks, { type: mimeType });
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Starting AssemblyAI transcription`);
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Audio blob size:`, audioBlob.size, 'bytes');
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Audio mime type:`, mimeType);
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Number of chunks:`, chunks.length);
+        
         cancelTranscriptionRef.current = false;
-        setIsSegmentedTranscribing(true);
-        setTranscriptionProgress(0);
+        setLoadingText(t('uploadingToTranscriptionServer'));
         
-        // Enhanced connection monitoring
-        const connectionMonitor = {
-          isOnline: navigator.onLine,
-          checkConnection: () => navigator.onLine,
-          waitForConnection: async (maxWaitMs = 30000) => {
-            const startTime = Date.now();
-            while (!navigator.onLine && (Date.now() - startTime) < maxWaitMs) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-            return navigator.onLine;
-          }
-        };
+        // Step 1: Upload audio and start transcription
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Creating FormData`);
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        console.log(`[${transcribeTimestamp}] handleTranscribe: FormData created with audio file`);
         
-        // Check initial connection
-        if (!connectionMonitor.checkConnection()) {
-          console.warn('⚠️ Geen internetverbinding gedetecteerd, wachten op verbinding...');
-          setLoadingText('Wachten op internetverbinding...');
-          const connected = await connectionMonitor.waitForConnection();
-          if (!connected) {
-            setError('Geen internetverbinding beschikbaar voor transcriptie');
-            setStatus(RecordingStatus.ERROR);
-            setLoadingText('');
-            return;
-          }
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Making fetch request to transcribe-start`);
+        const startResponse = await fetch('/.netlify/functions/transcribe-start', {
+          method: 'POST',
+          body: formData
+        });
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Fetch response status:`, startResponse.status);
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Fetch response ok:`, startResponse.ok);
+        
+        if (!startResponse.ok) {
+          const errorText = await startResponse.text();
+          console.error(`[${transcribeTimestamp}] handleTranscribe: ERROR - Start response not ok:`, startResponse.status, errorText);
+          throw new Error(`Transcriptie start gefaald: ${errorText}`);
         }
         
-        console.log(`🎙️ ${t('startingTranscription', { count: totalSegments })}`);
-
-        const inputLanguage = getGeminiCode(language || 'en');
-        const transcribePrompt = `Transcribe this audio recording with ABSOLUTE ACCURACY. Follow these strict rules:
-1. ONLY transcribe what is actually spoken in the audio - do NOT add, invent, or assume any content
-2. If audio is unclear or inaudible, mark it as [UNCLEAR] or [INAUDIBLE] - do NOT guess
-3. Preserve the exact words, pauses, and speech patterns as heard
-4. Do NOT correct grammar, add punctuation that wasn't clearly indicated, or "improve" the speech
-5. The spoken language is ${inputLanguage}
-6. If no speech is detected in a segment, respond with [NO SPEECH DETECTED]
-7. Stay strictly faithful to the audio content - accuracy over readability`;
-
-        let combinedText = '';
-        let consecutiveFailures = 0;
-        const maxConsecutiveFailures = 3;
-        let totalInputTokens = 0;
-        let totalOutputTokens = 0; // Stop if 3 segments fail in a row
-
-        for (let i = 0; i < totalSegments; i++) {
-          if (cancelTranscriptionRef.current) {
-            setError(t('transcriptionCancelled'));
-            break;
-          }
-
-          const segmentBlob = getSegmentBlob(i);
-          const base64Audio = await blobToBase64(segmentBlob);
-          const audioPart = { inlineData: { mimeType, data: base64Audio } };
-          const textPart = { text: transcribePrompt };
-
-          // Update progress UI before processing
-          setTranscriptionProgress(i / totalSegments);
-          setLoadingText(`${t('transcribing')} (${i + 1}/${totalSegments})`);
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Parsing start response JSON`);
+        const startResponseData = await startResponse.json();
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Start response data:`, JSON.stringify(startResponseData));
+        const { transcriptId } = startResponseData;
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Transcriptie gestart met ID:`, transcriptId);
+        
+        setLoadingText('Transcriptie wordt verwerkt...');
+        
+        // Step 2: Poll for transcription status
+        let transcriptionComplete = false;
+        let transcribedText = '';
+        let pollCount = 0;
+        const maxPollAttempts = 100; // Maximum 5 minutes (100 * 3 seconds)
+        
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Starting polling loop for transcriptId:`, transcriptId);
+        
+        while (!transcriptionComplete && pollCount < maxPollAttempts && !cancelTranscriptionRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+          pollCount++;
           
-          console.log(`🎵 Verwerking segment ${i + 1}/${totalSegments} gestart...`);
-
+          const pollTimestamp = new Date().toISOString();
+          console.log(`[${pollTimestamp}] handleTranscribe: Polling attempt ${pollCount}/${maxPollAttempts}`);
+          
           try {
-            // Enhanced retry logic for 500 errors with better fallback
-            let retryCount = 0;
-            const maxRetries = 5; // Increased from 3 to 5
-            let transcribeResponse;
+            console.log(`[${pollTimestamp}] handleTranscribe: Making status request to transcribe-status`);
+            const statusResponse = await fetch(`/.netlify/functions/transcribe-status?id=${transcriptId}`);
+            console.log(`[${pollTimestamp}] handleTranscribe: Status response status:`, statusResponse.status);
+            console.log(`[${pollTimestamp}] handleTranscribe: Status response ok:`, statusResponse.ok);
             
-            const modelName = await modelManager.getModelForFunction('audioTranscription');
-            while (retryCount <= maxRetries) {
-              try {
-                transcribeResponse = await ai.models.generateContent({ 
-                  model: modelName, 
-                  contents: { parts: [textPart, audioPart] } 
-                });
-                break; // Success, exit retry loop
-              } catch (retryError: any) {
-                retryCount++;
-                console.warn(`⚠️ Poging ${retryCount} voor segment ${i + 1} mislukt:`, retryError.message || retryError);
-                
-                // Check if it's a retryable error
-                const isRetryableError = 
-                  retryError.message?.includes('500') ||
-                  retryError.message?.includes('INTERNAL') ||
-                  retryError.message?.includes('503') ||
-                  retryError.message?.includes('RESOURCE_EXHAUSTED') ||
-                  retryError.status === 500 ||
-                  retryError.status === 503 ||
-                  retryError.status === 429 ||
-                  retryError.code === 500;
-                
-                if (retryCount <= maxRetries && isRetryableError) {
-                  // Faster retry for smaller segments
-                  const baseWaitTime = 2000 * Math.pow(1.5, retryCount - 1); // Start at 2s, slower growth
-                  const jitter = Math.random() * 1000; // Add 0-1s random jitter
-                  const waitTime = Math.min(baseWaitTime + jitter, 30000); // Max 30s
-                  console.log(`⏱️ Wachten ${Math.round(waitTime)}ms voor retry ${retryCount}...`);
-                  await new Promise(resolve => setTimeout(resolve, waitTime));
-                } else {
-                  throw retryError; // Re-throw if not retryable or max retries reached
-                }
-              }
+            if (!statusResponse.ok) {
+              const errorText = await statusResponse.text();
+              console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Status response not ok:`, statusResponse.status, errorText);
+              throw new Error(`Status check gefaald: ${errorText}`);
             }
             
-            const segText = transcribeResponse?.text || '';
+            console.log(`[${pollTimestamp}] handleTranscribe: Parsing status response JSON`);
+            const statusData = await statusResponse.json();
+            console.log(`[${pollTimestamp}] handleTranscribe: Status data:`, JSON.stringify(statusData));
+            console.log(`[${pollTimestamp}] handleTranscribe: Transcriptie status (${pollCount}): ${statusData.status}`);
             
-            console.log(`✅ Segment ${i + 1} succesvol verwerkt, tekst lengte: ${segText.length} karakters`);
-            
-            // Reset consecutive failures on success
-            consecutiveFailures = 0;
-
-            if (segText) {
-              combinedText += (combinedText ? '\n\n' : '') + segText;
-              setTranscript(prev => (prev ? prev + '\n\n' : '') + segText);
+            switch (statusData.status) {
+              case 'queued':
+                console.log(`[${pollTimestamp}] handleTranscribe: Status QUEUED - transcription in queue`);
+                setLoadingText('Transcriptie in wachtrij...');
+                break;
+              case 'processing':
+                console.log(`[${pollTimestamp}] handleTranscribe: Status PROCESSING - transcription in progress`);
+                setLoadingText('Transcriptie wordt verwerkt...');
+                setTranscriptionProgress(0.5); // Show some progress
+                break;
+              case 'completed':
+                console.log(`[${pollTimestamp}] handleTranscribe: Status COMPLETED - transcription finished`);
+                transcriptionComplete = true;
+                transcribedText = statusData.text || '';
+                setTranscriptionProgress(1);
+                console.log(`[${pollTimestamp}] handleTranscribe: Transcriptie voltooid: ${transcribedText.length} karakters`);
+                console.log(`[${pollTimestamp}] handleTranscribe: Transcribed text preview:`, transcribedText.substring(0, 200) + '...');
+                break;
+              case 'error':
+                console.error(`[${pollTimestamp}] handleTranscribe: Status ERROR - transcription failed:`, statusData.error);
+                throw new Error(`AssemblyAI transcriptie fout: ${statusData.error || 'Onbekende fout'}`);
+              default:
+                console.warn(`[${pollTimestamp}] handleTranscribe: Unknown status: ${statusData.status}`);
             }
-            
-            // Track token usage with TokenManager per segment
-            try {
-              // Use accurate API-based token counting when possible
-              let promptTokens, responseTokens;
-              try {
-                promptTokens = await tokenCounter.countTokensWithAPI(ai.models, [textPart]);
-                responseTokens = await tokenCounter.countTokensWithAPI(ai.models, segText || '');
-              } catch (apiError) {
-                // Fallback to estimation if API counting fails
-                promptTokens = tokenCounter.countPromptTokens([textPart]);
-                responseTokens = tokenCounter.countResponseTokens(segText || '');
-              }
-              
-              totalInputTokens += promptTokens;
-              totalOutputTokens += responseTokens;
-              await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
-            } catch (error) {
-              console.error('Error recording token usage for transcription segment:', error);
+          } catch (pollError: any) {
+            console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Fout bij status check (poging ${pollCount}):`, pollError);
+            console.error(`[${pollTimestamp}] handleTranscribe: Poll error message:`, pollError.message);
+            console.error(`[${pollTimestamp}] handleTranscribe: Poll error stack:`, pollError.stack);
+            if (pollCount >= 3) { // After 3 failed attempts, give up
+              console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Giving up after 3 failed attempts`);
+              throw pollError;
             }
-          } catch (segmentError: any) {
-            console.error(`❌ Fout bij segment ${i + 1}:`, segmentError);
-            console.error(`❌ Error details:`, {
-              message: segmentError.message,
-              status: segmentError.status,
-              code: segmentError.code
-            });
-            
-            // Use enhanced error handler for better error management
-            const { errorHandler } = await import('./src/utils/errorHandler');
-            const userFriendlyError = errorHandler.handleApiError(segmentError, 
-              segmentError.status || (segmentError.message?.includes('500') ? 500 : undefined), 
-              {
-                userId: user?.uid,
-                sessionId: undefined,
-                endpoint: 'google-speech-api'
-              }
-            );
-            
-            // Enhanced error handling with better user feedback
-            let errorText;
-            const isServerError = segmentError.message?.includes('500') || 
-                                 segmentError.message?.includes('INTERNAL') || 
-                                 segmentError.status === 500 || 
-                                 segmentError.code === 500;
-            
-            if (isServerError) {
-              errorText = `[Segment ${i + 1}: ⚠️ ${userFriendlyError.message}]`;
-              console.log(`🔄 ${t('segmentSkipped', { number: i + 1 })}`);
-            } else if (segmentError.message?.includes('quota') || segmentError.message?.includes('limit')) {
-              errorText = `[Segment ${i + 1}: ⏸️ API-limiet bereikt - wacht en probeer later opnieuw]`;
-            } else {
-              errorText = `[Segment ${i + 1}: ❌ ${userFriendlyError.message}]`;
-            }
-            
-            combinedText += (combinedText ? '\n\n' : '') + errorText;
-            setTranscript(prev => (prev ? prev + '\n\n' : '') + errorText);
-            
-            // Track consecutive failures for circuit breaker
-            consecutiveFailures++;
-            
-            // Circuit breaker: stop if too many consecutive failures
-            if (consecutiveFailures >= maxConsecutiveFailures) {
-              console.error(`🚨 ${t('tooManyConsecutiveErrors')} (${consecutiveFailures}). ${t('transcriptionStopped')}`);
-            const stopMessage = `\n\n[⚠️ ${t('transcriptionStopped').replace('te veel fouten', `${consecutiveFailures} opeenvolgende fouten`)}. ${t('googleAiServiceOverloaded')}]`;
-              combinedText += stopMessage;
-              setTranscript(prev => prev + stopMessage);
-              break; // Exit the transcription loop
-            }
-            
-            // For server errors, continue with next segment instead of failing completely
-            if (isServerError) {
-              console.log(`⏭️ Doorgaan naar segment ${i + 2}/${totalSegments}... (${consecutiveFailures}/${maxConsecutiveFailures} opeenvolgende fouten)`);
-            }
-          }
-
-          // Update progress UI after processing
-          setTranscriptionProgress((i + 1) / totalSegments);
-          
-          // Dynamische delays op basis van transcriptie kwaliteit
-          if (i < totalSegments - 1) {
-            const getDelaySettings = () => {
-              switch (transcriptionQuality) {
-                case 'fast': return { base: 800, max: 2000, jitter: 200 }; // Zeer snel
-                case 'high': return { base: 2000, max: 6000, jitter: 800 }; // Langzamer voor kwaliteit
-                case 'balanced':
-                default: return { base: 1500, max: 4000, jitter: 500 }; // Gebalanceerd
-              }
-            };
-            const delaySettings = getDelaySettings();
-            const progressiveDelay = Math.min(delaySettings.base + (i * 200), delaySettings.max);
-            const jitterDelay = Math.random() * delaySettings.jitter;
-            const totalDelay = progressiveDelay + jitterDelay;
-            
-            console.log(`⏱️ ${t('waitingForNextSegment', { ms: Math.round(totalDelay) })}`);
-            await new Promise(resolve => setTimeout(resolve, totalDelay));
           }
         }
-
+        
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Polling loop completed`);
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Transcription complete:`, transcriptionComplete);
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Cancel requested:`, cancelTranscriptionRef.current);
+        
         if (cancelTranscriptionRef.current) {
+          console.log(`[${transcribeTimestamp}] handleTranscribe: Transcription cancelled by user`);
+          setError(t('transcriptionCancelled'));
           setStatus(RecordingStatus.STOPPED);
           return;
         }
-
-        // Provide summary of transcription results
-        const successfulSegments = totalSegments - consecutiveFailures;
-        if (consecutiveFailures > 0) {
-          console.log(`🏁 ${t('transcriptionCompletedWithWarnings')}. ${t('transcriptionSummary', { successful: successfulSegments, total: totalSegments })}`);
-          const summaryMessage = `\n\n[📊 ${t('transcriptionSummary', { successful: successfulSegments, total: totalSegments })} ${consecutiveFailures > 0 ? t('segmentsSkippedDueToServerProblems', { count: consecutiveFailures }) : ''}]`;
-          combinedText += summaryMessage;
-          setTranscript(prev => prev + summaryMessage);
-        } else {
-          console.log(`🏁 ${t('transcriptionFullyCompleted', { count: totalSegments })}`);
+        
+        if (!transcriptionComplete) {
+          console.error(`[${transcribeTimestamp}] handleTranscribe: ERROR - Transcription timeout after ${pollCount} attempts`);
+          throw new Error('Transcriptie timeout - proces duurde te lang');
         }
         
-        // Final progress update
-        setTranscriptionProgress(1);
-        setLoadingText(t('transcribing') + ' - ' + t('processing'));
-
-        // Set audio token usage for display
-        setAudioTokenUsage({
-          inputTokens: totalInputTokens,
-          outputTokens: totalOutputTokens,
-          totalTokens: totalInputTokens + totalOutputTokens
-        });
-
-        // Na volledige loop is transcript reeds opgebouwd via setTranscript per segment
-      setSummary('');
-      setFaq('');
-      setLearningDoc('');
-      setFollowUpQuestions('');
-      setBlogData('');
-      setChatHistory([]);
-      setKeywordAnalysis(null);
-      setSentimentAnalysisResult(null);
-      setMindmapMermaid('');
-      setMindmapSvg('');
-      setExecutiveSummaryData(null);
-      setStorytellingData(null);
-      setBusinessCaseData(null);
-      setQuizQuestions(null);
-      setStatus(RecordingStatus.FINISHED);
-        // Increment usage counters on successful finish
+        // Set the transcribed text
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Setting transcript with ${transcribedText.length} characters`);
+        setTranscript(transcribedText);
+        
+        // Record token usage (estimate for AssemblyAI)
+        const estimatedInputTokens = Math.ceil(audioBlob.size / 1000); // Rough estimate
+        const estimatedOutputTokens = Math.ceil(transcribedText.length / 4); // Rough estimate
+        
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Recording token usage - Input: ${estimatedInputTokens}, Output: ${estimatedOutputTokens}`);
+        
         try {
-          if (authState.user) {
-            await incrementUserDailyUsage(authState.user.uid, 'audio');
-            await incrementUserMonthlySessions(authState.user.uid);
-            setDailyAudioCount(prev => prev + 1);
-          }
-        } catch (e) {
-          console.warn(t('errorUpdateSessionCount'), e);
+          await tokenManager.recordTokenUsage(user.uid, estimatedInputTokens, estimatedOutputTokens);
+          setAudioTokenUsage({
+            inputTokens: estimatedInputTokens,
+            outputTokens: estimatedOutputTokens,
+            totalTokens: estimatedInputTokens + estimatedOutputTokens
+          });
+          console.log(`[${transcribeTimestamp}] handleTranscribe: Token usage recorded successfully`);
+        } catch (error) {
+          console.error(`[${transcribeTimestamp}] handleTranscribe: Error recording token usage:`, error);
         }
-      setActiveView('transcript');
-
-    } catch (err: any) {
-      console.error("Fout bij AI-verwerking:", err);
-      let errorMessage = `${t("aiError")}: `;
-      
-      if (err.message && err.message.includes('500')) {
-        errorMessage += 'Interne serverfout. Probeer het over een paar minuten opnieuw.';
-      } else if (err.message && err.message.includes('INTERNAL')) {
-        errorMessage += 'Tijdelijke AI-servicefout. Probeer het later opnieuw.';
-      } else {
-        errorMessage += err.message || t("unknownError");
-      }
-      
-      setError(errorMessage);
-      setStatus(RecordingStatus.ERROR);
+        
+        console.log(`[${transcribeTimestamp}] handleTranscribe: SUCCESS - AssemblyAI transcriptie succesvol voltooid`);
+         
+         // Reset AI processing states
+         setSummary('');
+         setFaq('');
+         setLearningDoc('');
+         setFollowUpQuestions('');
+         setBlogData('');
+         setChatHistory([]);
+         setKeywordAnalysis(null);
+         setSentimentAnalysisResult(null);
+         setMindmapMermaid('');
+         setMindmapSvg('');
+         setExecutiveSummaryData(null);
+         setStorytellingData(null);
+         setBusinessCaseData(null);
+         setQuizQuestions(null);
+         setStatus(RecordingStatus.FINISHED);
+         
+         // Increment usage counters on successful completion
+         try {
+           if (authState.user) {
+             await incrementUserDailyUsage(authState.user.uid, 'audio');
+             await incrementUserMonthlySessions(authState.user.uid);
+             setDailyAudioCount(prev => prev + 1);
+           }
+         } catch (error) {
+           console.error('Error incrementing usage counters:', error);
+         }
+         
+         setActiveView('transcript');
+         
+    } catch (error: any) {
+        console.error(`[${transcribeTimestamp}] handleTranscribe: FINAL CATCH - AssemblyAI transcription error:`, error);
+        console.error(`[${transcribeTimestamp}] handleTranscribe: Error message:`, error.message);
+        console.error(`[${transcribeTimestamp}] handleTranscribe: Error stack:`, error.stack);
+        console.error(`[${transcribeTimestamp}] handleTranscribe: Full error object:`, error);
+        setError(error.message || t('transcriptionError'));
+        setStatus(RecordingStatus.ERROR);
     } finally {
-      // Add a small delay to ensure final progress is visible
-      setTimeout(() => {
-        setLoadingText('');
-        setIsSegmentedTranscribing(false);
-        setTranscriptionProgress(null);
-        cancelTranscriptionRef.current = false;
-      }, 500);
+        console.log(`[${transcribeTimestamp}] handleTranscribe: FINALLY - Cleaning up transcription states`);
+        // Always reset these states
+        setTimeout(() => {
+            console.log(`[${transcribeTimestamp}] handleTranscribe: TIMEOUT CLEANUP - Resetting final states`);
+            setLoadingText('');
+            setIsSegmentedTranscribing(false);
+            setTranscriptionProgress(0);
+            cancelTranscriptionRef.current = false;
+        }, 100);
     }
   };
   

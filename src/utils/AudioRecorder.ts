@@ -201,7 +201,7 @@ export class AudioRecorder {
               this._isRecording = true;
               this._isPaused = false;
               this.onStateChange?.('recording');
-              console.log(this.t?.('mediaRecorderRestarted') || 'MediaRecorder restarted after track end');
+              // MediaRecorder restarted after track end
             }
           } catch (e) {
             console.warn(this.t?.('failedToRecoverFromTrackEnd') || 'Failed to recover from track end:', e);
@@ -295,7 +295,7 @@ export class AudioRecorder {
       // Request wake lock to prevent screen sleep on mobile
       await this.requestWakeLock();
       
-      console.log(this.t?.('recordingStartedWithMimeType') || 'Recording started with MIME type:', mimeType);
+      // Recording started with MIME type: ${mimeType}
     } catch (error) {
       console.error(this.t?.('failedToStartRecording') || 'Failed to start recording:', error);
       this.onError?.(error as Error);
@@ -310,7 +310,7 @@ export class AudioRecorder {
       this.mediaRecorder.pause();
       this._isPaused = true;
       this.onStateChange?.('paused');
-      console.log(this.t?.('recordingPausedConsole') || 'Recording paused');
+      // Recording paused
     }
   }
 
@@ -327,7 +327,7 @@ export class AudioRecorder {
       this.mediaRecorder.resume();
       this._isPaused = false;
       this.onStateChange?.('recording');
-      console.log(this.t?.('recordingResumed') || 'Recording resumed');
+      // Recording resumed
     }
   }
 
@@ -389,10 +389,8 @@ export class AudioRecorder {
   private setupVisibilityListener(): void {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this._isRecording && !this._isPaused) {
-        console.log(this.t?.('tabHiddenPausingRecording') || 'Tab hidden, pausing recording to prevent interruption');
         this.pauseRecording();
       } else if (!document.hidden && this._isRecording && this._isPaused) {
-        console.log(this.t?.('tabVisibleResumingRecording') || 'Tab visible, resuming recording');
         this.resumeRecording();
       }
     });
@@ -400,7 +398,6 @@ export class AudioRecorder {
     // Handle page focus/blur for additional recovery
     window.addEventListener('focus', () => {
       if (this._isRecording && this._isPaused && !document.hidden) {
-        console.log(this.t?.('windowFocusResumingRecording') || 'Window focused, attempting to resume recording');
         this.resumeRecording();
       }
     });
@@ -434,7 +431,6 @@ export class AudioRecorder {
         if (state === 'suspended' && this._isRecording && !this._isPaused) {
           try {
             await this.audioContext.resume();
-            console.log(this.t?.('audioContextAutoResumed') || 'AudioContext auto-resumed after brief interruption');
           } catch (err) {
             console.warn(this.t?.('failedToAutoResumeAudioContext') || 'Failed to auto-resume AudioContext:', err);
           }
@@ -467,10 +463,9 @@ export class AudioRecorder {
 
     try {
       this.wakeLock = await (navigator as any).wakeLock.request('screen');
-      console.log(this.t?.('wakeLockAcquired') || 'Wake lock acquired - screen will stay on during recording');
       
       this.wakeLock.addEventListener('release', () => {
-        console.log(this.t?.('wakeLockReleased') || 'Wake lock released');
+        // Wake lock released
       });
     } catch (err) {
       console.warn(this.t?.('wakeLockFailed') || 'Failed to acquire wake lock:', err);
@@ -483,7 +478,6 @@ export class AudioRecorder {
       try {
         await this.wakeLock.release();
         this.wakeLock = null;
-        console.log(this.t?.('wakeLockReleased') || 'Wake lock released');
       } catch (err) {
         console.warn(this.t?.('wakeLockReleaseFailed') || 'Failed to release wake lock:', err);
       }
@@ -500,8 +494,6 @@ export class AudioRecorder {
         
         // Only offer recovery if interruption was recent (within 5 minutes)
         if (timeSinceInterruption < 5 * 60 * 1000 && state.wasRecording) {
-          console.log(this.t?.('recordingInterruptionDetected') || 'Recording interruption detected, recovery available');
-          
           // Notify parent component about potential recovery
           if (this.onStateChange) {
             // Use a custom state to indicate recovery is available
@@ -524,12 +516,9 @@ export class AudioRecorder {
   // Attempt to recover from interruption
   public async recoverFromInterruption(): Promise<boolean> {
     try {
-      console.log(this.t?.('attemptingRecordingRecovery') || 'Attempting to recover recording...');
-      
       // Try to restart recording
       await this.startRecording();
       
-      console.log(this.t?.('recordingRecoverySuccessful') || 'Recording recovery successful');
       return true;
     } catch (error) {
       console.error(this.t?.('recordingRecoveryFailed') || 'Recording recovery failed:', error);

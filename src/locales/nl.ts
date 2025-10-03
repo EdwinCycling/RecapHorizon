@@ -28,6 +28,7 @@ export const nl = {
   recordingStopped: "Opname gestopt. Klaar om te transcriberen.",
   transcribeSession: "Transcribeer Sessie",
   transcribing: "Transcriptie bezig...",
+  uploadingToTranscriptionServer: "Audio uploaden naar transcriptie server...",
   transcriptionCancelled: "Transcriberen geannuleerd door gebruiker.",
   transcriptionStopped: "Transcriptie gestopt na te veel fouten.",
   tooManyConsecutiveErrors: "Te veel opeenvolgende fouten.",

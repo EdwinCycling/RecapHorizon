@@ -156,7 +156,6 @@ useEffect(() => {
 	})();
 
 	if (shouldReset) {
-		console.log('[RecapHorizonPanel] Significant session change detected - resetting');
 		setPersistentItems([]);
 		processedContentRef.current.clear();
 		previousStartStampRef.current = startStamp;
@@ -242,15 +241,12 @@ useEffect(() => {
 const toggleItem = (id: string) => {
 	const item = persistentItems.find(i => i.id === id);
 	if (!item) return;
-	console.log('[RecapHorizonPanel] toggleItem:', id, item.type, 'enabled:', !item.enabled);
 	if (resultsCache[item.type]) {
-		console.log('[RecapHorizonPanel] toggleItem: uit cache', item.type);
 		setPersistentItems(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
 		return;
 	}
 	// Alleen genereren als nog niet in cache
 	const section = composeSectionText(item.type);
-	console.log('[RecapHorizonPanel] toggleItem: genereren en cachen', item.type);
 	setResultsCache(prev => ({ ...prev, [item.type]: section.text }));
 	setPersistentItems(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
 };
@@ -390,11 +386,9 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 
 	const getCachedOrGenerate = useCallback(async <T,>(type: RecapItemType, generator: () => Promise<T>): Promise<T> => {
 		if (resultsCache[type]) {
-			console.log(`[RecapHorizonPanel] Using cached result for ${type}`);
 			return resultsCache[type];
 		}
 
-		console.log(`[RecapHorizonPanel] Generating new result for ${type}`);
 		const result = await generator();
 		setResultsCache(prev => ({ ...prev, [type]: result }));
 		return result;

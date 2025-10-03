@@ -6,6 +6,12 @@
   "dependencies": {
     "stripe": "^14.21.0",
     "firebase": "^10.7.1",
-    "firebase-admin": "^13.5.0"
+    "firebase-admin": "^13.5.0",
+    "google-auth-library": "^9.14.1",
+    "axios": "^1.6.0",
+    "busboy": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.0"
   }
 }

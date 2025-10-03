@@ -316,7 +316,7 @@ export class AIProviderManager {
 
     // Get API key for the selected provider
     const apiKey = this.getApiKey(providerSelection.provider);
-    console.log(`[AI Provider Debug] API Key check - Provider: ${providerSelection.provider}, Key exists: ${!!apiKey}, Key length: ${apiKey?.length || 0}`);
+
     
     // Validate API key exists
     if (!apiKey || apiKey.trim() === '') {
@@ -347,7 +347,7 @@ export class AIProviderManager {
       
       // Try fallback if available
       if (providerSelection.fallbackAvailable && userTier !== SubscriptionTier.FREE) {
-        console.log('Attempting fallback to alternative provider...');
+
         const fallbackProvider = providerSelection.provider === AIProvider.GOOGLE_GEMINI 
           ? AIProvider.OPENROUTER 
           : AIProvider.GOOGLE_GEMINI;

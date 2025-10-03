@@ -840,7 +840,7 @@ class SessionManager {
     // Store session securely in localStorage with encryption
     this.storeSessionSecurely(session, t);
 
-    console.log('[SessionManager] New session created:', sessionId);
+
 
     return session;
   }
@@ -875,7 +875,7 @@ class SessionManager {
     const currentUser = auth.currentUser;
     
     if (!currentUser || currentUser.uid !== session.userId) {
-      console.log('🔥 Firebase auth mismatch - invalidating session');
+
       this.invalidateSession(sessionId);
       return { valid: false, reason: 'Firebase auth expired or user mismatch' };
     }

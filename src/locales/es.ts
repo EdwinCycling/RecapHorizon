@@ -24,6 +24,7 @@ export const es = {
   recordingStopped: "Grabación detenida. Listo para transcribir.",
   transcribeSession: "Transcribir Sesión",
   transcribing: "Transcribiendo...",
+  uploadingToTranscriptionServer: "Subiendo audio al servidor de transcripción...",
   summarizing: "Resumiendo...",
   processing: "Procesando...",
   appTitle: "RecapHorizon",

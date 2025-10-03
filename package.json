@@ -1,14 +1,15 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.90928.0",
+  "version": "v.0.91003.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",
     "preview": "vite preview",
     "dev:netlify": "npx netlify dev",
-    "init-tier-models": "cd scripts && node initializeTierModelConfigs.js"
+    "init-tier-models": "cd scripts && node initializeTierModelConfigs.js",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@google/genai": "^1.13.0",
@@ -40,6 +41,7 @@
     "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
+    "gh-pages": "^6.3.0",
     "netlify": "^23.5.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",

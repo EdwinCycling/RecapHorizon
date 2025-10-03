@@ -21,10 +21,10 @@ function App() {
 
   // 🔥 NIEUW: Samenvatting met caching
   const handleSummaryTab = async () => {
-    console.log(t('debugSummaryTabClicked', '[DEBUG] Samenvatting tab clicked'));
+    // Samenvatting tab clicked
 
     const summaryContent = await getCachedTabContent('summary', async () => {
-      console.log(t('debugGeneratingNewSummary', '[DEBUG] Genereren nieuwe samenvatting...'));
+      // Genereren nieuwe samenvatting
       // Vervang dit met je echte samenvatting API call
       return await new Promise(resolve =>
         setTimeout(() => resolve("Dit is de gegenereerde samenvatting..."), 1000)
@@ -37,10 +37,10 @@ function App() {
 
   // 🔥 NIEUW: Executive Summary met caching
   const handleExecutiveSummaryTab = async () => {
-    console.log(t('debugExecutiveSummaryTabClicked', '[DEBUG] Executive Summary tab clicked'));
+    // Executive Summary tab clicked
 
     const execContent = await getCachedTabContent('executiveSummary', async () => {
-      console.log(t('debugGeneratingNewExecutiveSummary', '[DEBUG] Genereren nieuwe executive summary...'));
+      // Genereren nieuwe executive summary
       // Vervang dit met je echte executive summary API call
       return await new Promise(resolve =>
         setTimeout(() => resolve("Dit is de executive summary..."), 1000)

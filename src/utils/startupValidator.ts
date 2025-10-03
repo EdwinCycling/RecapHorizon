@@ -33,11 +33,10 @@ export class StartupValidator {
     const cacheKey = `startup_${userId || 'anonymous'}`;
     const cached = this.validationCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      console.log('🔄 Using cached startup validation result');
       return cached.result;
     }
     
-    console.log(t?.('startupValidationStart') || '🚀 Starting RecapHorizon startup validation...');
+
     
     const criticalIssues: string[] = [];
     const warnings: string[] = [];
@@ -49,18 +48,16 @@ export class StartupValidator {
     };
 
     // 1. Validate Firebase Configuration
-    console.log(t?.('validatingFirebaseConfig') || '🔍 Validating Firebase configuration...');
     try {
       const firebaseValidation = ApiValidator.validateFirebaseConfig();
       if (firebaseValidation.isValid) {
         services.firebase = true;
-        console.log(t?.('firebaseConfigOk') || '✅ Firebase configuration: OK');
       } else {
         criticalIssues.push(firebaseValidation.error || 'Firebase configuratie ongeldig');
         if (firebaseValidation.suggestion) {
           recommendations.push(firebaseValidation.suggestion);
         }
-        console.error(t?.('firebaseConfigFailed') || '❌ Firebase configuration failed:', firebaseValidation.error);
+
       }
     } catch (error: any) {
       criticalIssues.push(t?.('firebaseConfigValidationFailed', 'Firebase configuratie kan niet worden gevalideerd') || 'Firebase configuratie kan niet worden gevalideerd');
@@ -68,12 +65,10 @@ export class StartupValidator {
     }
 
     // 2. Validate Firestore Health
-    console.log(t?.('validatingFirestoreHealth') || '🔍 Validating Firestore health...');
     try {
       const firestoreHealth = await FirestoreHealthChecker.performHealthCheck(userId, t);
       if (firestoreHealth.isHealthy) {
         services.firestore = true;
-        console.log(t?.('firestoreHealthOk') || '✅ Firestore health: OK');
       } else {
         if (firestoreHealth.testResults.basicConnection) {
           warnings.push(...firestoreHealth.issues);
@@ -93,14 +88,12 @@ export class StartupValidator {
     }
 
     // 3. Validate Google Gemini AI API (if API key is available)
-    console.log(t?.('validatingGoogleSpeechApi') || '🔍 Validating Google Gemini AI API...');
     const googleApiKey = import.meta.env.VITE_GOOGLE_CLOUD_API_KEY;
     if (googleApiKey) {
       try {
         const speechApiValidation = await ApiValidator.validateGoogleSpeechApi(googleApiKey);
         if (speechApiValidation.isValid) {
           services.googleSpeechApi = true;
-          console.log(t?.('googleSpeechApiOk') || '✅ Google Gemini AI API: OK');
         } else {
           warnings.push(speechApiValidation.error || 'Google Gemini AI API niet beschikbaar');
           if (speechApiValidation.suggestion) {
@@ -122,15 +115,12 @@ export class StartupValidator {
     }
 
     // 4. Additional environment checks
-    console.log(t?.('performingEnvironmentChecks') || '🔍 Performing additional environment checks...');
     this.performEnvironmentChecks(warnings, recommendations, t);
 
     const isReady = services.firebase && criticalIssues.length === 0;
 
     // Log summary
     if (isReady) {
-      console.log(t?.('startupValidationCompleted') || '🎉 Startup validation completed successfully!');
-      console.log(t?.('servicesStatus') || '📊 Services status:', services);
       if (warnings.length > 0) {
         console.warn(t?.('nonCriticalWarnings') || '⚠️ Non-critical warnings:', warnings);
       }
@@ -190,9 +180,6 @@ export class StartupValidator {
     t?: TranslationFunction
   ): void {
     // Check if running in development mode
-    if (import.meta.env.DEV) {
-      console.log(t?.('runningInDevMode', '🔧 Running in development mode') || '🔧 Running in development mode');
-    }
 
     // Check browser compatibility
     if (typeof navigator !== 'undefined') {

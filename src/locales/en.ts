@@ -24,6 +24,7 @@ export const en = {
   recordingStopped: "Recording stopped. Ready to transcribe.",
   transcribeSession: "Transcribe Session",
   transcribing: "Transcribing...",
+  uploadingToTranscriptionServer: "Uploading audio to transcription server...",
   transcriptionCancelled: "Transcription cancelled by user.",
   transcriptionStopped: "Transcription stopped after too many errors.",
   tooManyConsecutiveErrors: "Too many consecutive errors.",

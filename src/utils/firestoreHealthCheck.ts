@@ -42,10 +42,8 @@ export class FirestoreHealthChecker {
 
     try {
       // Test 1: Basic connection
-      console.log(t?.('testingFirestoreBasicConnection') || '🔍 Testing Firestore basic connection...');
       await this.testBasicConnection();
       testResults.basicConnection = true;
-      console.log(t?.('basicConnectionOk') || '✅ Basic connection: OK');
     } catch (error: any) {
       console.error(t?.('basicConnectionFailed') || '❌ Basic connection failed:', error);
       issues.push(t?.('firestoreConnectionError') || 'Cannot connect to Firestore');
@@ -59,10 +57,8 @@ export class FirestoreHealthChecker {
     // Test 2: Read permissions (only if authenticated)
     if (isAuthenticated && effectiveUserId) {
       try {
-        console.log(t?.('testingFirestoreReadPermissions') || '🔍 Testing Firestore read permissions...');
         await this.testReadPermissions(effectiveUserId, t);
         testResults.readPermissions = true;
-        console.log(t?.('readPermissionsOk') || '✅ Read permissions: OK');
       } catch (error: any) {
         console.error(t?.('readPermissionsFailed') || '❌ Read permissions failed:', error);
         issues.push(t?.('firestoreReadPermissionsError') || 'No read permissions for Firestore');
@@ -73,7 +69,7 @@ export class FirestoreHealthChecker {
         }
       }
     } else {
-      console.log(t?.('skippingReadPermissionsTest') || 'ℹ️ Skipping read permissions test - user not authenticated');
+      // Skipping read permissions test - user not authenticated
       // Add informational message for unauthenticated users
       issues.push(t?.('firestoreSkippingAuthTests') || 'Skipping permission tests - authentication required');
       suggestions.push(t?.('firestoreAuthenticationRequired') || 'Please log in to access all database features');
@@ -84,10 +80,8 @@ export class FirestoreHealthChecker {
     // Test 3: Write permissions (only if authenticated)
     if (isAuthenticated && effectiveUserId) {
       try {
-        console.log(t?.('testingFirestoreWritePermissions') || '🔍 Testing Firestore write permissions...');
         await this.testWritePermissions(effectiveUserId, t);
         testResults.writePermissions = true;
-        console.log(t?.('writePermissionsOk') || '✅ Write permissions: OK');
       } catch (error: any) {
         console.error(t?.('writePermissionsFailed') || '❌ Write permissions failed:', error);
         issues.push(t?.('firestoreWritePermissionsError') || 'No write permissions for Firestore');
@@ -98,7 +92,7 @@ export class FirestoreHealthChecker {
         }
       }
     } else {
-      console.log(t?.('skippingWritePermissionsTest') || 'ℹ️ Skipping write permissions test - user not authenticated');
+      // Skipping write permissions test - user not authenticated
       // Don't mark as failed, just skip the test
       testResults.writePermissions = true; // Consider it "passed" since we're not testing
     }
@@ -106,10 +100,8 @@ export class FirestoreHealthChecker {
     // Test 4: Index functionality (only if authenticated)
     if (isAuthenticated && effectiveUserId) {
       try {
-        console.log(t?.('testingFirestoreIndexes') || '🔍 Testing Firestore indexes...');
         await this.testIndexes(effectiveUserId);
         testResults.indexesWorking = true;
-        console.log(t?.('indexesOk') || '✅ Indexes: OK');
       } catch (error: any) {
         console.error(t?.('indexTestFailed') || '❌ Index test failed:', error);
         issues.push(t?.('firestoreIndexesNotWorking') || 'Firestore indexes not working correctly');
@@ -120,7 +112,7 @@ export class FirestoreHealthChecker {
         }
       }
     } else {
-      console.log(t?.('skippingIndexTest') || 'ℹ️ Skipping index test - user not authenticated');
+      // Skipping index test - user not authenticated
       // Don't mark as failed, just skip the test
       testResults.indexesWorking = true; // Consider it "passed" since we're not testing
     }
@@ -168,7 +160,6 @@ export class FirestoreHealthChecker {
     
     // Simplified read permissions test - if we have a valid userId and Firebase auth is working,
     // we assume read permissions are working. This avoids false positives from non-existent documents.
-    console.log('Read permissions test - user authenticated, assuming read access is available');
     
     // The fact that we have a userId means the user is authenticated and should have read access
     // to their own data according to our security rules. No need to test actual document reads
@@ -199,7 +190,6 @@ export class FirestoreHealthChecker {
     } else {
       // If user document doesn't exist, we can't test write permissions
       // without creating the full user document structure
-      console.warn('User document does not exist, skipping write permission test');
     }
   }
 

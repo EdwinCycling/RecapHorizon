@@ -414,7 +414,6 @@ OPDRACHT:\n${instructionRaw}\n\nGeef je antwoord uitsluiten in het volgende JSON
   const copyEmailBodyToClipboard = () => {
     navigator.clipboard.writeText(emailData.body).then(() => {
       displayToast(t('copiedToClipboard', 'Gekopieerd naar klembord!'), 'success');
-      console.log('Email body copied to clipboard');
     }).catch(err => {
       console.error('Failed to copy email body: ', err);
       displayToast(t('copyFailed', 'Kopiëren mislukt'), 'error');
@@ -494,7 +493,6 @@ OPDRACHT:\n${instructionRaw}\n\nGeef je antwoord uitsluiten in het volgende JSON
     
     navigator.clipboard.writeText(emailContent).then(() => {
       displayToast(t('copiedToClipboard', 'Gekopieerd naar klembord!'), 'success');
-      console.log('Full email copied to clipboard');
     }).catch(err => {
       console.error('Failed to copy full email: ', err);
       displayToast(t('copyFailed', 'Kopiëren mislukt'), 'error');

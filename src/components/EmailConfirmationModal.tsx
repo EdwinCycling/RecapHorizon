@@ -57,7 +57,6 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error verifying confirmation code:', error);
       setError('Er is een fout opgetreden. Probeer het opnieuw.');
     } finally {
       setIsVerifying(false);
@@ -77,7 +76,6 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
         setResendCooldown(60); // 60 second cooldown
         setError('');
         // In a real app, you would send the confirmation email here
-        console.log('New confirmation token generated:', result.confirmationToken);
       } else {
         if (result.pendingConfirmation) {
           setError('Er is al een bevestigingsmail verstuurd. Controleer je inbox.');
@@ -86,7 +84,6 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error resending confirmation:', error);
       setError('Er is een fout opgetreden bij het verzenden van een nieuwe code.');
     } finally {
       setIsResending(false);

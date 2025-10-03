@@ -217,7 +217,7 @@ export class ApiFallbackManager {
       this.retryAttempts.set(apiName, 0);
       return result;
     } catch (error: any) {
-      console.error(ApiValidator.t ? ApiValidator.t('apiCallFailed', { apiName }) : `API call failed for ${apiName}:`, error);
+      console.error(ApiValidator.t ? ApiValidator.t('apiCallFailed', { apiName }) : `API call failed for ${apiName}`);
 
       if (attempts < this.maxRetries) {
         // Increment retry count
@@ -229,7 +229,7 @@ export class ApiFallbackManager {
           10000 // Max 10 seconds
         );
         
-        console.log(ApiValidator.t ? ApiValidator.t('retryingApiCall', { apiName, delay, attempt: attempts + 1, maxRetries: this.maxRetries }) : `Retrying ${apiName} in ${delay}ms (attempt ${attempts + 1}/${this.maxRetries})`);
+
         await new Promise(resolve => setTimeout(resolve, delay));
         
         return this.executeWithFallback(apiCall, fallbackCall, apiName);
@@ -237,11 +237,11 @@ export class ApiFallbackManager {
 
       // All retries exhausted, try fallback if available
       if (fallbackCall) {
-        console.log(ApiValidator.t ? ApiValidator.t('usingFallbackApi', { apiName }) : `Using fallback for ${apiName}`);
+
         try {
           return await fallbackCall();
         } catch (fallbackError) {
-          console.error(ApiValidator.t ? ApiValidator.t('fallbackAlsoFailed', { apiName }) : `Fallback also failed for ${apiName}:`, fallbackError);
+          console.error(ApiValidator.t ? ApiValidator.t('fallbackAlsoFailed', { apiName }) : `Fallback also failed for ${apiName}`);
           throw error; // Throw original error
         }
       }

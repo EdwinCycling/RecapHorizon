@@ -76,7 +76,7 @@ export async function fetchHTML(
     }, timeoutMs);
 
     try {
-      console.log(t?.('fetchAttempt', `[FetchHTML] Attempt ${attempt + 1}/${retries + 1} for URL: ${url}`) || `[FetchHTML] Attempt ${attempt + 1}/${retries + 1} for URL: ${url}`);
+
       
       const response = await fetch(url, {
         method: "GET",
@@ -136,7 +136,7 @@ export async function fetchHTML(
         headers[key] = value;
       });
 
-      console.log(t?.('fetchSuccess', `[FetchHTML] Successfully fetched ${htmlContent.length} characters from ${url}`) || `[FetchHTML] Successfully fetched ${htmlContent.length} characters from ${url}`);
+
       
       return {
         content: htmlContent,
@@ -154,11 +154,7 @@ export async function fetchHTML(
       clearTimeout(timeout);
       lastError = error as Error;
       
-      console.error(t?.('fetchAttemptFailed', `[FetchHTML] Attempt ${attempt + 1} failed:`) || `[FetchHTML] Attempt ${attempt + 1} failed:`, {
-        url,
-        error: lastError.message,
-        name: lastError.name
-      });
+      // Fetch attempt failed
 
       // Don't retry on certain errors
       if (error instanceof FetchError && error.status) {
@@ -181,7 +177,6 @@ export async function fetchHTML(
 
       // Wait before retry (except on last attempt)
       if (attempt < retries) {
-        console.log(t?.('fetchRetryWait', `[FetchHTML] Waiting ${retryDelay}ms before retry...`) || `[FetchHTML] Waiting ${retryDelay}ms before retry...`);
         await delay(retryDelay);
         // Exponential backoff
         retryDelay *= 1.5;
@@ -218,7 +213,7 @@ function extractMetadata(html: string, t?: TranslationFunction): { title?: strin
       metadata.description = descMatch[1].trim();
     }
   } catch (error) {
-    console.warn(t?.('fetchMetadataError', '[FetchHTML] Error extracting metadata:') || '[FetchHTML] Error extracting metadata:', error);
+    // Error extracting metadata
   }
   
   return metadata;
@@ -237,7 +232,7 @@ export async function fetchMultipleHTML(
     return [];
   }
 
-  console.log(t?.('fetchMultipleStart', `[FetchMultipleHTML] Fetching ${urls.length} URLs with max ${maxConcurrent} concurrent requests`) || `[FetchMultipleHTML] Fetching ${urls.length} URLs with max ${maxConcurrent} concurrent requests`);
+
   
   const results: Array<FetchResult | FetchError> = [];
   
@@ -249,7 +244,7 @@ export async function fetchMultipleHTML(
       try {
         return await fetchHTML(url, options, t);
       } catch (error) {
-        console.error(t?.('fetchMultipleFailed', `[FetchMultipleHTML] Failed to fetch ${url}:`) || `[FetchMultipleHTML] Failed to fetch ${url}:`, error);
+        // Failed to fetch URL
         return error as FetchError;
       }
     });
@@ -264,7 +259,6 @@ export async function fetchMultipleHTML(
   }
   
   const successful = results.filter(r => !(r instanceof FetchError)).length;
-  console.log(t?.('fetchMultipleCompleted', `[FetchMultipleHTML] Completed: ${successful}/${urls.length} successful`) || `[FetchMultipleHTML] Completed: ${successful}/${urls.length} successful`);
   
   return results;
 }
@@ -299,7 +293,7 @@ export function extractTextFromHTML(html: string): string {
       .trim();
       
   } catch (error) {
-    console.error('[ExtractText] Error parsing HTML:', error);
+    // Error parsing HTML
     // Fallback: simple regex-based cleaning
     return html
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
@@ -309,29 +303,3 @@ export function extractTextFromHTML(html: string): string {
       .trim();
   }
 }
-
-// Voorbeeldgebruik:
-/*
-(async () => {
-  try {
-    const result = await fetchHTML("https://example.com", {
-      timeoutMs: 10000,
-      retries: 2,
-      retryDelay: 1000
-    });
-    
-    console.log('Fetched:', result.metadata?.title);
-    console.log('Content length:', result.content.length);
-    
-    const cleanText = extractTextFromHTML(result.content);
-    console.log('Clean text:', cleanText.slice(0, 500));
-    
-  } catch (error) {
-    if (error instanceof FetchError) {
-      console.error('Fetch error:', error.message, 'Status:', error.status);
-    } else {
-      console.error('Unexpected error:', error);
-    }
-  }
-})();
-*/

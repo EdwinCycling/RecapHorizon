@@ -76,7 +76,6 @@ export const useSessionActivity = ({
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (!user) {
         // Firebase auth is verlopen, invalideer lokale session
-        console.log('Firebase auth expired, invalidating local session');
         onSessionExpired();
       }
     });

@@ -124,8 +124,6 @@ export const ensureUserDocument = async (userId: string, userEmail?: string): Pr
         sessionsMonth: currentMonth,
         monthlySessionsCount: 0
       });
-      
-      console.log(t('userDocumentCreated', 'Gebruikersdocument aangemaakt voor'), userId);
     }
   } catch (error) {
     console.error(t('errorCreatingUserDocument', 'Fout bij aanmaken gebruikersdocument:'), error);
@@ -460,30 +458,22 @@ export const debugTokenUsageData = async (userId: string): Promise<void> => {
     const monthlyUsage = await getTokenUsageThisMonth(userId);
     const totalMonthly = monthlyUsage.reduce((sum, usage) => sum + (usage.totalTokens || 0), 0);
   } catch (error) {
-    console.error('[debugTokenUsageData] Error:', error);
+    // Debug token usage data error
   }
 };
 
 export const getTotalTokenUsage = async (userId: string, period: 'daily' | 'monthly' = 'monthly'): Promise<number> => {
-  console.warn('[getTotalTokenUsage] Starting with userId:', userId, 'period:', period);
-  
-  // Add debug check
-  await debugTokenUsageData(userId);
-  
   try {
     if (period === 'daily') {
       const dailyUsage = await getTokenUsageToday(userId);
-      console.warn('[getTotalTokenUsage] Daily usage:', dailyUsage);
       return dailyUsage?.totalTokens || 0;
     } else {
       const monthlyUsageArray = await getTokenUsageThisMonth(userId);
-      console.warn('[getTotalTokenUsage] Monthly usage array:', monthlyUsageArray);
       const total = monthlyUsageArray.reduce((sum, usage) => sum + usage.totalTokens, 0);
-      console.warn('[getTotalTokenUsage] Total calculated:', total);
       return total;
     }
   } catch (error) {
-    console.error('[getTotalTokenUsage] Error:', error);
+    // Get total token usage error
     return 0;
   }
 };
@@ -500,7 +490,7 @@ export const getUserPreferences = async (userId: string): Promise<UserPreference
     }
     return null;
   } catch (error) {
-    console.error(t('errorGettingUserPreferences', 'Error getting user preferences:'), error);
+    // Error getting user preferences
     return null;
   }
 };
@@ -521,7 +511,7 @@ export const saveUserPreferences = async (userId: string, preferences: Partial<U
     
     await setDoc(userPrefsRef, updatedPrefs);
   } catch (error) {
-    console.error(t('errorSavingUserPreferences', 'Error saving user preferences:'), error);
+    // Error saving user preferences
   }
 };
 
@@ -552,9 +542,8 @@ export const updateUserStripeData = async (userId: string, stripeData: {
     if (stripeData.currentSubscriptionStartDate !== undefined) updateData.currentSubscriptionStartDate = stripeData.currentSubscriptionStartDate;
     
     await updateDoc(userRef, updateData);
-    console.log(t('stripeDataUpdated', 'Stripe gegevens bijgewerkt voor gebruiker'), userId);
   } catch (error) {
-    console.error(t('errorUpdatingStripeData', 'Fout bij bijwerken Stripe gegevens:'), error);
+    // Error updating Stripe data
     throw error;
   }
 };
@@ -588,7 +577,7 @@ export const getUserStripeData = async (userId: string): Promise<{
     }
     return null;
   } catch (error) {
-    console.error(t('errorGettingStripeData', 'Fout bij ophalen Stripe gegevens:'), error);
+    // Error getting Stripe data
     return null;
   }
 };
@@ -610,10 +599,8 @@ export const scheduleSubscriptionTierChange = async (userId: string, tierChange:
       },
       updatedAt: serverTimestamp()
     });
-    
-    console.log(t('tierChangeScheduled', 'Tier wijziging gepland voor gebruiker'), userId);
   } catch (error) {
-    console.error(t('errorSchedulingTierChange', 'Fout bij plannen tier wijziging:'), error);
+    // Error scheduling tier change
     throw error;
   }
 };
@@ -627,10 +614,8 @@ export const clearScheduledTierChange = async (userId: string): Promise<void> =>
       scheduledTierChange: null,
       updatedAt: serverTimestamp()
     });
-    
-    console.log(t('tierChangeCleared', 'Geplande tier wijziging gewist voor gebruiker'), userId);
   } catch (error) {
-    console.error(t('errorClearingTierChange', 'Fout bij wissen geplande tier wijziging:'), error);
+    // Error clearing tier change
     throw error;
   }
 };
@@ -653,10 +638,8 @@ export const createPricingTier = async (tierData: {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
-    
-    console.log(t('pricingTierCreated', 'Pricing tier aangemaakt:'), tierData.tier);
   } catch (error) {
-    console.error(t('errorCreatingPricingTier', 'Fout bij aanmaken pricing tier:'), error);
+    // Error creating pricing tier
     throw error;
   }
 };
@@ -712,8 +695,6 @@ export const logStripeWebhook = async (webhookData: {
       receivedAt: serverTimestamp(),
       createdAt: serverTimestamp()
     });
-    
-    console.log(t('stripeWebhookLogged', 'Stripe webhook gelogd:'), webhookData.eventType);
   } catch (error) {
     console.error(t('errorLoggingStripeWebhook', 'Fout bij loggen Stripe webhook:'), error);
     throw error;
@@ -734,7 +715,6 @@ export const updateWebhookProcessingStatus = async (webhookId: string, processed
     }
     
     await updateDoc(webhookRef, updateData);
-    console.log(t('webhookStatusUpdated', 'Webhook status bijgewerkt:'), webhookId);
   } catch (error) {
     console.error(t('errorUpdatingWebhookStatus', 'Fout bij bijwerken webhook status:'), error);
     throw error;

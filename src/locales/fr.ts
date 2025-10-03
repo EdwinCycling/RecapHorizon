@@ -24,6 +24,7 @@ export const fr = {
   recordingStopped: "Enregistrement arrêté. Prêt à transcrire.",
   transcribeSession: "Transcrire la session",
   transcribing: "Transcription en cours...",
+  uploadingToTranscriptionServer: "Téléchargement audio vers le serveur de transcription...",
   summarizing: "Résumé en cours...",
   processing: "Traitement...",
   appTitle: "RecapHorizon",

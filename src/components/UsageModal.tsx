@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { SubscriptionTier } from '../utils/aiProviderManager';
 import { subscriptionService } from '../subscriptionService';
-import { getTotalTokenUsage, getUserMonthlySessions, getUserMonthlyAudioMinutes } from '../firebase';
+import { getUserMonthlyTokens, getUserMonthlySessions, getUserMonthlyAudioMinutes } from '../firebase';
 import { auth } from '../firebase';
 import Modal from './Modal';
 import AudioUsageMeter from './AudioUsageMeter';
@@ -43,13 +43,13 @@ const UsageModal: React.FC<UsageModalProps> = ({
     setIsLoading(true);
     
     try {
-      const [usage, sessions, audioUsage] = await Promise.all([
-        getTotalTokenUsage(auth.currentUser.uid, 'monthly'),
+      const [tokenUsage, sessions, audioUsage] = await Promise.all([
+        getUserMonthlyTokens(auth.currentUser.uid),
         getUserMonthlySessions(auth.currentUser.uid),
         getUserMonthlyAudioMinutes(auth.currentUser.uid)
       ]);
       
-      setMonthlyUsage(usage);
+      setMonthlyUsage(tokenUsage.totalTokens);
       setMonthlySessions(sessions.sessions);
       setMonthlyAudioUsage(audioUsage.minutes);
     } catch (error) {

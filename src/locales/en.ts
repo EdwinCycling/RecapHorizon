@@ -1425,6 +1425,42 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   socialPostCopyIndividual: "Copy this post",
   socialPostCopyAll: "Copy all posts",
   socialPostGenerated: "Social posts generated",
+  // Social media post options
+  socialPostToneInformative: "Informative",
+  socialPostToneCasual: "Casual",
+  socialPostToneProfessional: "Professional",
+  socialPostToneEngaging: "Engaging",
+  socialPostToneFriendly: "Friendly",
+  socialPostToneEnthusiastic: "Enthusiastic",
+  socialPostToneHumor: "Humor",
+  socialPostToneFactual: "Factual",
+  socialPostLengthShort: "Short (200 characters)",
+  socialPostLengthMedium: "Medium (200-500 characters)",
+  socialPostLengthLong: "Long (up to 1000 characters)",
+  socialPostPlatformXBlueSky: "X / BlueSky",
+  socialPostPlatformLinkedIn: "LinkedIn",
+  socialPostPlatformFacebook: "Facebook",
+  socialPostPlatformInstagram: "Instagram",
+  socialPostPlatform: "Platform",
+  socialPostTone: "Tone",
+  socialPostLength: "Length",
+  socialPostIncludeHashtags: "Include hashtags",
+  socialPostIncludeEmoticons: "Use emoticons",
+  socialPostOptions: "Social Media Options",
+  socialPostGenerateWithOptions: "Generate with options",
+  imageGeneration: "Image Generation",
+  imageGenerationStyle: "Style",
+  imageGenerationColor: "Color",
+  imageStyleInfographic: "Infographic",
+  imageStyleDrawing: "Drawing",
+  imageStyleRealistic: "Realistic photo",
+  imageColorBlackWhite: "Black/white",
+  imageColorColor: "Color",
+  imageColorVibrant: "Very colorful/vibrant colors",
+  generateImage: "Generate Image",
+  generatingImage: "Generating image...",
+  imageGenerationGoldFeature: "Image Generation - Gold Feature",
+  imageGenerationUpgradeMessage: "Image generation is only available for Gold, Diamond and Enterprise subscriptions.",
 
   // Email import
   emailImportOption: "Email Import",
@@ -2126,4 +2162,48 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   // Audio Usage Meter
   unlimitedAudio: "Unlimited audio - no restrictions!",
   approachingAudioLimit: "You are approaching your monthly audio limit. Consider upgrading to a higher plan."
+
+  // Referral Program
+,referralProgramTitle: "Referral Program"
+,referralWhatIsIt: "What is this?"
+,referralIntro: "Earn 1 dollar per month recurring commission on every paid subscription you refer."
+,referralRulePaidCustomer: "You must be a paying customer to enroll."
+,referralRulePayment: "Payouts are made monthly via PayPal."
+,referralRulePaypal: "A valid PayPal.Me link is required to receive payouts."
+,referralRuleJoinUrl: "Your unique join URL automatically signs new users up as your referrals."
+,referralRulePayoutSchedule: "Commissions accrue monthly and are paid out within 7 days after month end."
+,referralRuleFree: "New users start on the free plan; once they choose a paid subscription, your referral starts and pays monthly."
+  ,referralAlreadyEnrolled: "You're enrolled in the referral program."
+  ,referralYourJoinUrl: "Your join URL"
+  ,referralEnrollButton: "Enroll now"
+  ,referralDashboardTitle: "Referral Dashboard"
+  ,referralNeedEnroll: "You need to enroll to see your referral dashboard."
+  ,referralEarningsTotal: "Total earnings"
+  ,referralEarningsMonth: "Earnings this month"
+  ,referralColEmail: "Email"
+  ,referralColCurrentTier: "Current Tier"
+  ,referralColMonthStartTier: "Start-of-month Tier"
+  ,referralNoEntries: "No referral entries yet."
+  ,referralPaypalMeDesc: "We use PayPal.Me for simple, secure payouts."
+  ,referralPaypalLearnMore: "Learn more"
+  ,referralPaypalMeLabel: "Your PayPal.Me link"
+  ,referralPaypalInvalid: "Please enter a valid PayPal.Me link like https://paypal.me/yourname"
+  ,referralSignupTitle: "Enroll in Referral Program"
+  ,referralGenerateCode: "Generate referral code"
+  ,referralYourCode: "Your referral code"
+  ,referralJoinUrl: "Your join URL"
+  ,mustBeLoggedIn: "You must be logged in to continue."
+  ,copy: "Copy"
+  ,referralEnrollSuccess: "You're enrolled! Your referral profile has been saved."
+  ,referralEnrollError: "Could not enroll in the referral program. Please try again."
+  ,welcomeNewReferral: "Welcome! Your account was created using a referral."
+  ,referralExportPdf: "Export PDF"
+  ,referralExportError: "Export failed. Please try again."
+  ,referralOneTimeWarning: "IMPORTANT: This code is provided only ONCE! Copy and save it carefully."
+  ,copyCode: "Copy code"
+  ,referralInstructions: "Instructions:"
+  ,referralInstruction1: "Share this URL with people who want to sign up (for free)"
+  ,referralInstruction2: "The URL can be used by everyone"
+  ,referralInstruction3: "Save the URL in a safe place"
+  ,referralInstruction4: "For communication with RecapHorizon about your referral program, always provide your unique code"
 };

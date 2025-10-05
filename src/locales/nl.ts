@@ -1398,6 +1398,44 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   socialPostCopyIndividual: "Kopieer dit bericht",
   socialPostCopyAll: "Kopieer alle berichten",
   socialPostGenerated: "Social posts gegenereerd",
+  // Social media post options
+  socialPostToneInformative: "Informatief",
+  socialPostToneCasual: "Casual",
+  socialPostToneProfessional: "Professioneel",
+  socialPostToneEngaging: "Boeiend",
+  socialPostToneFriendly: "Vriendelijk",
+  socialPostToneEnthusiastic: "Enthousiast",
+  socialPostToneHumor: "Humor",
+  socialPostToneFactual: "Feitelijk",
+  socialPostLengthShort: "Kort (200 karakters)",
+  socialPostLengthMedium: "Midden (200-500 karakters)",
+  socialPostLengthLong: "Lang (tot 1000 karakters)",
+  socialPostPlatformXBlueSky: "X / BlueSky",
+  socialPostPlatformLinkedIn: "LinkedIn",
+  socialPostPlatformFacebook: "Facebook",
+  socialPostPlatformInstagram: "Instagram",
+  socialPostPlatform: "Platform",
+  socialPostTone: "Toon",
+  socialPostLength: "Lengte",
+  socialPostIncludeHashtags: "Hashtags toevoegen",
+  socialPostIncludeEmoticons: "Emoticons gebruiken",
+  socialPostOptions: "Social Media Opties",
+  socialPostGenerateWithOptions: "Genereer met opties",
+  imageGeneration: "Afbeelding Generatie",
+  aiImageGeneration: "AI Afbeelding Generatie",
+  imageGenerationStyle: "Stijl",
+  imageGenerationColor: "Kleur",
+  imageColor: "Kleur",
+  imageStyleInfographic: "Infographic",
+  imageStyleDrawing: "Tekening",
+  imageStyleRealistic: "Foto realistisch",
+  imageColorBlackWhite: "Zwart/wit",
+  imageColorColor: "Kleur",
+  imageColorVibrant: "Zeer kleurrijk/felle kleuren",
+  generateImage: "Genereer instructie voor afbeelding",
+  generatingImage: "Afbeelding genereren...",
+  imageGenerationGoldFeature: "Afbeelding Generatie - Gold Functie",
+  imageGenerationUpgradeMessage: "Afbeelding generatie is alleen beschikbaar voor Gold, Diamond en Enterprise abonnementen.",
   imageInstructionCopied: "AI afbeelding instructie gekopieerd naar klembord",
   copyImageInstruction: "Kopieer afbeelding instructie",
   aiImageInstruction: "AI Afbeelding Instructie",
@@ -2094,4 +2132,49 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   // Audio Usage Meter
   unlimitedAudio: "Onbeperkte audio - geen beperkingen!",
   approachingAudioLimit: "Je nadert je maandelijkse audio limiet. Overweeg een upgrade naar een hoger abonnement."
+
+  // Referral Programma
+,referralProgramTitle: "Referral Programma"
+,referralWhatIsIt: "Wat is dit?"
+,referralIntro: "Verdien 1 dollar per maand terugkerende commissie op elke betaald abonnement dat je aanbrengt."
+,referralRulePaidCustomer: "Je moet een betalende klant zijn om je in te schrijven."
+,referralRulePayment: "Uitbetalingen worden maandelijks gedaan via PayPal."
+,referralRulePaypal: "Een geldige PayPal.Me link is vereist om uitbetalingen te ontvangen."
+,referralRuleJoinUrl: "Je unieke aanmeld-URL laat nieuwe gebruikers zich automatisch aanmelden als jouw referral."
+,referralRulePayoutSchedule: "Commissies bouwen maandelijks op en worden binnen 7 dagen na maandafsluiting uitbetaald."
+,referralRuleFree: "Nieuwe gebruikers worden eerst gratis lid, geen kosten; zodra ze zelf kiezen voor een betaald abonnement, gaat jouw referral lopen, elke maand."
+  ,referralAlreadyEnrolled: "Je bent ingeschreven in het referral programma."
+  ,referralYourJoinUrl: "Jouw aanmeld-URL"
+  ,referralEnrollButton: "Inschrijven"
+  ,referralDashboardTitle: "Referral Dashboard"
+  ,referralNeedEnroll: "Je moet je inschrijven om je referral dashboard te zien."
+  ,referralEarningsTotal: "Totale verdiensten"
+  ,referralEarningsMonth: "Verdiensten deze maand"
+  ,referralEarningsPreviousMonth: "Verdiensten vorige maand"
+  ,referralColEmail: "E-mail"
+  ,referralColCurrentTier: "Huidige abonnement"
+  ,referralColMonthStartTier: "Abonnement aan begin van de maand"
+  ,referralNoEntries: "Nog geen referrals."
+  ,referralPaypalMeDesc: "We gebruiken PayPal.Me voor eenvoudige, veilige uitbetalingen."
+  ,referralPaypalLearnMore: "Meer informatie"
+  ,referralPaypalMeLabel: "Jouw PayPal.Me link"
+  ,referralPaypalInvalid: "Voer een geldige PayPal.Me link in zoals https://paypal.me/jouwnaam"
+  ,referralSignupTitle: "Inschrijven voor Referral Programma"
+  ,referralGenerateCode: "Genereer referralcode"
+  ,referralYourCode: "Jouw referralcode"
+  ,referralJoinUrl: "Jouw aanmeld-URL"
+  ,mustBeLoggedIn: "Je moet ingelogd zijn om door te gaan."
+  ,copy: "Kopiëren"
+  ,referralEnrollSuccess: "Je bent ingeschreven! Je referralprofiel is opgeslagen."
+  ,referralEnrollError: "Kon niet inschrijven voor het referral programma. Probeer opnieuw."
+  ,welcomeNewReferral: "Welkom! Je account is aangemaakt via een referral."
+  ,referralExportPdf: "Export PDF"
+  ,referralExportError: "Exporteren mislukt. Probeer opnieuw."
+  ,referralOneTimeWarning: "BELANGRIJK: Deze code wordt slechts EENMALIG verstrekt! Kopieer en bewaar deze zorgvuldig."
+  ,copyCode: "Code kopiëren"
+  ,referralInstructions: "Instructies:"
+  ,referralInstruction1: "Deel deze URL met mensen die zich (gratis) willen aanmelden"
+  ,referralInstruction2: "De URL kan door iedereen worden gebruikt"
+  ,referralInstruction3: "Bewaar de URL op een veilige plaats"
+  ,referralInstruction4: "Voor communicatie met RecapHorizon over jouw referral programma, geef altijd jouw unieke code mee"
 };

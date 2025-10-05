@@ -10,7 +10,7 @@ import WaitlistModal from './src/components/WaitlistModal.tsx';
 // import { EmailConfirmationModal } from './src/components/EmailConfirmationModal';
 import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
-import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, EmailOptions, SocialPostData, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
+import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, EmailOptions, SocialPostOptions, SocialPostData, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
  import { HiRefresh, HiClipboardCopy, HiDownload, HiMail, HiDotsHorizontal } from 'react-icons/hi';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
@@ -21,6 +21,7 @@ import { AIProviderManager, AIFunction, SubscriptionTier as ProviderSubscription
 let mermaid: typeof import('mermaid') | undefined;
 import PptxGenJS from 'pptxgenjs';
 import RecapHorizonPanel from './src/components/RecapHorizonPanel.tsx';
+import SocialPostCard from './src/components/SocialPostCard.tsx';
 import LanguageSelector from './src/components/LanguageSelector.tsx';
 import SessionOptionsModal from './src/components/SessionOptionsModal.tsx';
 import ExpertConfigurationModal from './src/components/ExpertConfigurationModal.tsx';
@@ -40,6 +41,7 @@ import NotionImportModal from './src/components/NotionImportModal.tsx';
 import NotionIntegrationHelpModal from './src/components/NotionIntegrationHelpModal.tsx';
 import FileUploadModal from './src/components/FileUploadModal.tsx';
 import ImageUploadModal from './src/components/ImageUploadModal.tsx';
+import ImageGenerationModal from './src/components/ImageGenerationModal.tsx';
 import { SafeUserText } from './src/utils/SafeHtml';
 import { sanitizeTextInput, extractEmailAddresses } from './src/utils/security';
 import { isMobileDevice } from './src/utils/deviceDetection';
@@ -53,6 +55,8 @@ import CustomerPortalReturnScreen from './src/components/CustomerPortalReturnScr
 import { stripeService } from './src/services/stripeService';
 import UsageModal from './src/components/UsageModal';
 import AudioLimitModal from './src/components/AudioLimitModal';
+import QuotaExceededModal from './src/components/QuotaExceededModal';
+import QuotaWarningBanner from './src/components/QuotaWarningBanner';
 import BlurredLoadingOverlay from './src/components/BlurredLoadingOverlay';
 
 // SEO Meta Tag Manager
@@ -341,8 +345,8 @@ const LoadingOverlay: React.FC<{ text: string; progress?: number; cancelText?: s
   const progressPercentage = typeof progress === 'number' ? Math.max(0, Math.min(100, Math.round(progress * 100))) : 0;
   
   return (
-    <div className="fixed inset-0 bg-gray-200/80 dark:bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-[100] transition-opacity duration-300">
-      <div className="flex items-start gap-4 p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 min-w-[320px] max-w-[90%]">
+    <div className="fixed inset-0 bg-gray-200/60 dark:bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center z-[100] transition-opacity duration-300">
+      <div className="flex items-start gap-4 p-6 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200/50 dark:border-slate-700/50 min-w-[320px] max-w-[90%]">
         <LoadingSpinner />
         <div className="flex-1">
           <p className="text-xl font-semibold text-slate-800 dark:text-slate-200">{text}</p>
@@ -687,6 +691,11 @@ import { tokenManager } from './src/utils/tokenManager';
 import UpgradeModal from './src/components/UpgradeModal.tsx';
 import PricingPage from './src/components/PricingPage.tsx';
 import FAQPage from './src/components/FAQPage.tsx';
+import ReferralInfoPage from './src/components/ReferralInfoPage.tsx';
+import ReferralDashboard from './src/components/ReferralDashboard.tsx';
+import ReferralSignupModal from './src/components/ReferralSignupModal.tsx';
+import { generateReferralCode, buildReferralJoinUrl, maskEmail } from './src/utils/referral';
+import { validatePayPalMeLink } from './src/utils/paypal';
 
 // Hamburger Menu Component
 const HamburgerMenu: React.FC<{
@@ -697,12 +706,14 @@ const HamburgerMenu: React.FC<{
   onShowSettings: () => void;
   onShowPricing: () => void;
   onShowFAQ: () => void;
+  onShowReferralInfo: () => void;
+  onShowReferralDashboard: () => void;
   t: (key: string) => string;
   theme: 'light' | 'dark';
   userTier: SubscriptionTier;
   showUsageModal: boolean;
   setShowUsageModal: (show: boolean) => void;
-}> = ({ isOpen, onToggle, user, onLogout, onShowSettings, onShowPricing, onShowFAQ, t, theme, userTier, showUsageModal, setShowUsageModal }) => {
+}> = ({ isOpen, onToggle, user, onLogout, onShowSettings, onShowPricing, onShowFAQ, onShowReferralInfo, onShowReferralDashboard, t, theme, userTier, showUsageModal, setShowUsageModal }) => {
   return (
     <div className="relative">
       {/* Hamburger Menu Button */}
@@ -802,6 +813,35 @@ const HamburgerMenu: React.FC<{
                 <QuestionMarkIcon className="w-5 h-5" />
                 <span>{t('faq')}</span>
               </button>
+
+              {/* Referral Program - visible for all tiers during testing */}
+              {true && (
+                <div className={`mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <div className="px-4 py-2 text-xs uppercase opacity-70">{t('referralProgramTitle', 'Referral programma')}</div>
+                  <button
+                    onClick={() => {
+                      onShowReferralInfo();
+                      onToggle();
+                    }}
+                    className={`w-full px-4 py-2 text-left transition-colors ${
+                      theme === 'dark' ? 'hover:bg-gray-700 hover:text-white' : 'hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    {t('referralWhatIsIt', 'Wat is het')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      onShowReferralDashboard();
+                      onToggle();
+                    }}
+                    className={`w-full px-4 py-2 text-left transition-colors ${
+                      theme === 'dark' ? 'hover:bg-gray-700 hover:text-white' : 'hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    {t('referralDashboardTitle', 'Mijn dashboard')}
+                  </button>
+                </div>
+              )}
 
               {/* Logout */}
               {user && (
@@ -1003,7 +1043,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('Transcribe');
   
   // New dropdown navigation state
-  const [mainMode, setMainMode] = useState<'transcript' | 'analysis' | 'actions'>('transcript');
+  const [mainMode, setMainMode] = useState<'transcript' | 'analysis' | 'actions'>('analysis');
   const [selectedAnalysis, setSelectedAnalysis] = useState<ViewType>('');
   const [loadingText, setLoadingText] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -1332,96 +1372,226 @@ export default function App() {
     
     setIsGenerating(true);
     try {
+      // Get platform-specific settings
+      const platform = socialPostOptions.platform;
+      const tone = socialPostOptions.tone;
+      const length = socialPostOptions.length;
+      const includeHashtags = socialPostOptions.includeHashtags;
+      const includeEmoticons = socialPostOptions.includeEmoticons;
+      
+      // Define platform-specific constraints
+      const platformConstraints = {
+        'X / BlueSky': { maxChars: 280, minChars: 50 },
+        'LinkedIn': { maxChars: 3000, minChars: 400 },
+        'Facebook': { maxChars: 2000, minChars: 200 },
+        'Instagram': { maxChars: 2200, minChars: 150 }
+      };
+      
+      const constraints = platformConstraints[platform] || platformConstraints['LinkedIn'];
+      
+      // Adjust length based on user preference with strict character counts
+      let targetLength = constraints.minChars;
+      let maxLength = constraints.maxChars;
+      
+      if (length === 'short') {
+        targetLength = 150;
+        maxLength = 200;
+      } else if (length === 'medium') {
+        targetLength = 200;
+        maxLength = 500;
+      } else if (length === 'long') {
+        targetLength = 500;
+        maxLength = 1000;
+      }
+      
+      // Define comprehensive tone instructions
+      const toneInstructions = {
+        'professional': 'Gebruik een professionele, zakelijke toon. Formeel maar toegankelijk. Vermijd jargon.',
+        'friendly': 'Gebruik een vriendelijke, warme toon. Persoonlijk en uitnodigend. Spreek de lezer direct aan.',
+        'enthusiastic': 'Gebruik een enthousiaste, energieke toon. Positief en motiverend. Gebruik actieve taal.',
+        'informative': 'Gebruik een informatieve, educatieve toon. Helder en feitelijk. Focus op kennis overdracht.',
+        'humor': 'Gebruik een humoristische toon. Luchtig en grappig, maar blijf professioneel. Vermijd controversiële humor.',
+        'factual': 'Gebruik een feitelijke, objectieve toon. Neutraal en gebaseerd op feiten. Vermijd emotionele taal.'
+      };
+      
+      // Define platform-specific guidelines
+      const platformGuidelines = {
+        'X / BlueSky': 'Kort en krachtig. Gebruik hashtags spaarzaam. Focus op één kernboodschap.',
+        'LinkedIn': 'Professioneel en waardevol. Gebruik storytelling. Eindig met een vraag of call-to-action.',
+        'Facebook': 'Persoonlijk en engaging. Gebruik emoties. Moedig interactie aan.',
+        'Instagram': 'Visueel en inspirerend. Gebruik relevante hashtags. Focus op lifestyle en inspiratie.'
+      };
+      
       const stamp = (() => {
         const d = recordingStartMs ? new Date(recordingStartMs) : new Date();
         return d.toLocaleString('nl-NL');
       })();
       
       const posts: string[] = [];
+      const providerTier = (userSubscription as unknown as ProviderSubscriptionTier);
       
-      if (analysisType === 'socialPostX') {
-        console.log('Generating X/BlueSky posts via AIProviderManager');
-        const providerTier = (userSubscription as unknown as ProviderSubscriptionTier);
-        for (let i = 0; i < postCount; i++) {
-          const postNumber = postCount > 1 ? `${i + 1}/${postCount}` : '';
-          const prompt = `Maak een kort, krachtig X/BlueSky bericht in het Nederlands van de volgende tekst. Het bericht mag maximaal 200 karakters lang zijn (inclusief de teller). ${postNumber ? `Begin het bericht met \"${postNumber} \"` : ''}. Geen hashtags of emojis. Houd het zakelijk en informatief.\n\nTekst: ${content}`;
-          console.log('Sending prompt to AI provider:', prompt.substring(0, 100) + '...');
-          const request = {
-            userId: authState.user?.uid || 'anonymous',
-            functionType: AIFunction.ANALYSIS_GENERATION,
-            userTier: providerTier,
-          };
-          let aiResponse;
-          let attempt = 0;
-          const maxRetries = 3;
-          while (attempt < maxRetries) {
-            try {
-              aiResponse = await AIProviderManager.generateContentWithProviderSelection(request, prompt);
-              break;
-            } catch (error) {
-              if ((error.statusCode || error.code) === 429 && attempt < maxRetries - 1) {
-                const delaySec = (error as any).retryDelaySec || 10;
-                console.log(`Rate limit hit for X/BlueSky post, retrying after ${delaySec} seconds...`);
-                await new Promise(resolve => setTimeout(resolve, delaySec * 1000));
-                attempt++;
-              } else {
-                throw error;
-              }
-            }
-          }
-          if (!aiResponse) {
-            throw new Error('Failed to generate X/BlueSky post after retries');
-          }
-          if (i < postCount - 1) {
-            await new Promise(resolve => setTimeout(resolve, 10000));
-          }
-          let result = aiResponse.content.trim();
-          console.log('AI response received:', result.substring(0, 100) + '...');
-          if (result.length > 200) {
-            result = result.substring(0, 197) + '...';
-          }
-          posts.push(result);
+      if (postCount === 1) {
+        // SINGLE POST GENERATION - Strikte instructies voor één bericht
+        const prompt = `Maak één ${platform} bericht in het Nederlands van de volgende tekst.
+
+TOON: ${toneInstructions[tone]}
+PLATFORM RICHTLIJNEN: ${platformGuidelines[platform]}
+LENGTE: Het bericht moet tussen ${targetLength} en ${maxLength} karakters lang zijn.
+
+ABSOLUTE VEREISTEN:
+- NOOIT beginnen met "Podcast transcriptie", datum informatie of metadata
+- Focus ALLEEN op de kerninhoud en belangrijkste inzichten
+- Maak het bericht actionable en waardevol voor de lezer
+- Gebruik concrete details en voorbeelden uit de tekst
+- ${includeHashtags ? 'Voeg 2-4 relevante hashtags toe aan het einde' : 'Gebruik GEEN hashtags'}
+- ${includeEmoticons ? 'Gebruik passende emoticons om het bericht levendiger te maken (2-4 emoticons verspreid door de tekst)' : 'Gebruik GEEN emoticons'}
+- NOOIT landcodes zoals "NL", "DE", "EN" toevoegen
+- Geen technische codes, timestamps of metadata
+- Vermijd clichés en algemene uitspraken
+- Gebruik actieve zinnen en concrete taal
+- Begin met een pakkende openingszin
+- Eindig met een call-to-action of vraag
+
+KARAKTERTELLING: Tel de karakters en zorg dat het bericht precies tussen ${targetLength}-${maxLength} karakters valt.
+
+Tekst: ${content}`;
+
+        // Validate token usage
+        const tokenEstimate = tokenManager.estimateTokens(prompt, 1.2);
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+        
+        if (!tokenValidation.allowed) {
+          throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
         }
-      } else {
-        console.log('Generating LinkedIn post via AIProviderManager');
-        const providerTier = (userSubscription as unknown as ProviderSubscriptionTier);
-        const prompt = `Maak een korte, aantrekkelijke LinkedIn post in het Nederlands van de volgende tekst. Voeg relevante emojis en hashtags toe. De post mag maximaal 300 karakters lang zijn. Maak een titel en een bericht.\n\nTekst: ${content}`;
-        console.log('Sending prompt to AI provider:', prompt.substring(0, 100) + '...');
-        const request = {
-          userId: authState.user?.uid || 'anonymous',
-          functionType: AIFunction.ANALYSIS_GENERATION,
-          userTier: providerTier,
-        };
-        let aiResponse;
-        let attempt = 0;
-        const maxRetries = 3;
-        while (attempt < maxRetries) {
-          try {
-            aiResponse = await AIProviderManager.generateContentWithProviderSelection(request, prompt);
-            break;
-          } catch (error) {
-            if ((error.statusCode || error.code) === 429 && attempt < maxRetries - 1) {
-              const delaySec = (error as any).retryDelaySec || 10;
-              console.log(`Rate limit hit for LinkedIn post, retrying after ${delaySec} seconds...`);
-              await new Promise(resolve => setTimeout(resolve, delaySec * 1000));
-              attempt++;
-            } else {
-              throw error;
-            }
+
+        console.log('Sending single post prompt to AI provider');
+        
+        // Use the same AI approach as other analyses - direct Google Gemini with tier-based model
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const modelName = await modelManager.getModelForFunction('analysisGeneration');
+        const response = await ai.models.generateContent({ model: modelName, contents: prompt });
+        
+        // Track token usage with TokenManager
+        const promptTokens = tokenCounter.countPromptTokens(prompt);
+        const responseTokens = tokenCounter.countResponseTokens(response.text);
+        
+        // Record actual token usage
+        try {
+          if (authState.user) {
+            await tokenManager.recordTokenUsage(authState.user.uid, promptTokens, responseTokens);
           }
+        } catch (error) {
+          console.warn('Could not record token usage:', error);
         }
-        if (!aiResponse) {
-          throw new Error('Failed to generate LinkedIn post after retries');
-        }
-        const result = aiResponse.content;
-        console.log('AI response received:', result.substring(0, 100) + '...');
+        
+        const result = response.text.trim();
+        console.log('Single post AI response received:', result.substring(0, 100) + '...');
         posts.push(result);
+        
+      } else {
+        // MULTIPLE POSTS GENERATION - JSON formaat voor meerdere berichten
+        const prompt = `Maak ${postCount} ${platform} berichten in het Nederlands van de volgende tekst. Splits de inhoud logisch op over ${postCount} berichten.
+
+TOON: ${toneInstructions[tone]}
+PLATFORM RICHTLIJNEN: ${platformGuidelines[platform]}
+LENGTE: Elk bericht moet tussen ${targetLength} en ${maxLength} karakters lang zijn.
+
+ABSOLUTE VEREISTEN:
+- NOOIT beginnen met "Podcast transcriptie", datum informatie of metadata
+- Focus ALLEEN op de kerninhoud en belangrijkste inzichten
+- Maak elk bericht actionable en waardevol voor de lezer
+- Gebruik concrete details en voorbeelden uit de tekst
+- ${includeHashtags ? 'Voeg 2-4 relevante hashtags toe aan elk bericht' : 'Gebruik GEEN hashtags'}
+- ${includeEmoticons ? 'Gebruik passende emoticons om elk bericht levendiger te maken (2-4 emoticons verspreid door elk bericht)' : 'Gebruik GEEN emoticons'}
+- NOOIT landcodes zoals "NL", "DE", "EN" toevoegen
+- Geen technische codes, timestamps of metadata
+- Vermijd clichés en algemene uitspraken
+- Gebruik actieve zinnen en concrete taal
+- Zorg voor logische flow tussen berichten
+- Eerste bericht: pakkende introductie
+- Laatste bericht: sterke conclusie of call-to-action
+
+KARAKTERTELLING: Tel de karakters van elk bericht en zorg dat elk bericht precies tussen ${targetLength}-${maxLength} karakters valt.
+
+VERPLICHT JSON FORMAAT:
+Geef je antwoord terug in dit exacte JSON formaat:
+{
+  "posts": [
+    "Bericht 1 tekst hier...",
+    "Bericht 2 tekst hier...",
+    "Bericht 3 tekst hier..."
+  ]
+}
+
+Tekst: ${content}`;
+
+        // Validate token usage
+        const tokenEstimate = tokenManager.estimateTokens(prompt, 1.2);
+        const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+        
+        if (!tokenValidation.allowed) {
+          throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
+        }
+
+        console.log('Sending multiple posts prompt to AI provider');
+        
+        // Use the same AI approach as other analyses - direct Google Gemini with tier-based model
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const modelName = await modelManager.getModelForFunction('analysisGeneration');
+        const response = await ai.models.generateContent({ model: modelName, contents: prompt });
+        
+        // Track token usage with TokenManager
+        const promptTokens = tokenCounter.countPromptTokens(prompt);
+        const responseTokens = tokenCounter.countResponseTokens(response.text);
+        
+        // Record actual token usage
+        try {
+          if (authState.user) {
+            await tokenManager.recordTokenUsage(authState.user.uid, promptTokens, responseTokens);
+          }
+        } catch (error) {
+          console.warn('Could not record token usage:', error);
+        }
+        
+        // Parse JSON response
+        try {
+          const result = response.text.trim();
+          console.log('Multiple posts AI response received:', result.substring(0, 200) + '...');
+          
+          // Extract JSON from response
+          const jsonMatch = result.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            throw new Error('No JSON found in AI response');
+          }
+          
+          const jsonData = JSON.parse(jsonMatch[0]);
+          if (!jsonData.posts || !Array.isArray(jsonData.posts)) {
+            throw new Error('Invalid JSON structure in AI response');
+          }
+          
+          // Add posts with numbering
+          jsonData.posts.forEach((post: string, index: number) => {
+            const numberedPost = `${index + 1}/${postCount} ${post.trim()}`;
+            posts.push(numberedPost);
+          });
+          
+        } catch (parseError) {
+          console.error('Error parsing JSON response:', parseError);
+          // Fallback: split response by lines or paragraphs
+          const result = response.text.trim();
+          const fallbackPosts = result.split(/\n\s*\n/).filter(p => p.trim()).slice(0, postCount);
+          fallbackPosts.forEach((post: string, index: number) => {
+            const numberedPost = `${index + 1}/${postCount} ${post.trim()}`;
+            posts.push(numberedPost);
+          });
+        }
       }
 
+      // Save results
       const socialPostResult = {
-        post: posts,
+        post: posts.length === 1 ? posts[0] : posts,
         timestamp: stamp,
-        platform: analysisType === 'socialPostX' ? 'X / BlueSky' : 'Generic',
+        platform: platform,
         imageInstruction: undefined,
       };
 
@@ -1432,16 +1602,16 @@ export default function App() {
         console.log('X/BlueSky data saved successfully');
       } else {
         setSocialPostData({
-          post: Array.isArray(socialPostResult.post) ? (socialPostResult.post[0] || '') : socialPostResult.post,
+          post: Array.isArray(socialPostResult.post) ? socialPostResult.post.join('\n\n') : socialPostResult.post,
           timestamp: socialPostResult.timestamp,
           platform: socialPostResult.platform,
           imageInstruction: socialPostResult.imageInstruction,
         });
-        console.log('LinkedIn data saved successfully');
+        console.log('Social post data saved successfully');
       }
 
     } catch (error: any) {
-      // Parse status code and retry delay from Gemini API error (if available)
+      // Parse status code and retry delay from API error
       const rawMessage = typeof error?.message === 'string' ? error.message : '';
       let statusCode: number | undefined = (error as any)?.statusCode || (error as any)?.code;
       let retryDelaySec: number | undefined;
@@ -1461,34 +1631,118 @@ export default function App() {
             }
           }
         } catch {
-          // Ignore JSON parse errors and proceed with generic handling
+          // Ignore JSON parse errors
         }
       }
 
-      // Use dedicated API error handler for rate limits (429)
+      // Error handling
       const isRateLimit = statusCode === 429;
-      const userError = isRateLimit
-        ? errorHandler.handleApiError(error as any, 429, { endpoint: 'gemini generateContent' })
-        : errorHandler.handleError(error as any, ErrorType.UNKNOWN, { additionalContext: { context: 'generateSocialPost', message: t('errorGeneratingSocialPost') } });
+      
+      // Check if this is a quota exceeded error that should show the modal
+      const isQuotaExceeded = isRateLimit && (
+        rawMessage.includes('quota') || 
+        rawMessage.includes('free_tier_requests') ||
+        rawMessage.includes('You exceeded your current quota')
+      );
+      
+      if (isQuotaExceeded) {
+        // Show quota exceeded modal instead of toast
+        setQuotaExceededError(rawMessage);
+        setShowQuotaExceededModal(true);
+      } else {
+        // Handle other errors normally
+        const userError = isRateLimit
+          ? errorHandler.handleApiError(error as any, 429, { endpoint: 'AI generateContent' })
+          : errorHandler.handleError(error as any, ErrorType.UNKNOWN, { additionalContext: { context: 'generateSocialPost', message: t('errorGeneratingSocialPost') } });
 
-      // Fallback: clear, explicit error message (no complex recovery logic)
-      const delayText = retryDelaySec ? ` Please wait ~${retryDelaySec}s and try again.` : '';
-      const displayMessage = isRateLimit
-        ? `Error: Rate limit exceeded on Gemini API.${delayText}`
-        : `Error: ${userError.message}`;
+        const delayText = retryDelaySec ? ` Wacht ${retryDelaySec}s en probeer opnieuw.` : '';
+        const displayMessage = isRateLimit
+          ? `Error: Rate limit bereikt.${delayText}`
+          : `Error: ${userError.message}`;
 
-      displayToast(displayMessage, 'error');
-
+        displayToast(displayMessage, 'error');
+      }
+      
       console.error('Error generating social post:', error);
-      console.log('Error details:', { analysisType, contentLength: typeof content === 'string' ? content.length : 0, error: (error as any)?.message });
     } finally {
       setIsGenerating(false);
       console.log('generateSocialPost completed');
     }
   };
 
-      
+  const generateImage = async (postContent: string, analysisType: 'socialPost' | 'socialPostX') => {
+    // Check subscription level
+    if (!['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) {
+      setShowImageGenerationModal(true);
+      return;
+    }
 
+    if (!postContent.trim()) {
+      displayToast(t('noPostContentForImage', 'Geen post content beschikbaar voor afbeelding generatie'), 'error');
+      return;
+    }
+
+    // Set generating state
+    setIsGeneratingImage(true);
+
+    try {
+      if (!apiKey) {
+        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        setIsGeneratingImage(false);
+        return;
+      }
+
+      // Validate token usage for image generation
+      const styleText = imageGenerationStyle === 'infographic' ? t('imageStyleInfographic') : 
+                       imageGenerationStyle === 'drawing' ? t('imageStyleDrawing') : 
+                       t('imageStyleRealistic');
+      const colorText = imageGenerationColor === 'blackwhite' ? t('imageColorBlackWhite') : 
+                       imageGenerationColor === 'color' ? t('imageColorColor') : 
+                       t('imageColorVibrant');
+
+      const imagePrompt = `Create a ${styleText.toLowerCase()} style image in ${colorText.toLowerCase()} that visually represents this social media post: "${postContent}". The image should be suitable for ${analysisType === 'socialPost' ? 'LinkedIn' : 'X/BlueSky'} and complement the message effectively.`;
+      
+      const tokenEstimate = tokenManager.estimateTokens(imagePrompt, 1.2);
+      const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+      
+      if (!tokenValidation.allowed) {
+        displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+        setIsGeneratingImage(false);
+        setTimeout(() => setShowPricingPage(true), 2000);
+        return;
+      }
+
+      // Store the generated prompt for display
+      setGeneratedImagePrompt(imagePrompt);
+
+      // Update the social post data with image instruction
+      const imageInstruction = `Generate an image with the following specifications:
+Style: ${styleText}
+Color: ${colorText}
+Content: ${postContent}
+
+Prompt for AI image generator: ${imagePrompt}`;
+
+      if (analysisType === 'socialPostX') {
+        setSocialPostXData(prev => prev ? { ...prev, imageInstructions: imageInstruction } : null);
+      } else {
+        setSocialPostData(prev => prev ? { ...prev, imageInstructions: imageInstruction } : null);
+      }
+
+      // Record token usage
+      try {
+        await tokenManager.recordTokenUsage(user.uid, tokenEstimate.totalTokens, 0);
+      } catch (error) {
+        console.error('Error recording token usage:', error);
+      }
+
+    } catch (error: any) {
+      console.error('Error generating image instruction:', error);
+      displayToast(t('errorGeneratingImage', 'Fout bij genereren afbeelding instructie'), 'error');
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
 
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -1578,6 +1832,15 @@ export default function App() {
     complexityLevel: t('explainComplexityGeneral'), 
     focusArea: t('explainFocusGeneral'), 
     format: t('explainFormatShort') 
+  });
+  // Social media post options state
+  const [socialPostOptions, setSocialPostOptions] = useState<SocialPostOptions>({
+    platform: 'X / BlueSky',
+    tone: 'informative',
+    length: 'short',
+    includeHashtags: true,
+    includeEmoticons: false,
+    postCount: 1
   });
   // Quiz state
   
@@ -1912,8 +2175,88 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [dailyUploadCount, setDailyUploadCount] = useState<number>(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showAudioLimitModal, setShowAudioLimitModal] = useState(false);
+  const [showQuotaExceededModal, setShowQuotaExceededModal] = useState(false);
+  const [quotaExceededError, setQuotaExceededError] = useState<string>('');
   const [showPricingPage, setShowPricingPage] = useState(false);
   const [sessionOptionsHelpMode, setSessionOptionsHelpMode] = useState(false);
+
+  // Referral UI state and URL code capture
+  const [showReferralInfoPage, setShowReferralInfoPage] = useState(false);
+  const [showReferralDashboardPage, setShowReferralDashboardPage] = useState(false);
+  const [showReferralSignupModal, setShowReferralSignupModal] = useState(false);
+  const [referralCodeFromURL, setReferralCodeFromURL] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const refCode = params.get('ref');
+      if (refCode) {
+        setReferralCodeFromURL(refCode);
+        // If not authenticated, encourage sign up by showing info page
+        if (!authState.user) {
+          setShowInfoPage(true);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  // Debug logs for referral UI
+  useEffect(() => {
+    if (showReferralInfoPage) {
+      console.log('[Referral] Info page opened');
+    }
+  }, [showReferralInfoPage]);
+  useEffect(() => {
+    if (showReferralDashboardPage) {
+      console.log('[Referral] Dashboard page opened');
+    }
+  }, [showReferralDashboardPage]);
+
+  const enrollReferral = async ({ paypalMeLink }: { paypalMeLink: string }): Promise<{ code: string }> => {
+    if (!authState.user?.uid) throw new Error(t('mustBeLoggedIn', 'Je moet ingelogd zijn'));
+    if (!validatePayPalMeLink(paypalMeLink)) throw new Error(t('referralPaypalInvalid', 'Ongeldige PayPal.Me link.'));
+
+    try {
+      const token = await auth.currentUser?.getIdToken(true);
+      if (!token) throw new Error(t('mustBeLoggedIn', 'Je moet ingelogd zijn'));
+
+      const functionsBase = (import.meta as any)?.env?.VITE_FUNCTIONS_BASE_URL || '';
+      const resp = await fetch(`${functionsBase}/.netlify/functions/referral-enroll`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ paypalMeLink })
+      });
+
+      if (!resp.ok) {
+        const msg = await resp.text().catch(() => '');
+        if (resp.status === 409) {
+          throw new Error(t('referralAlreadyEnrolled', 'Je bent ingeschreven in het referral programma.'));
+        }
+        throw new Error(msg || t('referralEnrollError', 'Er ging iets mis bij aanmelden. Probeer opnieuw.'));
+      }
+
+      const data = await resp.json() as { code: string; joinUrl?: string };
+
+      // Update local state with server-provided code
+      const refProfile = {
+        code: data.code,
+        paypalMeLink
+      } as any;
+      setAuthState(prev => ({
+        ...prev,
+        user: { ...prev.user, referralProfile: refProfile }
+      }));
+      displayToast(t('referralEnrollSuccess', 'Je bent aangemeld voor het referral programma.'), 'success');
+      return { code: data.code };
+    } catch (e: any) {
+      throw new Error(e?.message || t('referralEnrollError', 'Er ging iets mis bij aanmelden. Probeer opnieuw.'));
+    }
+  };
 
   const [showWebPageModal, setShowWebPageModal] = useState(false);
   const [showWebPageHelp, setShowWebPageHelp] = useState(false);
@@ -1934,6 +2277,15 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [socialPostData, setSocialPostData] = useState<SocialPostData | null>(null);
 const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(null);
   const [socialPostCount, setSocialPostCount] = useState<number>(1);
+  
+  // Image generation state
+  const [imageGenerationStyle, setImageGenerationStyle] = useState<string>('infographic');
+  const [imageGenerationColor, setImageGenerationColor] = useState<string>('color');
+  const [isGeneratingImage, setIsGeneratingImage] = useState<boolean>(false);
+  const [showImageGenerationModal, setShowImageGenerationModal] = useState<boolean>(false);
+  const [generatedImagePrompt, setGeneratedImagePrompt] = useState<string>('');
+  const [showImageGenerationResult, setShowImageGenerationResult] = useState<boolean>(false);
+  const [imageInstructionsCopied, setImageInstructionsCopied] = useState<boolean>(false);
   const [sessionType, setSessionType] = useState<SessionType>(SessionType.AUDIO_RECORDING);
 
   // Deep translation helper for nested keys like 'storytellingTargetAudienceOptions.internalTeam'
@@ -2824,7 +3176,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     try {
       // Initialize AudioRecorder if not already done
       if (!audioRecorderRef.current) {
-        audioRecorderRef.current = new AudioRecorder();
+        audioRecorderRef.current = new AudioRecorder(t, authState.user?.uid);
         
         // Setup callbacks using the AudioRecorder API
         audioRecorderRef.current.setCallbacks({
@@ -4733,7 +5085,7 @@ const handleAnalyzeSentiment = async () => {
           isActive: true,
                     lastLogin: serverTimestamp(),
           sessionCount: 0,
-          createdAt: new Date(),
+          createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         };
         
@@ -4792,7 +5144,58 @@ const handleAnalyzeSentiment = async () => {
     try {
       // Creating new account
       
-      // Check if user exists in database
+      // If referral code present in URL, bypass pre-created user requirement and create Firestore user document
+      if (referralCodeFromURL) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Find referrer by referralProfile.code
+        let referrerUid: string | null = null;
+        try {
+          const usersRef = collection(db, 'users');
+          const qRef = query(usersRef, where('referralProfile.code', '==', referralCodeFromURL));
+          const refSnap = await getDocs(qRef);
+          if (!refSnap.empty) {
+            const refData = refSnap.docs[0].data();
+            referrerUid = refSnap.docs[0].id || (refData as any)?.uid || null;
+          }
+        } catch {}
+
+        const newUserData = {
+          email,
+          isActive: true,
+          lastLogin: serverTimestamp(),
+          sessionCount: 0,
+          createdAt: new Date(),
+          updatedAt: serverTimestamp(),
+          subscriptionTier: SubscriptionTier.FREE,
+          referrerCode: referralCodeFromURL,
+        };
+        await setDoc(doc(db, 'users', user.uid), newUserData);
+
+        // Create referral link record for dashboard
+        if (referrerUid) {
+          await setDoc(doc(db, 'referrals', user.uid), {
+            referrerUid,
+            referredUid: user.uid,
+            emailMasked: maskEmail(email),
+            currentTier: 'free',
+            monthStartTier: 'free',
+            createdAt: serverTimestamp()
+          });
+        }
+
+        setAuthState({
+          user: { ...newUserData, uid: user.uid },
+          isLoading: false,
+        });
+        setUserSubscription(SubscriptionTier.FREE);
+        setShowInfoPage(false);
+        displayToast(t('welcomeNewReferral', 'Welkom! Je bent aangemeld als gratis gebruiker via een referral.'), 'success');
+        return;
+      }
+
+      // Fallback: original path requiring pre-existing user record
       const Ref = collection(db, 'users');
       const q = query(Ref, where('email', '==', email));
       const querySnapshot = await getDocs(q);
@@ -4808,63 +5211,35 @@ const handleAnalyzeSentiment = async () => {
         throw new Error(t('accountDisabled', 'Account is disabled. Contact administrator.'));
       }
       
-      // User found in database
-      
       // Check if user already has a UID (means Firebase Auth account exists)
       if (userData.uid) {
-        // User already has UID, checking if Firebase Auth account exists
         try {
-          // Try to sign in to see if account exists
           await signInWithEmailAndPassword(auth, email, 'dummy-password');
-          // Firebase Auth account exists, cannot create new one
           throw new Error(t('emailInUseFirebase', 'Dit email adres is al in gebruik in Firebase. Probeer in te loggen in plaats van een account aan te maken.'));
         } catch (authError: any) {
           if (authError.code === 'auth/wrong-password') {
-            // Account exists but wrong password - this is what we want
-            // Firebase Auth account exists, cannot create new one
             throw new Error(t('firebaseEmailInUse', 'This email address is already in use in Firebase. Try logging in instead of creating an account.'));
           } else if (authError.code === 'auth/user-not-found') {
-            // Account doesn't exist - this is also fine
-            // No Firebase Auth account found, will create new one
+            // proceed
           } else if (authError.code === 'auth/invalid-credential') {
-            // Account might exist but is corrupted - try to create new one
-            // Invalid credential error, will attempt to create new Firebase Auth account
+            // proceed
           } else {
-            // Unexpected auth error
             throw authError;
           }
         }
-      } else {
-        // No UID found, safe to create new Firebase Auth account
       }
-      
-      // Creating Firebase Auth account
-      // Create Firebase auth account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
-      // Firebase Auth account created
-      
-      // Update user document with UID
       await updateDoc(doc(db, 'users', userDoc.id), {
         uid: user.uid,
         updatedAt: serverTimestamp()
       });
-      
-      // User document updated with new UID
-      
-      // User document updated with UID
-      
       setAuthState({
         user: { ...userData, uid: user.uid },
         isLoading: false,
-              });
-      
-      // Load user subscription tier
+      });
       const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
       setUserSubscription(tier);
-      // login modal removed
-      
       // Account creation successful
     } catch (error: any) {
       console.error('Create account error:', error);
@@ -7073,10 +7448,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : []),
         // Social Post tab - alleen zichtbaar voor Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
-            [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : []),
-        // Social Post X tab - alleen zichtbaar voor Gold, Enterprise, Diamond
-        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
-            [{ id: 'socialPostX', type: 'view', icon: SocialPostIcon, label: () => t('socialPostX') }] : [])
+            [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
     const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
@@ -7101,10 +7473,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         if (view === 'socialPost' && socialPostData?.post) { setActiveView('socialPost'); return; }
         if (view === 'socialPostX' && socialPostXData?.post) { setActiveView('socialPostX'); return; }
 
-        // If content doesn't exist, generate it
-        if (['summary', 'faq', 'learning', 'followUp', 'socialPost', 'socialPostX'].includes(view)) {
+        // If content doesn't exist, generate it (except for social posts which need manual generation)
+        if (['summary', 'faq', 'learning', 'followUp'].includes(view)) {
             console.log('DEBUG: handleTabClick called for', view, 'transcript length:', transcript.length, 'transcript preview:', transcript.slice(0, 100));
             handleGenerateAnalysis(view, 1);
+        } else if (view === 'socialPost' || view === 'socialPostX') {
+            // Just switch to the view without auto-generating content
+            setActiveView(view);
         } else if (view === 'exec') {
             handleGenerateExecutiveSummary();
         } else if (view === 'quiz') {
@@ -8209,112 +8584,152 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         }
 
         if (activeView === 'socialPost') {
-            if (!socialPostData) {
-                return <div className="text-slate-500 dark:text-slate-400 p-6">{t('noContent')}</div>;
-            }
-
-            // The post content is already parsed when stored, so we can use it directly
-            const cleanPostContent = socialPostData.post;
-
             return (
-                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                    {/* Social Post Section */}
-                    <div className="mb-8">
-                        <div className="absolute top-4 right-8">
-                            <div 
-                                ref={actionButtonsRef}
-                                className="relative"
-                                onMouseEnter={() => setShowActionButtons(true)}
-                                onMouseLeave={() => setShowActionButtons(false)}
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg transition-colors">
+                    {/* Social Media Options */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        {/* Platform Selection */}
+                        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                                {t('socialPostPlatform') || 'Platform'}
+                            </label>
+                            <select
+                                value={socialPostOptions.platform}
+                                onChange={(e) => setSocialPostOptions(prev => ({ ...prev, platform: e.target.value as any }))}
+                                className="w-full p-3 border border-slate-300 dark:border-slate-500 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                             >
-                                <button 
-                                    className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
-                                    aria-label={t('actions')}
-                                    onClick={() => setShowActionButtons(!showActionButtons)}
-                                    title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
-                                >
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="5" r="2"/>
-                                        <circle cx="12" cy="12" r="2"/>
-                                        <circle cx="12" cy="19" r="2"/>
-                                    </svg>
-                                </button>
-                                {showActionButtons && (
-                                    <div 
-                                        className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
-                                        onMouseEnter={() => setShowActionButtons(true)}
-                                        onMouseLeave={() => setShowActionButtons(false)}
-                                    >
-                                        <button onClick={async () => await generateSocialPost('socialPost', transcript)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
-                                            🔄
-                                        </button>
-                                        <button onClick={async () => {
-                                            try {
-                                                await copyToClipboard(cleanPostContent);
-                                                displayToast(t('socialPostCopied'), 'success');
-                                            } catch {
-                                                displayToast(t('copyFailed'), 'error');
-                                            }
-                                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copySocialPost')} title={window.innerWidth > 768 ? t('copySocialPost', 'Kopiëren') : undefined}>
-                                            <CopyIcon className="w-5 h-5" />
-                                        </button>
-                                        <button onClick={() => downloadTextFile(cleanPostContent, 'social-post.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
-                                            ⬇️
-                                        </button>
-                                        <button onClick={() => {
-                                            const { subject, body } = generateEmailContent(t('socialPost'), cleanPostContent);
-                                            copyToClipboardForEmail(subject, body);
-                                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
-                                            ✉️
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                                <option value="LinkedIn">LinkedIn</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="X / BlueSky">X / BlueSky</option>
+                            </select>
                         </div>
-                        
-                        <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
-                            <div className="prose prose-slate dark:prose-invert max-w-none">
-                                <div className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
-                                    {cleanPostContent.split('\n').map((line, index) => (
-                                        <p key={index}>{line}</p>
-                                    ))}
-                                </div>
-                            </div>
+
+                        {/* Tone Selection */}
+                        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                                {t('socialPostTone') || 'Tone'}
+                            </label>
+                            <select
+                                value={socialPostOptions.tone}
+                                onChange={(e) => setSocialPostOptions(prev => ({ ...prev, tone: e.target.value as any }))}
+                                className="w-full p-3 border border-slate-300 dark:border-slate-500 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                            >
+                                <option value="professional">{t('socialPostToneProfessional') || 'Professional'}</option>
+                                <option value="friendly">{t('socialPostToneFriendly') || 'Friendly'}</option>
+                                <option value="enthusiastic">{t('socialPostToneEnthusiastic') || 'Enthusiastic'}</option>
+                                <option value="informative">{t('socialPostToneInformative') || 'Informative'}</option>
+                                <option value="humor">{t('socialPostToneHumor') || 'Humor'}</option>
+                                <option value="factual">{t('socialPostToneFactual') || 'Factual'}</option>
+                            </select>
+                        </div>
+
+                        {/* Length Selection */}
+                        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                                {t('socialPostLength') || 'Length'}
+                            </label>
+                            <select
+                                value={socialPostOptions.length}
+                                onChange={(e) => {
+                                    const newLength = e.target.value as any;
+                                    setSocialPostOptions(prev => ({ 
+                                        ...prev, 
+                                        length: newLength,
+                                        // Reset to 1 post when medium or long is selected
+                                        postCount: (newLength === 'medium' || newLength === 'long') ? 1 : prev.postCount
+                                    }));
+                                }}
+                                className="w-full p-3 border border-slate-300 dark:border-slate-500 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                            >
+                                <option value="short">{t('socialPostLengthShort') || 'Short'}</option>
+                                <option value="medium">{t('socialPostLengthMedium') || 'Medium'}</option>
+                                <option value="long">{t('socialPostLengthLong') || 'Long'}</option>
+                            </select>
+                        </div>
+
+                        {/* Post Count Selection */}
+                        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-600">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                                {t('socialPostCount') || 'Number of Posts'}
+                            </label>
+                            <select
+                                value={socialPostOptions.postCount}
+                                onChange={(e) => setSocialPostOptions(prev => ({ ...prev, postCount: parseInt(e.target.value) }))}
+                                disabled={socialPostOptions.length === 'medium' || socialPostOptions.length === 'long'}
+                                className={`w-full p-3 border rounded-lg text-slate-900 dark:text-slate-100 transition-colors ${
+                                    (socialPostOptions.length === 'medium' || socialPostOptions.length === 'long') 
+                                        ? 'border-slate-200 dark:border-slate-600 bg-slate-100 dark:bg-slate-600 opacity-50 cursor-not-allowed' 
+                                        : 'border-slate-300 dark:border-slate-500 bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500'
+                                }`}
+                            >
+                                <option value={1}>1</option>
+                                <option value={2}>2</option>
+                                <option value={3}>3</option>
+                                <option value={4}>4</option>
+                                <option value={5}>5</option>
+                            </select>
                         </div>
                     </div>
 
-                    {/* AI Image Instruction Section */}
-                    {socialPostData.imageInstruction && (
-                        <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                            <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{t('aiImageInstructions')}</h3>
-                                <button onClick={async () => {
-                                    try {
-                                        await copyToClipboard(socialPostData.imageInstruction);
-                                        displayToast(t('imageInstructionCopied'), 'success');
-                                    } catch {
-                                        displayToast(t('copyFailed'), 'error');
-                                    }
-                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyImageInstructions')} title={window.innerWidth > 768 ? t('copyImageInstructions', 'Kopiëren') : undefined}>
-                                    <CopyIcon className="w-5 h-5" />
-                                </button>
-                            </div>
-                            
-                            <div className="mb-4">
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                                    {t('aiImageInstructionDescription')}
-                                </p>
-                                <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    {t('aiImageInstructionExample')} <a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" className="text-cyan-600 dark:text-cyan-400 hover:underline">Google Gemini</a>
-                                </p>
-                            </div>
-                            
-                            <div className="prose prose-slate dark:prose-invert max-w-none">
-                                <div className="text-slate-700 dark:text-slate-300 text-sm bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700 whitespace-pre-wrap">
-                                    {socialPostData.imageInstruction}
-                                </div>
-                            </div>
-                        </div>
+                    {/* Include Options Checkboxes */}
+                    <div className="mb-6 space-y-3">
+                        <label className="flex items-center p-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={socialPostOptions.includeHashtags}
+                                onChange={(e) => setSocialPostOptions(prev => ({ ...prev, includeHashtags: e.target.checked }))}
+                                className="mr-3 w-4 h-4 text-cyan-600 bg-white border-slate-300 rounded focus:ring-cyan-500 focus:ring-2 dark:bg-slate-700 dark:border-slate-500"
+                            />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {t('socialPostIncludeHashtags') || 'Include hashtags'}
+                            </span>
+                        </label>
+                        
+                        <label className="flex items-center p-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={socialPostOptions.includeEmoticons}
+                                onChange={(e) => setSocialPostOptions(prev => ({ ...prev, includeEmoticons: e.target.checked }))}
+                                className="mr-3 w-4 h-4 text-cyan-600 bg-white border-slate-300 rounded focus:ring-cyan-500 focus:ring-2 dark:bg-slate-700 dark:border-slate-500"
+                            />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {t('socialPostIncludeEmoticons') || 'Emoticons gebruiken'}
+                            </span>
+                        </label>
+                    </div>
+
+                    {/* Generate Button */}
+                    <div className="mb-6">
+                        <button
+                            onClick={() => generateSocialPost('socialPost', transcript, socialPostOptions.postCount)}
+                            disabled={isGenerating || !transcript}
+                            className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
+                        >
+                            {isGenerating ? (t('socialPostGenerating') || 'Generating...') : (t('generate') || 'Generate Social Media Post')}
+                        </button>
+                    </div>
+
+                    {/* Generated Content */}
+                    {socialPostData && (
+                        <SocialPostCard
+                            socialPostData={socialPostData}
+                            onCopy={copyToClipboard}
+                            t={t}
+                            onGenerateImage={async (style: string, color: string) => {
+                                // Set the style and color for image generation
+                                setImageGenerationStyle(style);
+                                setImageGenerationColor(color);
+                                // Generate image with the social post content
+                                const postContent = Array.isArray(socialPostData.post) 
+                                    ? socialPostData.post.join('\n') 
+                                    : socialPostData.post;
+                                await generateImage(postContent, 'socialPost');
+                            }}
+                            imageGenerationStyle={imageGenerationStyle}
+                            imageGenerationColor={imageGenerationColor}
+                            isGeneratingImage={isGeneratingImage}
+                        />
                     )}
                 </div>
             );
@@ -8461,8 +8876,10 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                  outputLanguage={outputLang}
                  onNotify={(msg, type) => displayToast(msg, type)}
                  onGenerateSocialPost={async (analysisType, count) => {
+                     // Use getTranscriptSlice to limit transcript length and prevent Gemini API extended feed limit
+                     const transcriptSlice = getTranscriptSlice(transcript, 12000); // Same limit as other social functions
                      const { validateAndSanitizeForAI } = await import('./src/utils/security');
-                     const validation = validateAndSanitizeForAI(transcript, 500000);
+                     const validation = validateAndSanitizeForAI(transcriptSlice, 500000);
                      if (!validation.isValid || !validation.sanitized.trim()) {
                          displayToast(t('transcriptEmpty'), 'error');
                          return;
@@ -8471,6 +8888,10 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                      await generateSocialPost(analysisType, validation.sanitized, count);
                  }}
                  isGeneratingSocialPost={isGenerating}
+                 onGenerateImage={generateImage}
+                 imageGenerationStyle={imageGenerationStyle}
+                 imageGenerationColor={imageGenerationColor}
+                 isGeneratingImage={isGeneratingImage}
                  onGenerateQuiz={async ({ numQuestions, numOptions }) => {
                     // Check transcript length based on user tier
                     const effectiveTier = userSubscription;
@@ -8511,9 +8932,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                  }}
              />
              {/* Main Navigation Dropdown */}
-             <div className="p-4 bg-gray-100/50 dark:bg-slate-800/50 border-b border-gray-300 dark:border-slate-700">
-                <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+             <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 border-b border-gray-200 dark:border-slate-600 shadow-sm">
+                <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 min-w-fit">
                         Kies modus:
                     </label>
                     <select
@@ -8531,7 +8952,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 // Keep current view for actions mode
                             }
                         }}
-                        className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                        className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer"
                     >
                         <option value="transcript">Transcript</option>
                         <option value="analysis">Analyse Resultaten</option>
@@ -8541,8 +8962,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 
                 {/* Secondary Analysis Dropdown */}
                 {mainMode === 'analysis' && (
-                    <div className="flex items-center gap-3 mt-3">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-4 mt-4">
+                        <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 min-w-fit">
                             Kies analyse:
                         </label>
                         <select
@@ -8557,7 +8978,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 }
                                 setError(null); // Clear error messages when switching analysis
                             }}
-                            className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer"
                         >
                             <option value="">-- Selecteer een analyse --</option>
                             <option value="summary">{t('summary')}</option>
@@ -8577,9 +8998,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             )}
                             {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
                                 <option value="socialPost">{t('socialPost')}</option>
-                            )}
-                            {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
-                                <option value="socialPostX">{t('socialPostX')}</option>
                             )}
                         </select>
                     </div>
@@ -8698,6 +9116,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
   
   return (
     <>
+    {/* Quota Warning Banner */}
+    {authState.user && (
+      <QuotaWarningBanner 
+        onUpgrade={() => setShowUpgradeModal(true)}
+      />
+    )}
+    
     <div className="min-h-screen text-slate-800 dark:text-white font-sans flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       {isProcessing && (
         <LoadingOverlay
@@ -8786,6 +9211,36 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             }}
             onShowPricing={() => setShowPricingPage(true)}
             onShowFAQ={() => setShowFAQPage(true)}
+            onShowReferralInfo={() => { 
+              console.log('[Referral] Info clicked'); 
+              setShowInfoPage(false); 
+              setShowReferralDashboardPage(false); 
+              setShowReferralInfoPage(true); 
+              displayToast(t('referralInfoOpen', 'Referral info geopend'), 'success'); 
+              setTimeout(() => {
+                const el = document.getElementById('referral-info');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }, 0);
+            }}
+            onShowReferralDashboard={() => { 
+              console.log('[Referral] Dashboard clicked'); 
+              setShowInfoPage(false); 
+              setShowReferralInfoPage(false); 
+              setShowReferralDashboardPage(true); 
+              displayToast(t('referralDashboardOpen', 'Referral dashboard geopend'), 'success'); 
+              setTimeout(() => {
+                const el = document.getElementById('referral-dashboard');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }, 0);
+            }}
             t={t}
             theme={theme}
             userTier={userSubscription || SubscriptionTier.FREE}
@@ -10127,7 +10582,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       <main className="w-full max-w-7xl xl:max-w-[90vw] 2xl:max-w-[85vw] mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 flex flex-col items-center gap-6 sm:gap-8 mt-20 sm:mt-12">
         {authState.isLoading ? (
           <BlurredLoadingOverlay loadingText={t('loading')} />
-        ) : showInfoPage || !authState.user ? (
+        ) : (showInfoPage || (!authState.user && !showReferralInfoPage && !showReferralDashboardPage && !showReferralSignupModal)) ? (
           <div className="text-center py-16 w-full max-w-7xl xl:max-w-[85vw] 2xl:max-w-[80vw] mx-auto">
             {/* Start new session knop bovenaan info pagina verwijderd */}
             {/* Hero Section */}
@@ -10849,6 +11304,57 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       <FAQPage onClose={() => setShowFAQPage(false)} t={t} />
     )}
 
+    {/* Referral Info Modal */}
+    {showReferralInfoPage && (
+      <Modal
+        isOpen={showReferralInfoPage}
+        onClose={() => setShowReferralInfoPage(false)}
+        title={t('referralProgramTitle', 'Referral programma')}
+        maxWidth="max-w-3xl"
+      >
+        <ReferralInfoPage
+          t={t}
+          onEnrollClick={() => {
+            // Prevent opening signup modal if user already has a referral code
+            if (authState.user?.referralProfile?.code) {
+              return; // User already has a referral code, do nothing
+            }
+            // Close info modal first to avoid stacking issues, then open signup
+            setShowReferralInfoPage(false);
+            setTimeout(() => setShowReferralSignupModal(true), 50);
+          }}
+          hasReferral={!!authState.user?.referralProfile}
+          referralInfo={authState.user?.referralProfile?.code ? { code: authState.user?.referralProfile?.code, joinUrl: buildReferralJoinUrl(authState.user?.referralProfile?.code) } : null}
+        />
+      </Modal>
+    )}
+
+    {/* Referral Dashboard Modal */}
+    {showReferralDashboardPage && (
+      <Modal
+        isOpen={showReferralDashboardPage}
+        onClose={() => setShowReferralDashboardPage(false)}
+        title={t('referralDashboardTitle', 'Mijn dashboard')}
+        maxWidth="max-w-4xl"
+      >
+        <ReferralDashboard
+          t={t}
+          userId={authState.user?.uid}
+          hasReferral={!!authState.user?.referralProfile}
+        />
+      </Modal>
+    )}
+
+    {/* Referral Signup Modal */}
+    {showReferralSignupModal && (
+      <ReferralSignupModal
+        isOpen={showReferralSignupModal}
+        onClose={() => setShowReferralSignupModal(false)}
+        onEnroll={enrollReferral}
+        t={t}
+      />
+    )}
+
     {/* Mobile Audio Help Modal */}
     {mobileAudioHelpModal.isOpen && (
       <MobileAudioHelpModal
@@ -10872,6 +11378,59 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       <EmailImportHelpModal
         isOpen={emailImportHelpModal.isOpen}
         onClose={emailImportHelpModal.close}
+        t={t}
+      />
+    )}
+
+    {/* Image Generation Subscription Modal */}
+    {showImageGenerationModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+            {t('imageGenerationGoldFeature')}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            {t('imageGenerationUpgradeMessage')}
+          </p>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => setShowImageGenerationModal(false)}
+              className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
+            >
+              {t('cancel', 'Annuleren')}
+            </button>
+            <button
+              onClick={() => {
+                setShowImageGenerationModal(false);
+                setShowPricingPage(true);
+              }}
+              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors"
+            >
+              {t('upgradeToGold')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Image Generation Result Modal */}
+    {showImageGenerationResult && (
+      <ImageGenerationModal
+        isOpen={showImageGenerationResult}
+        onClose={() => {
+          setShowImageGenerationResult(false);
+          setGeneratedImagePrompt('');
+          setImageInstructionsCopied(false);
+        }}
+        isGenerating={isGeneratingImage}
+        imageInstructions={generatedImagePrompt}
+        onCopyInstructions={() => {
+          navigator.clipboard.writeText(generatedImagePrompt);
+          setImageInstructionsCopied(true);
+          displayToast(t('imageInstructionCopied') || 'AI afbeelding instructie gekopieerd naar klembord', 'success');
+          setTimeout(() => setImageInstructionsCopied(false), 2000);
+        }}
+        instructionsCopied={imageInstructionsCopied}
         t={t}
       />
     )}
@@ -11031,6 +11590,20 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
          t={t}
        />
      )}
+
+     {/* Quota Exceeded Modal */}
+     {showQuotaExceededModal && (
+       <QuotaExceededModal
+         isOpen={showQuotaExceededModal}
+         onClose={() => setShowQuotaExceededModal(false)}
+         errorMessage={quotaExceededError}
+         onUpgrade={() => {
+           setShowQuotaExceededModal(false);
+           setShowPricingPage(true);
+         }}
+         t={t}
+       />
+     )}
      
      {/* Session Timeout Warning */}
      {sessionId && (
@@ -11043,7 +11616,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
 
    </main>
-   </div>
+  </div>
   </>
 ); 
 }

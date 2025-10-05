@@ -1,47 +1,35 @@
 import React, { useState } from 'react';
-import { ChevronDown, Copy, MoreVertical, Image } from 'lucide-react';
+import { Copy, MoreVertical, Image, ChevronDown } from 'lucide-react';
 import { SocialPostData } from '../../types';
 
-interface SocialPostXCardProps {
-  socialPostXData: SocialPostData;
+interface SocialPostCardProps {
+  socialPostData: SocialPostData;
   onCopy: (content: string) => void;
   t: (key: string) => string;
-  onGenerate: (count: number) => void;
-  isGenerating?: boolean;
   onGenerateImage?: (style: string, color: string) => void;
   imageGenerationStyle?: string;
   imageGenerationColor?: string;
   isGeneratingImage?: boolean;
 }
 
-const SocialPostXCard: React.FC<SocialPostXCardProps> = ({ 
-  socialPostXData, 
+const SocialPostCard: React.FC<SocialPostCardProps> = ({ 
+  socialPostData, 
   onCopy, 
   t, 
-  onGenerate, 
-  isGenerating = false,
   onGenerateImage,
   imageGenerationStyle = 'infographic',
   imageGenerationColor = 'color',
   isGeneratingImage = false
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedPostCount, setSelectedPostCount] = useState(1);
   const [styleDropdownOpen, setStyleDropdownOpen] = useState(false);
   const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState(imageGenerationStyle);
   const [selectedColor, setSelectedColor] = useState(imageGenerationColor);
 
   const handleCopy = (content?: string) => {
-    onCopy(content || socialPostXData.post);
+    onCopy(content || socialPostData.post);
     setMenuOpen(false);
-  };
-
-  const handleGenerate = () => {
-    if (onGenerate) {
-      onGenerate(selectedPostCount);
-    }
   };
 
   const handleGenerateImage = () => {
@@ -82,55 +70,49 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
     return posts.map(post => post.trim());
   };
 
-  const posts = parsePosts(socialPostXData.post);
+  // Early return if no data available
+  if (!socialPostData) {
+    return null;
+  }
+
+  const posts = parsePosts(socialPostData.post);
   const isMultiplePosts = posts.length > 1;
+
+  // Get platform display name
+  const getPlatformDisplayName = () => {
+    switch (socialPostData.platform) {
+      case 'LinkedIn':
+        return 'LinkedIn';
+      case 'Facebook':
+        return 'Facebook';
+      case 'Instagram':
+        return 'Instagram';
+      default:
+        return t('socialPost') || 'Social Post';
+    }
+  };
+
+  // Get platform color
+  const getPlatformColor = () => {
+    switch (socialPostData.platform) {
+      case 'LinkedIn':
+        return 'text-blue-600 dark:text-blue-400';
+      case 'Facebook':
+        return 'text-blue-700 dark:text-blue-500';
+      case 'Instagram':
+        return 'text-pink-600 dark:text-pink-400';
+      default:
+        return 'text-cyan-500 dark:text-cyan-400';
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
       <div className="flex justify-between items-start">
-        <h3 className="text-lg font-bold text-cyan-500 dark:text-cyan-400 mb-2">X / BlueSky Post</h3>
+        <h3 className={`text-lg font-bold mb-2 ${getPlatformColor()}`}>
+          {getPlatformDisplayName()}
+        </h3>
         <div className="flex items-center gap-2">
-          {/* Dropdown for post count selection and generate button - Always show when onGenerate exists */}
-          {onGenerate && (
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <button 
-                  onClick={() => setDropdownOpen(!dropdownOpen)} 
-                  className="flex items-center gap-1 px-3 py-1 text-sm bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded border border-slate-300 dark:border-slate-600"
-                  disabled={isGenerating}
-                  title="Selecteer aantal berichten"
-                >
-                  {`${selectedPostCount} ${selectedPostCount === 1 ? t('socialPost') || 'post' : t('socialPost') || 'posts'}`}
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-slate-700">
-                    {[1, 2, 3, 4, 5].map(count => (
-                      <button
-                        key={count}
-                        onClick={() => {
-                          setSelectedPostCount(count);
-                          setDropdownOpen(false);
-                        }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
-                      >
-                        {count} {count === 1 ? t('socialPost') || 'post' : t('socialPost') || 'posts'}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="px-3 py-1 text-sm bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-400 text-white rounded transition-colors"
-                title="Genereer nieuwe berichten"
-              >
-                {isGenerating ? t('socialPostGenerating') || 'Generating...' : t('generate') || 'Generate'}
-              </button>
-            </div>
-          )}
-          
           {/* Menu button */}
           <div className="relative">
             <button onClick={() => setMenuOpen(!menuOpen)} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700">
@@ -159,7 +141,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
             <div key={index} className="p-3 bg-gray-50 dark:bg-slate-700 rounded border">
               <div className="flex justify-between items-center mb-2">
                 {posts.length > 1 && (
-                  <span className="text-xs font-medium text-cyan-600 dark:text-cyan-400">
+                  <span className={`text-xs font-medium ${getPlatformColor()}`}>
                     {index + 1}/{posts.length}
                   </span>
                 )}
@@ -264,14 +246,14 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
           </button>
 
           {/* Image Instructions Display */}
-          {socialPostXData.imageInstructions && (
+          {socialPostData.imageInstructions && (
             <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-700">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
                   {t('aiImageInstruction') || 'AI Image Instruction'}
                 </span>
                 <button
-                  onClick={() => onCopy(socialPostXData.imageInstructions || '')}
+                  onClick={() => onCopy(socialPostData.imageInstructions || '')}
                   className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 dark:bg-purple-800 hover:bg-purple-200 dark:hover:bg-purple-700 text-purple-700 dark:text-purple-300 rounded"
                 >
                   <Copy className="w-3 h-3" />
@@ -279,7 +261,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                 </button>
               </div>
               <pre className="whitespace-pre-wrap text-xs text-purple-600 dark:text-purple-200 font-mono">
-                {socialPostXData.imageInstructions}
+                {socialPostData.imageInstructions}
               </pre>
             </div>
           )}
@@ -289,4 +271,4 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
   );
 };
 
-export default SocialPostXCard;
+export default SocialPostCard;

@@ -37,7 +37,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
     maxTokensPerMonth: 500000, // 500k tokens per month
     maxTokensPerDay: 20000, // 20k tokens per day
-    maxMonthlyAudioMinutes: -1 // unlimited
+    maxMonthlyAudioMinutes: 2500 // 2500 minutes per month
   },
   [SubscriptionTier.DIAMOND]: {
     maxSessionDuration: 120,
@@ -289,8 +289,8 @@ export class SubscriptionService {
         };
       case SubscriptionTier.GOLD:
         return {
-          message: 'Je hebt je maandelijkse audio limiet van 1000 minuten bereikt. Bekijk onze Enterprise opties voor onbeperkte opnametijd.',
-          upgradeUrl: '/pricing'
+          message: 'Je hebt je maandelijkse audio limiet van 1000 minuten bereikt. Upgrade naar Enterprise voor 2500 minuten per maand.',
+          upgradeUrl: '/pricing?highlight=enterprise'
         };
       default:
         return {

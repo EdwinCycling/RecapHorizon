@@ -1,4 +1,5 @@
 import SocialPostXCard from './SocialPostXCard';
+import SocialPostCard from './SocialPostCard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData, SocialPostData } from '../../types';
@@ -61,6 +62,12 @@ socialPostXData?: SocialPostData | null;
 	onGenerateSocialPost?: (analysisType: 'socialPost' | 'socialPostX', postCount: number) => Promise<void>;
 	isGeneratingSocialPost?: boolean;
 
+	// Image Generation functionality
+	onGenerateImage?: (analysisType: 'socialPost' | 'socialPostX', style: string, color: string) => Promise<void>;
+	imageGenerationStyle?: string;
+	imageGenerationColor?: string;
+	isGeneratingImage?: boolean;
+
 	// Notifications
 	onNotify?: (message: string, type?: 'success' | 'error' | 'info') => void;
 
@@ -120,6 +127,10 @@ export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	onOpenMailto,
 	onGenerateSocialPost,
 	isGeneratingSocialPost,
+	onGenerateImage,
+	imageGenerationStyle,
+	imageGenerationColor,
+	isGeneratingImage,
 	onNotify,
 	startStamp,
 }) => {
@@ -376,26 +387,30 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 				return { title: `## ${t('explain')}`, text: parts.join('\n') };
 			}
 			case 'socialPost': {
-				if (!socialPostData) return { title: `## ${t('socialPost')}`, text: '' };
-				const parts: string[] = [];
-				parts.push(socialPostData.post);
-				if (socialPostData.imageInstruction) {
-					parts.push('');
-					parts.push(`**AI Image Instructions:**`);
-					parts.push(socialPostData.imageInstruction);
+				// Show full social post content in exports
+				const postContent = socialPostData?.post;
+				let content = '';
+				if (postContent) {
+					if (Array.isArray(postContent)) {
+						content = postContent.filter(p => p && p.trim().length > 0).join('\n\n');
+					} else {
+						content = postContent;
+					}
 				}
-				return { title: `## ${t('socialPost')}`, text: parts.join('\n') };
+				return { title: `## ${t('socialPost')}`, text: content };
 			}
       case 'socialPostX': {
-				if (!socialPostXData) return { title: `## ${t('socialPostX')}`, text: '' };
-				const parts: string[] = [];
-				parts.push(socialPostXData.post);
-				if (socialPostXData.imageInstruction) {
-					parts.push('');
-					parts.push(`**AI Image Instructions:**`);
-					parts.push(socialPostXData.imageInstruction);
+				// Show full social post content in exports
+				const postContent = socialPostXData?.post;
+				let content = '';
+				if (postContent) {
+					if (Array.isArray(postContent)) {
+						content = postContent.filter(p => p && p.trim().length > 0).join('\n\n');
+					} else {
+						content = postContent;
+					}
 				}
-				return { title: `## ${t('socialPostX')}`, text: parts.join('\n') };
+				return { title: `## ${t('socialPostX')}`, text: content };
 			}
 		}
 	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, socialPostData, quizQuestions, quizIncludeAnswers]);
@@ -539,20 +554,7 @@ To send via email:
 												onChange={() => toggleItem(item.id)}
 												className="w-4 h-4 accent-cyan-600"
 											/>
-                                        {item.type === 'socialPostX' ? (
-                                            <SocialPostXCard 
-                                                socialPostXData={socialPostXData || { post: '', imageInstruction: '', platform: 'X / BlueSky' }} 
-                                                onCopy={(content) => {
-                                                    navigator.clipboard.writeText(content);
-                                                    if (onNotify) onNotify(t('copiedToClipboard'), 'success');
-                                                }}
-                                                onGenerate={onGenerateSocialPost ? (count) => onGenerateSocialPost('socialPostX', count) : undefined}
-                                                isGenerating={isGeneratingSocialPost || false}
-                                                t={t} 
-                                            />
-                                        ) : (
-													<span className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.title}</span>
-                                        )}
+											<span className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.title}</span>
 										</div>
 										{item.type === 'quiz' ? (
 											<div className="relative flex items-center gap-1">

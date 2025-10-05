@@ -441,8 +441,8 @@ export const getRemainingAudioMinutes = async (userId: string): Promise<{ remain
       'Free': 60,
       'Silver': 500,
       'Gold': 1000,
-      'Enterprise': 2000,
-      'Diamond': 2000
+      'Enterprise': 2500,
+      'Diamond': 2500
     };
     
     const totalAllowed = tierLimits[userTier as keyof typeof tierLimits] || 60;

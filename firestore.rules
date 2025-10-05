@@ -17,14 +17,33 @@ service cloud.firestore {
     function isValidTimestamp(ts) {
       return ts is timestamp;
     }
+
+    // Masked email strings should NOT be valid full emails
+    function isMaskedEmail(email) {
+      return email is string && !(email.matches('.*@.*\\..*'));
+    }
+
+    // Valid subscription tiers for referral records
+    function isValidTier(tier) {
+      return tier in ['free', 'silver', 'gold', 'enterprise', 'diamond'];
+    }
     
-    // User profiles - users can only access their own data
+    // Helper: detect writes that touch referralProfile
+    function touchesReferralProfile() {
+      return request.resource.data.keys().hasAny(['referralProfile']);
+    }
+
+    // User profiles - users can only access their own data, but cannot update referralProfile client-side
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
       allow create: if isAuthenticated() && request.auth.uid == userId
         && request.resource.data.keys().hasAll(['email', 'createdAt'])
+        && !touchesReferralProfile()
         && isValidEmail(request.resource.data.email)
         && isValidTimestamp(request.resource.data.createdAt);
+      // Allow updates excluding referralProfile; referralProfile must be written server-side only
+      allow update: if isOwner(userId) && !touchesReferralProfile();
+      allow delete: if false;
     }
     
     // User sessions - users can only access their own sessions
@@ -137,7 +156,42 @@ service cloud.firestore {
     match /stripe_webhooks/{webhookId} {
       allow read, write: if false; // Webhook processing should be server-side only
     }
-    
+
+    // Referral records - created by the referred user only, readable by referrer
+    match /referrals/{referredUid} {
+      // Only the referrer can read their referrals
+      allow read: if isAuthenticated() && resource.data.referrerUid == request.auth.uid;
+
+      // Allow create only by the referred user, and only if it links to a valid referrer code
+      allow create: if isAuthenticated()
+        && request.auth.uid == referredUid
+        && request.resource.data.keys().hasAll(['referrerUid', 'referredUid', 'emailMasked', 'currentTier', 'monthStartTier', 'createdAt'])
+        && request.resource.data.referredUid == referredUid
+        && request.resource.data.referrerUid is string
+        && isMaskedEmail(request.resource.data.emailMasked)
+        && isValidTier(request.resource.data.currentTier)
+        && isValidTier(request.resource.data.monthStartTier)
+        && request.resource.data.currentTier == 'free'
+        && request.resource.data.monthStartTier == 'free'
+        && isValidTimestamp(request.resource.data.createdAt)
+        // Cross-document validation: referred user's user doc must contain referrerCode
+        // that matches the referrer's referralProfile.code
+        && get(/databases/$(database)/documents/users/$(referredUid)).exists()
+        && get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).exists()
+        && get(/databases/$(database)/documents/users/$(referredUid)).data.referrerCode is string
+        && get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).data.referralProfile.code is string
+        && get(/databases/$(database)/documents/users/$(referredUid)).data.referrerCode == get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).data.referralProfile.code;
+
+      // No client-side updates or deletes to referral records
+      allow update, delete: if false;
+    }
+
+    // Rate limiting collection - server-side only
+    match /rateLimits/{document} {
+      // No client-side access to rate limiting data
+      allow read, write: if false;
+    }
+
     // Default deny rule for any unmatched paths
     match /{document=**} {
       allow read, write: if false;

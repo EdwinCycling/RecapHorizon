@@ -201,11 +201,21 @@ export interface EmailOptions {
   length: string;
 }
 
+// Social media post options interface
+export interface SocialPostOptions {
+  platform: 'X / BlueSky' | 'LinkedIn' | 'Facebook' | 'Instagram';
+  tone: 'professional' | 'friendly' | 'enthusiastic' | 'informative' | 'humor' | 'factual';
+  length: 'short' | 'medium' | 'long';
+  includeHashtags: boolean;
+  includeEmoticons: boolean;
+  postCount: number;
+}
+
 export interface SocialPostData {
   post: string | string[];
   timestamp?: string;
-  imageInstruction?: string;
-  platform?: 'X / BlueSky' | 'Generic';
+  imageInstructions?: string;
+  platform?: 'X / BlueSky' | 'LinkedIn' | 'Facebook' | 'Instagram' | 'Generic';
 }
 
 // Ask the Expert interfaces

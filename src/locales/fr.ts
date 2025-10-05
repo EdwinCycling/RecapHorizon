@@ -1858,5 +1858,49 @@ notionIntegrationSecurityDesc: "Vos données Notion restent sécurisées car nou
   monthlyUsage: "Utilisation mensuelle",
   unlimitedAudio: "Audio illimité - aucune restriction!",
   approachingAudioLimit: "Vous approchez de votre limite audio mensuelle. Envisagez de passer à un plan supérieur.",
-  sessionRecordingTime: "Temps d'enregistrement de session"
+  sessionRecordingTime: "Temps d'enregistrement de session",
+
+  // Programme de parrainage
+ referralProgramTitle: "Programme de parrainage",
+ referralWhatIsIt: "Qu'est-ce que c'est ?",
+ referralIntro: "Gagnez 1 dollar par mois de commission récurrente pour chaque abonnement payant que vous parrainez.",
+ referralRulePaidCustomer: "Vous devez être un client payant pour vous inscrire.",
+ referralRulePayment: "Les paiements sont effectués mensuellement via PayPal.",
+ referralRulePaypal: "Un lien PayPal.Me valide est requis pour recevoir les paiements.",
+ referralRuleJoinUrl: "Votre URL d'inscription unique inscrit automatiquement les nouveaux utilisateurs comme vos filleuls.",
+ referralRulePayoutSchedule: "Les commissions s'accumulent mensuellement et sont versées dans les 7 jours suivant la fin du mois.",
+ referralRuleFree: "Les nouveaux utilisateurs commencent sur l'offre gratuite ; lorsqu'ils choisissent un abonnement payant, votre parrainage commence et paie chaque mois.",
+  referralAlreadyEnrolled: "Vous êtes inscrit au programme de parrainage.",
+  referralYourJoinUrl: "Votre URL d'inscription",
+  referralEnrollButton: "S'inscrire maintenant",
+  referralDashboardTitle: "Tableau de bord du parrainage",
+  referralNeedEnroll: "Vous devez vous inscrire pour voir votre tableau de bord de parrainage.",
+  referralEarningsTotal: "Gains totaux",
+  referralEarningsMonth: "Gains ce mois-ci",
+  referralColEmail: "E-mail",
+  referralColCurrentTier: "Offre actuelle",
+  referralColMonthStartTier: "Offre au début du mois",
+  referralNoEntries: "Aucun enregistrement de parrainage pour l'instant.",
+  referralPaypalMeDesc: "Nous utilisons PayPal.Me pour des paiements simples et sécurisés.",
+  referralPaypalLearnMore: "En savoir plus",
+  referralPaypalMeLabel: "Votre lien PayPal.Me",
+  referralPaypalInvalid: "Veuillez saisir un lien PayPal.Me valide, par exemple https://paypal.me/votrenom",
+  referralSignupTitle: "S'inscrire au programme de parrainage",
+  referralGenerateCode: "Générer un code de parrainage",
+  referralYourCode: "Votre code de parrainage",
+  referralJoinUrl: "Votre URL d'inscription",
+  mustBeLoggedIn: "Vous devez être connecté pour continuer.",
+  copy: "Copier",
+  referralEnrollSuccess: "Vous êtes inscrit ! Votre profil de parrainage a été enregistré.",
+  referralEnrollError: "Impossible de vous inscrire au programme de parrainage. Veuillez réessayer.",
+  welcomeNewReferral: "Bienvenue ! Votre compte a été créé via un parrainage."
+  ,referralExportPdf: "Exporter PDF"
+  ,referralExportError: "Échec de l'exportation. Veuillez réessayer."
+  ,referralOneTimeWarning: "IMPORTANT : Ce code n'est fourni qu'UNE SEULE FOIS ! Copiez-le et sauvegardez-le soigneusement."
+  ,copyCode: "Copier le code"
+  ,referralInstructions: "Instructions :"
+  ,referralInstruction1: "Partagez cette URL avec les personnes qui souhaitent s'inscrire (gratuitement)"
+  ,referralInstruction2: "L'URL peut être utilisée par tout le monde"
+  ,referralInstruction3: "Sauvegardez l'URL dans un endroit sûr"
+  ,referralInstruction4: "Pour communiquer avec RecapHorizon concernant votre programme de parrainage, fournissez toujours votre code unique"
 };

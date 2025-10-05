@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getUserPreferences } from '../firebase';
+import { quotaMonitoringService } from '../services/quotaMonitoringService';
 
 // AI Provider enumeration
 export enum AIProvider {
@@ -250,23 +251,45 @@ export class AIProviderManager {
     prompt: string,
     userId?: string
   ): Promise<AIResponse> {
-    const startTime = Date.now();
-    
-    try {
-      switch (config.provider) {
-        case AIProvider.GOOGLE_GEMINI:
-          return await this.callGemini(config, prompt, startTime);
-        case AIProvider.OPENROUTER:
-          return await this.callOpenRouter(config, prompt, startTime, userId);
-        default:
-          throw new Error(`Unsupported provider: ${config.provider}`);
-      }
-    } catch (error: any) {
-      console.error(`AI Provider error for ${config.provider}:`, error);
+    return await this.retryWithBackoff(async () => {
+      const startTime = Date.now();
       
-      const errorType = this.categorizeError(error);
-      throw new Error(`${config.provider} error: ${error.message}`);
-    }
+      try {
+        switch (config.provider) {
+          case AIProvider.GOOGLE_GEMINI:
+            return await this.callGemini(config, prompt, startTime, userId);
+          case AIProvider.OPENROUTER:
+            return await this.callOpenRouter(config, prompt, startTime, userId);
+          default:
+            throw new Error(`Unsupported provider: ${config.provider}`);
+        }
+      } catch (error: any) {
+         console.error(`AI Provider error for ${config.provider}:`, error);
+         
+         const errorType = this.categorizeError(error);
+         
+         // Try fallback for Google Gemini quota exceeded errors
+         if (errorType === AIProviderError.QUOTA_EXCEEDED && 
+             config.provider === AIProvider.GOOGLE_GEMINI &&
+             !error.message.includes('free_tier_requests')) {
+           try {
+             console.log('Attempting Gemini model fallback due to quota exceeded');
+             return await this.tryGeminiFallback(config, prompt, startTime, error, userId);
+           } catch (fallbackError: any) {
+             console.log('All Gemini fallbacks failed, using original error');
+             // Continue to original error handling below
+           }
+         }
+         
+         // Handle rate limit and quota errors with user-friendly messages
+         if (errorType === AIProviderError.QUOTA_EXCEEDED) {
+           const userFriendlyMessage = this.createRateLimitErrorMessage(error, config.provider);
+           throw new Error(userFriendlyMessage);
+         }
+         
+         throw new Error(`${config.provider} error: ${error.message}`);
+       }
+    });
   }
 
   /**
@@ -282,7 +305,7 @@ export class AIProviderManager {
     try {
       switch (config.provider) {
         case AIProvider.GOOGLE_GEMINI:
-          return await this.callGeminiWithStreaming(config, prompt, startTime);
+          return await this.callGeminiWithStreaming(config, prompt, startTime, userId);
         case AIProvider.OPENROUTER:
           return await this.callOpenRouterWithStreaming(config, prompt, startTime, userId);
         default:
@@ -292,6 +315,13 @@ export class AIProviderManager {
       console.error(`AI Provider streaming error for ${config.provider}:`, error);
       
       const errorType = this.categorizeError(error);
+      
+      // Handle rate limit and quota errors with user-friendly messages
+      if (errorType === AIProviderError.QUOTA_EXCEEDED) {
+        const userFriendlyMessage = this.createRateLimitErrorMessage(error, config.provider);
+        throw new Error(userFriendlyMessage);
+      }
+      
       throw new Error(`${config.provider} streaming error: ${error.message}`);
     }
   }
@@ -319,25 +349,9 @@ export class AIProviderManager {
     let modelToUse = providerSelection.model;
     let apiKey = this.getApiKey(providerToUse);
 
-    // Validate API key exists; if missing and fallback available (non-FREE), try fallback provider
+    // Validate API key exists
     if (!apiKey || apiKey.trim() === '') {
-      if (providerSelection.fallbackAvailable && userTier !== SubscriptionTier.FREE) {
-        const fallbackProvider = providerToUse === AIProvider.GOOGLE_GEMINI 
-          ? AIProvider.OPENROUTER 
-          : AIProvider.GOOGLE_GEMINI;
-        const fallbackApiKey = this.getApiKey(fallbackProvider);
-        if (fallbackApiKey && fallbackApiKey.trim() !== '') {
-          providerToUse = fallbackProvider;
-          modelToUse = fallbackProvider === AIProvider.GOOGLE_GEMINI 
-            ? this.getDefaultGeminiModel(functionType)
-            : this.getDefaultOpenRouterModel(functionType);
-          apiKey = fallbackApiKey;
-        } else {
-          throw new Error(`API key not configured for ${providerSelection.provider}. Please set the appropriate environment variable.`);
-        }
-      } else {
-        throw new Error(`API key not configured for ${providerSelection.provider}. Please set the appropriate environment variable.`);
-      }
+      throw new Error(`API key not configured for ${providerSelection.provider}. Please set the appropriate environment variable.`);
     }
     
     const config: AIProviderConfig = {
@@ -361,32 +375,6 @@ export class AIProviderManager {
       return response;
     } catch (error: any) {
       console.error(`Failed to generate content with ${providerSelection.provider}:`, error);
-      
-      // Try fallback if available
-      if (providerSelection.fallbackAvailable && userTier !== SubscriptionTier.FREE) {
-
-        const fallbackProvider = providerSelection.provider === AIProvider.GOOGLE_GEMINI 
-          ? AIProvider.OPENROUTER 
-          : AIProvider.GOOGLE_GEMINI;
-        
-        const fallbackApiKey = this.getApiKey(fallbackProvider);
-        if (fallbackApiKey) {
-          const fallbackConfig: AIProviderConfig = {
-            provider: fallbackProvider,
-            model: fallbackProvider === AIProvider.GOOGLE_GEMINI 
-              ? this.getDefaultGeminiModel(functionType)
-              : this.getDefaultOpenRouterModel(functionType),
-            apiKey: fallbackApiKey,
-            temperature: 0.7,
-            maxTokens: 4000
-          };
-          
-          return enableStreaming 
-            ? await this.generateContentWithStreaming(fallbackConfig, prompt, userId)
-            : await this.generateContent(fallbackConfig, prompt, userId);
-        }
-      }
-      
       throw error;
     }
   }
@@ -397,7 +385,8 @@ export class AIProviderManager {
   private static async callGemini(
     config: AIProviderConfig,
     prompt: string,
-    startTime: number
+    startTime: number,
+    userId?: string
   ): Promise<AIResponse> {
     // Get or create Gemini instance
     let gemini = this.geminiInstances.get(config.apiKey);
@@ -418,6 +407,15 @@ export class AIProviderManager {
     const response = await result.response;
     const text = response.text();
 
+    // Record quota usage for monitoring
+    if (userId) {
+      try {
+        await quotaMonitoringService.recordGeminiRequest(userId);
+      } catch (error) {
+        console.warn('Failed to record quota usage:', error);
+      }
+    }
+
     return {
       content: text,
       success: true,
@@ -437,7 +435,8 @@ export class AIProviderManager {
   private static async callGeminiWithStreaming(
     config: AIProviderConfig,
     prompt: string,
-    startTime: number
+    startTime: number,
+    userId?: string
   ): Promise<AIResponse> {
     // Get or create Gemini instance
     let gemini = this.geminiInstances.get(config.apiKey);
@@ -458,6 +457,15 @@ export class AIProviderManager {
     let fullContent = '';
     let inputTokens = 0;
     let outputTokens = 0;
+
+    // Record quota usage for monitoring
+    if (userId) {
+      try {
+        await quotaMonitoringService.recordGeminiRequest(userId);
+      } catch (error) {
+        console.warn('Failed to record quota usage:', error);
+      }
+    }
 
     // Create async iterable for streaming
     const stream = async function* () {
@@ -636,51 +644,53 @@ export class AIProviderManager {
   }
 
   /**
+   * Map AIFunction to ModelConfig key
+   */
+  private static mapAIFunctionToModelConfigKey(functionType: AIFunction): string {
+    const mapping: Record<AIFunction, string> = {
+      [AIFunction.AUDIO_TRANSCRIPTION]: 'audioTranscription',
+      [AIFunction.EXPERT_CHAT]: 'expertChat',
+      [AIFunction.EMAIL_COMPOSITION]: 'emailComposition',
+      [AIFunction.ANALYSIS_GENERATION]: 'analysisGeneration',
+      [AIFunction.PPT_EXPORT]: 'pptExport',
+      [AIFunction.BUSINESS_CASE]: 'businessCase',
+      [AIFunction.SESSION_IMPORT]: 'sessionImport',
+      [AIFunction.GENERAL_ANALYSIS]: 'generalAnalysis',
+      [AIFunction.MINDMAP_GENERATION]: 'analysisGeneration', // Map to analysis
+      [AIFunction.QUIZ_GENERATION]: 'analysisGeneration', // Map to analysis
+      [AIFunction.EXPLAIN_GENERATION]: 'analysisGeneration', // Map to analysis
+      [AIFunction.PRESENTATION_GENERATION]: 'pptExport', // Map to ppt export
+      [AIFunction.KEYWORD_ANALYSIS]: 'analysisGeneration', // Map to analysis
+      [AIFunction.SENTIMENT_ANALYSIS]: 'analysisGeneration', // Map to analysis
+      [AIFunction.IMAGE_ANALYSIS]: 'analysisGeneration' // Map to analysis
+    };
+    
+    return mapping[functionType] || 'analysisGeneration';
+  }
+
+  /**
    * Select the appropriate provider based on user tier and preferences
    */
   static async selectProvider(
     request: ProviderSelectionRequest
   ): Promise<ProviderSelectionResponse> {
-    const { userId, functionType, userTier, userPreference } = request;
+    const { userId, functionType, userTier } = request;
 
-    // Free users can only use OpenRouter
-    if (userTier === SubscriptionTier.FREE) {
-      const model = this.getDefaultOpenRouterModel(functionType);
-      const rateLimitStatus = await OpenRouterRateLimiter.checkRateLimit(userId, model);
-      
-      return {
-        provider: AIProvider.OPENROUTER,
-        model,
-        rateLimitStatus,
-        fallbackAvailable: false
-      };
-    }
-
-    // For paid users, respect their preference if set
-    if (userPreference) {
-      const model = userPreference === AIProvider.GOOGLE_GEMINI 
-        ? this.getDefaultGeminiModel(functionType)
-        : this.getDefaultOpenRouterModel(functionType);
-      
-      const rateLimitStatus = userPreference === AIProvider.OPENROUTER
-        ? await OpenRouterRateLimiter.checkRateLimit(userId, model)
-        : { isAllowed: true, requestsRemaining: 1000 };
-
-      return {
-        provider: userPreference,
-        model,
-        rateLimitStatus,
-        fallbackAvailable: true
-      };
-    }
-
-    // Default to Gemini for paid users
-    const model = this.getDefaultGeminiModel(functionType);
+    // Import tier model service for proper model selection
+    const { getModelForUser } = await import('./tierModelService');
+    
+    // Map AIFunction to ModelConfig key
+    const modelConfigKey = this.mapAIFunctionToModelConfigKey(functionType);
+    
+    // Get the appropriate Google Gemini model based on user's tier and function
+    const model = await getModelForUser(userId, modelConfigKey as any);
+    
+    // Always use Google Gemini with tier-based model selection
     return {
       provider: AIProvider.GOOGLE_GEMINI,
       model,
       rateLimitStatus: { isAllowed: true, requestsRemaining: 1000 },
-      fallbackAvailable: true
+      fallbackAvailable: false
     };
   }
 
@@ -740,13 +750,17 @@ export class AIProviderManager {
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
       
-      if (message.includes('rate limit') || message.includes('429')) {
-        return AIProviderError.RATE_LIMIT_EXCEEDED;
+      // Check for Google Gemini specific rate limit and quota errors
+      if (message.includes('rate limit') || message.includes('429') || 
+          message.includes('quota exceeded') || 
+          message.includes('generativelanguage.googleapis.com/generate_content_free_tier_requests')) {
+        return AIProviderError.QUOTA_EXCEEDED;
       }
-      if (message.includes('api key') || message.includes('401') || message.includes('403')) {
+      if (message.includes('api key') || message.includes('401') || 
+          (message.includes('403') && !message.includes('quota'))) {
         return AIProviderError.API_KEY_INVALID;
       }
-      if (message.includes('quota') || message.includes('billing')) {
+      if (message.includes('billing') && !message.includes('quota')) {
         return AIProviderError.QUOTA_EXCEEDED;
       }
       if (message.includes('model') || message.includes('404')) {
@@ -761,6 +775,157 @@ export class AIProviderManager {
     }
     
     return AIProviderError.UNKNOWN_ERROR;
+  }
+
+  /**
+   * Extract retry delay from Google Gemini error message
+   */
+  private static extractRetryDelay(error: any): number {
+    if (error instanceof Error) {
+      const message = error.message;
+      
+      // Look for retry delay in Google Gemini error format
+      const retryMatch = message.match(/Please retry in (\d+(?:\.\d+)?)s/);
+      if (retryMatch) {
+        return Math.ceil(parseFloat(retryMatch[1]));
+      }
+      
+      // Look for RetryInfo in the error details
+      const retryInfoMatch = message.match(/"retryDelay":"(\d+)s"/);
+      if (retryInfoMatch) {
+        return parseInt(retryInfoMatch[1]);
+      }
+    }
+    
+    // Default retry delay for rate limits
+    return 60;
+  }
+
+  /**
+   * Create user-friendly error message for rate limits
+   */
+  private static createRateLimitErrorMessage(error: any, provider: AIProvider): string {
+    const retryDelay = this.extractRetryDelay(error);
+    const minutes = Math.ceil(retryDelay / 60);
+    
+    if (provider === AIProvider.GOOGLE_GEMINI) {
+      if (error.message.includes('free_tier_requests')) {
+        return `Je hebt het dagelijkse quotum van 50 verzoeken voor Google Gemini bereikt. Probeer het over ${minutes} ${minutes === 1 ? 'minuut' : 'minuten'} opnieuw, of upgrade naar een betaald abonnement voor meer verzoeken.`;
+      }
+      return `Google Gemini rate limit bereikt. Probeer het over ${minutes} ${minutes === 1 ? 'minuut' : 'minuten'} opnieuw.`;
+    }
+    
+    return `Rate limit bereikt voor ${provider}. Probeer het over ${minutes} ${minutes === 1 ? 'minuut' : 'minuten'} opnieuw.`;
+  }
+
+  /**
+   * Sleep for a specified number of milliseconds
+   */
+  private static sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Get fallback Gemini models for quota exceeded scenarios
+   */
+  private static getFallbackGeminiModels(currentModel: string): string[] {
+    const fallbackModels: string[] = [];
+    
+    // Define fallback hierarchy based on model complexity and quota limits
+    switch (currentModel) {
+      case 'gemini-2.0-flash-exp':
+        fallbackModels.push('gemini-2.5-flash', 'gemini-2.5-flash-lite');
+        break;
+      case 'gemini-2.5-flash':
+        fallbackModels.push('gemini-2.5-flash-lite');
+        break;
+      case 'gemini-2.5-flash-lite':
+        // No fallback for the most basic model
+        break;
+      default:
+        // For any other model, try the standard fallback chain
+        fallbackModels.push('gemini-2.5-flash', 'gemini-2.5-flash-lite');
+        break;
+    }
+    
+    return fallbackModels.filter(model => model !== currentModel);
+  }
+
+  /**
+   * Retry mechanism with exponential backoff for rate limits
+   */
+  private static async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelay: number = 1000
+  ): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        lastError = error;
+        const errorType = this.categorizeError(error);
+        
+        // Only retry for rate limit errors, not quota exceeded
+        if (errorType === AIProviderError.QUOTA_EXCEEDED && 
+            error.message.includes('free_tier_requests')) {
+          // Don't retry for daily quota exceeded - it won't help
+          throw error;
+        }
+        
+        if (errorType === AIProviderError.QUOTA_EXCEEDED && attempt < maxRetries) {
+          // Extract retry delay from error or use exponential backoff
+          const retryDelay = this.extractRetryDelay(error);
+          const delay = Math.min(retryDelay * 1000, baseDelay * Math.pow(2, attempt));
+          
+          console.log(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+          await this.sleep(delay);
+          continue;
+        }
+        
+        // Don't retry for other error types
+        throw error;
+      }
+    }
+    
+    throw lastError;
+  }
+
+  /**
+   * Try fallback Gemini models when quota is exceeded
+   */
+  private static async tryGeminiFallback(
+    config: AIProviderConfig,
+    prompt: string,
+    startTime: number,
+    originalError: any,
+    userId?: string
+  ): Promise<AIResponse> {
+    const fallbackModels = this.getFallbackGeminiModels(config.model);
+    
+    for (const fallbackModel of fallbackModels) {
+      try {
+        console.log(`Trying fallback Gemini model: ${fallbackModel}`);
+        const fallbackConfig = { ...config, model: fallbackModel };
+        return await this.callGemini(fallbackConfig, prompt, startTime, userId);
+      } catch (fallbackError: any) {
+        console.log(`Fallback model ${fallbackModel} also failed:`, fallbackError.message);
+        const fallbackErrorType = this.categorizeError(fallbackError);
+        
+        // If this fallback also hits quota, try the next one
+        if (fallbackErrorType === AIProviderError.QUOTA_EXCEEDED) {
+          continue;
+        }
+        
+        // For other errors, stop trying fallbacks
+        break;
+      }
+    }
+    
+    // If all fallbacks failed, throw the original error
+    throw originalError;
   }
 
   /**

@@ -210,7 +210,8 @@ export class StartupValidator {
 
       optionalEnvVars.forEach(varName => {
         if (!import.meta.env[varName]) {
-          console.info(t?.('optionalEnvVarNotSet', `ℹ️ Optionele omgevingsvariabele ${varName} niet ingesteld`) || `ℹ️ Optionele omgevingsvariabele ${varName} niet ingesteld`);
+          const message = t?.('optionalEnvVarNotSet')?.replace('{varName}', varName) || `ℹ️ Optionele omgevingsvariabele ${varName} niet ingesteld`;
+          console.info(message);
         }
       });
     }

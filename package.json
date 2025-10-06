@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.91005.0",
+  "version": "0.91006.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3000",
@@ -21,7 +21,7 @@
     "axios": "^1.7.9",
     "buffer": "^6.0.3",
     "busboy": "^1.6.0",
-    "dotenv": "^17.2.2",
+    "dotenv": "^17.2.3",
     "eml-parse-js": "^1.2.0-beta.0",
     "events": "^3.3.0",
     "firebase": "^12.1.0",

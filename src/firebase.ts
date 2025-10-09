@@ -210,14 +210,17 @@ export const incrementUserDailyUsage = async (userId: string, type: UsageSession
   const today = new Date().toISOString().split('T')[0];
   if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
     const userRef = doc(db, 'users', userId);
+  // Zorg dat de user-doc bestaat en voldoet aan security rules (createdAt, etc.)
+  await ensureUserDocument(userId);
   await setDoc(userRef, { lastDailyUsageDate: today }, { merge: true });
   if (type === 'audio') {
     await updateDoc(userRef, { dailyAudioCount: increment(1), updatedAt: serverTimestamp() }).catch(async () => {
-      await setDoc(userRef, { dailyAudioCount: 1, updatedAt: serverTimestamp() }, { merge: true });
+      // Bij eerste creatie: voeg createdAt toe zodat create door de rules mag
+      await setDoc(userRef, { dailyAudioCount: 1, updatedAt: serverTimestamp(), createdAt: serverTimestamp() }, { merge: true });
     });
   } else {
     await updateDoc(userRef, { dailyUploadCount: increment(1), updatedAt: serverTimestamp() }).catch(async () => {
-      await setDoc(userRef, { dailyUploadCount: 1, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(userRef, { dailyUploadCount: 1, updatedAt: serverTimestamp(), createdAt: serverTimestamp() }, { merge: true });
     });
   }
 };
@@ -260,6 +263,7 @@ export const addUserMonthlyTokens = async (userId: string, inputTokens: number, 
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
     const userRef = doc(db, 'users', userId);
+  await ensureUserDocument(userId);
   await setDoc(userRef, { tokensMonth: currentMonth }, { merge: true });
   await updateDoc(userRef, {
     monthlyInputTokens: increment(inputTokens),
@@ -269,7 +273,8 @@ export const addUserMonthlyTokens = async (userId: string, inputTokens: number, 
     await setDoc(userRef, {
       monthlyInputTokens: inputTokens,
       monthlyOutputTokens: outputTokens,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
     }, { merge: true });
   });
 };
@@ -285,6 +290,7 @@ export const getUserMonthlySessions = async (userId: string): Promise<MonthlySes
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
     const userRef = doc(db, 'users', userId);
+  await ensureUserDocument(userId);
   const userSnap = await getDoc(userRef);
   const data = userSnap.exists() ? userSnap.data() as Record<string, unknown> : {};
   if (data.sessionsMonth === currentMonth) {
@@ -360,9 +366,10 @@ export const incrementUserMonthlySessions = async (userId: string): Promise<void
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
     const userRef = doc(db, 'users', userId);
+  await ensureUserDocument(userId);
   await setDoc(userRef, { sessionsMonth: currentMonth }, { merge: true });
   await updateDoc(userRef, { monthlySessionsCount: increment(1), updatedAt: serverTimestamp() }).catch(async () => {
-    await setDoc(userRef, { monthlySessionsCount: 1, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(userRef, { monthlySessionsCount: 1, updatedAt: serverTimestamp(), createdAt: serverTimestamp() }, { merge: true });
   });
 };
 
@@ -434,6 +441,7 @@ export const addUserMonthlyAudioMinutes = async (userId: string, minutes: number
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
   const userRef = doc(db, 'users', userId);
+  await ensureUserDocument(userId);
   
   // Ensure we're tracking the current month
   await setDoc(userRef, { audioMinutesMonth: currentMonth }, { merge: true });
@@ -446,7 +454,8 @@ export const addUserMonthlyAudioMinutes = async (userId: string, minutes: number
       monthlyAudioMinutes: minutes,
       audioMinutesMonth: currentMonth,
       lastAudioResetDate: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
     }, { merge: true });
   });
 };

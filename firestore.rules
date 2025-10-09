@@ -37,10 +37,12 @@ service cloud.firestore {
     // Also allow reading user data for referral validation (limited fields only)
     match /users/{userId} {
       allow read: if isOwner(userId) || isAuthenticated();
+      // Allow creating a minimal user document for first-time users without requiring an email
+      // If an email is provided, it must be valid. Referral profile cannot be touched client-side.
       allow create: if isAuthenticated() && request.auth.uid == userId
-        && request.resource.data.keys().hasAll(['email', 'createdAt'])
+        && request.resource.data.keys().hasAll(['createdAt'])
         && !touchesReferralProfile()
-        && isValidEmail(request.resource.data.email)
+        && (!request.resource.data.keys().hasAny(['email']) || isValidEmail(request.resource.data.email))
         && isValidTimestamp(request.resource.data.createdAt);
       // Allow updates excluding referralProfile; referralProfile must be written server-side only
       // Also allow token and usage tracking updates

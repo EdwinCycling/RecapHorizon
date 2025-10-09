@@ -209,39 +209,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
 
   return (
     <div className="login-form" style={{ maxWidth: '400px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
-          gap: window.innerWidth <= 768 ? '12px' : '8px',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <button 
+      <div style={{ marginBottom: '16px' }}>
+        <div className="inline-flex w-full sm:w-auto items-center justify-center rounded-md border border-slate-300 dark:border-slate-600 overflow-hidden">
+          <button
             onClick={() => setIsCreateMode(false)}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: !isCreateMode ? '#3b82f6' : '#e5e7eb',
-              color: !isCreateMode ? 'white' : '#374151',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              minWidth: window.innerWidth <= 768 ? '200px' : 'auto'
-            }}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${!isCreateMode ? 'bg-cyan-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
+            aria-pressed={!isCreateMode}
           >
             {t('login')}
           </button>
-          <button 
+          <button
             onClick={() => setIsCreateMode(true)}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: isCreateMode ? '#3b82f6' : '#e5e7eb',
-              color: isCreateMode ? 'white' : '#374151',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              minWidth: window.innerWidth <= 768 ? '200px' : 'auto'
-            }}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${isCreateMode ? 'bg-cyan-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
+            aria-pressed={isCreateMode}
           >
             {t('accountCreate')}
           </button>

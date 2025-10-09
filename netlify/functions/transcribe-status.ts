@@ -59,10 +59,13 @@ const handler: Handler = async (event) => {
   }
 
   try {
+    console.log('transcribe-status: REQUEST INFO', { id: transcriptId });
+    const start = Date.now();
     const pollingResponse = await axios.get<AssemblyAITranscriptResponseFull>(
       `${ASSEMBLYAI_BASE_URL}/transcript/${transcriptId}`,
       { headers: assemblyAIHeaders }
     );
+    console.log(`transcribe-status: Poll completed in ${Date.now() - start}ms`);
     
     const transcriptionResult = pollingResponse.data;
 
@@ -86,6 +89,13 @@ const handler: Handler = async (event) => {
     if (error.response) {
       console.error('transcribe-status: Error response status:', error.response.status);
       console.error('transcribe-status: Error response data:', error.response.data);
+    }
+    if (error.code === 'ECONNABORTED') {
+      return {
+        statusCode: 504,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Timeout bij status ophalen.' }),
+      };
     }
     
     return {

@@ -34,25 +34,29 @@ service cloud.firestore {
     }
 
     // User profiles - users can only access their own data, but cannot update referralProfile client-side
+    // Also allow reading user data for referral validation (limited fields only)
     match /users/{userId} {
-      allow read: if isOwner(userId);
+      allow read: if isOwner(userId) || isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId
         && request.resource.data.keys().hasAll(['email', 'createdAt'])
         && !touchesReferralProfile()
         && isValidEmail(request.resource.data.email)
         && isValidTimestamp(request.resource.data.createdAt);
       // Allow updates excluding referralProfile; referralProfile must be written server-side only
+      // Also allow token and usage tracking updates
       allow update: if isOwner(userId) && !touchesReferralProfile();
       allow delete: if false;
     }
     
     // User sessions - users can only access their own sessions
-    match /user_sessions/{userId} {
-      allow read, write: if isOwner(userId);
-      allow create: if isAuthenticated() && request.auth.uid == userId
-        && request.resource.data.keys().hasAll(['dailyUsage', 'monthlyTokens'])
-        && request.resource.data.dailyUsage is map
-        && request.resource.data.monthlyTokens is map;
+    match /user_sessions/{sessionId} {
+      // Allow read/write if the session document belongs to the authenticated user
+      allow read, write: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.userId == request.auth.uid)
+      );
+      // Allow create if the session document is being created for the authenticated user
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
     
     // Transcripts - users can only access their own transcripts
@@ -83,12 +87,17 @@ service cloud.firestore {
     // Token usage - users can only access their own usage docs
     match /tokenUsage/{docId} {
       // Allow read if the document belongs to the authenticated user
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.userId == request.auth.uid)
+      );
       // Allow write if the target (existing or new) doc belongs to the authenticated user
       allow write: if isAuthenticated() && (
         (resource != null && resource.data.userId == request.auth.uid) ||
         (request.resource != null && request.resource.data.userId == request.auth.uid)
       );
+      // Allow create for new token usage documents
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
     
     // Waitlist - allow creation with email validation, no read/update/delete
@@ -190,6 +199,14 @@ service cloud.firestore {
     match /rateLimits/{document} {
       // No client-side access to rate limiting data
       allow read, write: if false;
+    }
+
+    // Referral codes collection - public read access for validation
+    match /referral_codes/{referralCode} {
+      // Allow anyone to read referral codes for validation
+      allow read: if true;
+      // Only server-side writes allowed
+      allow write: if false;
     }
 
     // Default deny rule for any unmatched paths

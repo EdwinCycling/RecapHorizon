@@ -43,7 +43,7 @@ const requiredEnvVars = [
 
 const missingVars = requiredEnvVars.filter(varName => !import.meta.env[varName]);
 if (missingVars.length > 0) {
-  console.error(t('missingFirebaseEnvVars', 'Missing required Firebase environment variables:'), missingVars);
+  console.error('Missing required Firebase environment variables:', missingVars);
   throw new Error(`Missing required Firebase environment variables: ${missingVars.join(', ')}`);
 }
 
@@ -84,9 +84,19 @@ export const db = getFirestore(app);
 
 // Connect to emulators in development (optional)
 if (import.meta.env.DEV) {
-  // Uncomment these lines if you want to use Firebase emulators for development
-  // connectAuthEmulator(auth, 'http://localhost:9099');
-  // connectFirestoreEmulator(db, 'localhost', 8080);
+  // Opt-in emulator usage via env flag to avoid accidental writes to production
+  const useEmulators = String(import.meta.env.VITE_USE_FIREBASE_EMULATOR || '').toLowerCase() === 'true';
+  if (useEmulators) {
+    try {
+      connectAuthEmulator(auth, 'http://localhost:9099');
+      connectFirestoreEmulator(db, 'localhost', 8080);
+      console.warn('Firebase: Connected to local emulators for Auth (9099) and Firestore (8080)');
+    } catch (e) {
+      console.error('Failed to connect Firebase emulators:', e);
+    }
+  } else {
+    console.info('Firebase: Using remote services (set VITE_USE_FIREBASE_EMULATOR=true to use local emulators in dev)');
+  }
 }
 
 // Helper function to create user document if it doesn't exist
@@ -363,20 +373,31 @@ export const incrementUserMonthlyAudioMinutes = async (userId: string, minutes: 
   if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
   const userRef = doc(db, 'users', userId);
   
-  // Ensure we're tracking the current month
-  await setDoc(userRef, { audioMinutesMonth: currentMonth }, { merge: true });
-  
-  await updateDoc(userRef, {
-    monthlyAudioMinutes: increment(minutes),
-    updatedAt: serverTimestamp()
-  }).catch(async () => {
-    await setDoc(userRef, {
-      monthlyAudioMinutes: minutes,
-      audioMinutesMonth: currentMonth,
-      lastAudioResetDate: serverTimestamp(),
+  try {
+    // Ensure we're tracking the current month
+    await setDoc(userRef, { audioMinutesMonth: currentMonth }, { merge: true });
+    
+    await updateDoc(userRef, {
+      monthlyAudioMinutes: increment(minutes),
       updatedAt: serverTimestamp()
-    }, { merge: true });
-  });
+    }).catch(async () => {
+      await setDoc(userRef, {
+        monthlyAudioMinutes: minutes,
+        audioMinutesMonth: currentMonth,
+        lastAudioResetDate: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    });
+  } catch (error: any) {
+    // Handle Firebase permissions errors gracefully
+    if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+      console.warn('Audio minutes tracking unavailable due to permissions. Recording functionality continues normally.');
+      return; // Don't throw, just log warning and continue
+    } else {
+      console.error('Failed to update audio minutes:', error);
+      throw error; // Re-throw other errors
+    }
+  }
 };
 
 // Monthly audio minutes tracking (no history) on user document
@@ -895,6 +916,94 @@ export const getUnprocessedWebhooks = async (): Promise<any[]> => {
   } catch (error) {
     console.error(t('errorGettingUnprocessedWebhooks', 'Fout bij ophalen onverwerkte webhooks:'), error);
     return [];
+  }
+};
+
+// Referral validation function
+export const validateReferralCode = async (referralCode: string): Promise<{ isValid: boolean; referrerData?: any }> => {
+  try {
+    console.log('[REFERRAL] Validating referral code:', referralCode);
+    
+    if (!referralCode || referralCode.trim() === '') {
+      console.log('[REFERRAL] Empty referral code provided');
+      return { isValid: false };
+    }
+
+    const trimmedCode = referralCode.trim();
+    console.log('[REFERRAL] Checking code:', trimmedCode);
+    
+    // Try to get the referral code document directly
+    const referralCodeRef = doc(db, 'referral_codes', trimmedCode);
+    const referralCodeDoc = await getDoc(referralCodeRef);
+    
+    console.log('[REFERRAL] Code exists:', referralCodeDoc.exists());
+    
+    if (!referralCodeDoc.exists()) {
+      console.log('[DEBUG] No referral code document found for:', trimmedCode);
+      return { isValid: false };
+    }
+    
+    const referralCodeData = referralCodeDoc.data();
+    console.log('[DEBUG] Referral code data:', referralCodeData);
+    
+    // Check if the referral code is active
+    if (!referralCodeData.active) {
+      console.log('[DEBUG] Referral code is not active:', trimmedCode);
+      return { isValid: false };
+    }
+    
+    // Return referrer data from the referral_codes collection
+    // This avoids the need to access user documents which require authentication
+    const referrerData = {
+      id: referralCodeData.userId,
+      email: referralCodeData.userEmail,
+      referralCode: trimmedCode
+    };
+    
+    console.log('[DEBUG] Referral code validation successful:', referrerData);
+    
+    return { 
+      isValid: true, 
+      referrerData
+    };
+  } catch (error) {
+    console.error('[DEBUG] Error in validateReferralCode:', error);
+    return { isValid: false };
+  }
+};
+
+// Server-side referral validation (more secure alternative)
+export const validateReferralCodeServerSide = async (referralCode: string): Promise<{ isValid: boolean; referrerData?: any }> => {
+  try {
+    console.log('[REFERRAL] Server-side validation for code:', referralCode);
+    
+    if (!referralCode || referralCode.trim() === '') {
+      console.log('[REFERRAL] Empty referral code provided');
+      return { isValid: false };
+    }
+
+    const response = await fetch('/.netlify/functions/referral-validate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ referralCode: referralCode.trim() })
+    });
+
+    if (!response.ok) {
+      console.error('[REFERRAL] Server validation failed:', response.status, response.statusText);
+      return { isValid: false };
+    }
+
+    const result = await response.json();
+    console.log('[REFERRAL] Server validation result:', result);
+    
+    return result;
+  } catch (error) {
+    console.error('[REFERRAL] Error in server-side validation:', error);
+    // Fallback to client-side validation if server-side fails
+    console.log('[REFERRAL] Falling back to client-side validation');
+    return validateReferralCode(referralCode);
   }
 };
 

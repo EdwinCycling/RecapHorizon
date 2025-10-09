@@ -71,7 +71,7 @@ const AudioUsageMeter: React.FC<AudioUsageMeterProps> = ({
           <div className="mb-3">
             <div className="flex justify-between text-sm mb-1">
               <span className="text-base font-mono text-slate-600 dark:text-slate-400">
-                {monthlyAudioUsage} / {monthlyLimit}
+                {Math.round(monthlyAudioUsage)} / {Math.round(monthlyLimit)}
               </span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 mb-3">
@@ -87,7 +87,7 @@ const AudioUsageMeter: React.FC<AudioUsageMeterProps> = ({
                 {Math.round(usagePercentage)}% {t('tokenUsageUsed')}
               </span>
               <span className={getTextColor()}>
-                {remainingMinutes} {t('minutesRemaining')}
+                {Math.round(remainingMinutes)} {t('minutesRemaining')}
               </span>
             </div>
           </div>

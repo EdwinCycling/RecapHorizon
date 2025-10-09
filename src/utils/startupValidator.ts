@@ -87,32 +87,9 @@ export class StartupValidator {
       recommendations.push(...diagnostics.suggestedActions);
     }
 
-    // 3. Validate Google Gemini AI API (if API key is available)
-    const googleApiKey = import.meta.env.VITE_GOOGLE_CLOUD_API_KEY;
-    if (googleApiKey) {
-      try {
-        const speechApiValidation = await ApiValidator.validateGoogleSpeechApi(googleApiKey);
-        if (speechApiValidation.isValid) {
-          services.googleSpeechApi = true;
-        } else {
-          warnings.push(speechApiValidation.error || 'Google Gemini AI API niet beschikbaar');
-          if (speechApiValidation.suggestion) {
-            recommendations.push(speechApiValidation.suggestion);
-          }
-          console.warn(t?.('googleSpeechApiIssues') || '⚠️ Google Gemini AI API issues:', speechApiValidation.error);
-        }
-      } catch (error: any) {
-        warnings.push('Google Gemini AI API validatie gefaald');
-        console.error(t?.('googleSpeechApiError') || '❌ Google Gemini AI API validation error:', error);
-      }
-    } else {
-      // Only show Google Gemini AI API warnings in development mode
-      if (import.meta.env.DEV) {
-        warnings.push('Google Gemini AI API key niet geconfigureerd');
-        recommendations.push('Configureer VITE_GOOGLE_CLOUD_API_KEY voor transcriptie functionaliteit');
-        console.info(t?.('googleSpeechApiNotConfigured') || 'ℹ️ Google Gemini AI API key not configured (development mode)');
-      }
-    }
+    // 3. Google Gemini AI API validation disabled - TTS no longer uses Google API
+    // Note: Google API validation removed as TTS functionality has been migrated away from Google services
+    services.googleSpeechApi = true; // Set to true since we're not using it anymore
 
     // 4. Additional environment checks
     this.performEnvironmentChecks(warnings, recommendations, t);

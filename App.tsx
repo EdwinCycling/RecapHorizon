@@ -32,6 +32,7 @@ import { getGeminiCode, getBcp47Code, getTotalLanguageCount } from './src/langua
 import { useTabCache } from './src/hooks/useTabCache';
 import { fetchHTML, fetchMultipleHTML, extractTextFromHTML, FetchError } from './src/utils/fetchPage';
 import { useTranslation } from './src/hooks/useTranslation';
+import { Language } from './src/locales';
 import { AudioRecorder } from './src/utils/AudioRecorder';
 import MobileAudioHelpModal from './src/components/MobileAudioHelpModal.tsx';
 import ImageUploadHelpModal from './src/components/ImageUploadHelpModal.tsx';
@@ -41,6 +42,7 @@ import NotionImportModal from './src/components/NotionImportModal.tsx';
 import NotionIntegrationHelpModal from './src/components/NotionIntegrationHelpModal.tsx';
 import FileUploadModal from './src/components/FileUploadModal.tsx';
 import ImageUploadModal from './src/components/ImageUploadModal.tsx';
+import AudioUploadModal from './src/components/AudioUploadModal.tsx';
 import ImageGenerationModal from './src/components/ImageGenerationModal.tsx';
 import { SafeUserText } from './src/utils/SafeHtml';
 import { sanitizeTextInput, extractEmailAddresses } from './src/utils/security';
@@ -105,7 +107,7 @@ import {
   deleteField,
   increment
 } from 'firebase/firestore';
-import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, getUserStripeData, getUserMonthlyAudioMinutes, type MonthlyTokensUsage } from './src/firebase';
+import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, getUserStripeData, getUserMonthlyAudioMinutes, validateReferralCode, validateReferralCodeServerSide, type MonthlyTokensUsage } from './src/firebase';
 import { sessionManager, UserSession } from './src/utils/security';
 import LoginForm from './src/components/LoginForm';
 import SessionTimeoutWarning from './src/components/SessionTimeoutWarning.tsx';
@@ -694,6 +696,7 @@ import FAQPage from './src/components/FAQPage.tsx';
 import ReferralInfoPage from './src/components/ReferralInfoPage.tsx';
 import ReferralDashboard from './src/components/ReferralDashboard.tsx';
 import ReferralSignupModal from './src/components/ReferralSignupModal.tsx';
+import ReferralRegistrationModal from './src/components/ReferralRegistrationModal.tsx';
 import { generateReferralCode, buildReferralJoinUrl, maskEmail } from './src/utils/referral';
 import { validatePayPalMeLink } from './src/utils/paypal';
 
@@ -1186,6 +1189,8 @@ export default function App() {
   const emailUploadModal = useModalState();
   const fileUploadModal = useModalState();
   const imageUploadModal = useModalState();
+  const audioUploadModal = useModalState();
+  const audioUploadHelpModal = useModalState();
   const notionImportModal = useModalState();
   const expertConfigModal = useModalState();
   const expertChatModal = useModalState();
@@ -2051,6 +2056,10 @@ ${getTranscriptSlice(transcript, 20000)}`;
     imageUploadModal.open();
   };
 
+  const handleSessionOptionAudioUpload = () => {
+    audioUploadModal.open();
+  };
+
   // Inline panels; no-op kept if referenced
   const handleOpenStorytellingQuestions = () => {
     setActiveView('storytelling');
@@ -2067,6 +2076,84 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const importImageFile = async (file: File) => {
     const target = { files: [file] } as unknown as React.ChangeEvent<HTMLInputElement>['target'];
     await handleImageUpload({ target } as React.ChangeEvent<HTMLInputElement>);
+  };
+  const importAudioFile = async (file: File) => {
+    try {
+      // Validate file type
+      const validTypes = ['audio/mp3', 'audio/mpeg', 'audio/mp4', 'video/mp4', 'audio/webm', 'video/webm', 'audio/wav'];
+      const isValidType = validTypes.includes(file.type) || 
+                         file.type.startsWith('audio/webm') || 
+                         file.type.startsWith('video/webm');
+      if (!isValidType) {
+        console.log('File type validation failed:', file.type, 'Valid types:', validTypes);
+        throw new Error(t('audioUploadInvalidFormat', 'Alleen MP3, MP4, WebM en WAV bestanden zijn toegestaan.'));
+      }
+
+      // Validate file size (100MB limit)
+      const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+      if (file.size > maxSize) {
+        throw new Error(t('audioUploadFileTooLarge', 'Bestand is te groot. Maximum grootte is 100MB.'));
+      }
+
+      // Initialize transcription states
+      setTranscriptionStatus(t('audioUploadProcessing', 'Audio bestand wordt verwerkt...'));
+      setTranscriptionProgress(5);
+      setIsTranscribing(true);
+      setStatus(RecordingStatus.TRANSCRIBING);
+      setLoadingText(t('audioUploadProcessing', 'Audio bestand wordt verwerkt...'));
+      setError(null);
+
+      // Convert file to audio chunks for transcription
+      setTranscriptionStatus(t('audioUploadConverting', 'Audio bestand wordt geconverteerd...'));
+      setTranscriptionProgress(15);
+      
+      const arrayBuffer = await file.arrayBuffer();
+      const audioBlob = new Blob([arrayBuffer], { type: file.type });
+      
+      // Set audio chunks for transcription
+      audioChunksRef.current = [audioBlob];
+      
+      // Update progress - ready for transcription
+      setTranscriptionProgress(25);
+      setTranscriptionStatus(t('audioUploadReady', 'Klaar voor transcriptie...'));
+      
+      // Clear previous results
+      setTranscript(''); 
+      setSummary(''); 
+      setFaq(''); 
+      setLearningDoc(''); 
+      setFollowUpQuestions('');
+      setBlogData('');
+      setChatHistory([]);
+      setKeywordAnalysis(null);
+      setSentimentAnalysisResult(null);
+      setMindmapMermaid('');
+      setMindmapSvg('');
+
+      // Update progress before starting transcription
+      setTranscriptionProgress(30);
+      setTranscriptionStatus(t('audioUploadTranscribing', 'Audio wordt getranscribeerd...'));
+
+      // Start transcription using existing handleTranscribe function
+      await handleTranscribe();
+
+      // Success message will be shown by handleTranscribe if successful
+      if (status !== RecordingStatus.ERROR) {
+        displayToast(t('audioUploadSuccess', 'Audio bestand succesvol geüpload en getranscribeerd.'), 'success');
+      }
+    } catch (error) {
+      console.error('Audio upload error:', error);
+      const errorMessage = error instanceof Error ? error.message : t('audioUploadError', 'Er is een fout opgetreden bij het uploaden van het audio bestand.');
+      setError(errorMessage);
+      setStatus(RecordingStatus.ERROR);
+      displayToast(errorMessage, 'error');
+      
+      // Reset transcription states
+      setIsTranscribing(false);
+      setTranscriptionStatus('');
+      setTranscriptionProgress(0);
+      setLoadingText('');
+    }
   };
 
   // Utility function for copying content for email
@@ -2184,23 +2271,53 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [showReferralInfoPage, setShowReferralInfoPage] = useState(false);
   const [showReferralDashboardPage, setShowReferralDashboardPage] = useState(false);
   const [showReferralSignupModal, setShowReferralSignupModal] = useState(false);
+  const [showReferralRegistrationModal, setShowReferralRegistrationModal] = useState(false);
   const [referralCodeFromURL, setReferralCodeFromURL] = useState<string | null>(null);
+  const [isValidReferralCode, setIsValidReferralCode] = useState<boolean | null>(null);
+  const [referrerData, setReferrerData] = useState<any>(null);
 
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const refCode = params.get('ref');
+      console.log('[DEBUG App] URL params ref code:', refCode);
+      
       if (refCode) {
+        console.log('[DEBUG App] Setting referral code from URL:', refCode);
         setReferralCodeFromURL(refCode);
-        // If not authenticated, encourage sign up by showing info page
-        if (!authState.user) {
-          setShowInfoPage(true);
-        }
+        
+        // Validate the referral code using server-side validation for enhanced security
+        console.log('[DEBUG App] Starting server-side validation for code:', refCode);
+        validateReferralCodeServerSide(refCode).then(({ isValid, referrerData: validationReferrerData }) => {
+          console.log('[DEBUG App] Validation result - isValid:', isValid, 'referrerData:', validationReferrerData);
+          setIsValidReferralCode(isValid);
+          
+          if (isValid && validationReferrerData) {
+            setReferrerData(validationReferrerData);
+          }
+          
+          if (isValid && !authState.user) {
+            console.log('[DEBUG App] Valid code and no user - showing modals');
+            // Show info page and referral registration modal for valid codes
+            setShowInfoPage(true);
+            setShowReferralRegistrationModal(true);
+          } else if (!isValid) {
+            console.warn('[Referral] Invalid referral code:', refCode);
+            displayToast(t('invalidReferralCode', 'Ongeldige referral code'), 'error');
+          } else if (isValid && authState.user) {
+            console.log('[DEBUG App] Valid code but user is already logged in');
+          }
+        }).catch(error => {
+          console.error('[Referral] Error validating referral code:', error);
+          setIsValidReferralCode(false);
+        });
+      } else {
+        console.log('[DEBUG App] No ref code in URL');
       }
     } catch (e) {
-      // ignore
+      console.error('[DEBUG App] Error in referral useEffect:', e);
     }
-  }, []);
+  }, [authState.user]);
 
   // Debug logs for referral UI
   useEffect(() => {
@@ -2222,8 +2339,10 @@ ${getTranscriptSlice(transcript, 20000)}`;
       const token = await auth.currentUser?.getIdToken(true);
       if (!token) throw new Error(t('mustBeLoggedIn', 'Je moet ingelogd zijn'));
 
-      const functionsBase = (import.meta as any)?.env?.VITE_FUNCTIONS_BASE_URL || '';
-      const resp = await fetch(`${functionsBase}/.netlify/functions/referral-enroll`, {
+      const envBase = (import.meta as any)?.env?.VITE_FUNCTIONS_BASE_URL || '';
+      const originBase = typeof window !== 'undefined' ? window.location.origin : '';
+      const effectiveFunctionsBase = envBase && envBase.startsWith('http') ? envBase : originBase;
+      const resp = await fetch(`${effectiveFunctionsBase}/.netlify/functions/referral-enroll`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2360,6 +2479,8 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
   // Progress + cancel state for segmented transcription
   const [transcriptionProgress, setTranscriptionProgress] = useState<number | null>(null);
   const [isSegmentedTranscribing, setIsSegmentedTranscribing] = useState<boolean>(false);
+  const [transcriptionStatus, setTranscriptionStatus] = useState<string>('');
+  const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const cancelTranscriptionRef = useRef<boolean>(false);
   const [audioTokenUsage, setAudioTokenUsage] = useState<{inputTokens: number, outputTokens: number, totalTokens: number} | null>(null);
 
@@ -3052,7 +3173,8 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
       const threshold = 0.02;
       if (normalized < threshold) {
         if (lastNoInputStartRef.current == null) lastNoInputStartRef.current = now;
-        if (now - lastNoInputStartRef.current > 2000) setShowNoInputHint(true);
+        // Verhoogde timeout voor 'geen audio' indicatie van 2s naar 6s
+        if (now - lastNoInputStartRef.current > 6000) setShowNoInputHint(true);
       } else {
         lastNoInputStartRef.current = null;
         setShowNoInputHint(false);
@@ -5191,7 +5313,11 @@ const handleAnalyzeSentiment = async () => {
         });
         setUserSubscription(SubscriptionTier.FREE);
         setShowInfoPage(false);
-        displayToast(t('welcomeNewReferral', 'Welkom! Je bent aangemeld als gratis gebruiker via een referral.'), 'success');
+        
+        // Create personalized welcome message
+        const referrerEmail = referrerData?.userEmail || 'een collega';
+        const welcomeMessage = t('welcomeNewReferral', `Welkom! Je bent uitgenodigd door ${referrerEmail} en hebt nu toegang tot RecapHorizon. Veel plezier met het platform!`);
+        displayToast(welcomeMessage, 'success');
         return;
       }
 
@@ -5282,6 +5408,26 @@ const handleAnalyzeSentiment = async () => {
         isLoading: false,
               });
       setUserSubscription(SubscriptionTier.FREE);
+      // Clear referral-related UI and state to prevent redirect back to referral screen
+      setShowReferralRegistrationModal(false);
+      setShowReferralInfoPage(false);
+      setShowReferralDashboardPage(false);
+      setShowReferralSignupModal(false);
+      setReferralCodeFromURL(null);
+      setIsValidReferralCode(null);
+      setReferrerData(null);
+      setShowInfoPage(false);
+      // Remove ?ref= from the URL
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('ref')) {
+          url.searchParams.delete('ref');
+          const newUrl = `${url.pathname}${url.search}${url.hash}`;
+          window.history.replaceState({}, '', newUrl);
+        }
+      } catch (e) {
+        console.warn('Failed to clean referral query on logout:', e);
+      }
       reset();
     } catch (error: any) {
       console.error('Logout error:', error);
@@ -6182,33 +6328,136 @@ ${transcript}
     return new Blob([arrayBuffer], { type: 'audio/wav' });
   };
 
+  // Split een AudioBuffer in segmenten van een opgegeven maximum aantal samples
+  const splitAudioBuffer = (buffer: AudioBuffer, maxSamplesPerSegment: number): AudioBuffer[] => {
+    const segments: AudioBuffer[] = [];
+    const totalSamples = buffer.length;
+    let offset = 0;
+    const sampleRate = buffer.sampleRate;
+
+    while (offset < totalSamples) {
+      const remaining = totalSamples - offset;
+      const segmentLength = Math.min(remaining, maxSamplesPerSegment);
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const segment = ctx.createBuffer(1, segmentLength, sampleRate);
+      const src = buffer.getChannelData(0);
+      const dest = segment.getChannelData(0);
+      for (let i = 0; i < segmentLength; i++) {
+        dest[i] = src[offset + i];
+      }
+      segments.push(segment);
+      offset += segmentLength;
+      ctx.close();
+    }
+    return segments;
+  };
+
+  // Helper om WAV blob in segmenten te splitsen op basis van maximale bytes
+  const splitWavBlobByBytes = async (wavBlob: Blob, maxBytes: number): Promise<Blob[]> => {
+    try {
+      const arrayBuffer = await wavBlob.arrayBuffer();
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      const bytesPerSample = 2; // 16-bit PCM mono
+      const headerBytes = 44; // WAV header size
+      const usableBytes = Math.max(0, maxBytes - headerBytes);
+      const maxSamplesPerSegment = Math.floor(usableBytes / bytesPerSample);
+
+      if (maxSamplesPerSegment <= 0) {
+        console.warn('splitWavBlobByBytes: maxSamplesPerSegment berekend als 0, retourneer originele blob');
+        audioContext.close();
+        return [wavBlob];
+      }
+
+      const segments = splitAudioBuffer(audioBuffer, maxSamplesPerSegment);
+      const segmentBlobs = segments.map(seg => audioBufferToWav(seg));
+      console.log(`🔪 Audio gesegmenteerd in ${segmentBlobs.length} delen (max ${(maxBytes/1024/1024).toFixed(1)}MB per deel)`);
+      audioContext.close();
+      return segmentBlobs;
+    } catch (err) {
+      console.error('splitWavBlobByBytes: fout bij splitsen van WAV blob', err);
+      return [wavBlob];
+    }
+  };
+
+  // Helper functie voor fetch requests met timeout en retry logica
+  const fetchWithTimeoutAndRetry = async (
+    url: string, 
+    options: RequestInit = {}, 
+    timeoutMs: number = 30000, 
+    maxRetries: number = 3
+  ): Promise<Response> => {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        console.log(`🔎 [${attempt}/${maxRetries}] Fetch ${url}`);
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        // Log succesvolle verbinding
+        console.log(`✅ [✓] transcribe-start bereikbaar op ${new URL(url).host}`);
+        return response;
+
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        lastError = error;
+
+        const message = error.message || 'Unknown error';
+        const isConnectionError = message.includes('ERR_CONNECTION') || message.includes('Failed to fetch');
+        const isAbort = message.includes('AbortError');
+        const isHttpError = message.includes('HTTP ');
+
+        if (isHttpError) {
+          console.error(`⚠️ Attempt ${attempt} failed: Server unreachable: ${message}`);
+        } else {
+          console.error(`⚠️ Attempt ${attempt} failed: ${message}`);
+        }
+
+        if (attempt < maxRetries && (isConnectionError || isAbort)) {
+          const delay = Math.min(1000 * 2 ** (attempt - 1), 10000);
+          console.log(`🔁 Retry ${attempt + 1} after ${delay}ms...`);
+          await new Promise(res => setTimeout(res, delay));
+        }
+      }
+    }
+
+    throw lastError ?? new Error('Fetch failed after retries');
+  };
+
   const handleTranscribe = async () => {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] handleTranscribe: Function called`);
-    console.log(`[${timestamp}] handleTranscribe: Audio chunks length:`, audioChunksRef.current.length);
-    console.log(`[${timestamp}] handleTranscribe: Audio URL exists:`, !!audioURL);
+    console.log(`🎯 [${timestamp}] handleTranscribe: Function called`);
+    console.log(`📊 [${timestamp}] handleTranscribe: Audio chunks length:`, audioChunksRef.current.length);
+    console.log(`📊 [${timestamp}] handleTranscribe: Audio URL exists:`, !!audioURL);
     
     if (!audioChunksRef.current.length) {
-      console.log(`[${timestamp}] handleTranscribe: No audio chunks, trying fallback to audioURL`);
+      console.log(`🔍 [${timestamp}] handleTranscribe: No audio chunks, trying fallback to audioURL`);
       // Probeer terug te vallen op audioURL als die bestaat
       if (audioURL) {
         try {
-          console.log(`[${timestamp}] handleTranscribe: Fetching audio from URL:`, audioURL);
+          console.log(`🔗 [${timestamp}] handleTranscribe: Fetching audio from URL:`, audioURL);
           const fetched = await fetch(audioURL);
           const fetchedBlob = await fetched.blob();
-          console.log(`[${timestamp}] handleTranscribe: Fetched blob size:`, fetchedBlob.size);
+          console.log(`📦 [${timestamp}] handleTranscribe: Fetched blob size:`, fetchedBlob.size);
           if (fetchedBlob && fetchedBlob.size > 0) {
             audioChunksRef.current = [fetchedBlob];
-            console.log(`[${timestamp}] handleTranscribe: Successfully set audio chunks from URL`);
+            console.log(`✅ [${timestamp}] handleTranscribe: Successfully set audio chunks from URL`);
           }
         } catch (error) {
-          console.error(`[${timestamp}] handleTranscribe: Error fetching audio from URL:`, error);
+          console.error(`❌ [${timestamp}] handleTranscribe: Error fetching audio from URL:`, error);
         }
       }
     }
 
     if (!audioChunksRef.current.length) {
-      console.log(`[${timestamp}] handleTranscribe: ERROR - No audio to transcribe`);
+      console.log(`❌ [${timestamp}] handleTranscribe: ERROR - No audio to transcribe`);
       setError(t("noAudioToTranscribe"));
       setStatus(RecordingStatus.ERROR);
       return;
@@ -6271,123 +6520,152 @@ ${transcript}
         cancelTranscriptionRef.current = false;
         setLoadingText(t('uploadingToTranscriptionServer'));
         
-        // Step 1: Upload audio and start transcription
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Creating FormData`);
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
-        console.log(`[${transcribeTimestamp}] handleTranscribe: FormData created with audio file`);
+        // Bepaal functions base URL uit environment variabele met robuuste detectie
+        const envBase = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '').trim();
+        const effectiveFunctionsBase = 
+          envBase && envBase.startsWith('http') 
+            ? envBase 
+            : window.location.hostname.includes('localhost') 
+              ? 'http://localhost:8888' 
+              : window.location.origin;
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Functions base URL (effective):`, effectiveFunctionsBase);
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Environment VITE_FUNCTIONS_BASE_URL:`, envBase);
         
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Making fetch request to transcribe-start`);
-        const startResponse = await fetch('/.netlify/functions/transcribe-start', {
-          method: 'POST',
-          body: formData
-        });
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Fetch response status:`, startResponse.status);
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Fetch response ok:`, startResponse.ok);
-        
-        if (!startResponse.ok) {
-          const errorText = await startResponse.text();
-          console.error(`[${transcribeTimestamp}] handleTranscribe: ERROR - Start response not ok:`, startResponse.status, errorText);
-          throw new Error(`Transcriptie start gefaald: ${errorText}`);
-        }
-        
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Parsing start response JSON`);
-        const startResponseData = await startResponse.json();
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Start response data:`, JSON.stringify(startResponseData));
-        const { transcriptId } = startResponseData;
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Transcriptie gestart met ID:`, transcriptId);
-        
-        setLoadingText('Transcriptie wordt verwerkt...');
-        
-        // Step 2: Poll for transcription status
-        let transcriptionComplete = false;
-        let transcribedText = '';
-        let pollCount = 0;
-        const maxPollAttempts = 100; // Maximum 5 minutes (100 * 3 seconds)
-        
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Starting polling loop for transcriptId:`, transcriptId);
-        
-        while (!transcriptionComplete && pollCount < maxPollAttempts && !cancelTranscriptionRef.current) {
-          await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
-          pollCount++;
-          
-          const pollTimestamp = new Date().toISOString();
-          console.log(`[${pollTimestamp}] handleTranscribe: Polling attempt ${pollCount}/${maxPollAttempts}`);
-          
+        // Bepaal maximale uploadgrootte per segment (configureerbaar)
+        // Beperk standaard segmentgrootte om Netlify Dev body-limit ("Stream body too big") te vermijden
+        const MAX_STT_UPLOAD_MB = Number(import.meta.env.VITE_STT_MAX_UPLOAD_MB) || 5; // default 5MB
+        const MAX_UPLOAD_BYTES = MAX_STT_UPLOAD_MB * 1024 * 1024;
+        const transcribeStartUrl = `${effectiveFunctionsBase}/.netlify/functions/transcribe-start`;
+
+        // Als bestand groter is dan limiet → converteer naar WAV (16k mono) en splits in segmenten
+        let blobsToTranscribe: Blob[] = [audioBlob];
+        if (audioBlob.size > MAX_UPLOAD_BYTES) {
+          console.log(`[${transcribeTimestamp}] handleTranscribe: Audio groter dan ${MAX_STT_UPLOAD_MB}MB, voorbereiden op segmentatie`);
           try {
-            console.log(`[${pollTimestamp}] handleTranscribe: Making status request to transcribe-status`);
-            const statusResponse = await fetch(`/.netlify/functions/transcribe-status?id=${transcriptId}`);
-            console.log(`[${pollTimestamp}] handleTranscribe: Status response status:`, statusResponse.status);
-            console.log(`[${pollTimestamp}] handleTranscribe: Status response ok:`, statusResponse.ok);
+            // Forceer compressie naar WAV 16k mono om consistente segmenten te garanderen
+            const compressed = await compressAudioChunks([audioBlob]);
+            const wavBlob = compressed[0] || audioBlob;
+            console.log(`[${transcribeTimestamp}] handleTranscribe: Gecomprimeerde WAV grootte: ${(wavBlob.size/1024/1024).toFixed(2)}MB`);
+            blobsToTranscribe = await splitWavBlobByBytes(wavBlob, MAX_UPLOAD_BYTES - 128 * 1024); // veiligheidsmarge 128KB
+          } catch (e) {
+            console.warn(`[${transcribeTimestamp}] handleTranscribe: Segmentatie mislukt, doorgaan met originele blob`, e);
+            blobsToTranscribe = [audioBlob];
+          }
+        }
+
+        let transcribedText = '';
+        let globalPollCount = 0;
+        const maxPollAttempts = 100; // per segment
+        let segmentIndex = 0;
+        const totalSegments = blobsToTranscribe.length;
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Aantal segmenten: ${totalSegments}`);
+
+        for (const segmentBlob of blobsToTranscribe) {
+          segmentIndex++;
+          if (cancelTranscriptionRef.current) break;
+
+          setLoadingText(`Segment ${segmentIndex}/${totalSegments} uploaden en verwerken...`);
+          setTranscriptionProgress(Math.min(0.95, (segmentIndex - 1) / totalSegments));
+
+          console.log(`[${transcribeTimestamp}] handleTranscribe: Segment ${segmentIndex} grootte: ${(segmentBlob.size/1024/1024).toFixed(2)}MB`);
+          const formData = new FormData();
+          formData.append('audio', segmentBlob, `segment-${segmentIndex}.wav`);
+          console.log(`[${transcribeTimestamp}] handleTranscribe: POST naar ${transcribeStartUrl} voor segment ${segmentIndex}`);
+
+          const startResponse = await fetchWithTimeoutAndRetry(
+            transcribeStartUrl, 
+            { method: 'POST', body: formData }, 
+            120000, // 120 seconden timeout voor upload
+            3 // 3 retry pogingen
+          );
+          console.log(`[${transcribeTimestamp}] handleTranscribe: Start response (segment ${segmentIndex}) status:`, startResponse.status);
+          if (!startResponse.ok) {
+            const errorText = await startResponse.text();
+            console.error(`[${transcribeTimestamp}] handleTranscribe: ERROR start segment ${segmentIndex}:`, startResponse.status, errorText);
+            throw new Error(`Transcriptie start gefaald (segment ${segmentIndex}): ${errorText}`);
+          }
+
+          const startData = await startResponse.json();
+          const transcriptId = startData.transcriptId;
+          console.log(`[${transcribeTimestamp}] handleTranscribe: Transcript ID voor segment ${segmentIndex}: ${transcriptId}`);
+
+          // Poll per segment
+          let transcriptionComplete = false;
+          let pollCount = 0;
+          while (!transcriptionComplete && pollCount < maxPollAttempts && !cancelTranscriptionRef.current) {
+            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+            pollCount++;
+            globalPollCount++;
             
-            if (!statusResponse.ok) {
-              const errorText = await statusResponse.text();
-              console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Status response not ok:`, statusResponse.status, errorText);
-              throw new Error(`Status check gefaald: ${errorText}`);
-            }
+            const pollTimestamp = new Date().toISOString();
+            console.log(`[${pollTimestamp}] handleTranscribe: Polling (segment ${segmentIndex}) attempt ${pollCount}/${maxPollAttempts}`);
             
-            console.log(`[${pollTimestamp}] handleTranscribe: Parsing status response JSON`);
-            const statusData = await statusResponse.json();
-            console.log(`[${pollTimestamp}] handleTranscribe: Status data:`, JSON.stringify(statusData));
-            console.log(`[${pollTimestamp}] handleTranscribe: Transcriptie status (${pollCount}): ${statusData.status}`);
+            try {
+              const transcribeStatusUrl = `${effectiveFunctionsBase}/.netlify/functions/transcribe-status?id=${transcriptId}`;
+              console.log(`[${pollTimestamp}] handleTranscribe: Status request (segment ${segmentIndex}) →`, transcribeStatusUrl);
+              const statusResponse = await fetchWithTimeoutAndRetry(
+                transcribeStatusUrl,
+                {}, // GET request, geen extra options
+                30000, // 30 seconden timeout voor status check
+                3 // 3 retry pogingen
+              );
+              console.log(`[${pollTimestamp}] handleTranscribe: Status response (segment ${segmentIndex}) status:`, statusResponse.status);
             
-            switch (statusData.status) {
-              case 'queued':
-                console.log(`[${pollTimestamp}] handleTranscribe: Status QUEUED - transcription in queue`);
-                setLoadingText('Transcriptie in wachtrij...');
-                break;
-              case 'processing':
-                console.log(`[${pollTimestamp}] handleTranscribe: Status PROCESSING - transcription in progress`);
-                setLoadingText('Transcriptie wordt verwerkt...');
-                setTranscriptionProgress(0.5); // Show some progress
-                break;
-              case 'completed':
-                console.log(`[${pollTimestamp}] handleTranscribe: Status COMPLETED - transcription finished`);
-                transcriptionComplete = true;
-                transcribedText = statusData.text || '';
-                setTranscriptionProgress(1);
-                console.log(`[${pollTimestamp}] handleTranscribe: Transcriptie voltooid: ${transcribedText.length} karakters`);
-                console.log(`[${pollTimestamp}] handleTranscribe: Transcribed text preview:`, transcribedText.substring(0, 200) + '...');
-                break;
-              case 'error':
-                console.error(`[${pollTimestamp}] handleTranscribe: Status ERROR - transcription failed:`, statusData.error);
-                throw new Error(`AssemblyAI transcriptie fout: ${statusData.error || 'Onbekende fout'}`);
-              default:
-                console.warn(`[${pollTimestamp}] handleTranscribe: Unknown status: ${statusData.status}`);
-            }
-          } catch (pollError: any) {
-            console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Fout bij status check (poging ${pollCount}):`, pollError);
-            console.error(`[${pollTimestamp}] handleTranscribe: Poll error message:`, pollError.message);
-            console.error(`[${pollTimestamp}] handleTranscribe: Poll error stack:`, pollError.stack);
-            if (pollCount >= 3) { // After 3 failed attempts, give up
-              console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Giving up after 3 failed attempts`);
-              throw pollError;
+              if (!statusResponse.ok) {
+                const errorText = await statusResponse.text();
+                console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Status response (segment ${segmentIndex}) not ok:`, statusResponse.status, errorText);
+                throw new Error(`Status check gefaald (segment ${segmentIndex}): ${errorText}`);
+              }
+              
+              console.log(`[${pollTimestamp}] handleTranscribe: Parsing status response JSON`);
+              const statusData = await statusResponse.json();
+              console.log(`[${pollTimestamp}] handleTranscribe: Status data (segment ${segmentIndex}):`, JSON.stringify(statusData));
+              console.log(`[${pollTimestamp}] handleTranscribe: Transcriptie status (segment ${segmentIndex}, poging ${pollCount}): ${statusData.status}`);
+              
+              switch (statusData.status) {
+                case 'queued':
+                  console.log(`[${pollTimestamp}] handleTranscribe: Status QUEUED (segment ${segmentIndex}) - in wachtrij`);
+                  setLoadingText(`Transcriptie in wachtrij (segment ${segmentIndex}/${totalSegments})...`);
+                  break;
+                case 'processing':
+                  console.log(`[${pollTimestamp}] handleTranscribe: Status PROCESSING (segment ${segmentIndex}) - bezig`);
+                  setLoadingText(`Transcriptie wordt verwerkt (segment ${segmentIndex}/${totalSegments})...`);
+                  setTranscriptionProgress(Math.min(0.95, (segmentIndex - 1 + 0.5) / totalSegments));
+                  break;
+                case 'completed':
+                  console.log(`[${pollTimestamp}] handleTranscribe: Status COMPLETED (segment ${segmentIndex}) - voltooid`);
+                  transcriptionComplete = true;
+                  const segmentText = statusData.text || '';
+                  transcribedText += (transcribedText ? '\n\n' : '') + segmentText;
+                  setTranscriptionProgress(Math.min(1, segmentIndex / totalSegments));
+                  console.log(`[${pollTimestamp}] handleTranscribe: Segment ${segmentIndex} transcript lengte: ${segmentText.length}`);
+                  break;
+                case 'error':
+                  console.error(`[${pollTimestamp}] handleTranscribe: Status ERROR (segment ${segmentIndex}) - fout:`, statusData.error);
+                  throw new Error(`AssemblyAI transcriptie fout (segment ${segmentIndex}): ${statusData.error || 'Onbekende fout'}`);
+                default:
+                  console.warn(`[${pollTimestamp}] handleTranscribe: Onbekende status (segment ${segmentIndex}): ${statusData.status}`);
+              }
+            } catch (pollError: any) {
+              console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Status check fout (segment ${segmentIndex}, poging ${pollCount}):`, pollError);
+              console.error(`[${pollTimestamp}] handleTranscribe: Poll error message:`, pollError.message);
+              console.error(`[${pollTimestamp}] handleTranscribe: Poll error stack:`, pollError.stack);
+              if (pollCount >= 3) { // After 3 failed attempts, give up
+                console.error(`[${pollTimestamp}] handleTranscribe: ERROR - Opgegeven na 3 mislukte pogingen (segment ${segmentIndex})`);
+                throw pollError;
+              }
             }
           }
         }
-        
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Polling loop completed`);
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Transcription complete:`, transcriptionComplete);
+
+        console.log(`[${transcribeTimestamp}] handleTranscribe: Polling voltooid voor alle segmenten (totaal pogingen: ${globalPollCount})`);
         console.log(`[${transcribeTimestamp}] handleTranscribe: Cancel requested:`, cancelTranscriptionRef.current);
-        
-        if (cancelTranscriptionRef.current) {
-          console.log(`[${transcribeTimestamp}] handleTranscribe: Transcription cancelled by user`);
-          setError(t('transcriptionCancelled'));
-          setStatus(RecordingStatus.STOPPED);
-          return;
-        }
-        
-        if (!transcriptionComplete) {
-          console.error(`[${transcribeTimestamp}] handleTranscribe: ERROR - Transcription timeout after ${pollCount} attempts`);
-          throw new Error('Transcriptie timeout - proces duurde te lang');
-        }
-        
         // Set the transcribed text
         console.log(`[${transcribeTimestamp}] handleTranscribe: Setting transcript with ${transcribedText.length} characters`);
         setTranscript(transcribedText);
         
         // Record token usage (estimate for AssemblyAI)
-        const estimatedInputTokens = Math.ceil(audioBlob.size / 1000); // Rough estimate
+        const estimatedInputTokens = Math.ceil((blobsToTranscribe.reduce((acc, b) => acc + b.size, 0)) / 1000); // Rough estimate across segments
         const estimatedOutputTokens = Math.ceil(transcribedText.length / 4); // Rough estimate
         
         console.log(`[${transcribeTimestamp}] handleTranscribe: Recording token usage - Input: ${estimatedInputTokens}, Output: ${estimatedOutputTokens}`);
@@ -6584,7 +6862,8 @@ ${transcript}
               ></div>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Resterend: {Math.max(0, getMonthlyAudioLimit(userSubscription) - (authState.user?.monthlyAudioMinutes || 0))} minuten
+              {/** Round to 1 decimal to avoid long fractional values during live recording updates */}
+              Resterend: {Math.max(0, getMonthlyAudioLimit(userSubscription) - (authState.user?.monthlyAudioMinutes || 0)).toFixed(1)} minuten
             </div>
           </div>
         </div>
@@ -6686,16 +6965,18 @@ ${transcript}
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                 <span className="text-red-600 dark:text-red-400 font-medium">Opname actief</span>
               </div>
-              {avgInputLevel > 0.01 ? (
+              {showNoInputHint ? (
+                <div className="flex items-center gap-2 text-orange-500 dark:text-orange-400">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span className="text-xs">Geen audio gedetecteerd</span>
+                </div>
+              ) : avgInputLevel > 0.01 ? (
                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="text-xs">Audio gedetecteerd</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-orange-500 dark:text-orange-400">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <span className="text-xs">Geen audio gedetecteerd</span>
-                </div>
+                null
               )}
             </div>
           )}
@@ -8962,8 +9243,8 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 
                 {/* Secondary Analysis Dropdown */}
                 {mainMode === 'analysis' && (
-                    <div className="flex items-center gap-4 mt-4">
-                        <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 min-w-fit">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-4">
+                        <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 sm:min-w-fit">
                             Kies analyse:
                         </label>
                         <select
@@ -8978,7 +9259,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 }
                                 setError(null); // Clear error messages when switching analysis
                             }}
-                            className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer"
+                            className="w-full sm:flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer text-sm sm:text-base min-h-[44px] touch-manipulation"
                         >
                             <option value="">-- Selecteer een analyse --</option>
                             <option value="summary">{t('summary')}</option>
@@ -9417,9 +9698,13 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           setShowUsageModal(false);
           setShowPricingPage(true);
         }}
+        // Laat de totale maand-minuten live meebewegen tijdens opname
+        currentRecordingElapsedMinutes={duration / 60}
       />
 
       <WaitlistModal isOpen={waitlistModal.isOpen} onClose={waitlistModal.close} t={t} waitlistEmail={waitlistEmail} setWaitlistEmail={setWaitlistEmail} addToWaitlist={addToWaitlist} />
+
+      <MobileAudioHelpModal isOpen={audioUploadHelpModal.isOpen} onClose={audioUploadHelpModal.close} t={t} />
 
       <AudioLimitModal 
         isOpen={showAudioLimitModal} 
@@ -9573,12 +9858,12 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 {!useDeepseek ? (
                   <>
                     {/* Single URL Input */}
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('webPageUrlLabel', 'Web Page URL')}</label>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t('webPageUrlLabel', 'Web Page URL')}</label>
                       <input
                         type="url"
                         placeholder={t('webPageUrlPlaceholder')}
-                        className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                        className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm sm:text-base min-h-[44px] touch-manipulation"
                         onChange={(e) => setWebPageUrl(e.target.value)}
                         value={webPageUrl}
                       />
@@ -9670,11 +9955,11 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             }
                           }}
                         >
-                          <div className="relative border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-1 transition-all duration-200 hover:border-cyan-400 dark:hover:border-cyan-500 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <div className="relative border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-2 sm:p-3 transition-all duration-200 hover:border-cyan-400 dark:hover:border-cyan-500 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                             <input
                               type="url"
                               placeholder={`${t('webPageUrlPlaceholder')} ${index + 1}`}
-                              className="w-full p-3 border-0 rounded-md bg-transparent text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500"
+                              className="w-full p-3 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 text-base sm:text-base min-h-[48px] touch-manipulation"
                               onChange={(e) => {
                                 const newUrls = [...webPageUrls];
                                 newUrls[index] = e.target.value;
@@ -9682,18 +9967,6 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                               }}
                               value={url}
                             />
-                            {!url && (
-                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="flex items-center space-x-2 text-slate-400 dark:text-slate-500">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                                  </svg>
-                                  <span className="text-xs">
-                                    {t('webPageDragDropText', 'Drag URL here or type')}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </div>
                       ))}
@@ -9711,7 +9984,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                   </div>
                 )}
               </div>
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col sm:flex-row justify-end gap-3">
                 <button 
                   onClick={() => { 
                     setShowWebPageModal(false); 
@@ -9719,7 +9992,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     setUseDeepseek(false);
                     setWebPageUrls(['', '', '']);
                   }} 
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
+                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium w-full sm:w-auto"
                 >
                   {t('cancel')}
                 </button>
@@ -9738,7 +10011,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     }
                   }} 
                   disabled={(useDeepseek ? webPageUrls.every(url => !url.trim()) : !webPageUrl.trim()) || isLoadingWebPage}
-                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-semibold disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-semibold disabled:cursor-not-allowed flex items-center gap-2 w-full sm:w-auto"
                 >
                   {isLoadingWebPage ? (
                     <>
@@ -10873,15 +11146,15 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
              <div className="w-full max-w-[1600px] mx-auto bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 space-y-6">
                 {/* PWA Install Banner - only on start screen, when logged in, and not installed */}
                 {showPwaBanner && (
-                  <div className="mb-2 rounded-lg border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/30 p-3 flex items-center justify-between gap-3">
+                  <div className="mb-2 rounded-lg border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/30 p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="text-sm text-cyan-900 dark:text-cyan-200">
                       {t('pwaInstallBannerText')}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={handlePwaIgnore} className="px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end sm:justify-start">
+                      <button onClick={handlePwaIgnore} className="px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors w-full sm:w-auto">
                         {t('pwaIgnore')}
                       </button>
-                      <button onClick={handlePwaInstall} className="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">
+                      <button onClick={handlePwaInstall} className="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors w-full sm:w-auto">
                         {t('pwaInstall')}
                       </button>
                     </div>
@@ -11021,6 +11294,31 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                     <div className="mt-3 text-center">
                                         <button onClick={() => pasteHelp.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
                                             📋 {t('pasteHelp')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Audio Upload Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-amber-300 dark:hover:border-amber-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-8 h-8 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionAudioUpload')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionAudioUploadDesc')}</p>
+                                    </div>
+                                    <button onClick={handleSessionOptionAudioUpload} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-700 text-white hover:from-amber-600 hover:to-orange-700 dark:hover:from-amber-700 dark:hover:to-orange-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                        </svg>
+                                        <span>{t('sessionOptionAudioUpload')}</span>
+                                    </button>
+                                    {/* Audio upload help link */}
+                                    <div className="mt-3 text-center">
+                                        <button onClick={() => audioUploadHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            🎵 {t('audioUploadHelpTitle')}
                                         </button>
                                     </div>
                                 </div>
@@ -11274,6 +11572,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       onPasteText={() => pasteModal.open()}
       onWebPage={() => webPageModal.open()}
       onUploadImage={() => handleSessionOptionImageUpload()}
+      onAudioUpload={() => handleSessionOptionAudioUpload()}
       onEmailImport={() => emailUploadModal.open()}
       onNotionImport={() => notionImportModal.open()}
       onAskExpert={() => expertConfigModal.open()}
@@ -11481,6 +11780,19 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
       />
     )}
 
+    {/* Audio Upload Modal */}
+    {audioUploadModal.isOpen && (
+      <AudioUploadModal
+        isOpen={audioUploadModal.isOpen}
+        onClose={audioUploadModal.close}
+        onAudioImport={async (file) => {
+          await importAudioFile(file);
+          audioUploadModal.close();
+        }}
+        t={t}
+      />
+    )}
+
     {/* Notion Import Modal */}
     {notionImportModal.isOpen && userSubscription === SubscriptionTier.DIAMOND && (
       <NotionImportModal
@@ -11611,6 +11923,27 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
          sessionId={sessionId}
          onExtendSession={handleExtendSession}
          onLogout={handleSessionExpired}
+       />
+     )}
+
+     {/* Referral Registration Modal */}
+     {showReferralRegistrationModal && referralCodeFromURL && (
+       <ReferralRegistrationModal
+         isOpen={showReferralRegistrationModal}
+         onClose={() => setShowReferralRegistrationModal(false)}
+         onCreateAccount={handleCreateAccount}
+         t={t}
+         uiLang={uiLang}
+         referralCode={referralCodeFromURL}
+         referrerData={referrerData}
+         onShowInfoPage={() => {
+           setShowReferralRegistrationModal(false);
+           setShowInfoPage(true);
+         }}
+         onLanguageChange={(lang) => {
+           setUiLang(lang as Language);
+           localStorage.setItem('uiLanguage', lang);
+         }}
        />
      )}
 

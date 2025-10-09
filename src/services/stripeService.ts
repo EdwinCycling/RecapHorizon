@@ -30,10 +30,12 @@ class StripeService {
   private baseUrl: string;
 
   constructor() {
-    // Voor development gebruik je localhost, voor productie je Netlify URL
-    this.baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://recaphorizon.netlify.app/.netlify/functions' 
-      : 'http://localhost:8888/.netlify/functions';
+    // Voor development gebruik je de huidige origin (Netlify dev proxy), voor productie je Netlify URL
+    // Dit voorkomt harde koppeling aan een specifieke poort (zoals 8888) die kan wisselen.
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    this.baseUrl = process.env.NODE_ENV === 'production'
+      ? 'https://recaphorizon.netlify.app/.netlify/functions'
+      : `${origin}/.netlify/functions`;
   }
 
   /**

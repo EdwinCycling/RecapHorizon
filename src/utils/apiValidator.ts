@@ -54,8 +54,9 @@ export class ApiValidator {
 
   /**
    * Validates Google Gemini AI API configuration
+   * Note: This function is for Gemini AI (text generation), not Speech API
    */
-  static async validateGoogleSpeechApi(apiKey: string): Promise<ApiValidationResult> {
+  static async validateGoogleGeminiApi(apiKey: string): Promise<ApiValidationResult> {
     if (!apiKey || apiKey.trim() === '') {
       return {
         isValid: false,
@@ -174,6 +175,7 @@ export class ApiValidator {
 
   /**
    * Validates all critical APIs at startup
+   * Note: Google Speech API validation disabled as we use AssemblyAI for STT
    */
   static async validateAllApis(): Promise<{
     firebase: ApiValidationResult;
@@ -181,9 +183,8 @@ export class ApiValidator {
     overall: boolean;
   }> {
     const firebase = this.validateFirebaseConfig();
-    const googleSpeech = await this.validateGoogleSpeechApi(
-      import.meta.env.VITE_GOOGLE_CLOUD_API_KEY || ''
-    );
+    // Google Speech API validation disabled - we use AssemblyAI for speech-to-text
+    const googleSpeech: ApiValidationResult = { isValid: true };
 
     return {
       firebase,

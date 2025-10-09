@@ -162,8 +162,13 @@ export class AudioRecorder {
       const sessionMinutes = (Date.now() - this.recordingStartTime) / (1000 * 60);
       try {
         await incrementUserMonthlyAudioMinutes(this.userId, sessionMinutes);
-      } catch (error) {
-        console.error('Failed to update audio minutes:', error);
+      } catch (error: any) {
+        // Handle Firebase permissions errors gracefully
+        if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+          console.warn('Audio minutes tracking unavailable due to permissions. Recording functionality continues normally.');
+        } else {
+          console.error('Failed to update audio minutes:', error);
+        }
       }
     }
     
@@ -489,8 +494,13 @@ export class AudioRecorder {
         const sessionMinutes = (Date.now() - this.recordingStartTime) / (1000 * 60);
         try {
           await incrementUserMonthlyAudioMinutes(this.userId, sessionMinutes);
-        } catch (error) {
-          console.error('Failed to update audio minutes:', error);
+        } catch (error: any) {
+          // Handle Firebase permissions errors gracefully
+          if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+            console.warn('Audio minutes tracking unavailable due to permissions. Recording functionality continues normally.');
+          } else {
+            console.error('Failed to update audio minutes:', error);
+          }
         }
       }
       

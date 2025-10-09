@@ -34,6 +34,41 @@ export const nl = {
   tooManyConsecutiveErrors: "Te veel opeenvolgende fouten.",
   transcriptionCompletedWithWarnings: "Transcriptie voltooid met waarschuwingen.",
   transcriptionCompleted: "Transcriptie voltooid.",
+  
+  // Audio Upload Modal
+  audioUploadTitle: "Audio Bestand Uploaden",
+  audioUploadDescription: "Sleep je audio bestand hiernaartoe of klik om een MP3/MP4/WebM/WAV bestand te selecteren voor transcriptie",
+  audioUploadDragText: "Sleep audio bestand hier of klik",
+  audioUploadSelectFile: "Selecteer Audio Bestand",
+  audioUploadHelpTitle: "Audio Upload Help",
+  audioUploadHelpDescription: "Leer hoe je audio bestanden kunt uploaden:",
+  audioUploadHelpStep1: "Selecteer een MP3, MP4, WebM of WAV audio bestand van je computer",
+  audioUploadHelpStep2: "Sleep het bestand naar de upload zone of klik om te selecteren",
+  audioUploadHelpStep3: "Het bestand wordt automatisch gevalideerd en geüpload",
+  audioUploadHelpStep4: "Na upload start de transcriptie automatisch",
+  
+  // Progress and Status Messages
+  audioUploadProcessing: "Audio bestand wordt verwerkt...",
+  audioUploadConverting: "Audio bestand wordt geconverteerd...",
+  audioUploadReady: "Klaar voor transcriptie...",
+  audioUploadTranscribing: "Audio wordt getranscribeerd...",
+  transcriptionUploading: "Audio uploaden naar transcriptie server...",
+  transcriptionQueued: "Audio in wachtrij voor transcriptie...",
+  transcriptionProcessing: "Audio wordt getranscribeerd... Dit kan enkele minuten duren.",
+  transcriptionProgress: "Transcriptie voortgang: {percentage}%",
+  transcriptionStatusChecking: "Status controleren...",
+  transcriptionAlmostDone: "Transcriptie bijna voltooid...",
+  
+  // Error Messages
+  audioUploadError: "Fout bij uploaden audio bestand",
+  audioUploadInvalidFormat: "Alleen MP3, MP4, WebM en WAV bestanden zijn toegestaan",
+  audioUploadTooLarge: "Audio bestand is te groot (maximum 100MB)",
+  audioUploadFailed: "Upload mislukt. Probeer opnieuw.",
+  transcriptionTimeout: "Transcriptie duurt langer dan verwacht. Probeer opnieuw.",
+  transcriptionServerError: "Server fout tijdens transcriptie. Probeer later opnieuw.",
+  
+  // Success Messages
+  audioUploadSuccess: "Audio bestand succesvol geüpload",
   waitingForNextSegment: "Wachten {ms}ms voor volgende segment...",
   startingTranscription: "Start transcriptie van {count} segmenten...",
   segmentSkipped: "Segment {number} overgeslagen vanwege serverproblemen, doorgaan met volgende...",
@@ -44,6 +79,14 @@ export const nl = {
   summarizing: "Samenvatting wordt gemaakt...",
   processing: "Verwerken...",
   appTitle: "RecapHorizon",
+  // Referral registration modal UI strings
+  chooseLanguage: "Kies taal",
+  chooseLanguagePlaceholder: "Selecteer UI taal",
+  enterEmail: "Voer je e-mailadres in",
+  enterPassword: "Voer je wachtwoord in",
+  confirmPasswordPlaceholder: "Bevestig je wachtwoord",
+  passwordStrength: "Wachtwoordsterkte",
+  referralWelcomeMessagePersonalized: "Je bent uitgenodigd door {referrer} om RecapHorizon te proberen. Je maakt nu een gratis account aan en krijgt toegang tot de Free tier. We zijn super blij dat je er bent!",
   pwaInstallBannerText: "Installeer RecapHorizon als app voor snelle toegang via je taakbalk.",
   pwaIgnore: "Negeer",
   pwaInstall: "Installeren",
@@ -500,6 +543,11 @@ export const nl = {
   sessionOptionImage: "Afbeelding Upload",
   sessionOptionImageDesc: "Upload een foto of afbeelding voor AI-analyse en transcript generatie",
   sessionOptionImageFormats: "Ondersteunde formaten:\nJPG, PNG, JPEG, WEBP, GIF\n• Gold, Diamond & Enterprise only",
+  
+  // Audio Upload Session Option
+  sessionOptionAudioUpload: "Audio Upload",
+  sessionOptionAudioUploadDesc: "Upload een bestaand audio bestand (MP3/MP4) voor directe transcriptie",
+  sessionOptionAudioUploadFormats: "Ondersteunde formaten:\nMP3, MP4\n• Alle abonnementen",
   webPageUrlLabel: "Web Pagina URL",
   webPageHelpText: "Voer een URL in of sleep een link om inhoud van een webpagina te analyseren.",
   webPageDragDropText: "Sleep URL hier of typ",
@@ -2177,4 +2225,14 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   ,referralInstruction2: "De URL kan door iedereen worden gebruikt"
   ,referralInstruction3: "Bewaar de URL op een veilige plaats"
   ,referralInstruction4: "Voor communicatie met RecapHorizon over jouw referral programma, geef altijd jouw unieke code mee"
+
+// Referral Registration Modal
+,referralWelcomeTitle: "Welkom!"
+,referralWelcomeGreeting: "Welkom,"
+,referralWelcomeMessage: "We zijn super blij dat je via een referral bij ons terecht bent gekomen. Je kan nu je account aanmaken (gratis) om gebruik te maken van de Free tier."
+,referralWelcomeGetStarted: "Na het aanmaken kun je meteen aan de slag."
+,referralCodeUsed: "Gebruikte referral code"
+,errorValidatingReferralCode: "Fout bij valideren referral code:"
+,invalidReferralCode: "Ongeldige referral code"
+,referralCodeNotFound: "Referral code niet gevonden"
 };

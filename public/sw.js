@@ -6,7 +6,5 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Optional: basic fetch handler passthrough (kept minimal for now)
-self.addEventListener('fetch', () => {
-  // Let the network handle requests for now
-});
+// Removed no-op fetch handler to prevent warning
+// The service worker will now only handle install and activate events

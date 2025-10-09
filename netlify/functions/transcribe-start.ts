@@ -27,6 +27,9 @@ const assemblyAIHeaders = {
   authorization: ASSEMBLYAI_API_KEY as string,
 };
 
+// Maximum file size: 25MB (Netlify function limit is around 50MB)
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB in bytes
+
 // Hulpprogramma om multipart/form-data te parsen
 async function parseMultipartForm(event: HandlerEvent): Promise<{ audioBuffer: Buffer; contentType: string }> {
   return new Promise((resolve, reject) => {
@@ -35,6 +38,7 @@ async function parseMultipartForm(event: HandlerEvent): Promise<{ audioBuffer: B
     let audioBuffer: Buffer = Buffer.alloc(0);
     let contentType: string = '';
     let fileCount = 0;
+    let totalSize = 0;
 
     busboy.on('file', (fieldname, file, info) => {
       fileCount++;
@@ -42,11 +46,27 @@ async function parseMultipartForm(event: HandlerEvent): Promise<{ audioBuffer: B
       
       if (fieldname === 'audio') {
         contentType = mimeType || 'audio/mp4'; // Fallback to audio/mp4 if mimeType is undefined
+        
         file.on('data', (data) => {
+          totalSize += data.length;
+          
+          // Check file size limit
+          if (totalSize > MAX_FILE_SIZE) {
+            file.destroy();
+            reject(new Error(`Bestand te groot. Maximum grootte is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`));
+            return;
+          }
+          
           audioBuffer = Buffer.concat([audioBuffer, data]);
         });
+        
         file.on('end', () => {
-          // File processing completed
+          console.log(`Audio file processed: ${totalSize} bytes`);
+        });
+        
+        file.on('error', (err) => {
+          console.error('File stream error:', err);
+          reject(err);
         });
       } else {
         file.resume();
@@ -66,12 +86,22 @@ async function parseMultipartForm(event: HandlerEvent): Promise<{ audioBuffer: B
       reject(err);
     });
 
-    const decodedBody = Buffer.from(event.body as string, 'base64');
-    busboy.end(decodedBody);
+    // Netlify sets isBase64Encoded=true for binary bodies in production.
+    // In netlify dev, it may be false. Decode accordingly to avoid corrupting the multipart stream.
+    const isBase64 = (event as any).isBase64Encoded === true;
+    const bodyBuffer = isBase64
+      ? Buffer.from(event.body as string, 'base64')
+      : Buffer.from((event.body as string) || '', 'utf8');
+    busboy.end(bodyBuffer);
   });
 }
 
 const handler: Handler = async (event) => {
+  console.log('🎯 transcribe-start: Function called');
+  console.log('📊 transcribe-start: Method:', event.httpMethod);
+  console.log('📊 transcribe-start: Headers:', JSON.stringify(event.headers, null, 2));
+  console.log('📊 transcribe-start: Body length:', event.body?.length || 0);
+  console.log('📊 transcribe-start: IsBase64Encoded:', event.isBase64Encoded);
   
   // CORS headers
   const corsHeaders = {
@@ -86,6 +116,24 @@ const handler: Handler = async (event) => {
       statusCode: 200,
       headers: corsHeaders,
       body: '',
+    };
+  }
+
+  // Handle GET request for testing connectivity
+  if (event.httpMethod === 'GET') {
+    console.log('🔍 transcribe-start: GET request received - returning test response');
+    return {
+      statusCode: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        ok: true, 
+        message: "Function alive",
+        timestamp: new Date().toISOString(),
+        endpoint: "transcribe-start"
+      }),
     };
   }
 
@@ -116,10 +164,30 @@ const handler: Handler = async (event) => {
   }
 
   try {
+    console.log('transcribe-start: REQUEST INFO', {
+      method: event.httpMethod,
+      contentType: event.headers['content-type'],
+      contentLength: event.headers['content-length'],
+      isBase64Encoded: (event as any).isBase64Encoded,
+    });
     const { audioBuffer, contentType } = await parseMultipartForm(event);
 
+    // Check file size before processing
+    if (audioBuffer.length > MAX_FILE_SIZE) {
+      return {
+        statusCode: 413,
+        headers: corsHeaders,
+        body: JSON.stringify({ 
+          error: `Bestand te groot. Maximum grootte is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`,
+          maxSize: MAX_FILE_SIZE 
+        }),
+      };
+    }
+
+    console.log(`Processing audio file: ${audioBuffer.length} bytes, type: ${contentType}`);
+
     // 1. Upload audio naar AssemblyAI's upload endpoint
-    
+    const uploadStart = Date.now();
     const uploadResponse = await axios.post<AssemblyAIUploadResponse>(
       `${ASSEMBLYAI_BASE_URL}/upload`,
       audioBuffer,
@@ -128,10 +196,12 @@ const handler: Handler = async (event) => {
           ...assemblyAIHeaders,
           'Content-Type': contentType,
         },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
+        timeout: 60000, // 60 second timeout
+        maxContentLength: MAX_FILE_SIZE,
+        maxBodyLength: MAX_FILE_SIZE,
       }
     );
+    console.log(`transcribe-start: Upload completed in ${Date.now() - uploadStart}ms`);
     const uploadUrl = uploadResponse.data.upload_url;
 
     // 2. Start transcriptie met de verkregen upload URL
@@ -141,11 +211,13 @@ const handler: Handler = async (event) => {
       // speaker_labels: true // Optioneel
     };
 
+    const transcriptStart = Date.now();
     const transcriptResponse = await axios.post<AssemblyAITranscriptResponseMinimal>(
       `${ASSEMBLYAI_BASE_URL}/transcript`,
       transcriptRequestData,
       { headers: assemblyAIHeaders }
     );
+    console.log(`transcribe-start: Transcript creation completed in ${Date.now() - transcriptStart}ms`);
     const transcriptId = transcriptResponse.data.id;
 
     // Retourneer direct de transcriptId naar de client
@@ -163,7 +235,21 @@ const handler: Handler = async (event) => {
       console.error('transcribe-start: Error response status:', error.response.status);
       console.error('transcribe-start: Error response data:', error.response.data);
     }
-    
+    // Specifieke fouten voor bestandsgrootte en timeouts
+    if (error.message && /Bestand te groot/i.test(error.message)) {
+      return {
+        statusCode: 413,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Bestand te groot voor transcriptie.', maxSize: MAX_FILE_SIZE }),
+      };
+    }
+    if (error.code === 'ECONNABORTED') {
+      return {
+        statusCode: 504,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Timeout bij upload of transcript aanmaken.' }),
+      };
+    }
     return {
       statusCode: 500,
       headers: corsHeaders,

@@ -10,6 +10,7 @@ interface SessionOptionsModalProps {
   onPasteText: () => void;
   onWebPage: () => void;
   onUploadImage: () => void;
+  onAudioUpload: () => void;
   onEmailImport: () => void;
   onAskExpert: () => void;
   onNotionImport: () => void;
@@ -27,6 +28,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
   onPasteText,
   onWebPage,
   onUploadImage,
+  onAudioUpload,
   onEmailImport,
   onAskExpert,
   onNotionImport,
@@ -138,6 +140,8 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                 {t('sessionOptionImageFormats')}
               </div>
             </div>
+
+
 
             {/* Email Import Option */}
             <div 

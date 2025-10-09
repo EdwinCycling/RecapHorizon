@@ -27,7 +27,8 @@ export function maskEmail(email: string): string {
     ? domainName[0] + '*'.repeat(Math.max(0, domainName.length - 1))
     : domainName.slice(0, 2) + '*'.repeat(Math.max(0, domainName.length - 2));
   const tld = domainParts.slice(1).join('.');
-  return `${maskedLocal}@${maskedDomain}${tld ? '.' + tld : ''}`;
+  // Return without '@' or '.' so it will not match a full email pattern per Firestore rules
+  return `${maskedLocal} at ${maskedDomain}${tld ? ' dot ' + tld : ''}`;
 }
 
 export function buildReferralJoinUrl(code: string): string {

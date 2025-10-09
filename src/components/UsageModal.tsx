@@ -14,6 +14,8 @@ interface UsageModalProps {
   t: (key: string) => string;
   theme: 'light' | 'dark';
   onShowPricing: () => void;
+  // Extra: live elapsed minutes of the current recording to show real-time updates
+  currentRecordingElapsedMinutes?: number;
 }
 
 const UsageModal: React.FC<UsageModalProps> = ({ 
@@ -22,7 +24,8 @@ const UsageModal: React.FC<UsageModalProps> = ({
   userTier, 
   t, 
   theme, 
-  onShowPricing 
+  onShowPricing,
+  currentRecordingElapsedMinutes = 0
 }) => {
   const [monthlyUsage, setMonthlyUsage] = useState<number>(0);
   const [monthlySessions, setMonthlySessions] = useState<number>(0);
@@ -84,6 +87,9 @@ const UsageModal: React.FC<UsageModalProps> = ({
   const monthlySessionLimit = tierLimits?.maxSessionsPerDay || 0;
   const sessionUsagePercentage = monthlySessionLimit === -1 ? 0 : monthlySessionLimit > 0 ? (monthlySessions / monthlySessionLimit) * 100 : 0;
   const remainingSessions = monthlySessionLimit === -1 ? -1 : Math.max(0, monthlySessionLimit - monthlySessions);
+
+  // Compute effective monthly audio usage including the live-recording elapsed minutes
+  const effectiveMonthlyAudioUsage = Math.max(0, monthlyAudioUsage + currentRecordingElapsedMinutes);
 
   return (
     <Modal 
@@ -170,7 +176,7 @@ const UsageModal: React.FC<UsageModalProps> = ({
               <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
                 <AudioUsageMeter
                   userTier={userTier}
-                  monthlyAudioUsage={monthlyAudioUsage}
+                  monthlyAudioUsage={effectiveMonthlyAudioUsage}
                   t={t}
                   theme={theme}
                   onShowPricing={onShowPricing}

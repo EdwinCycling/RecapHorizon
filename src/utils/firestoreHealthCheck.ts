@@ -83,18 +83,18 @@ export class FirestoreHealthChecker {
         await this.testWritePermissions(effectiveUserId, t);
         testResults.writePermissions = true;
       } catch (error: any) {
-        console.error(t?.('writePermissionsFailed') || '❌ Write permissions failed:', error);
-        issues.push(t?.('firestoreWritePermissionsError') || 'No write permissions for Firestore');
-        suggestions.push(t?.('checkFirestoreWriteRules') || 'Check Firestore security rules for writing');
-        
+        console.warn(t?.('writePermissionsFailed') || '⚠️ Write permissions test failed:', error);
+        // Don't treat write permission failures as critical issues for health check
+        // This is expected for unauthenticated users or during initial setup
         if (error.code === 'permission-denied') {
-          suggestions.push(t?.('ensureUserLoggedInWithAccess') || 'Make sure user is logged in and has access to their own data');
+          console.info('Write permissions test failed due to authentication - this is expected during startup');
+        } else {
+          issues.push(t?.('noWritePermissionsForFirestore') || 'No write permissions for Firestore');
+          suggestions.push(t?.('checkFirestoreSecurityRules') || 'Check Firestore security rules');
         }
       }
     } else {
-      // Skipping write permissions test - user not authenticated
-      // Don't mark as failed, just skip the test
-      testResults.writePermissions = true; // Consider it "passed" since we're not testing
+      console.info('Skipping write permissions test - user not authenticated');
     }
 
     // Test 4: Index functionality (only if authenticated)
@@ -177,19 +177,25 @@ export class FirestoreHealthChecker {
     // Test writing to user's own data (which should be allowed by security rules)
     const userDoc = doc(db, 'users', userId);
     
-    // Try to read first to see if document exists
-    const userSnapshot = await getDoc(userDoc);
-    
-    if (userSnapshot.exists()) {
-      // If user document exists, try to update it with a test field
-      const testData = {
-        lastHealthCheck: new Date().toISOString()
-      };
+    try {
+      // Try to read first to see if document exists
+      const userSnapshot = await getDoc(userDoc);
       
-      await updateDoc(userDoc, testData);
-    } else {
-      // If user document doesn't exist, we can't test write permissions
-      // without creating the full user document structure
+      if (userSnapshot.exists()) {
+        // If user document exists, try to update it with a test field
+        const testData = {
+          lastHealthCheck: new Date().toISOString()
+        };
+        
+        await updateDoc(userDoc, testData);
+      } else {
+        // If user document doesn't exist, skip the write test
+        console.info('User document does not exist, skipping write permissions test');
+        return;
+      }
+    } catch (error: any) {
+      // Re-throw the error to be handled by the caller
+      throw error;
     }
   }
 

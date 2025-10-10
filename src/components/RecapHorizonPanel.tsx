@@ -297,9 +297,9 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 			q.options.forEach(opt => {
 				lines.push(`  ${opt.label}) ${opt.text}`);
 			});
-			if (includeAnswers) {
-				lines.push(`  Correct antwoord: ${q.correct_answer_label} - ${q.correct_answer_text}`);
-			}
+            if (includeAnswers) {
+                lines.push(`  ${t('correctAnswer')}: ${q.correct_answer_label} - ${q.correct_answer_text}`);
+            }
 			lines.push('');
 		});
 		return lines.join('\n');
@@ -308,7 +308,7 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 	const composeSectionText = useCallback((type: RecapItemType): { title: string; text: string } => {
 		switch (type) {
 			case 'summary':
-				return { title: `## ${t('summary')}`, text: summary || '' };
+				return { title: `${t('summary')}`, text: summary || '' };
 			case 'keywords': {
 				let content = '';
 				if (keywordAnalysis && keywordAnalysis.length > 0) {
@@ -319,7 +319,7 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 					}
 					content = lines.join('\n');
 				}
-				return { title: `## ${t('keywordAnalysis')}`, text: content };
+				return { title: `${t('keywordAnalysis')}`, text: content };
 			}
 			case 'sentiment': {
 				const parts: string[] = [];
@@ -330,24 +330,24 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 					parts.push(`${t('sentimentConclusion')}`);
 					parts.push(sentiment.conclusion || '');
 				}
-				return { title: `## ${t('sentiment')}`, text: parts.join('\n') };
+				return { title: `${t('sentiment')}`, text: parts.join('\n') };
 			}
 			case 'faq':
-				return { title: `## ${t('faq')}`, text: faq || '' };
+				return { title: `${t('faq')}`, text: faq || '' };
 			case 'learnings':
-				return { title: `## ${t('keyLearnings')}`, text: learnings || '' };
+				return { title: `${t('keyLearnings')}`, text: learnings || '' };
 			case 'followup':
-				return { title: `## ${t('followUp')}`, text: followup || '' };
+				return { title: `${t('followUp')}`, text: followup || '' };
 			case 'chat': {
 				const lines: string[] = [];
 				for (const msg of chatHistory) {
 					const speaker = msg.role === 'user' ? 'User' : 'AI';
 					lines.push(`${speaker}: ${msg.text}`);
 				}
-				return { title: `## ${t('chat')}`, text: lines.join('\n') };
+				return { title: `${t('chat')}`, text: lines.join('\n') };
 			}
 			case 'mindmap':
-				return { title: `## ${t('mindmap')}`, text: mindmapText || '' };
+				return { title: `${t('mindmap')}`, text: mindmapText || '' };
 			case 'exec': {
 				const sections: string[] = [];
 				const block = (label: string, value?: string) => `${label}\n${value || ''}`;
@@ -362,29 +362,29 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 				sections.push(block(t('benefits'), executiveSummaryData?.benefits));
 				sections.push('');
 				sections.push(block(t('callToAction'), executiveSummaryData?.call_to_action));
-				return { title: `## ${t('executiveSummary', 'Executive summary')}`, text: sections.join('\n') };
+				return { title: `${t('executiveSummary', 'Executive summary')}`, text: sections.join('\n') };
 			}
 			case 'quiz': {
-				return { title: `## ${t('quizQuestions', 'Quizvragen')}`, text: buildQuizText(quizIncludeAnswers) };
+				return { title: `${t('quizQuestions', 'Quizvragen')}`, text: buildQuizText(quizIncludeAnswers) };
 			}
 			case 'storytelling': {
-				return { title: `## ${t('storytelling')}`, text: storytellingData?.story || '' };
+				return { title: `${t('storytelling')}`, text: storytellingData?.story || '' };
 			}
 			case 'businessCase': {
-				return { title: `## ${t('businessCase', 'Zakelijke case')}`, text: businessCaseData?.businessCase || '' };
+				return { title: `${t('businessCase', 'Zakelijke case')}`, text: businessCaseData?.businessCase || '' };
 			}
 			case 'blog': {
-				return { title: `## ${t('blog')}`, text: blogData || '' };
+				return { title: `${t('blog')}`, text: blogData || '' };
 			}
 			case 'explain': {
 				if (!explainData) return { title: `## ${t('explain')}`, text: '' };
 				const parts: string[] = [];
-				parts.push(`**Complexity Level:** ${explainData.complexityLevel}`);
-				parts.push(`**Focus Area:** ${explainData.focusArea}`);
-				parts.push(`**Format:** ${explainData.format}`);
+				parts.push(`Complexity Level: ${explainData.complexityLevel}`);
+				parts.push(`Focus Area: ${explainData.focusArea}`);
+				parts.push(`Format: ${explainData.format}`);
 				parts.push('');
 				parts.push(explainData.explanation);
-				return { title: `## ${t('explain')}`, text: parts.join('\n') };
+				return { title: `${t('explain')}`, text: parts.join('\n') };
 			}
 			case 'socialPost': {
 				// Show full social post content in exports
@@ -397,9 +397,9 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 						content = postContent;
 					}
 				}
-				return { title: `## ${t('socialPost')}`, text: content };
+				return { title: `${t('socialPost')}`, text: content };
 			}
-      case 'socialPostX': {
+			case 'socialPostX': {
 				// Show full social post content in exports
 				const postContent = socialPostXData?.post;
 				let content = '';
@@ -410,7 +410,7 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 						content = postContent;
 					}
 				}
-				return { title: `## ${t('socialPostX')}`, text: content };
+				return { title: `${t('socialPostX')}`, text: content };
 			}
 		}
 	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, socialPostData, quizQuestions, quizIncludeAnswers]);
@@ -434,70 +434,114 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 		return section.text;
 	};
 
-	const composedText = useMemo(() => {
-		if (enabledItems.length === 0) return '';
-		const sections = enabledItems.map(i => {
-			const section = composeSectionText(i.type);
-			return `${section.title}\n\n${getOrCacheResult(i.type)}`;
-		});
-		return sections.join('\n\n\n');
-	}, [enabledItems, composeSectionText, resultsCache]);
+    // Helper: strip Markdown and control characters for clean plain text export/copy
+    const stripMarkdown = useCallback((text: string): string => {
+        if (!text) return '';
+        let out = text;
+        // Normalize newlines
+        out = out.replace(/\r\n/g, '\n');
+        // Remove headings markers (#)
+        out = out.replace(/^[ \t]*#{1,6}[ \t]*/gm, '');
+        // Bold/italic
+        out = out.replace(/(\*\*|__)(.*?)\1/g, '$2');
+        out = out.replace(/(\*|_)(.*?)\1/g, '$2');
+        // Code blocks and inline code
+        out = out.replace(/```[\s\S]*?```/g, '');
+        out = out.replace(/`([^`]+)`/g, '$1');
+        // Links and images
+        out = out.replace(/!\[(.*?)\]\((.*?)\)/g, '$1');
+        out = out.replace(/\[(.*?)\]\((.*?)\)/g, '$1 ($2)');
+        // Blockquotes
+        out = out.replace(/^[ \t]*>+[ \t]?/gm, '');
+        // List bullets normalization
+        out = out.replace(/[•·▪◦]/g, '-');
+        // Remove control/non-printable characters
+        out = out.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+        // Remove lines that are only formatting garbage like repeated ampersands or punctuation
+        out = out.replace(/^\s*[&*_~`\-]+\s*$/gm, '');
+        // Collapse stray repeated ampersands within whitespace-only contexts
+        out = out.replace(/^\s*&+\s*$/gm, '');
+        // Collapse excessive blank lines
+        out = out.replace(/\n{3,}/g, '\n\n');
+        return out.trim();
+    }, []);
 
-	const handleExportText = useCallback(() => {
-		if (!composedText) return;
-		const blob = new Blob([composedText], { type: 'text/plain;charset=utf-8' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = 'recap.txt';
-		document.body.appendChild(a);
-		a.click();
-		a.remove();
-		URL.revokeObjectURL(url);
-		if (onNotify) onNotify('Tekstbestand gedownload', 'success');
-	}, [composedText]);
+    const composedText = useMemo(() => {
+        if (enabledItems.length === 0) return '';
+        const sections = enabledItems.map(i => {
+            const section = composeSectionText(i.type);
+            return `${section.title}\n\n${getOrCacheResult(i.type)}`;
+        });
+        return sections.join('\n\n\n');
+    }, [enabledItems, composeSectionText, resultsCache]);
 
-	const handleExportPdf = useCallback(() => {
-		if (!enabledItems.length) return;
-		const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-		const pageWidth = doc.internal.pageSize.getWidth();
-		const pageHeight = doc.internal.pageSize.getHeight();
-		const margin = 40;
-		const contentWidth = pageWidth - margin * 2;
-		let y = margin;
+    // Plain-text version for export/copy: strip markdown from body
+    const composedPlainText = useMemo(() => {
+        if (enabledItems.length === 0) return '';
+        const sections = enabledItems.map(i => {
+            const section = composeSectionText(i.type);
+            const cleanBody = stripMarkdown(getOrCacheResult(i.type));
+            return `${section.title}\n\n${cleanBody}`;
+        });
+        return sections.join('\n\n\n');
+    }, [enabledItems, composeSectionText, resultsCache, stripMarkdown]);
 
-		enabledItems.forEach((it, idx) => {
-			if (idx > 0) { doc.addPage(); y = margin; }
-			const section = composeSectionText(it.type);
-			// Title
-			doc.setFont('Helvetica', 'bold');
-			doc.setFontSize(14);
-			const titleLines = doc.splitTextToSize(section.title, contentWidth);
-			for (const line of titleLines) {
-				if (y + 18 > pageHeight - margin) { doc.addPage(); y = margin; }
-				doc.text(line as unknown as string, margin, y);
-				y += 18;
-			}
-			// Body
-			doc.setFont('Helvetica', 'normal');
-			doc.setFontSize(11);
-			const bodyLines = doc.splitTextToSize(section.text || '', contentWidth) as unknown as string[];
-			for (const line of bodyLines) {
-				if (y + 14 > pageHeight - margin) { doc.addPage(); y = margin; }
-				doc.text(line, margin, y);
-				y += 14;
-			}
-		});
+    const handleExportText = useCallback(() => {
+        if (!composedPlainText) return;
+        const blob = new Blob([composedPlainText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'recap.txt';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        if (onNotify) onNotify('Tekstbestand gedownload', 'success');
+    }, [composedPlainText]);
 
-		doc.save('recap.pdf');
-		if (onNotify) onNotify('PDF gedownload', 'success');
-	}, [enabledItems, composeSectionText]);
+    const handleExportPdf = useCallback(() => {
+        if (!enabledItems.length) return;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 40;
+        const contentWidth = pageWidth - margin * 2;
+        let y = margin;
 
-	const handleMailComposed = useCallback(() => {
-		if (!composedText) return;
-		const locale = outputLanguage ? getBcp47Code(outputLanguage) : 'en-US';
-		const subject = `RecapHorizon ${startStamp || new Date().toLocaleString(locale)} - RecapHorizon`;
-		const body = composedText;
+        enabledItems.forEach((it, idx) => {
+            if (idx > 0) { doc.addPage(); y = margin; }
+            const section = composeSectionText(it.type);
+            // Title
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(14);
+            const titleLines = doc.splitTextToSize(section.title, contentWidth);
+            for (const line of titleLines) {
+                if (y + 18 > pageHeight - margin) { doc.addPage(); y = margin; }
+                doc.text(line as unknown as string, margin, y);
+                y += 18;
+            }
+            // Body
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(11);
+            const cleanBody = stripMarkdown(section.text || '');
+            const bodyLines = doc.splitTextToSize(cleanBody, contentWidth) as unknown as string[];
+            for (const line of bodyLines) {
+                if (y + 14 > pageHeight - margin) { doc.addPage(); y = margin; }
+                doc.text(line, margin, y);
+                y += 14;
+            }
+        });
+
+        doc.save('recap.pdf');
+        if (onNotify) onNotify('PDF gedownload', 'success');
+    }, [enabledItems, composeSectionText, stripMarkdown]);
+
+    const handleMailComposed = useCallback(() => {
+        if (!composedPlainText) return;
+        const locale = outputLanguage ? getBcp47Code(outputLanguage) : 'en-US';
+        const subject = `RecapHorizon ${startStamp || new Date().toLocaleString(locale)} - RecapHorizon`;
+        const body = composedPlainText;
 		
 
 		
@@ -522,7 +566,7 @@ To send via email:
 			console.error('Failed to copy to clipboard:', error);
 			if (onNotify) onNotify('Failed to copy content to clipboard. Please try again.', 'error');
 		}
-	}, [composedText, startStamp, onNotify]);
+    }, [composedPlainText, startStamp, onNotify]);
 
 	return (
 		<div className={`w-full mb-3 border ${borderColorClass} rounded-lg bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm`}>

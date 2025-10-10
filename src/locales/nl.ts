@@ -393,6 +393,7 @@ export const nl = {
   benefits: "Voordelen",
   callToAction: "Call to Action",
   quizQuestions: "Quizvragen",
+  correctAnswer: "Correct antwoord",
   numberOfQuestions: "Aantal vragen (1-5)",
   optionsPerQuestion: "Opties per vraag",
   includeAnswers: "Inclusief antwoorden",

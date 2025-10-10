@@ -292,6 +292,7 @@ export const pt = {
   benefits: "Benefícios",
   callToAction: "Chamada para Ação",
   quizQuestions: "Perguntas do Quiz",
+  correctAnswer: "Resposta correta",
   numberOfQuestions: "Número de perguntas (1-5)",
   optionsPerQuestion: "Opções por pergunta",
   includeAnswers: "Incluir respostas",

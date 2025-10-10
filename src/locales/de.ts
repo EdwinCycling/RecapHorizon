@@ -296,6 +296,7 @@ export const de = {
   benefits: "Vorteile",
   callToAction: "Call to Action",
   quizQuestions: "Quiz-Fragen",
+  correctAnswer: "Richtige Antwort",
   numberOfQuestions: "Anzahl Fragen (1-5)",
   optionsPerQuestion: "Optionen pro Frage",
   includeAnswers: "Antworten einschließen",

@@ -301,6 +301,7 @@ export const es = {
   benefits: "Beneficios",
   callToAction: "Llamada a la Acción",
   quizQuestions: "Preguntas del Quiz",
+  correctAnswer: "Respuesta correcta",
   numberOfQuestions: "Número de preguntas (1-5)",
   optionsPerQuestion: "Opciones por pregunta",
   includeAnswers: "Incluir respuestas",

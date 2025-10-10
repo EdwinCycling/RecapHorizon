@@ -301,6 +301,7 @@ export const fr = {
   benefits: "Avantages",
   callToAction: "Appel à l'action",
   quizQuestions: "Questions de Quiz",
+  correctAnswer: "Réponse correcte",
   numberOfQuestions: "Nombre de questions (1-5)",
   optionsPerQuestion: "Options par question",
   includeAnswers: "Inclure les réponses",

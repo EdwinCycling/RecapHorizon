@@ -430,6 +430,7 @@ export const en = {
   benefits: "Benefits",
   callToAction: "Call to Action",
   quizQuestions: "Quiz Questions",
+  correctAnswer: "Correct answer",
   numberOfQuestions: "Number of questions (1-5)",
   optionsPerQuestion: "Options per question",
   includeAnswers: "Include answers",

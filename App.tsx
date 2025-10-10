@@ -35,6 +35,7 @@ import { useTranslation } from './src/hooks/useTranslation';
 import { Language } from './src/locales';
 import { AudioRecorder } from './src/utils/AudioRecorder';
 import MobileAudioHelpModal from './src/components/MobileAudioHelpModal.tsx';
+import AudioUploadHelpModal from './src/components/AudioUploadHelpModal.tsx';
 import ImageUploadHelpModal from './src/components/ImageUploadHelpModal.tsx';
 import EmailImportHelpModal from './src/components/EmailImportHelpModal.tsx';
 import EmailUploadModal from './src/components/EmailUploadModal.tsx';
@@ -60,6 +61,7 @@ import AudioLimitModal from './src/components/AudioLimitModal';
 import QuotaExceededModal from './src/components/QuotaExceededModal';
 import QuotaWarningBanner from './src/components/QuotaWarningBanner';
 import BlurredLoadingOverlay from './src/components/BlurredLoadingOverlay';
+import jsPDF from 'jspdf';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -769,21 +771,23 @@ const HamburgerMenu: React.FC<{
                 </button>
               )}
 
-              {/* Settings */}
-              <button
-                onClick={() => {
-                  onShowSettings();
-                  onToggle();
-                }}
-                className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors ${
-                  theme === 'dark'
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <SettingsIcon className="w-5 h-5" />
-                <span>{t('settings')}</span>
-              </button>
+              {/* Settings (only when logged in) */}
+              {user && (
+                <button
+                  onClick={() => {
+                    onShowSettings();
+                    onToggle();
+                  }}
+                  className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors ${
+                    theme === 'dark'
+                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <SettingsIcon className="w-5 h-5" />
+                  <span>{t('settings')}</span>
+                </button>
+              )}
 
               {/* Pricing */}
               <button
@@ -817,8 +821,8 @@ const HamburgerMenu: React.FC<{
                 <span>{t('faq')}</span>
               </button>
 
-              {/* Referral Program - visible for all tiers during testing */}
-              {true && (
+              {/* Referral Program (only when logged in) */}
+              {user && (
                 <div className={`mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   <div className="px-4 py-2 text-xs uppercase opacity-70">{t('referralProgramTitle', 'Referral programma')}</div>
                   <button
@@ -1408,6 +1412,9 @@ export default function App() {
         targetLength = 500;
         maxLength = 1000;
       }
+      // Enforce platform-specific limits strictly
+      maxLength = Math.min(maxLength, constraints.maxChars);
+      targetLength = Math.max(targetLength, constraints.minChars);
       
       // Define comprehensive tone instructions
       const toneInstructions = {
@@ -1433,15 +1440,17 @@ export default function App() {
       })();
       
       const posts: string[] = [];
+      // Enforce single post for non X/BlueSky platforms
+      const seriesCount = platform === 'X / BlueSky' ? postCount : 1;
       const providerTier = (userSubscription as unknown as ProviderSubscriptionTier);
       
-      if (postCount === 1) {
+      if (seriesCount === 1) {
         // SINGLE POST GENERATION - Strikte instructies voor één bericht
         const prompt = `Maak één ${platform} bericht in het Nederlands van de volgende tekst.
 
 TOON: ${toneInstructions[tone]}
 PLATFORM RICHTLIJNEN: ${platformGuidelines[platform]}
-LENGTE: Het bericht moet tussen ${targetLength} en ${maxLength} karakters lang zijn.
+LENGTE: Het bericht moet tussen ${targetLength} en ${maxLength} karakters lang zijn. Streef naar een lengte binnen 5% van ${targetLength} karakters en GA NIET onder ${Math.floor(targetLength * 0.9)} karakters.
 
 ABSOLUTE VEREISTEN:
 - NOOIT beginnen met "Podcast transcriptie", datum informatie of metadata
@@ -1457,7 +1466,7 @@ ABSOLUTE VEREISTEN:
 - Begin met een pakkende openingszin
 - Eindig met een call-to-action of vraag
 
-KARAKTERTELLING: Tel de karakters en zorg dat het bericht precies tussen ${targetLength}-${maxLength} karakters valt.
+KARAKTERTELLING: Tel de karakters en zorg dat het bericht strikt tussen ${targetLength}-${maxLength} karakters valt, bij voorkeur binnen 5% van ${targetLength}. Als het korter dreigt te worden: voeg concrete details toe (geen fluff) zodat het aan de minimumlengte voldoet.
 
 Tekst: ${content}`;
 
@@ -1495,11 +1504,11 @@ Tekst: ${content}`;
         
       } else {
         // MULTIPLE POSTS GENERATION - JSON formaat voor meerdere berichten
-        const prompt = `Maak ${postCount} ${platform} berichten in het Nederlands van de volgende tekst. Splits de inhoud logisch op over ${postCount} berichten.
+        const prompt = `Maak ${seriesCount} ${platform} berichten in het Nederlands van de volgende tekst. Splits de inhoud logisch op over ${seriesCount} berichten als een samenhangende serie waarbij elk bericht voortbouwt op het vorige en samen één geheel vormt. Verwijs subtiel naar het vorige/de volgende post zodat lezers het als serie herkennen (zonder metadata). 
 
 TOON: ${toneInstructions[tone]}
 PLATFORM RICHTLIJNEN: ${platformGuidelines[platform]}
-LENGTE: Elk bericht moet tussen ${targetLength} en ${maxLength} karakters lang zijn.
+LENGTE: Elk bericht moet tussen ${targetLength} en ${maxLength} karakters lang zijn. Streef per bericht naar een lengte binnen 5% van ${targetLength} karakters en GA NIET onder ${Math.floor(targetLength * 0.9)} karakters.
 
 ABSOLUTE VEREISTEN:
 - NOOIT beginnen met "Podcast transcriptie", datum informatie of metadata
@@ -1516,7 +1525,7 @@ ABSOLUTE VEREISTEN:
 - Eerste bericht: pakkende introductie
 - Laatste bericht: sterke conclusie of call-to-action
 
-KARAKTERTELLING: Tel de karakters van elk bericht en zorg dat elk bericht precies tussen ${targetLength}-${maxLength} karakters valt.
+KARAKTERTELLING: Tel de karakters van elk bericht en zorg dat elk bericht strikt tussen ${targetLength}-${maxLength} karakters valt, bij voorkeur binnen 5% van ${targetLength}. Als een bericht korter dreigt te zijn: voeg concrete details toe (geen fluff) zodat het aan de minimumlengte voldoet.
 
 VERPLICHT JSON FORMAAT:
 Geef je antwoord terug in dit exacte JSON formaat:
@@ -1576,7 +1585,7 @@ Tekst: ${content}`;
           
           // Add posts with numbering
           jsonData.posts.forEach((post: string, index: number) => {
-            const numberedPost = `${index + 1}/${postCount} ${post.trim()}`;
+            const numberedPost = `${index + 1}/${seriesCount} ${post.trim()}`;
             posts.push(numberedPost);
           });
           
@@ -1584,9 +1593,9 @@ Tekst: ${content}`;
           console.error('Error parsing JSON response:', parseError);
           // Fallback: split response by lines or paragraphs
           const result = response.text.trim();
-          const fallbackPosts = result.split(/\n\s*\n/).filter(p => p.trim()).slice(0, postCount);
+          const fallbackPosts = result.split(/\n\s*\n/).filter(p => p.trim()).slice(0, seriesCount);
           fallbackPosts.forEach((post: string, index: number) => {
-            const numberedPost = `${index + 1}/${postCount} ${post.trim()}`;
+            const numberedPost = `${index + 1}/${seriesCount} ${post.trim()}`;
             posts.push(numberedPost);
           });
         }
@@ -1899,8 +1908,21 @@ Prompt for AI image generator: ${imagePrompt}`;
       const ai = new GoogleGenAI({ apiKey: apiKey });
       // Using configured model for general analysis
       const modelName = await modelManager.getModelForFunction('generalAnalysis');
-      const sys = `You generate MCQs based on a transcript. Return ONLY a JSON array of objects with keys: question (string), options (array of {label, text}), correct_answer_label, correct_answer_text. Ensure exactly one correct answer per question. Labels are A, B, C, D but limited to requested count.`;
-      const prompt = `${sys}\n\nConstraints: number_of_questions=${quizNumQuestions}, number_of_options=${quizNumOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
+      const inputLanguage = getGeminiCode(language || 'en');
+      const outputLanguageCode = getGeminiCode(outputLang || language || 'en');
+      const sys = `You generate MCQs based on a transcript.
+
+Return ONLY a JSON array of objects with keys:
+- question (string)
+- options (array of {label, text})
+- correct_answer_label
+- correct_answer_text
+
+Constraints:
+- Ensure exactly one correct answer per question.
+- Labels are A, B, C, D but limited to requested count.
+- Output language for question and option text: ${outputLanguageCode}.`;
+      const prompt = `${sys}\n\nConstraints: number_of_questions=${quizNumQuestions}, number_of_options=${quizNumOptions}.\nTranscript (input language: ${inputLanguage}):\n${getTranscriptSlice(transcript, 18000)}`;
       const res = await ai.models.generateContent({ model: modelName, contents: prompt });
       
       // Track token usage with TokenManager
@@ -6570,6 +6592,8 @@ ${transcript}
           console.log(`[${transcribeTimestamp}] handleTranscribe: Segment ${segmentIndex} grootte: ${(segmentBlob.size/1024/1024).toFixed(2)}MB`);
           const formData = new FormData();
           formData.append('audio', segmentBlob, `segment-${segmentIndex}.wav`);
+          // Forward selected source language to backend for AssemblyAI
+          formData.append('language_code', (language || 'nl'));
           console.log(`[${transcribeTimestamp}] handleTranscribe: POST naar ${transcribeStartUrl} voor segment ${segmentIndex}`);
 
           const startResponse = await fetchWithTimeoutAndRetry(
@@ -6749,6 +6773,59 @@ ${transcript}
     } catch (e) {
       console.error('Download failed', e);
       displayToast('Failed to download file. Please try again.', 'error');
+    }
+  };
+
+  // Strip markdown and control characters for clean exports
+  const stripMarkdown = (text: string): string => {
+    if (!text) return '';
+    let cleaned = text.replace(/\r\n|\r/g, '\n');
+    cleaned = cleaned
+      .replace(/^\s*#{1,6}\s+/gm, '') // headings
+      .replace(/\*\*(.*?)\*\*/g, '$1') // bold
+      .replace(/\*(.*?)\*/g, '$1') // italic
+      .replace(/`{1,3}[\s\S]*?`{1,3}/g, '') // code blocks/inline
+      .replace(/!\[[^\]]*\]\([^\)]*\)/g, '') // images
+      .replace(/\[[^\]]*\]\([^\)]*\)/g, '$1') // links
+      .replace(/^>\s+/gm, '') // blockquotes
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // control chars
+      .replace(/\n{3,}/g, '\n\n'); // collapse
+    return cleaned.trim();
+  };
+
+  const handleExportTranscriptPdf = () => {
+    try {
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const margin = 40;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const usableWidth = pageWidth - margin * 2;
+      let y = margin;
+
+      // Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(t('transcript'), margin, y);
+      y += 22;
+
+      // Body
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      const bodyText = stripMarkdown(transcript || t('noTranscriptAvailable'));
+      const lines = doc.splitTextToSize(bodyText, usableWidth);
+      for (const line of lines) {
+        if (y > doc.internal.pageSize.getHeight() - margin) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(line, margin, y);
+        y += 16;
+      }
+
+      doc.save('transcript.pdf');
+      displayToast(t('downloadStarted', 'Download gestart'), 'success');
+    } catch (e) {
+      console.error('PDF export failed', e);
+      displayToast(t('downloadFailed', 'Download mislukt'), 'error');
     }
   };
   
@@ -7732,7 +7809,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\nCorrect: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -7829,7 +7906,62 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         // Handle transcript mode
         if (mainMode === 'transcript' && activeView === 'transcript') {
             return (
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                    <div className="absolute top-4 right-2 sm:right-8">
+                        <div 
+                            ref={actionButtonsRef}
+                            className="relative"
+                            onMouseEnter={() => setShowActionButtons(true)}
+                            onMouseLeave={() => setShowActionButtons(false)}
+                        >
+                            <button 
+                                className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                aria-label={t('actions')}
+                                onClick={() => setShowActionButtons(!showActionButtons)}
+                                title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="5" r="2"/>
+                                    <circle cx="12" cy="12" r="2"/>
+                                    <circle cx="12" cy="19" r="2"/>
+                                </svg>
+                            </button>
+                            {showActionButtons && (
+                                <div 
+                                    className="absolute top-0 right-2 sm:right-10 flex flex-wrap gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 mr-0 sm:-mr-2 max-w-[calc(100vw-2rem)]"
+                                    onMouseEnter={() => setShowActionButtons(true)}
+                                    onMouseLeave={() => setShowActionButtons(false)}
+                                >
+                                    <button onClick={async () => {
+                                        try {
+                                            await copyToClipboard(transcript || '');
+                                            displayToast(t('copiedToClipboard'), 'success');
+                                        } catch {
+                                            displayToast(t('copyFailed'), 'error');
+                                        }
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                        <CopyIcon className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={() => {
+                                        const txt = transcript || t('noTranscriptAvailable');
+                                        downloadTextFile(txt, 'transcript.txt');
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')} title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                        ⬇️
+                                    </button>
+                                    <button onClick={() => {
+                                        const content = transcript || t('noTranscriptAvailable');
+                                        const { subject, body } = generateEmailContent(t('transcript'), content);
+                                        copyToClipboardForEmail(subject, body);
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyForEmail')} title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                        ✉️
+                                    </button>
+                                    <button onClick={handleExportTranscriptPdf} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('downloadPdf', 'Download PDF')} title={window.innerWidth > 768 ? t('downloadPdf', 'Download PDF') : undefined}>
+                                        📄
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <div className="prose dark:prose-invert max-w-none">
                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
                             {t('transcript')}
@@ -7907,7 +8039,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
             );
             return (
                 <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                    <div className="absolute top-4 right-8">
+                    <div className="absolute top-4 right-2 sm:right-8">
                         <div 
                             ref={actionButtonsRef}
                             className="relative"
@@ -7928,7 +8060,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             </button>
                             {showActionButtons && (
                                 <div 
-                                    className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                    className="absolute top-0 right-2 sm:right-10 flex flex-wrap gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 mr-0 sm:-mr-2 max-w-[calc(100vw-2rem)]"
                                     onMouseEnter={() => setShowActionButtons(true)}
                                     onMouseLeave={() => setShowActionButtons(false)}
                                 >
@@ -8089,7 +8221,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                     {/* Output */}
                     {storytellingData ? (
                         <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                            <div className="absolute top-4 right-8">
+                            <div className="absolute top-4 right-2 sm:right-8">
                                 <div 
                                     ref={actionButtonsRef}
                                     className="relative"
@@ -8110,7 +8242,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                     </button>
                                     {showActionButtons && (
                                         <div 
-                                            className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                            className="absolute top-0 right-2 sm:right-10 flex flex-wrap gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 mr-0 sm:-mr-2 max-w-[calc(100vw-2rem)]"
                                             onMouseEnter={() => setShowActionButtons(true)}
                                             onMouseLeave={() => setShowActionButtons(false)}
                                         >
@@ -8876,7 +9008,15 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             </label>
                             <select
                                 value={socialPostOptions.platform}
-                                onChange={(e) => setSocialPostOptions(prev => ({ ...prev, platform: e.target.value as any }))}
+                                onChange={(e) => {
+                                    const newPlatform = e.target.value as any;
+                                    setSocialPostOptions(prev => ({
+                                        ...prev,
+                                        platform: newPlatform,
+                                        // Force single post for non X/BlueSky platforms
+                                        postCount: newPlatform === 'X / BlueSky' ? prev.postCount : 1
+                                    }));
+                                }}
                                 className="w-full p-3 border border-slate-300 dark:border-slate-500 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                             >
                                 <option value="LinkedIn">LinkedIn</option>
@@ -8884,6 +9024,11 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 <option value="Instagram">Instagram</option>
                                 <option value="X / BlueSky">X / BlueSky</option>
                             </select>
+                            {socialPostOptions.platform !== 'X / BlueSky' && (
+                                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                                    Meerdere berichten zijn alleen beschikbaar voor X / BlueSky.
+                                </p>
+                            )}
                         </div>
 
                         {/* Tone Selection */}
@@ -8937,9 +9082,9 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                             <select
                                 value={socialPostOptions.postCount}
                                 onChange={(e) => setSocialPostOptions(prev => ({ ...prev, postCount: parseInt(e.target.value) }))}
-                                disabled={socialPostOptions.length === 'medium' || socialPostOptions.length === 'long'}
+                                disabled={socialPostOptions.length === 'medium' || socialPostOptions.length === 'long' || socialPostOptions.platform !== 'X / BlueSky'}
                                 className={`w-full p-3 border rounded-lg text-slate-900 dark:text-slate-100 transition-colors ${
-                                    (socialPostOptions.length === 'medium' || socialPostOptions.length === 'long') 
+                                    (socialPostOptions.length === 'medium' || socialPostOptions.length === 'long' || socialPostOptions.platform !== 'X / BlueSky') 
                                         ? 'border-slate-200 dark:border-slate-600 bg-slate-100 dark:bg-slate-600 opacity-50 cursor-not-allowed' 
                                         : 'border-slate-300 dark:border-slate-500 bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500'
                                 }`}
@@ -9019,7 +9164,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         const content = analysisContent[activeView];
         return (
             <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
-                <div className="absolute top-4 right-8">
+                <div className="absolute top-4 right-2 sm:right-8">
                     <div 
                         ref={actionButtonsRef}
                         className="relative"
@@ -9040,7 +9185,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                         </button>
                         {showActionButtons && (
                             <div 
-                                className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                className="absolute top-0 right-2 sm:right-10 flex flex-wrap gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 mr-0 sm:-mr-2 max-w-[calc(100vw-2rem)]"
                                 onMouseEnter={() => setShowActionButtons(true)}
                                 onMouseLeave={() => setShowActionButtons(false)}
                             >
@@ -9214,7 +9359,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
              />
              {/* Main Navigation Dropdown */}
              <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 border-b border-gray-200 dark:border-slate-600 shadow-sm">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap min-w-0">
                     <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 min-w-fit">
                         Kies modus:
                     </label>
@@ -9233,7 +9378,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 // Keep current view for actions mode
                             }
                         }}
-                        className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer"
+                        className="w-full sm:flex-1 min-w-0 max-w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer"
                     >
                         <option value="transcript">Transcript</option>
                         <option value="analysis">Analyse Resultaten</option>
@@ -9243,7 +9388,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                 
                 {/* Secondary Analysis Dropdown */}
                 {mainMode === 'analysis' && (
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-2 sm:gap-4 mt-4 min-w-0">
                         <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 sm:min-w-fit">
                             Kies analyse:
                         </label>
@@ -9259,7 +9404,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                                 }
                                 setError(null); // Clear error messages when switching analysis
                             }}
-                            className="w-full sm:flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer text-sm sm:text-base min-h-[44px] touch-manipulation"
+                            className="w-full sm:flex-1 min-w-0 max-w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer text-sm sm:text-base min-h-[44px] touch-manipulation"
                         >
                             <option value="">-- Selecteer een analyse --</option>
                             <option value="summary">{t('summary')}</option>
@@ -9586,6 +9731,14 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                           setLoadingText('');
                           setIsAnonymized(false);
                           chatInstanceRef.current = null;
+                          // Clear social/email related states
+                          setSocialPostData(null);
+                          setSocialPostXData(null);
+                          setEmailAddresses([]);
+                          // Reset tab caches
+                          try { resetTabCache(); } catch {}
+                          // Bump startStamp to trigger full panel reset
+                          setRecordingStartMs(Date.now());
                         }} 
                         className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[120px]"
                       >
@@ -9658,6 +9811,14 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
                       setLoadingText('');
                       setIsAnonymized(false);
                       chatInstanceRef.current = null;
+                      // Clear social/email related states
+                      setSocialPostData(null);
+                      setSocialPostXData(null);
+                      setEmailAddresses([]);
+                      // Reset tab caches
+                      try { resetTabCache(); } catch {}
+                      // Bump startStamp to trigger full panel reset
+                      setRecordingStartMs(Date.now());
                     }} 
                     className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[120px]"
                   >
@@ -9704,7 +9865,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
 
       <WaitlistModal isOpen={waitlistModal.isOpen} onClose={waitlistModal.close} t={t} waitlistEmail={waitlistEmail} setWaitlistEmail={setWaitlistEmail} addToWaitlist={addToWaitlist} />
 
-      <MobileAudioHelpModal isOpen={audioUploadHelpModal.isOpen} onClose={audioUploadHelpModal.close} t={t} />
+      <AudioUploadHelpModal isOpen={audioUploadHelpModal.isOpen} onClose={audioUploadHelpModal.close} t={t} />
 
       <AudioLimitModal 
         isOpen={showAudioLimitModal} 

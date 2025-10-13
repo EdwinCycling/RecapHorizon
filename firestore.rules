@@ -1,0 +1,221 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for security
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches('.*@.*\\..*');
+    }
+    
+    function isValidTimestamp(ts) {
+      return ts is timestamp;
+    }
+
+    // Masked email strings should NOT be valid full emails
+    function isMaskedEmail(email) {
+      return email is string && !(email.matches('.*@.*\\..*'));
+    }
+
+    // Valid subscription tiers for referral records
+    function isValidTier(tier) {
+      return tier in ['free', 'silver', 'gold', 'enterprise', 'diamond'];
+    }
+    
+    // Helper: detect writes that touch referralProfile
+    function touchesReferralProfile() {
+      return request.resource.data.keys().hasAny(['referralProfile']);
+    }
+
+    // User profiles - users can only access their own data, but cannot update referralProfile client-side
+    // Also allow reading user data for referral validation (limited fields only)
+    match /users/{userId} {
+      // Users may only read their own user document.
+      // Note: Rule-level get() in other match blocks can still read user docs for validation without granting client read access.
+      allow read: if isOwner(userId);
+      // Allow creating a minimal user document for first-time users without requiring an email
+      // If an email is provided, it must be valid. Referral profile cannot be touched client-side.
+      allow create: if isAuthenticated() && request.auth.uid == userId
+        && request.resource.data.keys().hasAll(['createdAt'])
+        && !touchesReferralProfile()
+        && (!request.resource.data.keys().hasAny(['email']) || isValidEmail(request.resource.data.email))
+        && isValidTimestamp(request.resource.data.createdAt);
+      // Allow updates excluding referralProfile; referralProfile must be written server-side only
+      // Also allow token and usage tracking updates
+      allow update: if isOwner(userId) && !touchesReferralProfile();
+      allow delete: if false;
+    }
+    
+    // User sessions - users can only access their own sessions
+    match /user_sessions/{sessionId} {
+      // Allow read/write if the session document belongs to the authenticated user
+      allow read, write: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.userId == request.auth.uid)
+      );
+      // Allow create if the session document is being created for the authenticated user
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Transcripts - users can only access their own transcripts
+    match /transcripts/{transcriptId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'createdAt', 'content']) &&
+        isValidTimestamp(request.resource.data.createdAt);
+    }
+    
+    // Analyses - users can only access their own analyses
+    match /analyses/{analysisId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId', 'createdAt', 'type']) &&
+        isValidTimestamp(request.resource.data.createdAt);
+    }
+    
+    // User preferences - users can only access their own preferences
+    match /userPreferences/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Token usage - users can only access their own usage docs
+    match /tokenUsage/{docId} {
+      // Allow read if the document belongs to the authenticated user
+      allow read: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.userId == request.auth.uid)
+      );
+      // Allow write if the target (existing or new) doc belongs to the authenticated user
+      allow write: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.userId == request.auth.uid)
+      );
+      // Allow create for new token usage documents
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Waitlist - allow creation with email validation, no read/update/delete
+    match /waitlist/{waitlistId} {
+      allow create: if request.resource.data.keys().hasAll(['email', 'createdAt']) &&
+        isValidEmail(request.resource.data.email) &&
+        isValidTimestamp(request.resource.data.createdAt) &&
+        request.resource.data.status == 'pending';
+      // No read, update, or delete allowed for privacy
+    }
+    
+    // Email confirmations - allow creation and limited read for verification
+    match /email_confirmations/{confirmationId} {
+      allow create: if request.resource.data.keys().hasAll(['email', 'token', 'createdAt', 'expiresAt']) &&
+        isValidEmail(request.resource.data.email) &&
+        request.resource.data.token is string &&
+        isValidTimestamp(request.resource.data.createdAt) &&
+        request.resource.data.expiresAt is number &&
+        request.resource.data.confirmed == false;
+      
+      // Allow read only for verification purposes (token-based)
+      allow read: if resource.data.token is string;
+      
+      // Allow update only to mark as confirmed
+      allow update: if resource.data.confirmed == false &&
+        request.resource.data.confirmed == true &&
+        request.resource.data.confirmedAt is number;
+    }
+    
+    // Subscription data - users can only read their own subscription info
+    match /subscriptions/{userId} {
+      allow read: if isOwner(userId);
+      // Subscription updates should be handled server-side only
+    }
+    
+    // Usage tracking - users can read their own usage, system can write
+    match /usage/{userId} {
+      allow read: if isOwner(userId);
+      // Usage updates should be handled server-side only
+    }
+    
+    // Admin collections - completely restricted
+    match /admin/{document=**} {
+      allow read, write: if false; // Admin access should be server-side only
+    }
+    
+    // System logs - completely restricted
+    match /logs/{document=**} {
+      allow read, write: if false; // Logs should be server-side only
+    }
+    
+    // Settings collection - read only for authenticated users, no writes allowed
+    match /settings/{document} {
+      allow read: if isAuthenticated();
+      allow write: if false; // No writes allowed to settings
+    }
+    
+    // Pricing tiers - read only for authenticated users
+    match /pricing_tiers/{tierId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Pricing tiers should be managed server-side only
+    }
+    
+    // Stripe webhooks - completely restricted (server-side only)
+    match /stripe_webhooks/{webhookId} {
+      allow read, write: if false; // Webhook processing should be server-side only
+    }
+
+    // Referral records - created by the referred user only, readable by referrer
+    match /referrals/{referredUid} {
+      // Only the referrer can read their referrals
+      allow read: if isAuthenticated() && resource.data.referrerUid == request.auth.uid;
+
+      // Allow create only by the referred user, and only if it links to a valid referrer code
+      allow create: if isAuthenticated()
+        && request.auth.uid == referredUid
+        && request.resource.data.keys().hasAll(['referrerUid', 'referredUid', 'emailMasked', 'currentTier', 'monthStartTier', 'createdAt'])
+        && request.resource.data.referredUid == referredUid
+        && request.resource.data.referrerUid is string
+        && isMaskedEmail(request.resource.data.emailMasked)
+        && isValidTier(request.resource.data.currentTier)
+        && isValidTier(request.resource.data.monthStartTier)
+        && request.resource.data.currentTier == 'free'
+        && request.resource.data.monthStartTier == 'free'
+        && isValidTimestamp(request.resource.data.createdAt)
+        // Cross-document validation: referred user's user doc must contain referrerCode
+        // that matches the referrer's referralProfile.code
+        && get(/databases/$(database)/documents/users/$(referredUid)).exists()
+        && get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).exists()
+        && get(/databases/$(database)/documents/users/$(referredUid)).data.referrerCode is string
+        && get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).data.referralProfile.code is string
+        && get(/databases/$(database)/documents/users/$(referredUid)).data.referrerCode == get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).data.referralProfile.code;
+
+      // No client-side updates or deletes to referral records
+      allow update, delete: if false;
+    }
+
+    // Rate limiting collection - server-side only
+    match /rateLimits/{document} {
+      // No client-side access to rate limiting data
+      allow read, write: if false;
+    }
+
+    // Referral codes collection - public read access for validation
+    match /referral_codes/{referralCode} {
+      // Allow anyone to read referral codes for validation
+      allow read: if true;
+      // Only server-side writes allowed
+      allow write: if false;
+    }
+
+    // Default deny rule for any unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

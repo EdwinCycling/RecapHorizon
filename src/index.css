@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Improve native select dropdown contrast in light and dark modes */
+select {
+  color: #0f172a; /* slate-900 */
+  background-color: #ffffff;
+}
+select option {
+  color: #0f172a; /* slate-900 */
+  background-color: #ffffff;
+}
+.dark select {
+  color: #e2e8f0; /* slate-200 */
+  background-color: #0f172a; /* slate-900 */
+}
+.dark select option {
+  color: #e2e8f0; /* slate-200 */
+  background-color: #0f172a; /* slate-900 */
+}
+
+/* Align native controls (e.g., selects) with current theme for better UA rendering */
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }

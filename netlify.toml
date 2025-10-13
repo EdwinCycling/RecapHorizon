@@ -1,0 +1,109 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  SECRETS_SCAN_ENABLED = "false"
+
+[functions]
+directory = "netlify/functions"
+node_bundler = "esbuild"
+
+[functions."transcribe-start"]
+timeout = 60
+
+[functions."transcribe-status"]
+timeout = 60
+
+# SEO and Performance Headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(self), geolocation=()"
+
+# PWA Headers for Service Worker and Manifest
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=86400"
+
+# Cache static assets for better performance
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "image/png"
+
+[[headers]]
+  for = "*.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "image/x-icon"
+
+# Favicon redirect
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/logo.png"
+  status = 200
+
+# SPA redirects for SEO
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Specific page redirects for better SEO
+[[redirects]]
+  from = "/pricing"
+  to = "/#pricing"
+  status = 301
+
+[[redirects]]
+  from = "/faq"
+  to = "/#faq"
+  status = 301
+
+[[redirects]]
+  from = "/meetings"
+  to = "/#meetings"
+  status = 301
+
+[[redirects]]
+  from = "/webinars"
+  to = "/#webinars"
+  status = 301
+
+[dev]
+  port = 8888
+  targetPort = 3002
+  publish = "dist"
+  autoLaunch = false
+
+

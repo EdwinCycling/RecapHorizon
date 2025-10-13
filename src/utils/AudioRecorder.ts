@@ -1,0 +1,714 @@
+// Enhanced AudioRecorder for mobile device compatibility
+// Handles common web-specific interruptions and provides robust recording
+
+import { TFunction } from 'i18next';
+import { getUserMonthlyAudioMinutes, incrementUserMonthlyAudioMinutes, getUserSubscriptionTier } from '../firebase';
+import { SubscriptionTier, TierLimits } from '../../types';
+import { subscriptionService } from '../subscriptionService';
+
+export type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped' | 'error' | 'limit_reached';
+
+export interface AudioRecorderCallbacks {
+  onStateChange?: (state: RecordingState) => void;
+  onDataAvailable?: (chunks: Blob[]) => void;
+  onStop?: (audioBlob: Blob) => void;
+  onError?: (error: Error) => void;
+  onLimitReached?: (limitType: 'session' | 'monthly', tier: SubscriptionTier) => void;
+}
+
+type TranslationFunction = (key: string, fallback?: string) => string;
+
+export class AudioRecorder {
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: Blob[] = [];
+  private stream: MediaStream | null = null;
+  private audioContext: AudioContext | null = null;
+  private analyser: AnalyserNode | null = null;
+  private _isRecording: boolean = false;
+  private _isPaused: boolean = false;
+  private onDataAvailable?: (chunks: Blob[]) => void;
+  private onError?: (error: Error) => void;
+  private onStateChange?: (state: 'recording' | 'paused' | 'stopped' | 'error') => void;
+  private onStop?: (blob: Blob) => void;
+  private isMobile: boolean = false;
+  private t?: TranslationFunction;
+  private wakeLock: any = null; // Wake Lock to prevent screen sleep on mobile
+  private userId: string | null = null;
+  private recordingStartTime: number = 0;
+  private limitCheckInterval: NodeJS.Timeout | null = null;
+  private userTier: SubscriptionTier = SubscriptionTier.FREE;
+  private tierLimits: TierLimits | null = null;
+  private monthlyMinutesUsed: number = 0;
+  public onLimitReached?: (limitType: 'session' | 'monthly', tier: SubscriptionTier) => void;
+
+  constructor(t?: TranslationFunction, userId?: string, callbacks?: AudioRecorderCallbacks) {
+    this.t = t;
+    this.userId = userId || null;
+    
+    // Set callbacks
+    if (callbacks) {
+      this.onStateChange = callbacks.onStateChange;
+      this.onDataAvailable = callbacks.onDataAvailable;
+      this.onStop = callbacks.onStop;
+      this.onError = callbacks.onError;
+      this.onLimitReached = callbacks.onLimitReached;
+    }
+    
+    this.detectMobile();
+    this.setupVisibilityListener();
+    this.setupAudioContextListener();
+    this.checkForInterruptedRecording();
+  }
+
+  // Public getters for recording state
+  public get isRecording(): boolean { return this._isRecording; }
+  public get isPaused(): boolean { return this._isPaused; }
+
+  public getAnalyser(): AnalyserNode | null { return this.analyser; }
+
+  private detectMobile(): void {
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+  }
+
+  // Set callback functions
+  setCallbacks(callbacks: {
+    onDataAvailable?: (chunks: Blob[]) => void;
+    onError?: (error: Error) => void;
+    onStateChange?: (state: 'recording' | 'paused' | 'stopped' | 'error') => void;
+    onStop?: (blob: Blob) => void;
+  }): void {
+    this.onDataAvailable = callbacks.onDataAvailable;
+    this.onError = callbacks.onError;
+    this.onStateChange = callbacks.onStateChange;
+    this.onStop = callbacks.onStop;
+  }
+
+  // Initialize user limits and tier information
+  private async initializeUserLimits(): Promise<void> {
+    if (!this.userId) {
+      console.warn('No userId provided, using Free tier limits');
+      this.userTier = SubscriptionTier.FREE;
+      this.tierLimits = subscriptionService.getTierLimits(this.userTier);
+      this.monthlyMinutesUsed = 0;
+      return;
+    }
+
+    try {
+      // Get user's subscription tier
+      this.userTier = await getUserSubscriptionTier(this.userId) as SubscriptionTier;
+      this.tierLimits = subscriptionService.getTierLimits(this.userTier);
+      
+      // Get current monthly usage
+      const monthlyUsage = await getUserMonthlyAudioMinutes(this.userId);
+      this.monthlyMinutesUsed = monthlyUsage.minutes;
+    } catch (error) {
+      console.error('Failed to initialize user limits:', error);
+      // Fallback to Free tier
+      this.userTier = SubscriptionTier.FREE;
+      this.tierLimits = subscriptionService.getTierLimits(this.userTier);
+      this.monthlyMinutesUsed = 0;
+    }
+  }
+
+  // Check if user can start recording (monthly limit check)
+  private async checkMonthlyLimit(): Promise<boolean> {
+    if (!this.tierLimits) return true;
+    
+    const monthlyLimitMinutes = this.tierLimits.maxMonthlyAudioMinutes || Infinity;
+    
+    if (this.monthlyMinutesUsed >= monthlyLimitMinutes) {
+      this.onLimitReached?.('monthly', this.userTier);
+      this.onStateChange?.('stopped');
+      return false;
+    }
+    
+    return true;
+  }
+
+  // Start limit checking during recording
+  private startLimitChecking(): void {
+    if (!this.tierLimits || !this.userId) return;
+    
+    this.limitCheckInterval = setInterval(() => {
+      const currentSessionMinutes = (Date.now() - this.recordingStartTime) / (1000 * 60);
+      const sessionLimitMinutes = this.tierLimits!.maxSessionDuration || Infinity;
+      const monthlyLimitMinutes = this.tierLimits!.maxMonthlyAudioMinutes || Infinity;
+      
+      // Check session limit
+      if (currentSessionMinutes >= sessionLimitMinutes) {
+        this.stopRecordingDueToLimit('session');
+        return;
+      }
+      
+      // Check monthly limit (current usage + current session)
+      const totalMinutes = this.monthlyMinutesUsed + currentSessionMinutes;
+      if (totalMinutes >= monthlyLimitMinutes) {
+        this.stopRecordingDueToLimit('monthly');
+        return;
+      }
+    }, 5000); // Check every 5 seconds
+  }
+
+  // Stop recording due to limit reached
+  private async stopRecordingDueToLimit(limitType: 'session' | 'monthly'): Promise<void> {
+    if (this.limitCheckInterval) {
+      clearInterval(this.limitCheckInterval);
+      this.limitCheckInterval = null;
+    }
+    
+    // Update usage before stopping
+    if (this.userId && this.recordingStartTime > 0) {
+      const sessionMinutes = (Date.now() - this.recordingStartTime) / (1000 * 60);
+      try {
+        await incrementUserMonthlyAudioMinutes(this.userId, sessionMinutes);
+      } catch (error: any) {
+        // Handle Firebase permissions errors gracefully
+        if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+          console.warn('Audio minutes tracking unavailable due to permissions. Recording functionality continues normally.');
+        } else {
+          console.error('Failed to update audio minutes:', error);
+        }
+      }
+    }
+    
+    // Stop recording
+    await this.stopRecording();
+    
+    // Notify about limit reached
+    this.onLimitReached?.(limitType, this.userTier);
+    this.onStateChange?.('stopped');
+  }
+
+  // Start recording with enhanced mobile support
+  async startRecording(options?: {
+    includeSystemAudio?: boolean;
+    includeMicrophone?: boolean;
+  }): Promise<void> {
+    // Initialize user limits first
+    await this.initializeUserLimits();
+    
+    // Check monthly limit before starting
+    const canRecord = await this.checkMonthlyLimit();
+    if (!canRecord) {
+      throw new Error(this.t?.('monthlyLimitReached') || 'Monthly recording limit reached');
+    }
+    try {
+      const { includeSystemAudio = true, includeMicrophone = true } = options || {};
+      
+      // Reset chunks
+      this.audioChunks = [];
+      
+      // Request microphone permission
+      let micStream: MediaStream | null = null;
+      if (includeMicrophone) {
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: { 
+              sampleRate: 16000, // Optimal sample rate for speech recognition (16kHz)
+              channelCount: 1, // Mono is sufficient for transcription
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+              // Additional constraints for better transcription quality
+            } 
+          });
+        } catch (error: any) {
+          console.warn(this.t?.('microphoneAccessDenied') || 'Microphone access denied:', error);
+          if (error.name === 'NotAllowedError') {
+            console.error('[Violation] Permissions policy violation: microphone is not allowed in this document.');
+          }
+          if (!includeSystemAudio) {
+            throw new Error(this.t?.('microphoneAccessDenied') || 'Microphone access required but denied');
+          }
+        }
+      }
+
+      // Request display media (system audio) - not available on mobile
+      let displayStream: MediaStream | null = null;
+      if (includeSystemAudio && !this.isMobile) {
+        try {
+          displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: { 
+              sampleRate: 16000, // Optimal sample rate for speech recognition (16kHz)
+              channelCount: 1, // Mono is sufficient for transcription
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            } as MediaTrackConstraints
+          });
+        } catch (error) {
+          console.warn(this.t?.('displayCaptureNotAvailable') || 'Display capture not available:', error);
+        }
+      }
+
+      // Create audio context
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+      this.audioContext = new AudioContextClass();
+      // Attach statechange listener to handle brief interruptions on mobile (iOS Safari etc.)
+      this.setupAudioContextListener();
+      
+      // iOS requires explicit resume after user gesture
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+
+      // Prepare analyser and destination
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 2048;
+      this.analyser.smoothingTimeConstant = 0.8;
+
+      const destination = this.audioContext.createMediaStreamDestination();
+      let hasAudio = false;
+
+      // Create a gain node to mix multiple audio sources
+      const gainNode = this.audioContext.createGain();
+      gainNode.gain.value = 1.0;
+
+      if (displayStream) {
+        const displayAudioTracks = displayStream.getAudioTracks();
+        if (displayAudioTracks.length > 0) {
+          const displaySource = this.audioContext.createMediaStreamSource(new MediaStream(displayAudioTracks));
+          displaySource.connect(gainNode);
+          hasAudio = true;
+        }
+      }
+
+      if (micStream) {
+        const micAudioTracks = micStream.getAudioTracks();
+        if (micAudioTracks.length > 0) {
+          const micSource = this.audioContext.createMediaStreamSource(new MediaStream(micAudioTracks));
+          micSource.connect(gainNode);
+          hasAudio = true;
+        }
+      }
+
+      if (!hasAudio) {
+        throw new Error(this.t?.('noAudioSources') || 'No audio sources available');
+      }
+
+      // Connect gain node to analyser and destination
+      gainNode.connect(this.analyser);
+      gainNode.connect(destination);
+      this.stream = destination.stream;
+
+      // On some mobile devices, audio tracks can end briefly; try to recover automatically
+      this.stream.getAudioTracks().forEach((track) => {
+        track.addEventListener('ended', async () => {
+          console.warn('Audio track ended unexpectedly, attempting recovery...');
+          if (!this._isRecording) return;
+          try {
+            // Recreate destination if needed
+            if (!this.audioContext) return;
+            const newDest = this.audioContext.createMediaStreamDestination();
+            try { this.analyser?.disconnect(); } catch {}
+            this.analyser?.connect(newDest);
+            this.stream = newDest.stream;
+            if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+              // Note: MediaRecorder cannot change stream mid-flight in all browsers,
+              // so we stop and restart seamlessly building on existing chunks.
+              const prevChunks = this.audioChunks.slice();
+              this.mediaRecorder.stop();
+              // Small delay to allow onstop to flush
+              await new Promise(r => setTimeout(r, 50));
+              const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
+              // Initialize MediaRecorder with optimized settings for transcription
+              const mediaRecorderOptions: MediaRecorderOptions = {
+                mimeType,
+                audioBitsPerSecond: 64000 // Increased to 64kbps for better transcription quality while maintaining stability
+              };
+              
+              // Fallback if audioBitsPerSecond is not supported
+              try {
+                this.mediaRecorder = new MediaRecorder(this.stream, mediaRecorderOptions);
+              } catch (error) {
+                console.warn(this.t?.('mediaRecorderBitrateNotSupported') || 'MediaRecorder with bitrate not supported, using default:', error);
+                this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
+              }
+              this.audioChunks = prevChunks;
+              this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
+                if (event.data.size > 0) {
+                  this.audioChunks.push(event.data);
+                  this.onDataAvailable?.(this.audioChunks);
+                }
+              };
+              this.mediaRecorder.onstop = () => {
+                const mimeTypeInner = this.mediaRecorder?.mimeType || 'audio/webm';
+                const audioBlob = new Blob(this.audioChunks, { type: mimeTypeInner });
+                this._isRecording = false;
+                this._isPaused = false;
+                this.onStateChange?.('stopped');
+                this.onStop?.(audioBlob);
+                this.cleanup();
+              };
+              this.mediaRecorder.start(1000);
+              this._isRecording = true;
+              this._isPaused = false;
+              this.onStateChange?.('recording');
+              // MediaRecorder restarted after track end
+            }
+          } catch (e) {
+            console.warn(this.t?.('failedToRecoverFromTrackEnd') || 'Failed to recover from track end:', e);
+          }
+        });
+      });
+
+      // Choose appropriate MIME type for the platform
+      let mimeType = 'audio/webm';
+      if (this.isMobile) {
+        // iOS Safari doesn't support webm, prefer mp4/aac
+        const candidates = [
+          'audio/mp4',
+          'audio/aac',
+          'audio/mpeg',
+          'audio/webm'
+        ];
+        
+        for (const type of candidates) {
+          if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+            mimeType = type;
+            break;
+          }
+        }
+      } else {
+        // Desktop: prefer webm with opus
+        const candidates = [
+          'audio/webm; codecs=opus',
+          'audio/webm',
+          'audio/mp4'
+        ];
+        
+        for (const type of candidates) {
+          if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+            mimeType = type;
+            break;
+          }
+        }
+      }
+
+      // Initialize MediaRecorder with optimized settings for transcription
+      const mediaRecorderOptions: MediaRecorderOptions = {
+        mimeType,
+        audioBitsPerSecond: 64000 // Increased to 64kbps for better transcription quality while maintaining stability
+      };
+      
+      // Fallback if audioBitsPerSecond is not supported
+      try {
+        this.mediaRecorder = new MediaRecorder(this.stream, mediaRecorderOptions);
+      } catch (error) {
+        console.warn('MediaRecorder with bitrate not supported, using default:', error);
+        this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
+      }
+
+      // Handle data availability - collect chunks every 1s for robustness
+      this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+          // Notify callback with current chunks for real-time processing if needed
+          this.onDataAvailable?.(this.audioChunks);
+        }
+      };
+
+      // Handle errors
+      this.mediaRecorder.onerror = (event: Event) => {
+        console.error('MediaRecorder error:', event);
+        const error = new Error(this.t?.('recordingFailed') || 'Recording failed');
+        this.onError?.(error);
+        this.onStateChange?.('error');
+        this.stopRecording();
+      };
+
+      // Handle stop event
+      this.mediaRecorder.onstop = () => {
+        const mimeTypeInner = this.mediaRecorder?.mimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type: mimeTypeInner });
+        this._isRecording = false;
+        this._isPaused = false;
+        this.onStateChange?.('stopped');
+        // Emit final blob to consumer
+        this.onStop?.(audioBlob);
+        this.cleanup();
+      };
+
+      // Start recording with 1s intervals for chunk collection
+      this.mediaRecorder.start(1000);
+      this._isRecording = true;
+      this._isPaused = false;
+      this.recordingStartTime = Date.now();
+      this.onStateChange?.('recording');
+      
+      // Start limit checking
+      this.startLimitChecking();
+      
+      // Request wake lock to prevent screen sleep on mobile
+      await this.requestWakeLock();
+      
+      // Recording started with MIME type: ${mimeType}
+    } catch (error) {
+      console.error(this.t?.('failedToStartRecording') || 'Failed to start recording:', error);
+      this.onError?.(error as Error);
+      this.onStateChange?.('error');
+      throw error;
+    }
+  }
+
+  // Pause recording
+  pauseRecording(): void {
+    if (this.mediaRecorder && this._isRecording && !this._isPaused) {
+      this.mediaRecorder.pause();
+      this._isPaused = true;
+      this.onStateChange?.('paused');
+      // Recording paused
+    }
+  }
+
+  // Resume recording
+  resumeRecording(): void {
+    if (this.mediaRecorder && this._isRecording && this._isPaused) {
+      // Resume audio context if suspended
+      if (this.audioContext?.state === 'suspended') {
+        this.audioContext.resume().catch(err => 
+          console.error(this.t?.('failedToResumeAudioContext') || 'Failed to resume AudioContext:', err)
+        );
+      }
+      
+      this.mediaRecorder.resume();
+      this._isPaused = false;
+      this.onStateChange?.('recording');
+      // Recording resumed
+    }
+  }
+
+  // Stop recording and get the final audio
+  async stopRecording(): Promise<Blob> {
+    return new Promise(async (resolve) => {
+      // Stop limit checking
+      if (this.limitCheckInterval) {
+        clearInterval(this.limitCheckInterval);
+        this.limitCheckInterval = null;
+      }
+      
+      // Update user's monthly audio minutes
+      if (this.userId && this.recordingStartTime > 0) {
+        const sessionMinutes = (Date.now() - this.recordingStartTime) / (1000 * 60);
+        try {
+          await incrementUserMonthlyAudioMinutes(this.userId, sessionMinutes);
+        } catch (error: any) {
+          // Handle Firebase permissions errors gracefully
+          if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+            console.warn('Audio minutes tracking unavailable due to permissions. Recording functionality continues normally.');
+          } else {
+            console.error('Failed to update audio minutes:', error);
+          }
+        }
+      }
+      
+      if (!this.mediaRecorder || !this._isRecording) {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        // Release wake lock when recording stops
+        await this.releaseWakeLock();
+        // Emit to consumer as well
+        this.onStop?.(audioBlob);
+        resolve(audioBlob);
+        return;
+      }
+
+      this.mediaRecorder.onstop = async () => {
+        const mimeTypeInner = this.mediaRecorder?.mimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type: mimeTypeInner });
+        // Release wake lock when recording stops
+        await this.releaseWakeLock();
+        this.cleanup();
+        // Emit to consumer
+        this.onStop?.(audioBlob);
+        resolve(audioBlob);
+      };
+
+      this.mediaRecorder.stop();
+      this._isRecording = false;
+      this._isPaused = false;
+    });
+  }
+
+  // Clean up resources
+  public async cleanup(): Promise<void> {
+    try {
+      // Stop limit checking
+      if (this.limitCheckInterval) {
+        clearInterval(this.limitCheckInterval);
+        this.limitCheckInterval = null;
+      }
+      
+      // Release wake lock during cleanup
+      await this.releaseWakeLock();
+      
+      if (this.stream) {
+        this.stream.getTracks().forEach((track) => track.stop());
+        this.stream = null;
+      }
+      if (this.analyser) {
+        try { this.analyser.disconnect(); } catch {}
+        this.analyser = null;
+      }
+      if (this.audioContext) {
+        try { this.audioContext.close(); } catch {}
+        this.audioContext = null;
+      }
+      this.mediaRecorder = null;
+      this.recordingStartTime = 0;
+    } catch (e) {
+      console.warn(this.t?.('cleanupError') || 'Cleanup error:', e);
+    }
+  }
+
+  // Handle tab visibility changes (mobile browsers often pause when tab is hidden)
+  private setupVisibilityListener(): void {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this._isRecording && !this._isPaused) {
+        this.pauseRecording();
+      } else if (!document.hidden && this._isRecording && this._isPaused) {
+        this.resumeRecording();
+      }
+    });
+
+    // Handle page focus/blur for additional recovery
+    window.addEventListener('focus', () => {
+      if (this._isRecording && this._isPaused && !document.hidden) {
+        this.resumeRecording();
+      }
+    });
+
+    // Handle beforeunload to save recording state
+    window.addEventListener('beforeunload', () => {
+      if (this._isRecording) {
+        // Save recording state to localStorage for potential recovery
+        try {
+          localStorage.setItem('recapsmart_recording_interrupted', JSON.stringify({
+            timestamp: Date.now(),
+            wasRecording: this._isRecording,
+            wasPaused: this._isPaused,
+            chunksCount: this.audioChunks.length
+          }));
+        } catch (e) {
+          console.warn('Failed to save recording state:', e);
+        }
+      }
+    });
+  }
+
+  // Handle audio context interruptions (system audio interrupts)
+  private setupAudioContextListener(): void {
+    if (!this.audioContext) return;
+    try {
+      this.audioContext.onstatechange = async () => {
+        const state = this.audioContext?.state;
+        if (!state) return;
+        // When context becomes suspended unexpectedly during recording, attempt auto-resume
+        if (state === 'suspended' && this._isRecording && !this._isPaused) {
+          try {
+            await this.audioContext.resume();
+          } catch (err) {
+            console.warn(this.t?.('failedToAutoResumeAudioContext') || 'Failed to auto-resume AudioContext:', err);
+          }
+        }
+      };
+    } catch (e) {
+      console.warn(this.t?.('couldNotAttachAudioContextListener') || 'Could not attach AudioContext statechange listener:', e);
+    }
+  }
+
+  // Get current recording state
+  getState(): { isRecording: boolean; isPaused: boolean; chunksCount: number } {
+    return {
+      isRecording: this._isRecording,
+      isPaused: this._isPaused,
+      chunksCount: this.audioChunks.length
+    };
+  }
+
+  // Get current audio chunks (for real-time processing)
+  getCurrentChunks(): Blob[] {
+    return [...this.audioChunks];
+  }
+
+  // Request wake lock to prevent screen sleep during recording
+  private async requestWakeLock(): Promise<void> {
+    if (!this.isMobile || !('wakeLock' in navigator)) {
+      return; // Wake Lock API not available or not needed
+    }
+
+    try {
+      this.wakeLock = await (navigator as any).wakeLock.request('screen');
+      
+      this.wakeLock.addEventListener('release', () => {
+        // Wake lock released
+      });
+    } catch (err) {
+      console.warn(this.t?.('wakeLockFailed') || 'Failed to acquire wake lock:', err);
+    }
+  }
+
+  // Release wake lock
+  private async releaseWakeLock(): Promise<void> {
+    if (this.wakeLock) {
+      try {
+        await this.wakeLock.release();
+        this.wakeLock = null;
+      } catch (err) {
+        console.warn(this.t?.('wakeLockReleaseFailed') || 'Failed to release wake lock:', err);
+      }
+    }
+  }
+
+  // Check for interrupted recording and offer recovery
+  private checkForInterruptedRecording(): void {
+    try {
+      const interruptedState = localStorage.getItem('recapsmart_recording_interrupted');
+      if (interruptedState) {
+        const state = JSON.parse(interruptedState);
+        const timeSinceInterruption = Date.now() - state.timestamp;
+        
+        // Only offer recovery if interruption was recent (within 5 minutes)
+        if (timeSinceInterruption < 5 * 60 * 1000 && state.wasRecording) {
+          // Notify parent component about potential recovery
+          if (this.onStateChange) {
+            // Use a custom state to indicate recovery is available
+            setTimeout(() => {
+              this.onStateChange?.('recovery_available' as any);
+            }, 1000);
+          }
+        }
+        
+        // Clean up the interrupted state
+        localStorage.removeItem('recapsmart_recording_interrupted');
+      }
+    } catch (e) {
+      console.warn('Failed to check for interrupted recording:', e);
+      // Clean up potentially corrupted data
+      localStorage.removeItem('recapsmart_recording_interrupted');
+    }
+  }
+
+  // Attempt to recover from interruption
+  public async recoverFromInterruption(): Promise<boolean> {
+    try {
+      // Try to restart recording
+      await this.startRecording();
+      
+      return true;
+    } catch (error) {
+      console.error(this.t?.('recordingRecoveryFailed') || 'Recording recovery failed:', error);
+      this.onError?.(error as Error);
+      return false;
+    }
+  }
+
+  // Force cleanup (call when component unmounts)
+  destroy(): void {
+    if (this._isRecording) {
+      this.stopRecording();
+    }
+    this.cleanup();
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "RecapHorizon - AI Meeting Transcription & Analysis",
+  "short_name": "RecapHorizon",
+  "description": "AI-powered meeting transcription, analysis, and document generation tool. Transform meetings, webinars, and conversations into professional documents and insights.",
+  "keywords": [
+    "AI transcription",
+    "meeting analysis",
+    "webinar recording",
+    "speech to text",
+    "meeting notes",
+    "AI summary",
+    "voice recording",
+    "meeting minutes"
+  ],
+  "author": "RecapHorizon",
+  "version": "0.91009.1",
+  "homepage_url": "https://recaphorizon.app",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#06b6d4",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "nl",
+  "categories": [
+    "productivity",
+    "business",
+    "education",
+    "utilities"
+  ],
+  "requestFramePermissions": [
+    "microphone",
+    "display-capture"
+  ],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

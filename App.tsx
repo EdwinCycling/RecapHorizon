@@ -6605,16 +6605,46 @@ ${transcript}
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       try {
+        // Log request details for debugging
         console.log(`🔎 [${attempt}/${maxRetries}] Fetch ${url}`);
-        const response = await fetch(url, { ...options, signal: controller.signal });
+        console.log(`📊 Request method: ${options.method || 'GET'}`);
+        console.log(`📊 Request headers:`, options.headers);
+        console.log(`📊 Request body type:`, options.body ? options.body.constructor.name : 'none');
+        
+        // Ensure proper headers for FormData
+        const requestOptions = { ...options, signal: controller.signal };
+        
+        // Don't set Content-Type for FormData - let browser set it with boundary
+        if (options.body instanceof FormData) {
+          console.log(`📊 FormData detected - letting browser set Content-Type with boundary`);
+          // Remove any manually set Content-Type header for FormData
+          if (requestOptions.headers) {
+            const headers = new Headers(requestOptions.headers);
+            headers.delete('Content-Type');
+            requestOptions.headers = headers;
+          }
+        }
+        
+        const response = await fetch(url, requestOptions);
         clearTimeout(timeoutId);
 
+        console.log(`📊 Response status: ${response.status} ${response.statusText}`);
+        console.log(`📊 Response headers:`, Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          // Try to get response body for better error info
+          let errorBody = '';
+          try {
+            errorBody = await response.clone().text();
+            console.error(`❌ Response body:`, errorBody);
+          } catch (e) {
+            console.error(`❌ Could not read response body:`, e);
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}${errorBody ? ` - ${errorBody}` : ''}`);
         }
         
         // Log succesvolle verbinding
-        console.log(`✅ [✓] transcribe-start bereikbaar op ${new URL(url).host}`);
+        console.log(`✅ [✓] Request successful to ${new URL(url).host}`);
         return response;
 
       } catch (error: any) {
@@ -6623,11 +6653,15 @@ ${transcript}
 
         const message = error.message || 'Unknown error';
         const isConnectionError = message.includes('ERR_CONNECTION') || message.includes('Failed to fetch');
-        const isAbort = message.includes('AbortError');
+        const isAbort = message.includes('AbortError') || message.includes('The operation was aborted');
         const isHttpError = message.includes('HTTP ');
 
         if (isHttpError) {
-          console.error(`⚠️ Attempt ${attempt} failed: Server unreachable: ${message}`);
+          console.error(`⚠️ Attempt ${attempt} failed: HTTP Error: ${message}`);
+        } else if (isAbort) {
+          console.error(`⚠️ Attempt ${attempt} failed: Request timeout after ${timeoutMs}ms`);
+        } else if (isConnectionError) {
+          console.error(`⚠️ Attempt ${attempt} failed: Connection error: ${message}`);
         } else {
           console.error(`⚠️ Attempt ${attempt} failed: ${message}`);
         }
@@ -6744,7 +6778,7 @@ ${transcript}
         console.log(`[${transcribeTimestamp}] handleTranscribe: Environment VITE_FUNCTIONS_BASE_URL:`, envBase);
         
         // Bepaal maximale uploadgrootte per segment (configureerbaar)
-        // Beperk standaard segmentgrootte om Netlify Dev body-limit ("Stream body too big") te vermijden
+        // Behoud 5MB voor stabiliteit op Netlify productie
         const MAX_STT_UPLOAD_MB = Number(import.meta.env.VITE_STT_MAX_UPLOAD_MB) || 5; // default 5MB
         const MAX_UPLOAD_BYTES = MAX_STT_UPLOAD_MB * 1024 * 1024;
         const transcribeStartUrl = `${effectiveFunctionsBase}/.netlify/functions/transcribe-start`;
@@ -6752,16 +6786,30 @@ ${transcript}
         // Als bestand groter is dan limiet → converteer naar WAV (16k mono) en splits in segmenten
         let blobsToTranscribe: Blob[] = [audioBlob];
         if (audioBlob.size > MAX_UPLOAD_BYTES) {
-          console.log(`[${transcribeTimestamp}] handleTranscribe: Audio groter dan ${MAX_STT_UPLOAD_MB}MB, voorbereiden op segmentatie`);
+          console.log(`[${transcribeTimestamp}] handleTranscribe: Audio groter dan ${MAX_STT_UPLOAD_MB}MB (${(audioBlob.size/1024/1024).toFixed(2)}MB), voorbereiden op segmentatie`);
+          setLoadingText(`Groot bestand gedetecteerd (${(audioBlob.size/1024/1024).toFixed(1)}MB). Voorbereiden voor upload...`);
+          
           try {
             // Forceer compressie naar WAV 16k mono om consistente segmenten te garanderen
             const compressed = await compressAudioChunks([audioBlob]);
             const wavBlob = compressed[0] || audioBlob;
             console.log(`[${transcribeTimestamp}] handleTranscribe: Gecomprimeerde WAV grootte: ${(wavBlob.size/1024/1024).toFixed(2)}MB`);
-            blobsToTranscribe = await splitWavBlobByBytes(wavBlob, MAX_UPLOAD_BYTES - 128 * 1024); // veiligheidsmarge 128KB
+            
+            // Controleer of compressie voldoende was
+            if (wavBlob.size > MAX_UPLOAD_BYTES) {
+              setLoadingText(`Splitsen van audio in segmenten van ${MAX_STT_UPLOAD_MB}MB...`);
+              blobsToTranscribe = await splitWavBlobByBytes(wavBlob, MAX_UPLOAD_BYTES - 128 * 1024); // veiligheidsmarge 128KB
+              console.log(`[${transcribeTimestamp}] handleTranscribe: Audio gesplitst in ${blobsToTranscribe.length} segmenten`);
+            } else {
+              blobsToTranscribe = [wavBlob];
+              console.log(`[${transcribeTimestamp}] handleTranscribe: Compressie voldoende, geen segmentatie nodig`);
+            }
           } catch (e) {
-            console.warn(`[${transcribeTimestamp}] handleTranscribe: Segmentatie mislukt, doorgaan met originele blob`, e);
-            blobsToTranscribe = [audioBlob];
+            console.error(`[${transcribeTimestamp}] handleTranscribe: Segmentatie mislukt:`, e);
+            displayToast('Fout bij voorbereiden van groot audiobestand. Probeer een kleiner bestand.', 'error');
+            setStatus(RecordingStatus.ERROR);
+            setLoadingText('');
+            return;
           }
         }
 
@@ -6778,7 +6826,8 @@ ${transcript}
           segmentIndex++;
           if (cancelTranscriptionRef.current) break;
 
-          setLoadingText(`Segment ${segmentIndex}/${totalSegments} uploaden en verwerken...`);
+          const segmentSizeMB = (segmentBlob.size/1024/1024).toFixed(1);
+          setLoadingText(`Segment ${segmentIndex}/${totalSegments} uploaden (${segmentSizeMB}MB)...`);
           setTranscriptionProgress(Math.min(0.95, (segmentIndex - 1) / totalSegments));
 
           console.log(`[${transcribeTimestamp}] handleTranscribe: Segment ${segmentIndex} grootte: ${(segmentBlob.size/1024/1024).toFixed(2)}MB`);
@@ -6841,11 +6890,11 @@ ${transcript}
               switch (statusData.status) {
                 case 'queued':
                   console.log(`[${pollTimestamp}] handleTranscribe: Status QUEUED (segment ${segmentIndex}) - in wachtrij`);
-                  setLoadingText(`Transcriptie in wachtrij (segment ${segmentIndex}/${totalSegments})...`);
+                  setLoadingText(`Segment ${segmentIndex}/${totalSegments} in wachtrij (poging ${pollCount})...`);
                   break;
                 case 'processing':
                   console.log(`[${pollTimestamp}] handleTranscribe: Status PROCESSING (segment ${segmentIndex}) - bezig`);
-                  setLoadingText(`Transcriptie wordt verwerkt (segment ${segmentIndex}/${totalSegments})...`);
+                  setLoadingText(`Segment ${segmentIndex}/${totalSegments} wordt verwerkt (poging ${pollCount})...`);
                   setTranscriptionProgress(Math.min(0.95, (segmentIndex - 1 + 0.5) / totalSegments));
                   break;
                 case 'completed':

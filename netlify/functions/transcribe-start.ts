@@ -2,6 +2,7 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import axios from 'axios';
 import Busboy from 'busboy';
+import { gunzipSync, brotliDecompressSync } from 'zlib';
 import { Buffer } from 'buffer';
 // import { SubscriptionTier } from '../../src/types'; // Not needed in this function
 
@@ -54,7 +55,8 @@ async function parseMultipartForm(event: HandlerEvent): Promise<{ audioBuffer: B
     }
 
     try {
-      const busboy = Busboy({ headers: event.headers });
+      // Zorg dat Busboy altijd de juiste content-type header met boundary krijgt
+      const busboy = Busboy({ headers: { 'content-type': contentType } });
       let audioBuffer: Buffer = Buffer.alloc(0);
       let audioContentType: string = '';
       let languageCode: string = 'nl'; // default to Dutch if not provided
@@ -165,6 +167,27 @@ async function parseMultipartForm(event: HandlerEvent): Promise<{ audioBuffer: B
             console.log(`parseMultipartForm: Processed buffer body to ${bodyBuffer.length} bytes`);
           }
         }
+
+        // Indien de body gecomprimeerd is (gzip of brotli), eerst decomprimeren
+        const contentEncoding = (event.headers['content-encoding'] || event.headers['Content-Encoding'] || '').toLowerCase();
+        if (contentEncoding.includes('gzip')) {
+          try {
+            const decompressed = gunzipSync(bodyBuffer);
+            console.log(`parseMultipartForm: GZIP decompressed body from ${bodyBuffer.length} to ${decompressed.length} bytes`);
+            bodyBuffer = decompressed;
+          } catch (gzipErr) {
+            console.error('parseMultipartForm: Failed to gunzip body:', gzipErr);
+            // Ga door zonder decomprimeren; Busboy zal dan falen en we geven een duidelijke fout terug
+          }
+        } else if (contentEncoding.includes('br')) {
+          try {
+            const decompressed = brotliDecompressSync(bodyBuffer);
+            console.log(`parseMultipartForm: Brotli decompressed body from ${bodyBuffer.length} to ${decompressed.length} bytes`);
+            bodyBuffer = decompressed;
+          } catch (brErr) {
+            console.error('parseMultipartForm: Failed to brotli-decompress body:', brErr);
+          }
+        }
         
         // Extra validatie voor Netlify productie
         if (bodyBuffer.length === 0) {
@@ -177,7 +200,13 @@ async function parseMultipartForm(event: HandlerEvent): Promise<{ audioBuffer: B
         const preview = bodyBuffer.slice(0, 50).toString('ascii').replace(/[^\x20-\x7E]/g, '.');
         console.log(`parseMultipartForm: Body preview (first 50 bytes): ${preview}`);
         
-        busboy.end(bodyBuffer);
+        try {
+          busboy.end(bodyBuffer);
+        } catch (endErr) {
+          console.error('parseMultipartForm: Error ending busboy stream:', endErr);
+          reject(new Error('Fout bij afronden van multipart parser.'));
+          return;
+        }
       } catch (bufferError) {
         console.error('parseMultipartForm: Error processing body buffer:', bufferError);
         reject(new Error('Fout bij verwerken van request body.'));

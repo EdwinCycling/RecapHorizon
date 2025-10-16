@@ -1494,3 +1494,172 @@ export const validateFileUpload = (file: File, allowedTypes: string[], maxSize: 
   
   return { isValid: true };
 };
+
+/**
+ * Create referral account after email confirmation with enhanced security
+ */
+export const createReferralAccount = async (
+  email: string, 
+  password: string, 
+  referralCode?: string
+): Promise<{
+  success: boolean;
+  user?: any;
+  error?: string;
+}> => {
+  try {
+    // Validate inputs with enhanced security
+    const emailValidation = validateEmailEnhanced(email, {
+      allowDisposable: false,
+      allowSuspicious: false
+    });
+    
+    if (!emailValidation.isValid) {
+      return {
+        success: false,
+        error: emailValidation.error || 'Invalid email address'
+      };
+    }
+
+    // Validate password strength
+    if (!password || password.length < 8) {
+      return {
+        success: false,
+        error: 'Password must be at least 8 characters long'
+      };
+    }
+
+    // Check for SQL injection and XSS in inputs
+    if (containsSQLInjection(email) || containsXSS(email)) {
+      return {
+        success: false,
+        error: 'Invalid characters detected in email'
+      };
+    }
+
+    if (containsSQLInjection(password) || containsXSS(password)) {
+      return {
+        success: false,
+        error: 'Invalid characters detected in password'
+      };
+    }
+
+    // Rate limiting check for account creation
+    const rateLimitKey = `create_account_${email}`;
+    const rateLimitCheck = rateLimiter.isAllowedEnhanced(rateLimitKey, 3, 3600000, email); // 3 attempts per hour
+    
+    if (!rateLimitCheck.allowed) {
+      return {
+        success: false,
+        error: rateLimitCheck.reason || 'Too many account creation attempts. Please try again later.'
+      };
+    }
+
+    // Import Firebase functions
+    const { createUserWithEmailAndPassword } = await import('firebase/auth');
+    const { collection, addDoc, doc, getDoc, updateDoc, serverTimestamp, setDoc } = await import('firebase/firestore');
+    const { db } = await import('../firebase');
+
+    // Create Firebase Auth account
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Prepare user document data with security fields
+    const userData: any = {
+      email: email,
+      isActive: true,
+      lastLogin: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      subscriptionTier: 'free',
+      emailConfirmed: true,
+      confirmedAt: serverTimestamp(),
+      accountCreationMethod: 'referral_with_email_confirmation',
+      securityFlags: {
+        emailVerified: true,
+        accountVerified: true,
+        suspiciousActivity: false
+      }
+    };
+
+    // Handle referral if code provided with enhanced validation
+    if (referralCode) {
+      try {
+        // Sanitize referral code
+        const sanitizedReferralCode = sanitizeTextInput(referralCode, 50);
+        
+        if (containsSQLInjection(sanitizedReferralCode) || containsXSS(sanitizedReferralCode)) {
+          console.warn('Suspicious referral code detected:', referralCode);
+          // Continue without referral processing
+        } else {
+          const referrerQuery = await getDoc(doc(db, 'users', sanitizedReferralCode));
+          if (referrerQuery.exists()) {
+            const referrerData = referrerQuery.data();
+            
+            // Validate referrer account
+            if (referrerData.isActive && !referrerData.securityFlags?.suspiciousActivity) {
+              userData.referralCode = sanitizedReferralCode;
+              userData.referredBy = referrerData.email;
+              
+              // Create referral link record with security metadata
+              await addDoc(collection(db, 'referralLinks'), {
+                referrerEmail: referrerData.email,
+                referredEmail: email,
+                createdAt: serverTimestamp(),
+                status: 'completed',
+                verificationMethod: 'email_confirmation',
+                securityCheck: {
+                  emailVerified: true,
+                  ipAddress: 'masked_for_privacy',
+                  userAgent: 'masked_for_privacy',
+                  timestamp: Date.now()
+                }
+              });
+            }
+          }
+        }
+      } catch (referralError) {
+        console.warn('Error processing referral (continuing with account creation):', referralError);
+        // Continue with account creation even if referral processing fails
+      }
+    }
+
+    // Create user document in Firestore with enhanced security
+    await setDoc(doc(db, 'users', user.uid), userData);
+
+    // Log successful account creation for security monitoring
+    console.log('Referral account created successfully:', {
+      email: email,
+      uid: user.uid,
+      hasReferral: !!referralCode,
+      timestamp: new Date().toISOString()
+    });
+
+    return {
+      success: true,
+      user: user
+    };
+  } catch (error: any) {
+    console.error('Error creating referral account:', error);
+    
+    // Enhanced error handling with security considerations
+    let errorMessage = 'Failed to create account';
+    
+    if (error.code === 'auth/email-already-in-use') {
+      errorMessage = 'An account with this email already exists';
+    } else if (error.code === 'auth/weak-password') {
+      errorMessage = 'Password is too weak. Please choose a stronger password';
+    } else if (error.code === 'auth/invalid-email') {
+      errorMessage = 'Invalid email address format';
+    } else if (error.code === 'auth/operation-not-allowed') {
+      errorMessage = 'Account creation is currently disabled';
+    } else if (error.code === 'auth/too-many-requests') {
+      errorMessage = 'Too many requests. Please try again later';
+    }
+    
+    // Don't expose internal error details for security
+    return {
+      success: false,
+      error: errorMessage
+    };
+  }
+};

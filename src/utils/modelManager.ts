@@ -119,11 +119,7 @@ class ModelManager {
     return ModelManager.instance;
   }
 
-  // Get model for specific functionality (deprecated - use getModelForUser instead)
-  async getModelForFunction(functionName: keyof ModelConfig): Promise<string> {
-    console.warn('getModelForFunction is deprecated. Use getModelForUser instead.');
-    return DEFAULT_MODEL_CONFIG[functionName];
-  }
+
 
   // Get model for function based on user's subscription tier
   getModelForFunctionByTier(functionName: keyof ModelConfig, tier: SubscriptionTier): string {

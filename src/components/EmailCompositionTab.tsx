@@ -189,7 +189,15 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
       throw new Error(t('rateLimitExceeded', 'Rate limit exceeded'));
     }
 
-    const apiKey = (process.env.GEMINI_API_KEY as string | undefined)?.trim();
+    // Resolve API key from multiple possible env sources to be robust in Vite/Netlify setups
+    const env: any = (typeof import.meta !== 'undefined' ? (import.meta as any).env : {}) || {};
+    const apiKey = (
+      env.VITE_GEMINI_API_KEY ||
+      env.VITE_GOOGLE_CLOUD_API_KEY ||
+      (process as any)?.env?.GEMINI_API_KEY ||
+      (process as any)?.env?.REACT_APP_GEMINI_API_KEY ||
+      env.GEMINI_API_KEY
+    )?.toString().trim();
     if (!apiKey) {
       console.error(t('emailMissingApiKey'));
       throw new Error(t('missingApiKey', 'API sleutel ontbreekt. Configureer GEMINI_API_KEY in de omgeving.'));

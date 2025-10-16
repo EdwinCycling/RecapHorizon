@@ -67,8 +67,10 @@ class TestModelManager {
     return tierConfig[functionName] || 'gemini-2.5-flash-lite';
   }
 
-  async getModelForUser(userId, userTier, functionName) {
-    return this.getModelForFunctionByTier(functionName, userTier);
+  async getModelForUser(userId, functionName) {
+    // For testing, we'll use a default tier (gold)
+    const defaultTier = SubscriptionTier.GOLD;
+    return this.getModelForFunctionByTier(functionName, defaultTier);
   }
 }
 
@@ -96,19 +98,18 @@ async function testTierModelSelection() {
   console.log('-'.repeat(40));
   
   const testCases = [
-    { userId: 'user1', tier: 'free', function: 'expertChat' },
-    { userId: 'user2', tier: 'silver', function: 'analysisGeneration' },
-    { userId: 'user3', tier: 'gold', function: 'businessCase' },
-    { userId: 'user4', tier: 'diamond', function: 'emailComposition' }
+    { userId: 'user1', function: 'expertChat' },
+    { userId: 'user2', function: 'analysisGeneration' },
+    { userId: 'user3', function: 'businessCase' },
+    { userId: 'user4', function: 'emailComposition' }
   ];
   
   for (const testCase of testCases) {
     const model = await modelManager.getModelForUser(
       testCase.userId, 
-      testCase.tier, 
       testCase.function
     );
-    console.log(`  User ${testCase.userId} (${testCase.tier}) - ${testCase.function}: ${model}`);
+    console.log(`  User ${testCase.userId} - ${testCase.function}: ${model}`);
   }
   
   console.log('\n✅ All tests completed successfully!');

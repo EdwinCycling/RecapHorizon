@@ -11,9 +11,10 @@ interface PricingPageProps {
   t: (key: string, params?: any) => string;
   userId: string;
   userEmail: string;
+  isLoggedIn: boolean;
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription, onUpgrade, onClose, t, userId, userEmail }) => {
+const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription, onUpgrade, onClose, t, userId, userEmail, isLoggedIn }) => {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   // Get tier comparison - DIAMOND tier alleen tonen indien gewenst
   const tierComparison = subscriptionService.getTierComparison();
@@ -169,7 +170,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
 
 
         {/* Current Tier Info */}
-        {currentTier && (
+        {currentTier && isLoggedIn && (
           <div className="p-4 sm:p-6 bg-green-50 dark:bg-green-900/20 border-b bg-white dark:bg-gray-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -369,49 +370,58 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
               </div>
 
               {/* Action Button */}
-              <div className="text-center mt-auto">
-                {tier.tier === currentTier ? (
-                  <button
-                    disabled
-                    className="w-full py-3 px-6 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded font-medium cursor-not-allowed"
-                  >
-                    {t('pricingCurrentTierButton')}
-                  </button>
-                ) : (tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
-                  <button
-                    disabled
-                    className="w-full py-3 px-6 bg-cyan-300 dark:bg-cyan-600 text-cyan-600 dark:text-cyan-400 rounded font-medium cursor-not-allowed"
-                  >
-                    {t('pricingAdminOnly')}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleUpgrade(tier.tier as SubscriptionTier)}
-                    disabled={isLoading === tier.tier}
-                    className={`w-full py-3 px-6 text-white rounded font-medium transition-colors ${
-                      isLoading === tier.tier 
-                        ? 'bg-gray-400 cursor-not-allowed' 
-                        : getTierButtonColor(tier.tier)
-                    }`}
-                  >
-                    {isLoading === tier.tier ? (
-                      <span className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        {t('pricingProcessing', 'Verwerken...')}
-                      </span>
-                    ) : (
-                      tier.tier === SubscriptionTier.FREE 
-                        ? t('pricingStartFree') 
-                        : tier.tier === SubscriptionTier.ENTERPRISE 
-                          ? t('pricingContactEnterprise') 
-                          : t('pricingUpgradeTo', { tier: tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1) })
-                    )}
-                  </button>
-                )}
-              </div>
+              {isLoggedIn && (
+                <div className="text-center mt-auto">
+                  {tier.tier === currentTier ? (
+                    <button
+                      disabled
+                      className="w-full py-3 px-6 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded font-medium cursor-not-allowed"
+                    >
+                      {t('pricingCurrentTierButton')}
+                    </button>
+                  ) : (tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
+                    <button
+                      disabled
+                      className="w-full py-3 px-6 bg-cyan-300 dark:bg-cyan-600 text-cyan-600 dark:text-cyan-400 rounded font-medium cursor-not-allowed"
+                    >
+                      {t('pricingAdminOnly')}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleUpgrade(tier.tier as SubscriptionTier)}
+                      disabled={isLoading === tier.tier}
+                      className={`w-full py-3 px-6 text-white rounded font-medium transition-colors ${
+                        isLoading === tier.tier 
+                          ? 'bg-gray-400 cursor-not-allowed' 
+                          : getTierButtonColor(tier.tier)
+                      }`}
+                    >
+                      {isLoading === tier.tier ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          {t('pricingProcessing', 'Verwerken...')}
+                        </span>
+                      ) : (
+                        tier.tier === SubscriptionTier.FREE 
+                          ? t('pricingStartFree') 
+                          : tier.tier === SubscriptionTier.ENTERPRISE 
+                            ? t('pricingContactEnterprise') 
+                            : t('pricingUpgradeTo', { tier: tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1) })
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+              {!isLoggedIn && (
+                <div className="text-center mt-auto">
+                  <div className="w-full py-3 px-6 text-gray-500 dark:text-gray-400 text-sm">
+                    {t('pricingLoginRequired', 'Log in om deze tier te selecteren')}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

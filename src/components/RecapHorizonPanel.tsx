@@ -451,11 +451,18 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
     const stripMarkdown = useCallback((text: string): string => {
         if (!text) return '';
         let out = text;
-        // Normalize newlines
+        
+        // First, preserve star ratings by converting them to a safe placeholder
+        out = out.replace(/★+/g, (match) => `STAR_RATING_${match.length}_STARS`);
+        out = out.replace(/⭐+/g, (match) => `STAR_RATING_${match.length}_STARS`);
+        
+        // Normalize newlines and tabs
         out = out.replace(/\r\n/g, '\n');
-        // Remove headings markers (#)
+        out = out.replace(/\t/g, '  ');
+        // Remove ATX headings markers (#) and Setext underlines
         out = out.replace(/^[ \t]*#{1,6}[ \t]*/gm, '');
-        // Bold/italic
+        out = out.replace(/^\s*(=|-){3,}\s*$/gm, '');
+        // Bold/italic markers
         out = out.replace(/(\*\*|__)(.*?)\1/g, '$2');
         out = out.replace(/(\*|_)(.*?)\1/g, '$2');
         // Code blocks and inline code
@@ -466,17 +473,129 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
         out = out.replace(/\[(.*?)\]\((.*?)\)/g, '$1 ($2)');
         // Blockquotes
         out = out.replace(/^[ \t]*>+[ \t]?/gm, '');
-        // List bullets normalization
+        // Normalize list bullets at line-start (convert *, +, - to a single dash)
+        out = out.replace(/^[ \t]*([*+\-])\s+/gm, '- ');
+        // Normalize nested bullet symbols that may slip through (• · ▪ ◦)
         out = out.replace(/[•·▪◦]/g, '-');
+        // Normalize ordered list markers like "1)" or "1."
+        out = out.replace(/^[ \t]*(\d{1,3})[\.)]\s+/gm, '$1. ');
         // Remove control/non-printable characters
         out = out.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-        // Remove lines that are only formatting garbage like repeated ampersands or punctuation
+        // Remove lines that are only formatting garbage but preserve star ratings
         out = out.replace(/^\s*[&*_~`\-]+\s*$/gm, '');
-        // Collapse stray repeated ampersands within whitespace-only contexts
         out = out.replace(/^\s*&+\s*$/gm, '');
+        
+        // Convert star rating placeholders back to stars
+        out = out.replace(/STAR_RATING_(\d+)_STARS/g, (match, count) => '★'.repeat(parseInt(count)));
+        
         // Collapse excessive blank lines
         out = out.replace(/\n{3,}/g, '\n\n');
+        // Trim extra spaces on each line
+        out = out.split('\n').map(l => l.replace(/\s+$/,'')).join('\n');
         return out.trim();
+    }, []);
+
+    // Convert markdown to well-formatted plain text preserving structure
+    const markdownToPlainText = useCallback((text: string): string => {
+        if (!text) return '';
+        let formatted = text.replace(/\r\n|\r/g, '\n');
+        
+        // First, preserve star ratings by converting them to a safe placeholder
+        formatted = formatted.replace(/★+/g, (match) => `STAR_RATING_${match.length}_STARS`);
+        formatted = formatted.replace(/⭐+/g, (match) => `STAR_RATING_${match.length}_STARS`);
+        
+        // Preserve common emoticons by converting to text descriptions
+        const emojiMap: { [key: string]: string } = {
+            '😀': ':grinning:',
+            '😃': ':smiley:',
+            '😄': ':smile:',
+            '😁': ':grin:',
+            '😊': ':blush:',
+            '😍': ':heart_eyes:',
+            '🤔': ':thinking:',
+            '👍': ':thumbs_up:',
+            '👎': ':thumbs_down:',
+            '❤️': ':heart:',
+            '💡': ':bulb:',
+            '🎯': ':target:',
+            '🚀': ':rocket:',
+            '💪': ':muscle:',
+            '🔥': ':fire:',
+            '✨': ':sparkles:',
+            '🎉': ':party:',
+            '📈': ':chart_up:',
+            '📊': ':chart:',
+            '💰': ':money:',
+            '🏆': ':trophy:',
+            '⚡': ':lightning:',
+            '🌟': ':star2:',
+            '💎': ':diamond:',
+            '🎪': ':circus:',
+            '🎭': ':theater:',
+            '🎨': ':art:',
+            '📝': ':memo:',
+            '📚': ':books:',
+            '🔍': ':search:',
+            '🎓': ':graduation_cap:',
+            '💼': ':briefcase:',
+            '🌍': ':earth:',
+            '🌎': ':earth_americas:',
+            '🌏': ':earth_asia:'
+        };
+        
+        // Replace emojis with text descriptions
+        Object.entries(emojiMap).forEach(([emoji, description]) => {
+            formatted = formatted.replace(new RegExp(emoji, 'g'), description);
+        });
+        
+        // Convert headers to uppercase with underlines
+        formatted = formatted.replace(/^[ \t]*#{1,6}[ \t]*(.+)$/gm, (match, title) => {
+            const cleanTitle = title.trim().toUpperCase();
+            return `\n${cleanTitle}\n${'='.repeat(cleanTitle.length)}\n`;
+        });
+        
+        // Convert bold to uppercase, keep content
+        formatted = formatted.replace(/(\*\*|__)(.*?)\1/g, (match, marker, content) => content.toUpperCase());
+        
+        // Keep italic content but remove markers
+        formatted = formatted.replace(/(\*|_)(.*?)\1/g, '$2');
+        
+        // Remove code blocks but keep content
+        formatted = formatted.replace(/```[\s\S]*?```/g, '');
+        formatted = formatted.replace(/`([^`]+)`/g, '$1');
+        
+        // Convert links to "text (url)" format
+        formatted = formatted.replace(/!\[(.*?)\]\((.*?)\)/g, '$1');
+        formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '$1 ($2)');
+        
+        // Convert blockquotes to indented text
+        formatted = formatted.replace(/^[ \t]*>+[ \t]?(.*)$/gm, '    $1');
+        
+        // Convert unordered lists to bullets with proper spacing
+        formatted = formatted.replace(/^[ \t]*([*+\-])[ \t]+(.*)$/gm, '• $2');
+        
+        // Convert ordered lists with proper numbering
+        formatted = formatted.replace(/^[ \t]*(\d{1,3})[\.)]\s+(.*)$/gm, '$1. $2');
+        
+        // Clean up control characters but preserve structure
+        formatted = formatted.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '');
+        
+        // Remove lines of only formatting garbage but preserve star ratings
+        formatted = formatted.replace(/^\s*[&*_~`\-]+\s*$/gm, '');
+        
+        // Convert star rating placeholders back to stars
+        formatted = formatted.replace(/STAR_RATING_(\d+)_STARS/g, (match, count) => '★'.repeat(parseInt(count)));
+        
+        // Preserve paragraph breaks but limit excessive spacing
+        formatted = formatted.replace(/\n{4,}/g, '\n\n\n');
+        
+        // Trim trailing spaces per line but preserve structure
+        formatted = formatted.split('\n').map(l => l.replace(/\s+$/, '')).join('\n');
+        
+        // Convert to CRLF for Windows compatibility
+        formatted = formatted.replace(/\n/g, '\r\n');
+        
+        return formatted.trim();
     }, []);
 
     const composedText = useMemo(() => {
@@ -488,20 +607,22 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
         return sections.join('\n\n\n');
     }, [enabledItems, composeSectionText, resultsCache]);
 
-    // Plain-text version for export/copy: strip markdown from body
+    // Plain-text version for export/copy: convert markdown to formatted plain text
     const composedPlainText = useMemo(() => {
         if (enabledItems.length === 0) return '';
         const sections = enabledItems.map(i => {
             const section = composeSectionText(i.type);
-            const cleanBody = stripMarkdown(getOrCacheResult(i.type));
+            const cleanBody = markdownToPlainText(getOrCacheResult(i.type));
             return `${section.title}\n\n${cleanBody}`;
         });
         return sections.join('\n\n\n');
-    }, [enabledItems, composeSectionText, resultsCache, stripMarkdown]);
+    }, [enabledItems, composeSectionText, resultsCache, markdownToPlainText]);
 
     const handleExportText = useCallback(() => {
         if (!composedPlainText) return;
-        const blob = new Blob([composedPlainText], { type: 'text/plain;charset=utf-8' });
+        // Normalize to CRLF for maximum compatibility on Windows editors
+        const crlf = composedPlainText.replace(/\r?\n/g, '\r\n');
+        const blob = new Blob([crlf], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -516,6 +637,10 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
     const handleExportPdf = useCallback(() => {
         if (!enabledItems.length) return;
         const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+        // Try to register a Unicode font; fall back to helvetica (non-blocking)
+        import('../utils/pdfFont')
+            .then(({ tryUseUnicodeFont }) => tryUseUnicodeFont(doc))
+            .catch(() => {});
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         const margin = 40;
@@ -526,7 +651,7 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
             if (idx > 0) { doc.addPage(); y = margin; }
             const section = composeSectionText(it.type);
             // Title
-            doc.setFont('Helvetica', 'bold');
+            doc.setFont(doc.getFont().fontName || 'helvetica', 'bold');
             doc.setFontSize(14);
             const titleLines = doc.splitTextToSize(section.title, contentWidth);
             for (const line of titleLines) {
@@ -535,20 +660,49 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
                 y += 18;
             }
             // Body
-            doc.setFont('Helvetica', 'normal');
+            doc.setFont(doc.getFont().fontName || 'helvetica', 'normal');
             doc.setFontSize(11);
-            const cleanBody = stripMarkdown(section.text || '');
-            const bodyLines = doc.splitTextToSize(cleanBody, contentWidth) as unknown as string[];
-            for (const line of bodyLines) {
-                if (y + 14 > pageHeight - margin) { doc.addPage(); y = margin; }
-                doc.text(line, margin, y);
-                y += 14;
-            }
+            const cleanBody = markdownToPlainText(section.text || '');
+            const rawLines = cleanBody.split('\n');
+            const addPageIfNeeded = (h: number) => {
+                if (y + h > pageHeight - margin) { doc.addPage(); y = margin; }
+            };
+            rawLines.forEach((raw) => {
+                const ln = raw.trimEnd();
+                if (ln.trim() === '') { y += 8; return; }
+                const ul = ln.match(/^\s*-\s+(.*)$/);
+                const ol = ln.match(/^\s*(\d{1,3})\.\s+(.*)$/);
+                if (ul) {
+                    const text = ul[1];
+                    const indent = 20;
+                    const wrapped = doc.splitTextToSize(text, contentWidth - indent) as string[];
+                    addPageIfNeeded(16 * wrapped.length);
+                    doc.text('•', margin + 6, y);
+                    wrapped.forEach(w => { doc.text(w, margin + indent, y); y += 16; });
+                    y += 2;
+                    return;
+                }
+                if (ol) {
+                    const num = ol[1];
+                    const text = ol[2];
+                    const indent = 26;
+                    const wrapped = doc.splitTextToSize(text, contentWidth - indent) as string[];
+                    addPageIfNeeded(16 * wrapped.length);
+                    doc.text(num + '.', margin + 2, y);
+                    wrapped.forEach(w => { doc.text(w, margin + indent, y); y += 16; });
+                    y += 2;
+                    return;
+                }
+                const wrapped = doc.splitTextToSize(ln, contentWidth) as string[];
+                addPageIfNeeded(16 * wrapped.length);
+                wrapped.forEach(w => { doc.text(w, margin, y); y += 16; });
+                y += 4;
+            });
         });
 
         doc.save('recap.pdf');
         if (onNotify) onNotify('PDF gedownload', 'success');
-    }, [enabledItems, composeSectionText, stripMarkdown]);
+    }, [enabledItems, composeSectionText, markdownToPlainText]);
 
     const handleMailComposed = useCallback(() => {
         if (!composedPlainText) return;

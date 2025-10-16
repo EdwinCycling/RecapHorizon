@@ -6,8 +6,8 @@ import Modal from './src/components/Modal.tsx';
 import CookieModal from './src/components/CookieModal.tsx';
 import DisclaimerModal from './src/components/DisclaimerModal.tsx';
 import WaitlistModal from './src/components/WaitlistModal.tsx';
-// COMMENTED OUT: 2FA Email confirmation modal no longer needed
-// import { EmailConfirmationModal } from './src/components/EmailConfirmationModal';
+// Email confirmation modal for secure signup flows
+import { EmailConfirmationModal } from './src/components/EmailConfirmationModal';
 import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
 import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, TeachMeTopic, TeachMeMethod, TeachMeData, ShowMeData, TedTalk, NewsArticle, EmailOptions, SocialPostOptions, SocialPostData, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
@@ -16,6 +16,7 @@ import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 import modelManager from './src/utils/modelManager';
 import { AIProviderManager, AIFunction } from './src/utils/aiProviderManager';
+import { getModelForUser } from './src/utils/tierModelService';
 // Using Google's latest Gemini 2.5 Flash AI model for superior reasoning and text generation
 // Mermaid is ESM-only; import dynamically to avoid type issues
 let mermaid: typeof import('mermaid') | undefined;
@@ -1492,7 +1493,7 @@ Tekst: ${content}`;
         
         // Use the same AI approach as other analyses - direct Google Gemini with tier-based model
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('analysisGeneration');
+        const modelName = await getModelForUser(authState.user?.uid || "", "analysisGeneration");
         const response = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -1564,7 +1565,7 @@ Tekst: ${content}`;
         
         // Use the same AI approach as other analyses - direct Google Gemini with tier-based model
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('analysisGeneration');
+        const modelName = await getModelForUser(authState.user?.uid || "", "analysisGeneration");
         const response = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -1966,7 +1967,7 @@ Prompt for AI image generator: ${imagePrompt}`;
       
       const ai = new GoogleGenAI({ apiKey: apiKey });
       // Using configured model for general analysis
-      const modelName = await modelManager.getModelForFunction('generalAnalysis');
+      const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
       const inputLanguage = getGeminiCode(language || 'en');
       const outputLanguageCode = getGeminiCode(outputLang || language || 'en');
       const sys = `You generate MCQs based on a transcript.
@@ -2049,7 +2050,7 @@ Constraints:
       }
       
       const ai = new GoogleGenAI({ apiKey: apiKey });
-      const modelName = await modelManager.getModelForFunction('businessCase');
+      const modelName = await getModelForUser(authState.user?.uid || "", "businessCase");
       
       const businessCaseTypeDescriptions = {
         [t('costSavings')]: t('costSavingsDescription'),
@@ -2282,7 +2283,6 @@ ${getTranscriptSlice(transcript, 20000)}`;
   }>({ type: null, message: '' });
   // COMMENTED OUT: 2FA Email confirmation state no longer needed
   // const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
-  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState('');
 
   // Anonymization settings state
   const [anonymizationRules, setAnonymizationRules] = useState<AnonymizationRule[]>(() => {
@@ -2356,6 +2356,12 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [referralCodeFromURL, setReferralCodeFromURL] = useState<string | null>(null);
   const [isValidReferralCode, setIsValidReferralCode] = useState<boolean | null>(null);
   const [referrerData, setReferrerData] = useState<any>(null);
+
+  // Email confirmation state for secure signup flows
+  const [showEmailConfirmationModal, setShowEmailConfirmationModal] = useState(false);
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<string>('');
+  const [confirmationContext, setConfirmationContext] = useState<'waitlist' | 'referral'>('waitlist');
+  const [pendingReferralPassword, setPendingReferralPassword] = useState<string>('');
 
   useEffect(() => {
     try {
@@ -2689,9 +2695,22 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
   // --- PERSISTENCE & THEME ---
     useEffect(() => {
         // Load environment API key if provided via .env.local or Netlify environment variables
-        const envApiKey = process.env.GEMINI_API_KEY as string | undefined;
-        if (envApiKey && envApiKey.trim().length > 0) {
-            setApiKey(envApiKey.trim());
+        // Prefer Vite-style vars when available, then fall back to process.env mappings
+        try {
+          const env: any = (typeof import.meta !== 'undefined' ? (import.meta as any).env : {}) || {};
+          const candidates = [
+            env.VITE_GEMINI_API_KEY,
+            env.VITE_GOOGLE_CLOUD_API_KEY,
+            (process as any)?.env?.GEMINI_API_KEY,
+            (process as any)?.env?.REACT_APP_GEMINI_API_KEY,
+            env.GEMINI_API_KEY,
+          ];
+          const found = candidates.find((v) => typeof v === 'string' && v.trim().length > 0);
+          if (found) {
+            setApiKey((found as string).trim());
+          }
+        } catch {
+          // no-op
         }
 
         const savedLang = localStorage.getItem('uiLang') as string | null;
@@ -3071,7 +3090,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     try {
         if (!chatInstanceRef.current) {
             const ai = new GoogleGenAI({ apiKey: apiKey });
-            const modelName = await modelManager.getModelForFunction('expertChat');
+            const modelName = await getModelForUser(authState.user?.uid || "", "expertChat");
             chatInstanceRef.current = ai.chats.create({
               model: modelName,
               history: chatHistory.map(msg => ({ role: msg.role, parts: [{ text: msg.text }] })),
@@ -4031,7 +4050,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 }
                 
                 const ai = new GoogleGenAI({ apiKey: apiKey });
-                const modelName = await modelManager.getModelForFunction('analysisGeneration');
+                const modelName = await getModelForUser(authState.user?.uid || "", "analysisGeneration");
                 const inputLanguage = getGeminiCode(language || 'en');
                 const analysisPrompt = `Analyze this image in detail and provide a comprehensive description in ${inputLanguage}. Include:
 
@@ -4893,7 +4912,8 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
         const fullPrompt = `${prompt}\n\nHere is the text:\n\n${sanitizedTranscript}`;
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('analysisGeneration');
+        const { getModelForUser } = await import('./src/utils/tierModelService');
+        const modelName = await getModelForUser(authState.user?.uid || '', 'analysisGeneration');
         const response = await ai.models.generateContent({ model: modelName, contents: fullPrompt });
 
         // Track token usage with TokenManager
@@ -4975,7 +4995,7 @@ const handleKeywordClick = async (keyword: string) => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `Provide a short and clear explanation of the term '${keyword}' in the context of the following **${inputLanguage}** transcript. Return the explanation in **${outputLanguage}**, no extra titles or formatting. Keep it concise. Transcript: --- ${transcript} ---`;
@@ -5047,7 +5067,7 @@ const handleGenerateKeywordAnalysis = async () => {
     
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `Analyze the following **${inputLanguage}** transcript in **${outputLanguage}**. Identify the most frequent and important keywords. Group these into 5-7 relevant topics. For each topic, provide a short descriptive name and a list of associated keywords. Return JSON only. Transcript: --- ${transcript} ---`;
@@ -5134,7 +5154,7 @@ const handleAnalyzeSentiment = async () => {
 
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `Analyze the sentiment of the following **${inputLanguage}** transcript in **${outputLanguage}**. Return a JSON object with: 1. 'summary': a short factual summary of the sentiments found (e.g., "The conversation was predominantly positive with some negative points about X."). 2. 'conclusion': an overall conclusion about the general tone and atmosphere of the conversation. Do NOT include the full transcript with tags. Transcript: --- ${transcript} ---`;
@@ -5346,8 +5366,28 @@ const handleAnalyzeSentiment = async () => {
     try {
       // Creating new account
       
-      // If referral code present in URL, bypass pre-created user requirement and create Firestore user document
+      // If referral code present in URL, use email confirmation flow for security
       if (referralCodeFromURL) {
+        // Store password temporarily for after email confirmation
+        setPendingReferralPassword(password);
+        setPendingConfirmationEmail(email);
+        setConfirmationContext('referral');
+        
+        // Import security functions
+        const { initiateWaitlistSignup } = await import('./src/utils/security');
+        
+        // Initiate email confirmation for referral signup
+        const result = await initiateWaitlistSignup(email);
+        
+        if (result.success && result.requiresConfirmation) {
+          setShowEmailConfirmationModal(true);
+          displayToast(t('emailConfirmationSent', 'Een bevestigingscode is verzonden naar je e-mailadres.'), 'info');
+          return;
+        } else if (result.error) {
+          throw new Error(result.error);
+        }
+        
+        // Fallback to direct creation if email confirmation fails
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
@@ -5516,6 +5556,60 @@ const handleAnalyzeSentiment = async () => {
     }
   };
 
+  // Handle email confirmation completion
+  const handleEmailConfirmed = async (email: string, context: 'waitlist' | 'referral') => {
+    try {
+      if (context === 'waitlist') {
+        // Complete waitlist signup
+        const { completeWaitlistSignup } = await import('./src/utils/security');
+        const result = await completeWaitlistSignup(pendingConfirmationEmail || email);
+        
+        if (result.success) {
+          displayToast(t('waitlistConfirmationMessage', 'Uw inschrijving is opgenomen in de administratie. U hoort zo snel mogelijk van ons. Bedankt!'), 'success');
+          setShowEmailConfirmationModal(false);
+          setPendingConfirmationEmail('');
+          setConfirmationContext('waitlist');
+        } else {
+          throw new Error(result.error || 'Failed to complete waitlist signup');
+        }
+      } else if (context === 'referral') {
+        // Complete referral account creation
+        const { createReferralAccount } = await import('./src/utils/security');
+        const result = await createReferralAccount(
+          pendingConfirmationEmail || email, 
+          pendingReferralPassword || '', 
+          referralCodeFromURL || ''
+        );
+        
+        if (result.success && result.user) {
+          // Set authentication state
+          setAuthState({
+            user: result.user,
+            isLoading: false,
+          });
+          setUserSubscription(SubscriptionTier.FREE);
+          setShowInfoPage(false);
+          setShowEmailConfirmationModal(false);
+          
+          // Clear pending data
+          setPendingConfirmationEmail('');
+          setPendingReferralPassword('');
+          setConfirmationContext('waitlist');
+          
+          // Create personalized welcome message
+          const referrerEmail = referrerData?.userEmail || 'een collega';
+          const welcomeMessage = t('welcomeNewReferral', `Welkom! Je bent uitgenodigd door ${referrerEmail} en hebt nu toegang tot RecapHorizon. Veel plezier met het platform!`);
+          displayToast(welcomeMessage, 'success');
+        } else {
+          throw new Error(result.error || 'Failed to create referral account');
+        }
+      }
+    } catch (error: any) {
+      console.error('Email confirmation error:', error);
+      displayToast(error.message || t('emailConfirmationFailed', 'E-mailbevestiging mislukt. Probeer het opnieuw.'), 'error');
+    }
+  };
+
   const loadUsers = async (options?: { bypassAdminCheck?: boolean }) => {
     const bypass = options?.bypassAdminCheck === true;
     // Controleer of gebruiker admin is
@@ -5608,8 +5702,7 @@ const handleAnalyzeSentiment = async () => {
 
 
 
-  // Simplified waitlist functions without 2FA email confirmation
-  // Note: 2FA email confirmation system has been temporarily disabled
+  // Enhanced waitlist functions with email confirmation for security
   const addToWaitlist = async (email: string): Promise<{ success: boolean; message: string; type: 'success' | 'error' | 'info' }> => {
     // Prevent waitlist action when user is logged in
     if (authState.user) {
@@ -5619,6 +5712,45 @@ const handleAnalyzeSentiment = async () => {
         type: 'info'
       };
     }
+    
+    try {
+      // Import enhanced security utilities
+      const { initiateWaitlistSignup } = await import('./src/utils/security');
+      
+      // Initiate waitlist signup with email confirmation
+      const result = await initiateWaitlistSignup(email);
+      
+      if (result.success && result.requiresConfirmation) {
+        // Store email for confirmation
+        setPendingConfirmationEmail(email);
+        setConfirmationContext('waitlist');
+        setShowEmailConfirmationModal(true);
+        
+        return {
+          success: true,
+          message: t('emailConfirmationSent', 'Een bevestigingscode is verzonden naar je e-mailadres.'),
+          type: 'info'
+        };
+      } else if (result.error) {
+        return {
+          success: false,
+          message: result.error,
+          type: 'error'
+        };
+      }
+      
+      // Fallback to old method if email confirmation is not available
+      return await addToWaitlistDirect(email);
+      
+    } catch (error) {
+      console.error('Error in addToWaitlist:', error);
+      // Fallback to direct method
+      return await addToWaitlistDirect(email);
+    }
+  };
+
+  // Fallback direct waitlist method (kept for compatibility)
+  const addToWaitlistDirect = async (email: string): Promise<{ success: boolean; message: string; type: 'success' | 'error' | 'info' }> => {
     // Enhanced email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
@@ -5857,7 +5989,7 @@ const handleAnalyzeSentiment = async () => {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
     } catch (error) {
-
+      console.warn('Failed to generate session hash:', error);
       return 'unknown';
     }
   };
@@ -6090,7 +6222,7 @@ const handleAnalyzeSentiment = async () => {
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('pptExport');
+        const modelName = await getModelForUser(authState.user?.uid || "", "pptExport");
         const prompt = `Je bent een AI-expert in het creëren van professionele, gestructureerde en visueel aantrekkelijke zakelijke presentaties op basis van een meeting-transcript. Je taak is om de volgende content te genereren en te structureren in een JSON-object dat voldoet aan het verstrekte schema.
 
 **Taal:** ${getGeminiCode(options.language)} - Alle titels en content moeten in deze taal zijn.
@@ -6635,7 +6767,9 @@ ${transcript}
 
         let transcribedText = '';
         let globalPollCount = 0;
-        const maxPollAttempts = 100; // per segment
+        // Configureerbare polling parameters via env, met veilige defaults
+        const maxPollAttempts = Number(import.meta.env.VITE_STT_MAX_POLL_ATTEMPTS || 0) || 200; // per segment
+        const pollIntervalMs = Number(import.meta.env.VITE_STT_POLL_INTERVAL_MS || 0) || 3000; // standaard 3s
         let segmentIndex = 0;
         const totalSegments = blobsToTranscribe.length;
         console.log(`[${transcribeTimestamp}] handleTranscribe: Aantal segmenten: ${totalSegments}`);
@@ -6675,7 +6809,7 @@ ${transcript}
           let transcriptionComplete = false;
           let pollCount = 0;
           while (!transcriptionComplete && pollCount < maxPollAttempts && !cancelTranscriptionRef.current) {
-            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+            await new Promise(resolve => setTimeout(resolve, pollIntervalMs)); // wacht pollIntervalMs ms
             pollCount++;
             globalPollCount++;
             
@@ -6818,7 +6952,9 @@ ${transcript}
   
   const downloadTextFile = (text: string, filename: string) => {
     try {
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      // Normalize to CRLF for maximum compatibility on Windows editors like Notepad
+      const crlf = text.replace(/\r?\n/g, '\r\n');
+      const blob = new Blob([crlf], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -6838,45 +6974,166 @@ ${transcript}
   const stripMarkdown = (text: string): string => {
     if (!text) return '';
     let cleaned = text.replace(/\r\n|\r/g, '\n');
-    cleaned = cleaned
-      .replace(/^\s*#{1,6}\s+/gm, '') // headings
-      .replace(/\*\*(.*?)\*\*/g, '$1') // bold
-      .replace(/\*(.*?)\*/g, '$1') // italic
-      .replace(/`{1,3}[\s\S]*?`{1,3}/g, '') // code blocks/inline
-      .replace(/!\[[^\]]*\]\([^\)]*\)/g, '') // images
-      .replace(/\[[^\]]*\]\([^\)]*\)/g, '$1') // links
-      .replace(/^>\s+/gm, '') // blockquotes
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // control chars
-      .replace(/\n{3,}/g, '\n\n'); // collapse
+    // Remove headings markers
+    cleaned = cleaned.replace(/^[ \t]*#{1,6}[ \t]*/gm, '');
+    cleaned = cleaned.replace(/^\s*(=|\-){3,}\s*$/gm, '');
+    // Bold/italic
+    cleaned = cleaned.replace(/(\*\*|__)(.*?)\1/g, '$2');
+    cleaned = cleaned.replace(/(\*|_)(.*?)\1/g, '$2');
+    // Code blocks/inline
+    cleaned = cleaned.replace(/```[\s\S]*?```/g, '');
+    cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+    // Links and images
+    cleaned = cleaned.replace(/!\[(.*?)\]\((.*?)\)/g, '$1');
+    cleaned = cleaned.replace(/\[(.*?)\]\((.*?)\)/g, '$1 ($2)');
+    // Blockquotes
+    cleaned = cleaned.replace(/^[ \t]*>+[ \t]?/gm, '');
+    // Normalize unordered bullets and common bullet symbols
+    cleaned = cleaned.replace(/^[ \t]*([*+\-])\s+/gm, '- ');
+    cleaned = cleaned.replace(/[•·▪◦]/g, '-');
+    // Normalize ordered list markers "1)" or "1."
+    cleaned = cleaned.replace(/^[ \t]*(\d{1,3})[\.)]\s+/gm, '$1. ');
+    // Control/non-printable
+    cleaned = cleaned.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+    // Remove lines of only formatting garbage
+    cleaned = cleaned.replace(/^\s*[&*_~`\-]+\s*$/gm, '');
+    cleaned = cleaned.replace(/^\s*&+\s*$/gm, '');
+    // Collapse excessive blank lines
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    // Trim trailing spaces per line
+    cleaned = cleaned.split('\n').map(l => l.replace(/\s+$/, '')).join('\n');
     return cleaned.trim();
+  };
+
+  // Convert markdown to well-formatted plain text preserving structure
+  const markdownToPlainText = (text: string): string => {
+    if (!text) return '';
+    let formatted = text.replace(/\r\n|\r/g, '\n');
+    
+    // Convert headers to uppercase with underlines
+    formatted = formatted.replace(/^[ \t]*#{1,6}[ \t]*(.+)$/gm, (match, title) => {
+      const cleanTitle = title.trim().toUpperCase();
+      return `\n${cleanTitle}\n${'='.repeat(cleanTitle.length)}\n`;
+    });
+    
+    // Convert bold to uppercase, keep content
+    formatted = formatted.replace(/(\*\*|__)(.*?)\1/g, (match, marker, content) => content.toUpperCase());
+    
+    // Keep italic content but remove markers
+    formatted = formatted.replace(/(\*|_)(.*?)\1/g, '$2');
+    
+    // Remove code blocks but keep content
+    formatted = formatted.replace(/```[\s\S]*?```/g, '');
+    formatted = formatted.replace(/`([^`]+)`/g, '$1');
+    
+    // Convert links to "text (url)" format
+    formatted = formatted.replace(/!\[(.*?)\]\((.*?)\)/g, '$1');
+    formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '$1 ($2)');
+    
+    // Convert blockquotes to indented text
+    formatted = formatted.replace(/^[ \t]*>+[ \t]?(.*)$/gm, '    $1');
+    
+    // Convert unordered lists to bullets with proper spacing
+    formatted = formatted.replace(/^[ \t]*([*+\-])[ \t]+(.*)$/gm, '• $2');
+    
+    // Convert ordered lists with proper numbering
+    formatted = formatted.replace(/^[ \t]*(\d{1,3})[\.)]\s+(.*)$/gm, '$1. $2');
+    
+    // Clean up control characters but preserve structure
+    formatted = formatted.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '');
+    
+    // Remove lines of only formatting garbage
+    formatted = formatted.replace(/^\s*[&*_~`\-]+\s*$/gm, '');
+    
+    // Preserve paragraph breaks but limit excessive spacing
+    formatted = formatted.replace(/\n{4,}/g, '\n\n\n');
+    
+    // Trim trailing spaces per line but preserve structure
+    formatted = formatted.split('\n').map(l => l.replace(/\s+$/, '')).join('\n');
+    
+    // Convert to CRLF for Windows compatibility
+    formatted = formatted.replace(/\n/g, '\r\n');
+    
+    return formatted.trim();
   };
 
   const handleExportTranscriptPdf = () => {
     try {
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      // Try to register a Unicode font; fall back to helvetica (non-blocking)
+      import('./src/utils/pdfFont')
+        .then(({ tryUseUnicodeFont }) => tryUseUnicodeFont(doc))
+        .catch(() => {});
       const margin = 40;
       const pageWidth = doc.internal.pageSize.getWidth();
       const usableWidth = pageWidth - margin * 2;
       let y = margin;
 
       // Title
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(doc.getFont().fontName || 'helvetica', 'bold');
       doc.setFontSize(16);
       doc.text(t('transcript'), margin, y);
       y += 22;
 
       // Body
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(doc.getFont().fontName || 'helvetica', 'normal');
       doc.setFontSize(12);
-      const bodyText = stripMarkdown(transcript || t('noTranscriptAvailable'));
-      const lines = doc.splitTextToSize(bodyText, usableWidth);
-      for (const line of lines) {
-        if (y > doc.internal.pageSize.getHeight() - margin) {
+      const bodyText = markdownToPlainText(transcript || t('noTranscriptAvailable'));
+      const rawLines = bodyText.split('\n');
+      const addPageIfNeeded = (h: number) => {
+        if (y + h > doc.internal.pageSize.getHeight() - margin) {
           doc.addPage();
           y = margin;
         }
-        doc.text(line, margin, y);
-        y += 16;
+      };
+      for (const raw of rawLines) {
+        const line = raw.trimEnd();
+        if (line.trim() === '') {
+          // blank line = paragraph spacer
+          y += 8;
+          continue;
+        }
+        // Bullets
+        const ulMatch = line.match(/^\s*-\s+(.*)$/);
+        const olMatch = line.match(/^\s*(\d{1,3})\.\s+(.*)$/);
+        if (ulMatch) {
+          const text = ulMatch[1];
+          const indent = 20;
+          const bullet = '•';
+          const wrapped = doc.splitTextToSize(text, usableWidth - indent) as string[];
+          addPageIfNeeded(16 * wrapped.length);
+          // bullet symbol
+          doc.text(bullet, margin + 6, y);
+          // lines indented
+          wrapped.forEach((w) => {
+            doc.text(w, margin + indent, y);
+            y += 16;
+          });
+          y += 2;
+          continue;
+        }
+        if (olMatch) {
+          const num = olMatch[1];
+          const text = olMatch[2];
+          const indent = 26;
+          const wrapped = doc.splitTextToSize(text, usableWidth - indent) as string[];
+          addPageIfNeeded(16 * wrapped.length);
+          doc.text(num + '.', margin + 2, y);
+          wrapped.forEach((w) => {
+            doc.text(w, margin + indent, y);
+            y += 16;
+          });
+          y += 2;
+          continue;
+        }
+        // Normal paragraph
+        const wrapped = doc.splitTextToSize(line, usableWidth) as string[];
+        addPageIfNeeded(16 * wrapped.length);
+        wrapped.forEach((w) => {
+          doc.text(w, margin, y);
+          y += 16;
+        });
+        y += 4; // paragraph spacing
       }
 
       doc.save('transcript.pdf');
@@ -6982,24 +7239,35 @@ ${transcript}
 
           {/* Monthly Audio Usage */}
           <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-600 dark:text-slate-400">Maandelijks gebruik</span>
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                {authState.user?.monthlyAudioMinutes || 0}/{getMonthlyAudioLimit(userSubscription)} min
-              </span>
-            </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-              <div 
-                className="h-2 rounded-full transition-all duration-300 bg-blue-500"
-                style={{ 
-                  width: `${Math.min(((authState.user?.monthlyAudioMinutes || 0) / getMonthlyAudioLimit(userSubscription)) * 100, 100)}%` 
-                }}
-              ></div>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {/** Round to 1 decimal to avoid long fractional values during live recording updates */}
-              Resterend: {Math.max(0, getMonthlyAudioLimit(userSubscription) - (authState.user?.monthlyAudioMinutes || 0)).toFixed(1)} minuten
-            </div>
+            {(() => {
+              // Base used minutes from profile (may be fractional)
+              const baseUsed = authState.user?.monthlyAudioMinutes || 0;
+              // While recording, update live with current session duration
+              const liveUsed = baseUsed + (status === RecordingStatus.RECORDING ? currentDurationMinutes : 0);
+              const limit = getMonthlyAudioLimit(userSubscription);
+              const usedDisplay = Math.round(liveUsed);
+              const remainingDisplay = Math.max(0, limit - usedDisplay);
+              const percentUsed = Math.min((liveUsed / limit) * 100, 100);
+              return (
+                <>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Maandelijks gebruik</span>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      {usedDisplay}/{limit} min
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                    <div
+                      className="h-2 rounded-full transition-all duration-300 bg-blue-500"
+                      style={{ width: `${percentUsed}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Resterend: {remainingDisplay} minuten
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -7100,19 +7368,23 @@ ${transcript}
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                 <span className="text-red-600 dark:text-red-400 font-medium">Opname actief</span>
               </div>
-              {showNoInputHint ? (
-                <div className="flex items-center gap-2 text-orange-500 dark:text-orange-400">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <span className="text-xs">Geen audio gedetecteerd</span>
-                </div>
-              ) : avgInputLevel > 0.01 ? (
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs">Audio gedetecteerd</span>
-                </div>
-              ) : (
-                null
-              )}
+              {/* Reserveer vaste ruimte voor de audiostatus om 'springen' te voorkomen */}
+              <div className="h-5 flex items-center justify-center">
+                {showNoInputHint ? (
+                  <div className="flex items-center gap-2 text-orange-500 dark:text-orange-400">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-xs">Geen audio gedetecteerd</span>
+                  </div>
+                ) : avgInputLevel > 0.01 ? (
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs">Audio gedetecteerd</span>
+                  </div>
+                ) : (
+                  // Onzichtbare placeholder houdt de hoogte gelijk
+                  <span className="text-xs opacity-0">placeholder</span>
+                )}
+              </div>
             </div>
           )}
           {status === RecordingStatus.PAUSED && (
@@ -7301,8 +7573,18 @@ ${transcript}
         
         // Validate token usage for executive summary
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const sys = `Act as a seasoned McKinsey-style business analyst creating an extremely concise one-slide Executive Summary in OSC-R-B-C format (Objective, Situation, Complication, Resolution, Benefits, Call to Action). Use at most 1-3 short sentences per section. If a section is not explicitly present, output "[Niet expliciet besproken]". Return ONLY valid JSON with keys: objective, situation, complication, resolution, benefits, call_to_action.`;
-        const prompt = `${sys}\n\nTranscript (NL or other):\n${getTranscriptSlice(transcript, 20000)}`;
+        const outputLanguage = getGeminiCode(outputLang || language || 'en');
+        
+        // Create language-specific prompt
+        const notExplicitlyDiscussed = outputLanguage === 'nl' ? '[Niet expliciet besproken]' : 
+                                     outputLanguage === 'de' ? '[Nicht explizit besprochen]' :
+                                     outputLanguage === 'fr' ? '[Pas explicitement discuté]' :
+                                     outputLanguage === 'es' ? '[No discutido explícitamente]' :
+                                     outputLanguage === 'pt' ? '[Não discutido explicitamente]' :
+                                     '[Not explicitly discussed]';
+        
+        const sys = `Act as a seasoned McKinsey-style business analyst creating an extremely concise one-slide Executive Summary in OSC-R-B-C format (Objective, Situation, Complication, Resolution, Benefits, Call to Action). Use at most 1-3 short sentences per section. If a section is not explicitly present, output "${notExplicitlyDiscussed}". Write the entire response in ${outputLanguage} language. Return ONLY valid JSON with keys: objective, situation, complication, resolution, benefits, call_to_action.`;
+        const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
         const estimatedTokens = tokenCounter.countPromptTokens(prompt) + 500; // Add buffer for response
         const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
         
@@ -7312,7 +7594,7 @@ ${transcript}
           setLoadingText('');
           return;
         }
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -7328,12 +7610,12 @@ ${transcript}
         text = text.replace(/```[a-z]*|```/gi, '').trim();
         const data = JSON.parse(text);
         setExecutiveSummaryData({
-          objective: data.objective || '[Niet expliciet besproken]',
-          situation: data.situation || '[Niet expliciet besproken]',
-          complication: data.complication || '[Niet expliciet besproken]',
-          resolution: data.resolution || '[Niet expliciet besproken]',
-          benefits: data.benefits || '[Niet expliciet besproken]',
-          call_to_action: data.call_to_action || '[Niet expliciet besproken]'
+          objective: data.objective || notExplicitlyDiscussed,
+          situation: data.situation || notExplicitlyDiscussed,
+          complication: data.complication || notExplicitlyDiscussed,
+          resolution: data.resolution || notExplicitlyDiscussed,
+          benefits: data.benefits || notExplicitlyDiscussed,
+          call_to_action: data.call_to_action || notExplicitlyDiscussed
         });
         setActiveView('exec');
       } catch (e: any) {
@@ -7405,7 +7687,7 @@ ${transcript}
           setLoadingText('');
           return;
         }
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -7479,7 +7761,7 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
           setLoadingText('');
           return;
         }
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -7559,7 +7841,7 @@ IMPORTANT: Start DIRECTLY with the email content, without introduction or explan
           setLoadingText('');
           return;
         }
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -7637,7 +7919,7 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -7722,7 +8004,7 @@ IMPORTANT: Return ONLY the JSON array, no additional text or formatting.`;
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -7806,7 +8088,7 @@ IMPORTANT: Start DIRECTLY with the educational content, without introduction or 
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -7966,7 +8248,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -8028,7 +8310,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         }
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const modelName = await modelManager.getModelForFunction('generalAnalysis');
+        const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const res = await ai.models.generateContent({ model: modelName, contents: prompt });
         
         // Track token usage with TokenManager
@@ -8109,7 +8391,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                   }
                   
                   const ai = new GoogleGenAI({ apiKey: apiKey });
-                  const modelName = await modelManager.getModelForFunction('generalAnalysis');
+                  const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
                   const res = await ai.models.generateContent({ model: modelName, contents: prompt });
                   
                   // Track token usage with TokenManager
@@ -8305,7 +8587,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 setLoadingText(t('generating', { type: 'Mindmap' }));
                 const ai = new GoogleGenAI({ apiKey: apiKey });
                 // Using ModelManager for mindmap generation
-                const modelName = await modelManager.getModelForFunction('generalAnalysis');
+                const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
                 const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
                 const prompt = `${sys}\n\nTranscript:\n${transcript.slice(0, 12000)}`;
                 const res = await ai.models.generateContent({ model: modelName, contents: prompt });
@@ -8359,7 +8641,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 >
                                     <button onClick={async () => {
                                         try {
-                                            await copyToClipboard(transcript || '');
+                                            await copyToClipboard(markdownToPlainText(transcript || ''));
                                             displayToast(t('copiedToClipboard'), 'success');
                                         } catch {
                                             displayToast(t('copyFailed'), 'error');
@@ -8368,7 +8650,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         <CopyIcon className="w-5 h-5" />
                                     </button>
                                     <button onClick={() => {
-                                        const txt = transcript || t('noTranscriptAvailable');
+                                        const txt = markdownToPlainText(transcript || t('noTranscriptAvailable'));
                                         downloadTextFile(txt, 'transcript.txt');
                                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')} title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
                                         ⬇️
@@ -8507,7 +8789,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             return parts.join('\n');
                                         })();
                                         try {
-                                            await copyToClipboard(txt);
+                                            await copyToClipboard(markdownToPlainText(txt));
                                             displayToast(t('copiedToClipboard'), 'success');
                                         } catch {
                                             displayToast(t('copyFailed'), 'error');
@@ -8676,7 +8958,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             </button>
                                             <button onClick={async () => {
                                                 try {
-                                                    await copyToClipboard(storytellingData.story);
+                                                await copyToClipboard(markdownToPlainText(storytellingData.story));
                                                     displayToast(t('copiedToClipboard'), 'success');
                                                 } catch {
                                                     displayToast(t('copyFailed'), 'error');
@@ -8684,7 +8966,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => downloadTextFile(storytellingData.story, 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                            <button onClick={() => downloadTextFile(markdownToPlainText(storytellingData.story), 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
                                                 ⬇️
                                             </button>
                                             <button onClick={() => {
@@ -8927,7 +9209,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             </button>
                                             <button onClick={async () => {
                                                 try {
-                                                    await copyToClipboard(blogData);
+                                                    await copyToClipboard(markdownToPlainText(blogData));
                                                     displayToast(t('copiedToClipboard'), 'success');
                                                 } catch {
                                                     displayToast(t('copyFailed'), 'error');
@@ -8935,7 +9217,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => downloadTextFile(blogData, 'blog.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                            <button onClick={() => downloadTextFile(markdownToPlainText(blogData), 'blog.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
                                                 ⬇️
                                             </button>
                                             <button onClick={() => {
@@ -8997,10 +9279,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         <button onClick={() => handleAnalyzeSentiment()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
                                             🔄
                                         </button>
-                                        <button onClick={() => copyToClipboard(fullContent)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                        <button onClick={() => copyToClipboard(markdownToPlainText(fullContent))} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
                                             <CopyIcon className="w-5 h-5" />
                                         </button>
-                                        <button onClick={() => downloadTextFile(fullContent, `sentiment.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                        <button onClick={() => downloadTextFile(markdownToPlainText(fullContent), `sentiment.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
                                             ⬇️
                                         </button>
                                         <button onClick={() => {
@@ -9071,7 +9353,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             }
                                             return parts.join('\n');
                                         })();
-                                        copyToClipboard(txt);
+                                        copyToClipboard(markdownToPlainText(txt));
                                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
                                         <CopyIcon className="w-5 h-5" />
                                     </button>
@@ -9148,7 +9430,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 }
                                 return parts.join('\n');
                             })();
-                            copyToClipboard(txt);
+                                        copyToClipboard(markdownToPlainText(txt));
                         }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
                             <CopyIcon className="w-5 h-5" />
                         </button>
@@ -9259,7 +9541,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 <div className="flex gap-2">
                                     <button onClick={() => {
                                         const txt = `## Business Case\n\n${businessCaseData.businessCase}`;
-                                        copyToClipboard(txt);
+                                        copyToClipboard(markdownToPlainText(txt));
                                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
                                         <CopyIcon className="w-5 h-5" />
                                     </button>
@@ -9392,10 +9674,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             <button onClick={() => handleGenerateExplain(explainOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
                                                 🔄
                                             </button>
-                                            <button onClick={() => copyToClipboard(explainData.explanation)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                            <button onClick={() => copyToClipboard(markdownToPlainText(explainData.explanation))} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => downloadTextFile(explainData.explanation, 'explain.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                            <button onClick={() => downloadTextFile(markdownToPlainText(explainData.explanation), 'explain.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
                                                 ⬇️
                                             </button>
                                             <button onClick={() => {
@@ -9541,7 +9823,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 🔄
                                             </button>
                                             <button 
-                                                onClick={() => copyToClipboard(teachMeData.content)} 
+                                                onClick={() => copyToClipboard(markdownToPlainText(teachMeData.content))} 
                                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" 
                                                 aria-label={t('copyContent')} 
                                                 title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}
@@ -9549,7 +9831,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
                                             <button 
-                                                onClick={() => downloadTextFile(teachMeData.content, `teach-me-${teachMeData.topic.title.toLowerCase().replace(/\s+/g, '-')}.txt`)} 
+                                                onClick={() => downloadTextFile(markdownToPlainText(teachMeData.content), `teach-me-${teachMeData.topic.title.toLowerCase().replace(/\s+/g, '-')}.txt`)} 
                                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" 
                                                 aria-label="Download" 
                                                 title={window.innerWidth > 768 ? 'Downloaden' : undefined}
@@ -10068,7 +10350,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
                                     <CopyIcon className="w-5 h-5" />
                                 </button>
-                                <button onClick={() => downloadTextFile(content, `${activeView}.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                <button onClick={() => downloadTextFile(markdownToPlainText(content), `${activeView}.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
                                     ⬇️
                                 </button>
                                 <button onClick={() => {
@@ -10185,7 +10467,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     }
                     
                     const ai = new GoogleGenAI({ apiKey: apiKey });
-                    const modelName = await modelManager.getModelForFunction('generalAnalysis');
+                    const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
                     const prompt = `${sys}\n\nConstraints: number_of_questions=${numQuestions}, number_of_options=${numOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
                     const res = await ai.models.generateContent({ model: modelName, contents: prompt });
                     
@@ -12607,6 +12889,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         currentTier={userSubscription}
         userId={user?.uid || ''}
         userEmail={user?.email || ''}
+        isLoggedIn={!!authState.user}
         onUpgrade={(tier: SubscriptionTier) => {
           setUserSubscription(tier);
           setShowPricingPage(false);
@@ -12963,6 +13246,22 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
            setUiLang(lang as Language);
            localStorage.setItem('uiLanguage', lang);
          }}
+       />
+     )}
+
+     {/* Email Confirmation Modal */}
+     {showEmailConfirmationModal && (
+       <EmailConfirmationModal
+         isOpen={showEmailConfirmationModal}
+         onClose={() => {
+           setShowEmailConfirmationModal(false);
+           setPendingConfirmationEmail('');
+           setConfirmationContext('waitlist');
+         }}
+         onConfirm={handleEmailConfirmed}
+         email={pendingConfirmationEmail}
+         context={confirmationContext}
+         t={t}
        />
      )}
 

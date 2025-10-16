@@ -31,3 +31,6 @@ firebase-service-account.json
 
 # Local Netlify folder
 .netlify
+# Local tools and generated reports
+tools/
+gitleaks_report.json

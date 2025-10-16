@@ -6778,9 +6778,12 @@ ${transcript}
         console.log(`[${transcribeTimestamp}] handleTranscribe: Environment VITE_FUNCTIONS_BASE_URL:`, envBase);
         
         // Bepaal maximale uploadgrootte per segment (configureerbaar)
-        // Behoud 5MB voor stabiliteit op Netlify productie
-        const MAX_STT_UPLOAD_MB = Number(import.meta.env.VITE_STT_MAX_UPLOAD_MB) || 5; // default 5MB
+        // Verlaag limiet voor Netlify productie om body size limieten + base64 overhead te vermijden
+        const isNetlifyProd = !window.location.hostname.includes('localhost') && window.location.hostname.includes('netlify.app');
+        const DEFAULT_MAX_MB = Number(import.meta.env.VITE_STT_MAX_UPLOAD_MB) || 5; // default 5MB
+        const MAX_STT_UPLOAD_MB = isNetlifyProd ? Math.min(DEFAULT_MAX_MB, 4) : DEFAULT_MAX_MB; // 4MB op Netlify prod
         const MAX_UPLOAD_BYTES = MAX_STT_UPLOAD_MB * 1024 * 1024;
+        const SAFETY_MARGIN_BYTES = isNetlifyProd ? 512 * 1024 : 128 * 1024; // grotere marge in productie
         const transcribeStartUrl = `${effectiveFunctionsBase}/.netlify/functions/transcribe-start`;
 
         // Als bestand groter is dan limiet → converteer naar WAV (16k mono) en splits in segmenten
@@ -6797,8 +6800,8 @@ ${transcript}
             
             // Controleer of compressie voldoende was
             if (wavBlob.size > MAX_UPLOAD_BYTES) {
-              setLoadingText(`Splitsen van audio in segmenten van ${MAX_STT_UPLOAD_MB}MB...`);
-              blobsToTranscribe = await splitWavBlobByBytes(wavBlob, MAX_UPLOAD_BYTES - 128 * 1024); // veiligheidsmarge 128KB
+              setLoadingText(`Splitsen van audio in ${MAX_STT_UPLOAD_MB}MB segmenten (productie-optimalisatie)...`);
+              blobsToTranscribe = await splitWavBlobByBytes(wavBlob, MAX_UPLOAD_BYTES - SAFETY_MARGIN_BYTES);
               console.log(`[${transcribeTimestamp}] handleTranscribe: Audio gesplitst in ${blobsToTranscribe.length} segmenten`);
             } else {
               blobsToTranscribe = [wavBlob];

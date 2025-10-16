@@ -324,7 +324,8 @@ const handler: Handler = async (event) => {
       {
         headers: {
           ...assemblyAIHeaders,
-          'Content-Type': contentType,
+          // Gebruik octet-stream voor robuuste binaire uploads ongeacht bron mime type
+          'Content-Type': 'application/octet-stream',
         },
         timeout: 60000, // 60 second timeout
         maxContentLength: MAX_FILE_SIZE,

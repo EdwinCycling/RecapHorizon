@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SubscriptionTier, TierLimits, UserSubscription } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 import { stripeService } from '../services/stripeService';
+import { getUserStripeData } from '../firebase';
 
 interface PricingPageProps {
   currentTier: SubscriptionTier;
@@ -16,8 +17,25 @@ interface PricingPageProps {
 
 const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription, onUpgrade, onClose, t, userId, userEmail, isLoggedIn }) => {
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [nextBillingDate, setNextBillingDate] = useState<Date | null>(null);
+  const isHorizonEligible = currentTier === SubscriptionTier.SILVER || currentTier === SubscriptionTier.GOLD;
   // Get tier comparison - DIAMOND tier alleen tonen indien gewenst
   const tierComparison = subscriptionService.getTierComparison();
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        if (isLoggedIn && userId) {
+          const stripeData = await getUserStripeData(userId);
+          if (isMounted) setNextBillingDate(stripeData.nextBillingDate ?? null);
+        }
+      } catch (e) {
+        console.warn('Kon Stripe gegevens niet ophalen voor vervaldatum Horizon pakket:', e);
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [isLoggedIn, userId]);
 
   const getTierIcon = (tier: SubscriptionTier) => {
     switch (tier) {
@@ -98,6 +116,13 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
       default:
         return t('pricingAIModelFree');
     }
+  };
+
+  // Helper: format limit values for display (supports "Onbeperkt")
+  const formatLimitValue = (value: number, unit?: string) => {
+    if (value === -1) return t('pricingUnlimited');
+    const formatted = value.toLocaleString('nl-NL');
+    return unit ? `${formatted} ${unit}` : formatted;
   };
 
   const handleUpgrade = async (tier: SubscriptionTier) => {
@@ -268,6 +293,21 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                     )}
                   </span>
                 </div>
+
+                {/* Nieuw: Tokenlimieten per tier */}
+                <div className="flex items-center">
+                  <span className="text-green-500 dark:text-green-400 mr-2 flex-shrink-0">✓</span>
+                  <span className="text-gray-700 dark:text-gray-300 text-sm">
+                    Tokens per maand: {formatLimitValue(tier.maxTokensPerMonth)}
+                  </span>
+                </div>
+                {/* Verwijderd: Tokens per dag, niet getoond als dit geen harde limiet is */}
+                <div className="flex items-center">
+                  <span className="text-green-500 dark:text-green-400 mr-2 flex-shrink-0">✓</span>
+                  <span className="text-gray-700 dark:text-gray-300 text-sm">
+                    Audio per maand: {formatLimitValue(tier.maxMonthlyAudioMinutes, 'minuten')}
+                  </span>
+                </div>
                 
                 <div className="flex items-start">
                   <span className="text-green-500 dark:text-green-400 mr-2 mt-0.5 flex-shrink-0">✓</span>
@@ -426,6 +466,61 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
           ))}
         </div>
 
+        {/* Uitleg over tokens (positief en kort) */}
+        <div className="px-4 sm:px-6">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 sm:p-6">
+            <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">Wat zijn tokens?</h3>
+            <p className="text-sm text-blue-900 dark:text-blue-300 mb-2">
+              Tokens zijn kleine stukjes tekst die we gebruiken om AI-berekeningen te doen. Je hoeft er bijna niets voor te weten of te doen: jij werkt gewoon door, wij bewaken netjes je limieten per tier.
+            </p>
+            <ul className="text-sm text-blue-900 dark:text-blue-300 list-disc pl-5 space-y-1">
+              <li>We tellen tokens die je uploadt (naar de AI) en tokens die je downloadt (van de AI). Samen vormen ze je verbruik.</li>
+              <li>Downloadtokens (het AI‑resultaat) zijn iets duurder dan uploadtokens. Zo houden we de kwaliteit van de antwoorden hoog.</li>
+              <li>Kom je ooit in de buurt van je limiet? Dan laten we dat vriendelijk weten en kun je eenvoudig upgraden.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Horizon pakket: eenmalig extra capaciteit voor de lopende maand */}
+        <div className="px-4 sm:px-6 mt-4">
+          <div className="border-2 rounded-lg p-4 sm:p-6 bg-white dark:bg-gray-800">
+            <div className="flex items-center mb-2">
+              <div className="text-3xl mr-2">🌅</div>
+              <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-white">Horizon pakket</h3>
+            </div>
+            {!isHorizonEligible && (
+              <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                Alleen beschikbaar voor <strong>Silver</strong> en <strong>Gold</strong> members.
+              </div>
+            )}
+
+            <div className="grid sm:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-gray-300 mt-2">
+              <div className="flex items-center">
+                <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
+                <span>4 uur extra audio‑opname (<span className="whitespace-nowrap">240 minuten</span>)</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
+                <span>25.000 extra tokens</span>
+              </div>
+            </div>
+
+            <div className="mt-3 text-sm text-gray-700 dark:text-gray-300">
+              <div>Prijs: <strong>eenmalig €4</strong></div>
+              <div>Alleen geldig in jouw abonnementsmaand{isLoggedIn && nextBillingDate ? ` — geldig t/m ${nextBillingDate.toLocaleDateString('nl-NL')}` : ''}.</div>
+              <div>Niet mee te nemen naar een nieuwe abonnementsperiode.</div>
+            </div>
+
+            <div className="mt-4">
+              <button
+                disabled
+                className="w-full py-3 px-6 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded font-medium cursor-not-allowed"
+              >
+                Komt binnenkort
+              </button>
+            </div>
+          </div>
+        </div>
 
 
         {/* Stripe Payment Footnote */}

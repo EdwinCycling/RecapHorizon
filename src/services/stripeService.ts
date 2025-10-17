@@ -134,8 +134,25 @@ class StripeService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create portal session');
+        let errorText = 'Failed to create portal session';
+        try {
+          const errorData = await response.json();
+          if (errorData) {
+            if (errorData.error && errorData.details) {
+              errorText = `${errorData.error}: ${errorData.details}`;
+            } else if (errorData.error) {
+              errorText = errorData.error;
+            } else if (errorData.details) {
+              errorText = errorData.details;
+            }
+          }
+        } catch {
+          try {
+            const text = await response.text();
+            if (text) errorText = text;
+          } catch {}
+        }
+        throw new Error(errorText);
       }
 
       return await response.json();

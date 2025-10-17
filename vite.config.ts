@@ -52,7 +52,8 @@ export default defineConfig(({ mode }) => {
         ...(isProd ? { drop: ['console', 'debugger'] } : {})
       },
       optimizeDeps: {
-        include: ['buffer', 'process', 'stream-browserify', 'events']
+        include: ['buffer', 'process', 'stream-browserify', 'events'],
+        exclude: ['@getbrevo/brevo']
       }
     };
 });

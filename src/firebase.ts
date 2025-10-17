@@ -238,6 +238,8 @@ export const getUserMonthlyTokens = async (userId: string): Promise<MonthlyToken
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
   
+  console.debug('[Firebase] getUserMonthlyTokens()', { userId, authUid: auth.currentUser?.uid });
+  
   // Check if user is authenticated before attempting Firebase operations
   if (!auth.currentUser) {
     console.warn('Token usage retrieval unavailable: user not authenticated');
@@ -254,6 +256,12 @@ export const getUserMonthlyTokens = async (userId: string): Promise<MonthlyToken
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
     const data = userSnap.exists() ? userSnap.data() as Record<string, unknown> : {};
+    console.debug('[Firebase] getUserMonthlyTokens: userDoc exists?', userSnap.exists(), {
+      tokensMonth: (data as any).tokensMonth,
+      monthlyInputTokens: (data as any).monthlyInputTokens,
+      monthlyOutputTokens: (data as any).monthlyOutputTokens,
+      currentMonth
+    });
     if (data.tokensMonth === currentMonth) {
       return {
         month: currentMonth,
@@ -263,6 +271,7 @@ export const getUserMonthlyTokens = async (userId: string): Promise<MonthlyToken
       };
     }
     // Reset for a new month
+    console.info('[Firebase] getUserMonthlyTokens: resetting month, setting counters to 0', { currentMonth });
     await setDoc(userRef, {
       tokensMonth: currentMonth,
       monthlyInputTokens: 0,
@@ -280,6 +289,58 @@ export const getUserMonthlyTokens = async (userId: string): Promise<MonthlyToken
       throw error; // Re-throw other errors
     }
   }
+};
+
+export const getUserMonthlySessions = async (userId: string): Promise<MonthlySessionsUsage> => {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  console.debug('[Firebase] getUserMonthlySessions()', { userId });
+  const userRef = doc(db, 'users', userId);
+  await ensureUserDocument(userId);
+  const userSnap = await getDoc(userRef);
+  const data = userSnap.exists() ? userSnap.data() as Record<string, unknown> : {};
+  console.debug('[Firebase] getUserMonthlySessions: userDoc exists?', userSnap.exists(), {
+    sessionsMonth: (data as any).sessionsMonth,
+    monthlySessionsCount: (data as any).monthlySessionsCount,
+    currentMonth
+  });
+  if (data.sessionsMonth === currentMonth) {
+    return { month: currentMonth, sessions: (data.monthlySessionsCount as number) || 0 };
+  }
+  console.info('[Firebase] getUserMonthlySessions: resetting month, setting sessions to 0', { currentMonth });
+  await setDoc(userRef, { sessionsMonth: currentMonth, monthlySessionsCount: 0, updatedAt: serverTimestamp() }, { merge: true });
+  return { month: currentMonth, sessions: 0 };
+};
+
+export const getUserMonthlyAudioMinutes = async (userId: string): Promise<MonthlyAudioUsage> => {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  console.debug('[Firebase] getUserMonthlyAudioMinutes()', { userId });
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  const data = userSnap.exists() ? userSnap.data() as Record<string, unknown> : {};
+  console.debug('[Firebase] getUserMonthlyAudioMinutes: userDoc exists?', userSnap.exists(), {
+    audioMinutesMonth: (data as any).audioMinutesMonth,
+    monthlyAudioMinutes: (data as any).monthlyAudioMinutes,
+    currentMonth
+  });
+  
+  if (data.audioMinutesMonth === currentMonth) {
+    return { month: currentMonth, minutes: (data.monthlyAudioMinutes as number) || 0 };
+  }
+  
+  // Reset for a new month
+  console.info('[Firebase] getUserMonthlyAudioMinutes: resetting month, setting minutes to 0', { currentMonth });
+  await setDoc(userRef, {
+    audioMinutesMonth: currentMonth,
+    monthlyAudioMinutes: 0,
+    lastAudioResetDate: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+  
+  return { month: currentMonth, minutes: 0 };
 };
 
 export const addUserMonthlyTokens = async (userId: string, inputTokens: number, outputTokens: number): Promise<void> => {
@@ -333,20 +394,7 @@ export interface MonthlySessionsUsage {
   sessions: number;
 }
 
-export const getUserMonthlySessions = async (userId: string): Promise<MonthlySessionsUsage> => {
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
-    const userRef = doc(db, 'users', userId);
-  await ensureUserDocument(userId);
-  const userSnap = await getDoc(userRef);
-  const data = userSnap.exists() ? userSnap.data() as Record<string, unknown> : {};
-  if (data.sessionsMonth === currentMonth) {
-    return { month: currentMonth, sessions: (data.monthlySessionsCount as number) || 0 };
-  }
-  await setDoc(userRef, { sessionsMonth: currentMonth, monthlySessionsCount: 0, updatedAt: serverTimestamp() }, { merge: true });
-  return { month: currentMonth, sessions: 0 };
-};
+// Duplicate getUserMonthlySessions removed; using earlier implementation with debug logging.
 
 // Get user's monthly sessions count
 export const getUserMonthlySessionsCount = async (userId: string): Promise<number> => {
@@ -461,28 +509,7 @@ export interface MonthlyAudioUsage {
   minutes: number;
 }
 
-export const getUserMonthlyAudioMinutes = async (userId: string): Promise<MonthlyAudioUsage> => {
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
-  const userRef = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
-  const data = userSnap.exists() ? userSnap.data() as Record<string, unknown> : {};
-  
-  if (data.audioMinutesMonth === currentMonth) {
-    return { month: currentMonth, minutes: (data.monthlyAudioMinutes as number) || 0 };
-  }
-  
-  // Reset for a new month
-  await setDoc(userRef, {
-    audioMinutesMonth: currentMonth,
-    monthlyAudioMinutes: 0,
-    lastAudioResetDate: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  }, { merge: true });
-  
-  return { month: currentMonth, minutes: 0 };
-};
+// Duplicate getUserMonthlyAudioMinutes removed; using earlier implementation with debug logging.
 
 export const addUserMonthlyAudioMinutes = async (userId: string, minutes: number): Promise<void> => {
   const now = new Date();

@@ -34,32 +34,67 @@ const UsageModal: React.FC<UsageModalProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.debug('[UsageModal] useEffect triggered', { isOpen, hasUser: !!user, uid: user?.uid });
     if (isOpen && user) {
       loadUsageData();
+    } else if (isOpen && !user) {
+      console.warn('[UsageModal] Modal is open but no user provided. Usage data will not load.');
     }
   }, [isOpen, user]);
 
+  // Warn if the modal stays loading for too long
+  useEffect(() => {
+    if (isOpen && isLoading) {
+      const startMark = performance.now();
+      const timeoutId = setTimeout(() => {
+        console.warn('[UsageModal] Still loading after 4s', {
+          isOpen,
+          isLoading,
+          user,
+          userTier,
+          monthlyUsage,
+          monthlySessions,
+          monthlyAudioUsage,
+          elapsedMs: performance.now() - startMark
+        });
+      }, 4000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, isLoading, user, userTier, monthlyUsage, monthlySessions, monthlyAudioUsage]);
+
   const loadUsageData = async () => {
     if (!user) {
+      console.warn('[UsageModal] loadUsageData aborted: missing user');
       return;
     }
 
+    console.debug('[UsageModal] loadUsageData start', { uid: user.uid });
     setIsLoading(true);
-    
+    console.debug('[UsageModal] setIsLoading(true)');
+
+    const startTs = performance.now();
     try {
       const [tokenUsage, sessions, audioUsage] = await Promise.all([
         getUserMonthlyTokens(user.uid),
         getUserMonthlySessions(user.uid),
         getUserMonthlyAudioMinutes(user.uid)
       ]);
-      
+
+      console.debug('[UsageModal] loadUsageData fetched', { tokenUsage, sessions, audioUsage });
       setMonthlyUsage(tokenUsage.totalTokens);
       setMonthlySessions(sessions.sessions);
       setMonthlyAudioUsage(audioUsage.minutes);
+      console.debug('[UsageModal] loadUsageData state updated', {
+        tokenTotal: tokenUsage.totalTokens,
+        sessions: sessions.sessions,
+        minutes: audioUsage.minutes,
+        durationMs: performance.now() - startTs
+      });
     } catch (error) {
-      console.error('Error loading usage data:', error);
+      console.error('[UsageModal] Error loading usage data:', error);
     } finally {
       setIsLoading(false);
+      console.debug('[UsageModal] setIsLoading(false)');
     }
   };
 

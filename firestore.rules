@@ -90,26 +90,48 @@ service cloud.firestore {
     
     // Token usage - users can only access their own usage docs
     match /tokenUsage/{docId} {
-      // Allow read if the document belongs to the authenticated user
-      allow read: if isAuthenticated() && (
-        (resource != null && resource.data.userId == request.auth.uid) ||
-        (request.resource != null && request.resource.data.userId == request.auth.uid)
-      );
-      // Allow write if the target (existing or new) doc belongs to the authenticated user
-      allow write: if isAuthenticated() && (
-        (resource != null && resource.data.userId == request.auth.uid) ||
-        (request.resource != null && request.resource.data.userId == request.auth.uid)
-      );
-      // Allow create for new token usage documents
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // Allow read of documents where userId matches the authenticated user
+      allow read: if isAuthenticated() && resource != null && resource.data.userId == request.auth.uid;
+
+      // Allow create with strict schema for the authenticated user
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId','date','inputTokens','outputTokens','totalTokens','lastUpdated'])
+        && request.resource.data.userId is string
+        && request.resource.data.date is string
+        && request.resource.data.inputTokens is number
+        && request.resource.data.outputTokens is number
+        && request.resource.data.totalTokens is number
+        && isValidTimestamp(request.resource.data.lastUpdated);
+
+      // Allow update only by the owner, with immutable userId/date and constrained fields
+      allow update: if isAuthenticated()
+        && resource != null && resource.data.userId == request.auth.uid
+        && request.resource != null
+        // Ensure userId/date are not changed if present in the update
+        && (!request.resource.data.keys().hasAny(['userId']) || request.resource.data.userId == resource.data.userId)
+        && (!request.resource.data.keys().hasAny(['date']) || request.resource.data.date == resource.data.date)
+        // Only allow numeric counters and lastUpdated to be updated
+        && request.resource.data.keys().hasOnly(['inputTokens','outputTokens','totalTokens','lastUpdated','userId','date'])
+        && (!request.resource.data.keys().hasAny(['inputTokens']) || request.resource.data.inputTokens is number)
+        && (!request.resource.data.keys().hasAny(['outputTokens']) || request.resource.data.outputTokens is number)
+        && (!request.resource.data.keys().hasAny(['totalTokens']) || request.resource.data.totalTokens is number)
+        && (!request.resource.data.keys().hasAny(['lastUpdated']) || isValidTimestamp(request.resource.data.lastUpdated));
+
+      // No client-side deletes of usage docs
+      allow delete: if false;
     }
     
     // Waitlist - allow creation with email validation, no read/update/delete
     match /waitlist/{waitlistId} {
-      allow create: if request.resource.data.keys().hasAll(['email', 'createdAt']) &&
+      allow create: if request.resource.data.keys().hasAll(['email', 'createdAt', 'status']) &&
         isValidEmail(request.resource.data.email) &&
         isValidTimestamp(request.resource.data.createdAt) &&
-        request.resource.data.status == 'pending';
+        (request.resource.data.status in ['pending', 'confirmed']) &&
+        (request.resource.data.status != 'confirmed' || request.resource.data.confirmedAt is timestamp) &&
+        (!request.resource.data.keys().hasAny(['language']) || request.resource.data.language is string) &&
+        (!request.resource.data.keys().hasAny(['metadata']) || request.resource.data.metadata is map) &&
+        (!request.resource.data.keys().hasAny(['confirmationToken']) || request.resource.data.confirmationToken is string);
       // No read, update, or delete allowed for privacy
     }
     
@@ -129,6 +151,26 @@ service cloud.firestore {
       allow update: if resource.data.confirmed == false &&
         request.resource.data.confirmed == true &&
         request.resource.data.confirmedAt is number;
+    }
+    
+    // Referral registrations - allow creation with validation, no read/update/delete for privacy
+    match /referral_registrations/{registrationId} {
+      allow create: if request.resource.data.keys().hasAll(['email', 'referralCode', 'createdAt']) &&
+        isValidEmail(request.resource.data.email) &&
+        request.resource.data.referralCode is string &&
+        isValidTimestamp(request.resource.data.createdAt) &&
+        request.resource.data.status == 'pending';
+      // No read, update, or delete allowed for privacy
+    }
+    
+    // Email delivery logs - server-side only for monitoring
+    match /email_delivery_logs/{logId} {
+      allow read, write: if false; // Server-side only for admin monitoring
+    }
+    
+    // Admin actions - server-side only for audit trail
+    match /admin_actions/{actionId} {
+      allow read, write: if false; // Server-side only for admin audit trail
     }
     
     // Subscription data - users can only read their own subscription info
@@ -189,8 +231,8 @@ service cloud.firestore {
         && isValidTimestamp(request.resource.data.createdAt)
         // Cross-document validation: referred user's user doc must contain referrerCode
         // that matches the referrer's referralProfile.code
-        && get(/databases/$(database)/documents/users/$(referredUid)).exists()
-        && get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).exists()
+        && exists(/databases/$(database)/documents/users/$(referredUid))
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.referrerUid))
         && get(/databases/$(database)/documents/users/$(referredUid)).data.referrerCode is string
         && get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).data.referralProfile.code is string
         && get(/databases/$(database)/documents/users/$(referredUid)).data.referrerCode == get(/databases/$(database)/documents/users/$(request.resource.data.referrerUid)).data.referralProfile.code;

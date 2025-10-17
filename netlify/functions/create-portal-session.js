@@ -36,6 +36,22 @@ export async function handler(event) {
   }
 
   try {
+    // Validate environment configuration
+    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.trim().length === 0) {
+      console.error('Missing STRIPE_SECRET_KEY environment variable');
+      return {
+        statusCode: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type'
+        },
+        body: JSON.stringify({
+          error: 'Stripe configuration error',
+          details: 'STRIPE_SECRET_KEY is not set for serverless functions. Configure it in your Netlify environment or .env file.'
+        })
+      };
+    }
+
     const { customerId, returnUrl } = JSON.parse(event.body);
 
     // Validate required parameters
@@ -80,7 +96,7 @@ export async function handler(event) {
       },
       body: JSON.stringify({ 
         error: 'Internal server error',
-        details: error.message 
+        details: (error && error.message) ? error.message : String(error) 
       })
     };
   }

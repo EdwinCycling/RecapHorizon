@@ -38,7 +38,7 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Abonnement beheren"
+      title={t('manageSubscription')}
       maxWidth="max-w-lg"
     >
       <div className="space-y-6">
@@ -51,12 +51,12 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {userTier === 'diamond' ? 'RecapHorizon Stoppen' : 'Stripe Customer Portal'}
+            {userTier === 'diamond' ? t('customerPortalTitleDiamond') : t('customerPortalTitle')}
           </h3>
           <p className="text-sm text-gray-600">
             {userTier === 'diamond' 
-              ? 'Beheer je Diamond abonnement of stop RecapHorizon via het beveiligde Stripe portal.'
-              : 'Beheer je abonnement, betaalmethoden en factuurgegevens in een veilige omgeving.'
+              ? t('diamondHeaderDesc')
+              : t('portalHeaderDesc')
             }
           </p>
         </div>
@@ -65,36 +65,36 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-900 mb-3">
             {userTier === 'diamond' 
-              ? 'Wat kun je doen als Diamond gebruiker:'
-              : 'Wat kun je doen in het Customer Portal:'
+              ? t('diamondSectionTitle')
+              : t('portalSectionTitle')
             }
           </h4>
           <ul className="space-y-2 text-sm text-gray-600">
             {userTier === 'diamond' ? (
               <>
                 <li className="flex items-start">
-                  <svg className="flex-shrink-0 h-4 w-4 text-red-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Diamond abonnement stoppen of pauzeren</span>
+                  <span>{t('diamondBulletStop')}</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Betaalmethoden beheren</span>
+                  <span>{t('bulletPaymentMethodsManage')}</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Factuurgegevens en adres bijwerken</span>
+                  <span>{t('bulletInvoiceDetailsUpdate')}</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Factuurgeschiedenis bekijken</span>
+                  <span>{t('bulletInvoiceHistory')}</span>
                 </li>
               </>
             ) : (
@@ -103,31 +103,31 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Abonnement upgraden, downgraden of annuleren</span>
+                  <span>{t('generalBulletChangePlan')}</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Betaalmethoden toevoegen of wijzigen</span>
+                  <span>{t('bulletPaymentMethodsAddModify')}</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Factuurgegevens en adres bijwerken</span>
+                  <span>{t('bulletInvoiceDetailsUpdate')}</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Factuurgeschiedenis bekijken en downloaden</span>
+                  <span>{t('generalBulletInvoiceHistoryDownload')}</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>Volgende factureringsdatum bekijken</span>
+                  <span>{t('generalBulletNextBillingDate')}</span>
                 </li>
               </>
             )}
@@ -170,7 +170,7 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            {userTier === 'diamond' ? 'Abonnement beheren' : 'Portal openen'}
+            {t('manageSubscription')}
           </button>
         </div>
 

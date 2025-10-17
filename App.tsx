@@ -56,6 +56,7 @@ import TokenUsageMeter from './src/components/TokenUsageMeter.tsx';
 import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.tsx';
 import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
 import CustomerPortalReturnScreen from './src/components/CustomerPortalReturnScreen.tsx';
+import NotificationModal from './src/components/NotificationModal.tsx';
 import { stripeService } from './src/services/stripeService';
 import UsageModal from './src/components/UsageModal';
 import AudioLimitModal from './src/components/AudioLimitModal';
@@ -1206,6 +1207,7 @@ export default function App() {
   const expertHelpModal = useModalState();
   const subscriptionSuccessModal = useModalState();
   const customerPortalModal = useModalState();
+  const anonymizationSavedModal = useModalState();
   const notionIntegrationHelpModal = useModalState();
   
   // Usage Modal state
@@ -5235,6 +5237,8 @@ const handleAnalyzeSentiment = async () => {
 
   const saveAnonymizationRules = () => {
     localStorage.setItem('anonymization_rules', JSON.stringify(anonymizationRules));
+    // Toon een popup bevestiging zodat dit boven de blur zichtbaar is
+    anonymizationSavedModal.open();
   };
   
   const saveTranscriptionSettings = () => {
@@ -11051,6 +11055,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
           setShowUsageModal(false);
           setShowPricingPage(true);
         }}
+        user={user}
         // Laat de totale maand-minuten live meebewegen tijdens opname
         currentRecordingElapsedMinutes={duration / 60}
       />
@@ -11779,7 +11784,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                       </button>
 
                       {/* Upgrade/Downgrade */}
-                      {userSubscription !== 'diamond' && (
+                      {false && (
                         <button
                           onClick={() => {
                             settingsModal.close();
@@ -11803,75 +11808,25 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         </button>
                       )}
 
-                      {/* Manage Billing (Customer Portal) */}
-                      {userSubscription !== 'free' && authState.user?.stripeCustomerId && (
+                      {/* Manage Subscription */}
+                      {userSubscription !== 'free' && (
                         <button
                           onClick={() => {
                             settingsModal.close();
                             customerPortalModal.open();
                           }}
-                          className="w-full p-3 sm:p-4 text-left bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors"
+                          className="w-full p-3 sm:p-4 text-left rounded-lg transition-colors bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer"
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div>
-                              <p className="font-medium text-slate-800 dark:text-slate-200">{t('subscriptionManageBilling')}</p>
-                              <p className="text-sm text-slate-500 dark:text-slate-400">{t('subscriptionManageBillingDesc')}</p>
-                            </div>
-                            <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </div>
-                        </button>
-                      )}
-
-                      {/* Manage Subscription */}
-                      {userSubscription !== 'free' && (
-                        <button
-                          onClick={() => {
-                            if (userSubscription === 'diamond') {
-                              // Voor Diamond gebruikers: direct naar Customer Portal
-                              settingsModal.close();
-                              customerPortalModal.open();
-                            } else {
-                              // Voor andere gebruikers: bevestiging en dan Customer Portal
-                              if (confirm(t('subscriptionCancelConfirm'))) {
-                                settingsModal.close();
-                                customerPortalModal.open();
-                              }
-                            }
-                          }}
-                          disabled={userSubscription === 'diamond'}
-                          className={`w-full p-3 sm:p-4 text-left rounded-lg transition-colors ${
-                            userSubscription === 'diamond'
-                              ? 'bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-not-allowed opacity-60'
-                              : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className={`font-medium ${
-                                userSubscription === 'diamond'
-                                  ? 'text-gray-600 dark:text-gray-400'
-                                  : 'text-blue-800 dark:text-blue-300'
-                              }`}>
+                              <p className="font-medium text-blue-800 dark:text-blue-300">
                                 {t('manageSubscription')}
                               </p>
-                              <p className={`text-sm ${
-                                userSubscription === 'diamond'
-                                  ? 'text-gray-500 dark:text-gray-500'
-                                  : 'text-blue-600 dark:text-blue-400'
-                              }`}>
-                                {userSubscription === 'diamond' 
-                                  ? t('diamondSubscriptionManaged')
-                                  : t('manageSubscriptionDesc')
-                                }
+                              <p className="text-sm text-blue-600 dark:text-blue-400">
+                                {t('manageSubscriptionDesc')}
                               </p>
                             </div>
-                            <svg className={`w-5 h-5 ${
-                              userSubscription === 'diamond'
-                                ? 'text-gray-400 dark:text-gray-500'
-                                : 'text-blue-500'
-                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
@@ -13254,6 +13209,17 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
        <CustomerPortalReturnScreen
          onClose={() => setShowCustomerPortalReturn(false)}
          t={t}
+       />
+     )}
+
+     {/* Anonymization Saved Notification */}
+     {anonymizationSavedModal.isOpen && (
+       <NotificationModal
+         isOpen={anonymizationSavedModal.isOpen}
+         onClose={anonymizationSavedModal.close}
+         title={t('anonymizationRulesSavedTitle')}
+         message={t('anonymizationRulesSavedDesc')}
+         type="success"
        />
      )}
 

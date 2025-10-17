@@ -1174,9 +1174,13 @@ export const generateConfirmationToken = async (): Promise<string> => {
 /**
  * Create email confirmation entry
  */
-export const createEmailConfirmation = async (email: string): Promise<{
+export const createEmailConfirmation = async (
+  email: string, 
+  additionalMetadata?: any
+): Promise<{
   success: boolean;
   token?: string;
+  confirmationId?: string;
   error?: string;
 }> => {
   try {
@@ -1187,7 +1191,7 @@ export const createEmailConfirmation = async (email: string): Promise<{
     const now = Date.now();
     const expiresAt = now + (24 * 60 * 60 * 1000); // 24 hours
     
-    await addDoc(collection(db, 'email_confirmations'), {
+    const docRef = await addDoc(collection(db, 'email_confirmations'), {
       email,
       token,
       createdAt: serverTimestamp(),
@@ -1196,11 +1200,16 @@ export const createEmailConfirmation = async (email: string): Promise<{
       attempts: 0,
       metadata: {
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
-        timestamp: now
+        timestamp: now,
+        ...additionalMetadata
       }
     });
     
-    return { success: true, token };
+    return { 
+      success: true, 
+      token,
+      confirmationId: docRef.id
+    };
   } catch (error) {
     console.error('Error creating email confirmation:', error);
     return { success: false, error: 'Failed to create confirmation token' };
@@ -1292,8 +1301,13 @@ export const hasPendingConfirmation = async (email: string): Promise<{
       token: data.token,
       expiresAt: data.expiresAt
     };
-  } catch (error) {
-    console.warn('Error checking pending confirmation:', error);
+  } catch (error: any) {
+    const msg = error?.message || String(error);
+    const code = error?.code;
+    const expectedPrivacyBlock = code === 'permission-denied' || /Missing or insufficient permissions/i.test(msg);
+    if (!expectedPrivacyBlock) {
+      console.warn('Error checking pending confirmation:', error);
+    }
     return { hasPending: false };
   }
 };
@@ -1340,9 +1354,14 @@ export const validateWaitlistEmail = async (email: string, checkDuplicates: bool
           isDuplicate: true
         };
       }
-    } catch (error) {
-      console.warn('Could not check for duplicate emails:', error);
-      // Continue without duplicate check if Firebase is unavailable
+    } catch (error: any) {
+      const msg = error?.message || String(error);
+      const code = error?.code;
+      const expectedPrivacyBlock = code === 'permission-denied' || /Missing or insufficient permissions/i.test(msg);
+      if (!expectedPrivacyBlock) {
+        console.warn('Could not check for duplicate emails:', error);
+      }
+      // Continue without duplicate check if Firebase is unavailable or blocked by rules
     }
   }
   
@@ -1350,14 +1369,15 @@ export const validateWaitlistEmail = async (email: string, checkDuplicates: bool
 };
 
 /**
- * Enhanced waitlist signup with email confirmation
+ * Enhanced waitlist signup with email confirmation and Brevo integration
  */
-export const initiateWaitlistSignup = async (email: string): Promise<{
+export const initiateWaitlistSignup = async (email: string, language: string = 'en'): Promise<{
   success: boolean;
   requiresConfirmation?: boolean;
   confirmationToken?: string;
   error?: string;
   pendingConfirmation?: boolean;
+  emailSent?: boolean;
 }> => {
   // Validate email first
   const validation = await validateWaitlistEmail(email, true);
@@ -1390,11 +1410,50 @@ export const initiateWaitlistSignup = async (email: string): Promise<{
     };
   }
   
-  return {
-    success: true,
-    requiresConfirmation: true,
-    confirmationToken: confirmation.token
-  };
+  // Send 2FA email via browser-compatible service
+  try {
+    const { browserEmailService } = await import('../services/browserEmailService');
+    
+    const emailResult = await browserEmailService.send2FAWaitlistEmail({
+      email: validation.email!,
+      language: language as any,
+      confirmationCode: confirmation.token!,
+      expiryHours: 24,
+      supportEmail: 'support@recaphorizon.com'
+    });
+    
+    // Log email delivery for admin monitoring
+    await browserEmailService.logEmailDelivery(
+      confirmation.confirmationId!,
+      validation.email!,
+      '2fa_waitlist',
+      language as any,
+      emailResult
+    );
+    
+    if (!emailResult.success) {
+      console.error('Failed to send 2FA email:', emailResult.error);
+      // Don't fail the entire process if email fails
+      // The user can still use the token manually if needed
+    }
+    
+    return {
+      success: true,
+      requiresConfirmation: true,
+      confirmationToken: confirmation.token,
+      emailSent: emailResult.success
+    };
+  } catch (error) {
+    console.error('Error sending 2FA email:', error);
+    
+    // Return success even if email fails - user can still use token
+    return {
+      success: true,
+      requiresConfirmation: true,
+      confirmationToken: confirmation.token,
+      emailSent: false
+    };
+  }
 };
 
 /**
@@ -1660,6 +1719,252 @@ export const createReferralAccount = async (
     return {
       success: false,
       error: errorMessage
+    };
+  }
+};
+
+/**
+ * Initiate referral registration with 2FA email confirmation
+ */
+export const initiateReferralRegistration = async (
+  email: string, 
+  referralCode: string, 
+  referrerName: string,
+  language: string = 'en'
+): Promise<{
+  success: boolean;
+  requiresConfirmation?: boolean;
+  confirmationToken?: string;
+  error?: string;
+  pendingConfirmation?: boolean;
+  emailSent?: boolean;
+}> => {
+  // Validate email first
+  const validation = validateEmailEnhanced(email, {
+    allowDisposable: false,
+    allowSuspicious: false
+  });
+  
+  if (!validation.isValid) {
+    return {
+      success: false,
+      error: validation.error
+    };
+  }
+  
+  // Validate referral code
+  const sanitizedReferralCode = sanitizeTextInput(referralCode, 50);
+  if (containsSQLInjection(sanitizedReferralCode) || containsXSS(sanitizedReferralCode)) {
+    return {
+      success: false,
+      error: 'Invalid referral code format'
+    };
+  }
+  
+  // Check if there's already a pending confirmation
+  const pendingCheck = await hasPendingConfirmation(validation.email!);
+  
+  if (pendingCheck.hasPending) {
+    return {
+      success: false,
+      error: 'A confirmation email has already been sent. Please check your inbox or wait before requesting another.',
+      pendingConfirmation: true
+    };
+  }
+  
+  // Create confirmation token with referral context
+  const confirmation = await createEmailConfirmation(validation.email!, {
+    type: 'referral_registration',
+    referralCode: sanitizedReferralCode,
+    referrerName: sanitizeTextInput(referrerName, 100)
+  });
+  
+  if (!confirmation.success) {
+    return {
+      success: false,
+      error: confirmation.error
+    };
+  }
+  
+  // Send 2FA referral email via browser-compatible service
+  try {
+    const { browserEmailService } = await import('../services/browserEmailService');
+    
+    const emailResult = await browserEmailService.send2FAReferralEmail({
+      email: validation.email!,
+      language: language as any,
+      confirmationCode: confirmation.token!,
+      expiryHours: 24,
+      supportEmail: 'support@recaphorizon.com',
+      referrerName: sanitizeTextInput(referrerName, 100),
+      referralCode: sanitizedReferralCode
+    });
+    
+    // Log email delivery for admin monitoring
+    await browserEmailService.logEmailDelivery(
+      confirmation.confirmationId!,
+      validation.email!,
+      '2fa_referral',
+      language as any,
+      emailResult
+    );
+    
+    if (!emailResult.success) {
+      console.error('Failed to send 2FA referral email:', emailResult.error);
+    }
+    
+    return {
+      success: true,
+      requiresConfirmation: true,
+      confirmationToken: confirmation.token,
+      emailSent: emailResult.success
+    };
+  } catch (error) {
+    console.error('Error sending 2FA referral email:', error);
+    
+    return {
+      success: true,
+      requiresConfirmation: true,
+      confirmationToken: confirmation.token,
+      emailSent: false
+    };
+  }
+};
+
+/**
+ * Complete referral registration after email confirmation
+ */
+export const completeReferralRegistration = async (
+  token: string, 
+  password: string
+): Promise<{
+  success: boolean;
+  user?: any;
+  email?: string;
+  error?: string;
+}> => {
+  // Verify the confirmation token
+  const verification = await verifyEmailConfirmation(token);
+  
+  if (!verification.isValid) {
+    return {
+      success: false,
+      error: verification.error
+    };
+  }
+  
+  try {
+    // Get confirmation details to extract referral info
+    const { collection, query, where, getDocs } = await import('firebase/firestore');
+    const { db } = await import('../firebase');
+    
+    const confirmationQuery = query(
+      collection(db, 'email_confirmations'),
+      where('token', '==', token),
+      where('confirmed', '==', true)
+    );
+    
+    const snapshot = await getDocs(confirmationQuery);
+    
+    if (snapshot.empty) {
+      return {
+        success: false,
+        error: 'Confirmation not found'
+      };
+    }
+    
+    const confirmationData = snapshot.docs[0].data();
+    const referralCode = confirmationData.metadata?.referralCode;
+    const referrerName = confirmationData.metadata?.referrerName;
+    
+    // Create the referral account
+    const accountResult = await createReferralAccount(
+      verification.email!,
+      password,
+      referralCode
+    );
+    
+    if (!accountResult.success) {
+      return {
+        success: false,
+        error: accountResult.error
+      };
+    }
+    
+    // Log successful referral registration
+    try {
+      const { addDoc, serverTimestamp } = await import('firebase/firestore');
+      
+      await addDoc(collection(db, 'referral_registrations'), {
+        email: verification.email,
+        referralCode: referralCode,
+        referrerName: referrerName,
+        userId: accountResult.user?.uid,
+        completedAt: serverTimestamp(),
+        confirmationToken: token,
+        registrationMethod: '2fa_email',
+        status: 'completed'
+      });
+    } catch (logError) {
+      console.error('Error logging referral registration:', logError);
+      // Don't fail the registration if logging fails
+    }
+    
+    return {
+      success: true,
+      user: accountResult.user,
+      email: verification.email
+    };
+  } catch (error) {
+    console.error('Error completing referral registration:', error);
+    return {
+      success: false,
+      error: 'Failed to complete referral registration'
+    };
+  }
+};
+
+/**
+ * Send activation email to approved waitlist users
+ */
+export const sendActivationEmail = async (
+  email: string, 
+  activationUrl: string, 
+  language: string = 'en'
+): Promise<{
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}> => {
+  try {
+    const { browserEmailService } = await import('../services/browserEmailService');
+    
+    const emailResult = await browserEmailService.sendActivationEmail({
+      email: email,
+      language: language as any,
+      activationUrl: activationUrl,
+      supportEmail: 'support@recaphorizon.com'
+    });
+    
+    // Log email delivery for admin monitoring
+    await browserEmailService.logEmailDelivery(
+      `activation_${Date.now()}`,
+      email,
+      'activation',
+      language as any,
+      emailResult
+    );
+    
+    return {
+      success: emailResult.success,
+      messageId: emailResult.messageId,
+      error: emailResult.error
+    };
+  } catch (error) {
+    console.error('Error sending activation email:', error);
+    return {
+      success: false,
+      error: 'Failed to send activation email'
     };
   }
 };

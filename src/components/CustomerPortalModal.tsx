@@ -103,12 +103,6 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
                   <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span>{t('generalBulletChangePlan')}</span>
-                </li>
-                <li className="flex items-start">
-                  <svg className="flex-shrink-0 h-4 w-4 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
                   <span>{t('bulletPaymentMethodsAddModify')}</span>
                 </li>
                 <li className="flex items-start">
@@ -162,16 +156,17 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
           >
             Annuleren
           </button>
-          <button
-            onClick={handleOpenPortal}
-            disabled={!customerId}
-            className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          <a
+            href="https://billing.stripe.com/p/login/test_6oU14nb0ggped403Q124000"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
             {t('manageSubscription')}
-          </button>
+          </a>
         </div>
 
         {/* Footer note */}

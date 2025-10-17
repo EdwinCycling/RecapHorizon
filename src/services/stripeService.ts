@@ -174,6 +174,49 @@ class StripeService {
       throw error;
     }
   }
+
+  /**
+   * Annuleer abonnement aan einde van de periode (zonder Customer Portal)
+   */
+  async cancelSubscriptionAtPeriodEnd(customerId: string): Promise<{ effectiveDate: string }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/cancel-subscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ customerId })
+      });
+
+      if (!response.ok) {
+        let errorText = 'Failed to cancel subscription';
+        try {
+          const errorData = await response.json();
+          if (errorData) {
+            if (errorData.error && errorData.details) {
+              errorText = `${errorData.error}: ${errorData.details}`;
+            } else if (errorData.error) {
+              errorText = errorData.error;
+            } else if (errorData.details) {
+              errorText = errorData.details;
+            }
+          }
+        } catch {
+          try {
+            const text = await response.text();
+            if (text) errorText = text;
+          } catch {}
+        }
+        throw new Error(errorText);
+      }
+
+      const data = await response.json();
+      return { effectiveDate: data.effectiveDate };
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      throw error;
+    }
+  }
 }
 
 export const stripeService = new StripeService();

@@ -18,6 +18,7 @@ interface PricingPageProps {
 const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription, onUpgrade, onClose, t, userId, userEmail, isLoggedIn }) => {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [nextBillingDate, setNextBillingDate] = useState<Date | null>(null);
+  const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
   const isHorizonEligible = currentTier === SubscriptionTier.SILVER || currentTier === SubscriptionTier.GOLD;
   // Get tier comparison - DIAMOND tier alleen tonen indien gewenst
   const tierComparison = subscriptionService.getTierComparison();
@@ -28,7 +29,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
       try {
         if (isLoggedIn && userId) {
           const stripeData = await getUserStripeData(userId);
-          if (isMounted) setNextBillingDate(stripeData.nextBillingDate ?? null);
+          if (isMounted) {
+            setNextBillingDate(stripeData.nextBillingDate ?? null);
+            setStripeCustomerId(stripeData?.stripeCustomerId || null);
+          }
         }
       } catch (e) {
         console.warn('Kon Stripe gegevens niet ophalen voor vervaldatum Horizon pakket:', e);
@@ -126,24 +130,63 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
   };
 
   const handleUpgrade = async (tier: SubscriptionTier) => {
-    if (tier === SubscriptionTier.FREE || tier === SubscriptionTier.DIAMOND) {
-      return;
-    }
-
+    // Enterprise: contact
     if (tier === SubscriptionTier.ENTERPRISE) {
-      // Voor Enterprise tier, toon contact informatie
-      alert(t('pricingEnterpriseContact', 'Please contact us for Enterprise pricing at enterprise@recapsmart.com'));
+      alert(t('pricingEnterpriseContact', 'Neem contact op voor Enterprise prijzen: enterprise@recapsmart.com'));
+      return;
+    }
+    // Diamond: admin-only
+    if (tier === SubscriptionTier.DIAMOND) {
       return;
     }
 
-    setIsLoading(tier);
-    
+    // Free user upgrading to paid -> Stripe Checkout
+    if (currentTier === SubscriptionTier.FREE) {
+      if (tier === SubscriptionTier.FREE) {
+        // No action on selecting Free when already Free
+        return;
+      }
+      setIsLoading(tier);
+      try {
+        await stripeService.redirectToCheckout(tier, userId, userEmail);
+      } catch (error) {
+        console.error('Error redirecting to checkout:', error);
+        alert(t('pricingCheckoutError', 'Er is een fout opgetreden bij het starten van de checkout. Probeer het opnieuw.'));
+        setIsLoading(null);
+      }
+      return;
+    }
+
+    // Paid user -> cancel to Free OR change plan
+    if (!stripeCustomerId) {
+      alert(t('pricingPortalMissingCustomer', 'Stripe klant-ID ontbreekt. Open abonnementbeheer via Instellingen.'));
+      return;
+    }
+
+    // If selecting Free while paid, schedule cancel at period end without leaving the app
+    if (tier === SubscriptionTier.FREE && currentTier !== SubscriptionTier.FREE) {
+      setIsLoading(SubscriptionTier.FREE);
+      try {
+        const { effectiveDate } = await stripeService.cancelSubscriptionAtPeriodEnd(stripeCustomerId);
+        alert(
+          t('subscriptionCancelPending', 'Je opzegging is ingediend. Je abonnement blijft actief tot het einde van je huidige factureringsperiode.')
+          + `\n\n${t('subscriptionEffectiveDate', 'Ingangsdatum')}: ${new Date(effectiveDate).toLocaleDateString('nl-NL')}`
+        );
+      } catch (error) {
+        console.error('Error scheduling cancel:', error);
+        alert(t('pricingPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'));
+      } finally {
+        setIsLoading(null);
+      }
+      return;
+    }
+
+    // Otherwise, change plan via Stripe Customer Portal
     try {
-      await stripeService.redirectToCheckout(tier, userId, userEmail);
+      await stripeService.redirectToCustomerPortal(stripeCustomerId);
     } catch (error) {
-      console.error('Error redirecting to checkout:', error);
-      alert(t('pricingCheckoutError', 'Er is een fout opgetreden bij het starten van de checkout. Probeer het opnieuw.'));
-      setIsLoading(null);
+      console.error('Error redirecting to customer portal:', error);
+      alert(t('pricingPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'));
     }
   };
 
@@ -232,16 +275,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
         )}
 
         {/* Pricing Cards */}
-        <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 bg-gray-50 dark:bg-gray-900">
+        <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 auto-rows-fr items-stretch gap-4 sm:gap-6 bg-gray-50 dark:bg-gray-900">
           {tierComparison.map((tier) => (
             <div
               key={tier.tier}
-              className={`border-2 rounded-lg p-4 sm:p-6 transition-all duration-200 hover:shadow-lg bg-white dark:bg-gray-800 flex flex-col ${
-                tier.tier === currentTier ? 'ring-2 ring-blue-500 scale-105' : ''
+              className={`border-2 rounded-lg p-3 sm:p-4 transition-all duration-200 hover:shadow-lg bg-white dark:bg-gray-800 flex flex-col h-full ${
+                tier.tier === currentTier ? 'ring-2 ring-blue-500' : ''
               } ${getTierColor(tier.tier).replace(/bg-\S+/g, '').trim()}`}
             >
               {/* Tier Header */}
-              <div className="text-center mb-6">
+              <div className="text-center mb-4">
                 <div className="text-4xl mb-2">{getTierIcon(tier.tier)}</div>
                 <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-white mb-2 break-words">
                   {tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1)}
@@ -264,7 +307,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
               </div>
 
               {/* Features */}
-              <div className="space-y-4 mb-6 flex-grow">
+              <div className="space-y-3 mb-4 flex-grow">
                 <div className="flex items-center">
                   <span className="text-green-500 dark:text-green-400 mr-2 flex-shrink-0">✓</span>
                   <span className="text-gray-700 dark:text-gray-300 text-sm">
@@ -446,10 +489,23 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                         </span>
                       ) : (
                         tier.tier === SubscriptionTier.FREE 
-                          ? t('pricingStartFree') 
+                          ? (currentTier !== SubscriptionTier.FREE ? t('subscriptionCancel') : t('pricingStartFree'))
                           : tier.tier === SubscriptionTier.ENTERPRISE 
                             ? t('pricingContactEnterprise') 
-                            : t('pricingUpgradeTo', { tier: tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1) })
+                            : (() => {
+                                const order = {
+                                  [SubscriptionTier.FREE]: 0,
+                                  [SubscriptionTier.SILVER]: 1,
+                                  [SubscriptionTier.GOLD]: 2,
+                                  [SubscriptionTier.ENTERPRISE]: 3,
+                                  [SubscriptionTier.DIAMOND]: 4,
+                                } as const;
+                                const isDowngrade = order[tier.tier as SubscriptionTier] < order[currentTier];
+                                const target = (tier.tier as SubscriptionTier).charAt(0).toUpperCase() + (tier.tier as SubscriptionTier).slice(1);
+                                return isDowngrade 
+                                  ? t('pricingDowngradeTo', { tier: target }) || `Downgraden naar ${target}`
+                                  : t('pricingUpgradeTo', { tier: target });
+                              })()
                       )}
                     </button>
                   )}
@@ -464,21 +520,6 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
               )}
             </div>
           ))}
-        </div>
-
-        {/* Uitleg over tokens (positief en kort) */}
-        <div className="px-4 sm:px-6">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 sm:p-6">
-            <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">Wat zijn tokens?</h3>
-            <p className="text-sm text-blue-900 dark:text-blue-300 mb-2">
-              Tokens zijn kleine stukjes tekst die we gebruiken om AI-berekeningen te doen. Je hoeft er bijna niets voor te weten of te doen: jij werkt gewoon door, wij bewaken netjes je limieten per tier.
-            </p>
-            <ul className="text-sm text-blue-900 dark:text-blue-300 list-disc pl-5 space-y-1">
-              <li>We tellen tokens die je uploadt (naar de AI) en tokens die je downloadt (van de AI). Samen vormen ze je verbruik.</li>
-              <li>Downloadtokens (het AI‑resultaat) zijn iets duurder dan uploadtokens. Zo houden we de kwaliteit van de antwoorden hoog.</li>
-              <li>Kom je ooit in de buurt van je limiet? Dan laten we dat vriendelijk weten en kun je eenvoudig upgraden.</li>
-            </ul>
-          </div>
         </div>
 
         {/* Horizon pakket: eenmalig extra capaciteit voor de lopende maand */}
@@ -522,24 +563,43 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
           </div>
         </div>
 
+        {/* Uitleg over tokens (positief en kort) */}
+        <div className="px-4 sm:px-6 mt-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 sm:p-6">
+            <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">Wat zijn tokens?</h3>
+            <p className="text-sm text-blue-900 dark:text-blue-300 mb-2">
+              Tokens zijn kleine stukjes tekst die we gebruiken om AI-berekeningen te doen. Je hoeft er bijna niets voor te weten of te doen: jij werkt gewoon door, wij bewaken netjes je limieten per tier.
+            </p>
+            <ul className="text-sm text-blue-900 dark:text-blue-300 list-disc pl-5 space-y-1">
+              <li>We tellen tokens die je uploadt (naar de AI) en tokens die je downloadt (van de AI). Samen vormen ze je verbruik.</li>
+              <li>Downloadtokens (het AI‑resultaat) zijn iets duurder dan uploadtokens. Zo houden we de kwaliteit van de antwoorden hoog.</li>
+              <li>Kom je ooit in de buurt van je limiet? Dan laten we dat vriendelijk weten en kun je eenvoudig upgraden.</li>
+            </ul>
+          </div>
+        </div>
+
 
         {/* Stripe Payment Footnote */}
-        <div className="px-6 py-4 text-center bg-white dark:bg-gray-800">
-          <p 
-            className="text-xs text-gray-500 dark:text-gray-400"
-            dangerouslySetInnerHTML={{ __html: t('pricingStripeFootnote') }}
-          />
+        <div className="px-4 sm:px-6 mt-4">
+          <div className="text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 sm:p-6">
+            <p 
+              className="text-xs text-gray-500 dark:text-gray-400"
+              dangerouslySetInnerHTML={{ __html: t('pricingStripeFootnote') }}
+            />
+          </div>
         </div>
 
         {/* Close Button */}
         {onClose && (
-          <div className="p-6 border-t border-gray-200 dark:border-gray-600 flex justify-end bg-white dark:bg-gray-800 rounded-b-lg">
-            <button 
-              onClick={onClose} 
-              className="px-6 py-3 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors"
-            >
-              {t('close', 'Close')}
-            </button>
+          <div className="px-4 sm:px-6 mt-4">
+            <div className="p-4 sm:p-6 border border-gray-200 dark:border-gray-600 flex justify-end bg-white dark:bg-gray-800 rounded-lg">
+              <button 
+                onClick={onClose} 
+                className="px-6 py-3 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors"
+              >
+                {t('close', 'Close')}
+              </button>
+            </div>
           </div>
         )}
           </div>

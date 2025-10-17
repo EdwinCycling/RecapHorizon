@@ -129,9 +129,9 @@ async function handleSubscriptionUpdated(subscription) {
   // Handle cancellation at period end
   if (subscription.cancel_at_period_end) {
     subscriptionData.scheduledTierChange = {
-      newTier: 'free',
+      tier: 'free',
       effectiveDate: new Date(subscription.current_period_end * 1000),
-      reason: 'cancellation'
+      action: 'cancel'
     };
     subscriptionData.hasHadPaidSubscription = true; // Mark that this user had a paid subscription
   } else {

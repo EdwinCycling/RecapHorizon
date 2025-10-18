@@ -18,7 +18,7 @@ import EmailCompositionTab, { EmailData } from './EmailCompositionTab';
 
 
 
-type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email' | 'socialPost' | 'socialPostX' | 'teachMe';
+type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email' | 'socialPost' | 'socialPostX' | 'teachMe' | 'thinkingPartner';
 
 interface RecapItem {
 	id: string;
@@ -49,6 +49,9 @@ interface RecapHorizonPanelProps {
 	socialPostData?: SocialPostData | null;
 socialPostXData?: SocialPostData | null;
 	teachMeData?: TeachMeData | null;
+	thinkingPartnerAnalysis?: string;
+	selectedThinkingPartnerTopic?: string;
+	selectedThinkingPartner?: { name: string };
 	quizQuestions?: QuizQuestion[] | null;
 	quizIncludeAnswers?: boolean;
 	outputLanguage?: string; // Output language for BCP47 display
@@ -120,6 +123,9 @@ export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	socialPostData,
   socialPostXData,
 	teachMeData,
+	thinkingPartnerAnalysis,
+	selectedThinkingPartnerTopic,
+	selectedThinkingPartner,
 	quizQuestions,
 	quizIncludeAnswers,
 	outputLanguage,
@@ -197,6 +203,7 @@ useEffect(() => {
 		if (!!blogData && blogData.trim().length > 0) availableContent.add('blog');
 		if (!!explainData && explainData.explanation && explainData.explanation.trim().length > 0) availableContent.add('explain');
 		if (!!teachMeData && teachMeData.content && teachMeData.content.trim().length > 0) availableContent.add('teachMe');
+		if (!!thinkingPartnerAnalysis && thinkingPartnerAnalysis.trim().length > 0) availableContent.add('thinkingPartner');
 		if (emailEnabled && !!emailAddresses && emailAddresses.length > 0) availableContent.add('email');
 		// Social post (LinkedIn) - handle both string and array for backward compatibility
 		if (
@@ -247,6 +254,7 @@ useEffect(() => {
 					case 'blog': title = t('blog'); break;
 					case 'explain': title = t('explain'); break;
 					case 'teachMe': title = t('teachMe'); break;
+					case 'thinkingPartner': title = t('thinkingPartner'); break;
 					case 'email': title = t('emailFormTitle', 'E-mail Samenstelling'); break;
 					case 'socialPost': title = t('socialPost', 'Social Post'); break;
           case 'socialPostX': title = t('socialPostX', 'X / BlueSky post'); break;
@@ -259,7 +267,7 @@ useEffect(() => {
 			// Update welke content we hebben verwerkt
 			newContent.forEach(type => processedContentRef.current.add(type));
 		}
-	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData, explainData, teachMeData, socialPostData]);
+	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, socialPostData]);
 
 	const hasAnyItem = persistentItems.length > 0;
 	const numEnabled = persistentItems.filter(i => i.enabled).length;
@@ -399,6 +407,19 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 				parts.push(teachMeData.content);
 				return { title: `${t('teachMe')}`, text: parts.join('\n') };
 			}
+			case 'thinkingPartner': {
+				if (!thinkingPartnerAnalysis) return { title: `${t('thinkingPartner')}`, text: '' };
+				const parts: string[] = [];
+				if (selectedThinkingPartnerTopic) {
+					parts.push(`${t('thinkingPartnerSelectedTopic')}: ${selectedThinkingPartnerTopic}`);
+				}
+				if (selectedThinkingPartner) {
+					parts.push(`${t('thinkingPartnerMethod')}: ${selectedThinkingPartner.name}`);
+				}
+				parts.push('');
+				parts.push(thinkingPartnerAnalysis);
+				return { title: `${t('thinkingPartner')}`, text: parts.join('\n') };
+			}
 			case 'socialPost': {
 				// Show full social post content in exports
 				const postContent = socialPostData?.post;
@@ -426,7 +447,7 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 				return { title: `${t('socialPostX')}`, text: content };
 			}
 		}
-	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, teachMeData, socialPostData, quizQuestions, quizIncludeAnswers]);
+	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, selectedThinkingPartnerTopic, selectedThinkingPartner, socialPostData, quizQuestions, quizIncludeAnswers]);
 
 	const enabledItems = persistentItems.filter(i => i.enabled);
 

@@ -882,7 +882,10 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   webExpertFeatureUpgrade: "WebExpert optie is beschikbaar vanaf Gold tier. Upgrade je abonnement om geavanceerde AI-analyse te gebruiken voor webpagina's.",
   multipleUrlsFeatureUpgrade: "Meerdere URL's importeren is beschikbaar vanaf Gold tier. Upgrade je abonnement om meerdere webpagina's tegelijk te verwerken.",
   webPageFeatureUpgrade: "Web pagina import is beschikbaar vanaf Gold tier. Upgrade je abonnement om direct tekst van webpagina's te importeren.",
+  thinkingPartnerFeatureUpgrade: "Denkpartner is beschikbaar vanaf Gold tier. Upgrade je abonnement om gestructureerde denkbegeleiding te gebruiken.",
+  showMeFeatureUpgrade: "Show Me is beschikbaar vanaf Gold tier. Upgrade je abonnement voor begeleide onderwerpverkenning.",
   defaultFeatureUpgrade: "Deze functionaliteit is beschikbaar vanaf Gold tier. Upgrade je abonnement voor meer mogelijkheden.",
+  thinkingPartnerAccessRestricted: "Denkpartner is beschikbaar vanaf Gold tier. Upgrade om deze functionaliteit te gebruiken.",
   
   // Anonymization tips and buttons
   settingsAnonymizationTips: "💡 Tips voor Anonimisatie",
@@ -1166,6 +1169,77 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   // Show Me FAQ
   faqShowMe: "Wat is de 'Toon Mij' functie?",
   faqShowMeAnswer: "De 'Toon Mij' functie biedt twee krachtige mogelijkheden: 1) Transformeert je content in visuele representaties zoals stroomdiagrammen, tijdlijnen, procesdiagrammen en infographics. 2) Ontdekt relevante TED Talks en nieuwsartikelen gerelateerd aan je content. Deze premium functie is beschikbaar voor Gold, Diamond en Enterprise gebruikers en helpt complexe informatie begrijpelijker te maken door middel van interactieve visualisaties en gerelateerde educatieve content.",
+  
+  // Thinking Partner feature
+  thinkingPartner: "Denkpartner",
+  thinkingPartnerTitle: "Denkpartner",
+  thinkingPartnerDescription: "Laat AI je begeleiden door gestructureerde denkprocessen",
+  
+  // Topic generation
+  generatingTopics: "Onderwerpen genereren...",
+  generatingTopicsDesc: "We analyseren je content om relevante denkonderwerpen te identificeren...",
+  selectTopicDesc: "Kies het onderwerp waar je dieper over wilt nadenken",
+  topicsGenerated: "Onderwerpen gegenereerd",
+  noTopicsGenerated: "Geen onderwerpen gegenereerd",
+  
+  // Partner selection
+  selectThinkingPartner: "Kies je denkpartner",
+  selectPartnerDesc: "Selecteer de denkbenadering die het beste past bij je vraag",
+  thinkingPartnerSelected: "Denkpartner geselecteerd",
+  selectedTopic: "Geselecteerd onderwerp",
+  backToTopics: "Terug naar onderwerpen",
+  backToPartners: "Terug naar partners",
+  
+  // Partner names and descriptions
+  challengeThinking: "Daag mijn denken uit",
+  challengeThinkingDesc: "Stel aannames, logica en blinde vlekken ter discussie",
+  reframeLens: "Herframe door een andere lens",
+  reframeLensDesc: "Bekijk vanuit nieuw publiek POV of positioneringshoek",
+  translateGutFeeling: "Vertaal mijn gevoel",
+  translateGutFeelingDesc: "Geef woorden aan spanningen en verkeerde uitlijningen",
+  structureThinking: "Structureer mijn rommelige denken",
+  structureThinkingDesc: "Organiseer ideeën in duidelijke structuur",
+  faceDecision: "Help me de beslissing onder ogen zien",
+  faceDecisionDesc: "Identificeer vermeden of gecompliceerde beslissingen",
+  surfaceQuestion: "Breng de diepere vraag naar boven",
+  surfaceQuestionDesc: "Vind de echte strategische vraag eronder",
+  spotRisks: "Spot uitvoeringsrisico's",
+  spotRisksDesc: "Identificeer praktische implementatie-uitdagingen",
+  reverseEngineer: "Reverse-engineer mijn intuïtie",
+  reverseEngineerDesc: "Ontrafelen waarom een idee goed voelt",
+  
+  // ThinkingPartner component specific keys
+  "thinkingPartner.challenge-thinking": "Daag mijn denken uit",
+  "thinkingPartner.challenge-thinkingDesc": "Stel aannames, logica en blinde vlekken ter discussie",
+  "thinkingPartner.reframe-lens": "Herframe door een andere lens",
+  "thinkingPartner.reframe-lensDesc": "Bekijk vanuit nieuw publiek POV of positioneringshoek",
+  "thinkingPartner.translate-gut-feeling": "Vertaal mijn gevoel",
+  "thinkingPartner.translate-gut-feelingDesc": "Geef woorden aan spanningen en verkeerde uitlijningen",
+  "thinkingPartner.structure-thinking": "Structureer mijn rommelige denken",
+  "thinkingPartner.structure-thinkingDesc": "Organiseer ideeën in duidelijke structuur",
+  "thinkingPartner.face-decision": "Help me de beslissing onder ogen zien",
+  "thinkingPartner.face-decisionDesc": "Identificeer vermeden of gecompliceerde beslissingen",
+  "thinkingPartner.surface-question": "Breng de diepere vraag naar boven",
+  "thinkingPartner.surface-questionDesc": "Vind de echte strategische vraag eronder",
+  "thinkingPartner.spot-risks": "Spot uitvoeringsrisico's",
+  "thinkingPartner.spot-risksDesc": "Identificeer praktische implementatie-uitdagingen",
+  "thinkingPartner.reverse-engineer": "Reverse-engineer mijn intuïtie",
+  "thinkingPartner.reverse-engineerDesc": "Ontrafelen waarom een idee goed voelt",
+  
+  // Analysis
+  analyzingWithPartner: "Analyseren met {partnerName}...",
+  analyzingDesc: "Je denkpartner analyseert het onderwerp en genereert inzichten...",
+  analysisComplete: "Analyse voltooid",
+  regenerateAnalysis: "Analyse opnieuw genereren",
+  startNewAnalysis: "Nieuwe analyse starten",
+  copyAnalysis: "Analyse kopiëren",
+  analysisCopied: "Analyse gekopieerd naar klembord",
+  
+  // Errors
+  topicGenerationError: "Fout bij het genereren van onderwerpen",
+  analysisError: "Fout bij het uitvoeren van analyse",
+  copyError: "Fout bij het kopiëren naar klembord",
+  tryAgain: "Probeer opnieuw",
   
   // General UI
   help: "Help",
@@ -1508,7 +1582,6 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   emailImportSupportedFormats: "Ondersteund: EML en MSG bestanden of sleep direct vanuit Outlook",
   emailImportSelectFile: "E-mail Bestand Selecteren",
   analyzingEmail: "E-mail analyseren",
-  tryAgain: "Probeer opnieuw",
   emailImportRequiresSilver: "E-mail import vereist minimaal Silver abonnement",
   
   // Email upload FAQ
@@ -1906,7 +1979,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   noResultsYet: "Nog geen resultaten. Probeer een zoekopdracht.",
   pageLoadedSuccessfully: "Pagina Succesvol Geladen!",
   language: "Taal",
-  selectTopic: "Selecteer een topic...",
+  selectTopic: "Selecteer een onderwerp...",
   selectRole: "Selecteer een rol...",
   selectBranch: "Selecteer een branche/sfeer...",
   processingMsgFile: "MSG/EML bestand verwerken...",

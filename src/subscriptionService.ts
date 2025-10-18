@@ -98,7 +98,8 @@ export const TIER_FEATURES = {
     webPage: false,
     webExpert: false,
     multipleUrls: false,
-    showMe: false
+    showMe: false,
+    thinkingPartner: false
   },
   [SubscriptionTier.SILVER]: {
     chat: false,
@@ -107,7 +108,8 @@ export const TIER_FEATURES = {
     webPage: true,
     webExpert: false,
     multipleUrls: false,
-    showMe: false
+    showMe: false,
+    thinkingPartner: false
   },
   [SubscriptionTier.GOLD]: {
     chat: true,
@@ -116,7 +118,8 @@ export const TIER_FEATURES = {
     webPage: true,
     webExpert: true,
     multipleUrls: true,
-    showMe: true
+    showMe: true,
+    thinkingPartner: true
   },
   [SubscriptionTier.ENTERPRISE]: {
     chat: true,
@@ -125,7 +128,8 @@ export const TIER_FEATURES = {
     webPage: true,
     webExpert: true,
     multipleUrls: true,
-    showMe: true
+    showMe: true,
+    thinkingPartner: true
   },
   [SubscriptionTier.DIAMOND]: {
     chat: true,
@@ -134,7 +138,8 @@ export const TIER_FEATURES = {
     webPage: true,
     webExpert: true,
     multipleUrls: true,
-    showMe: true
+    showMe: true,
+    thinkingPartner: true
   }
 };
 
@@ -472,6 +477,10 @@ export class SubscriptionService {
         return t('multipleUrlsFeatureUpgrade');
       case 'webPage':
         return t('webPageFeatureUpgrade');
+      case 'showMe':
+        return t('showMeFeatureUpgrade');
+      case 'thinkingPartner':
+        return t('thinkingPartnerFeatureUpgrade');
       default:
         return t('defaultFeatureUpgrade');
     }

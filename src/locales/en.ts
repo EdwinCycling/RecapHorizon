@@ -907,7 +907,10 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   webExpertFeatureUpgrade: "WebExpert option is available from Gold tier. Upgrade your subscription to use advanced AI analysis for web pages.",
   multipleUrlsFeatureUpgrade: "Importing multiple URLs is available from Gold tier. Upgrade your subscription to process multiple web pages at once.",
   webPageFeatureUpgrade: "Web page import is available from Gold tier. Upgrade your subscription to import text directly from web pages.",
+  thinkingPartnerFeatureUpgrade: "Thinking Partner is available from Gold tier. Upgrade your subscription to access structured thinking guidance.",
+  showMeFeatureUpgrade: "Show Me is available from Gold tier. Upgrade your subscription to access guided topic exploration.",
   defaultFeatureUpgrade: "This functionality is available from Gold tier. Upgrade your subscription for more possibilities.",
+  thinkingPartnerAccessRestricted: "Thinking Partner is available from Gold tier. Please upgrade to access this feature.",
   
   // Anonymization tips and buttons
   settingsAnonymizationTips: "💡 Anonymization Tips",

@@ -52,6 +52,7 @@ import { isMobileDevice } from './src/utils/deviceDetection';
 import { readEml } from 'eml-parse-js';
 import MsgReader from '@kenjiuno/msgreader';
 import EmailCompositionTab, { EmailData } from './src/components/EmailCompositionTab.tsx';
+import ThinkingPartnerTab from './src/components/ThinkingPartnerTab.tsx';
 import TokenUsageMeter from './src/components/TokenUsageMeter.tsx';
 import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.tsx';
 import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
@@ -290,6 +291,12 @@ const MailIcon: React.FC<{ className?: string }> = ({ className }) => (
 const SocialPostIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+    </svg>
+);
+
+const ThinkingPartnerIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
     </svg>
 );
 
@@ -640,7 +647,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'email' | 'socialPost' | 'socialPostX';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'email' | 'socialPost' | 'socialPostX';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -1885,6 +1892,13 @@ Prompt for AI image generator: ${imagePrompt}`;
   const [showMeData, setShowMeData] = useState<ShowMeData | null>(null);
   const [isGeneratingShowMe, setIsGeneratingShowMe] = useState(false);
   const [isSearchingShowMeContent, setIsSearchingShowMeContent] = useState(false);
+  
+  // Thinking Partner state
+  const [thinkingPartnerAnalysis, setThinkingPartnerAnalysis] = useState<string>('');
+  const [selectedThinkingPartnerTopic, setSelectedThinkingPartnerTopic] = useState<string>('');
+  const [selectedThinkingPartner, setSelectedThinkingPartner] = useState<{ name: string } | null>(null);
+  
+
   // Social media post options state
   const [socialPostOptions, setSocialPostOptions] = useState<SocialPostOptions>({
     platform: 'X / BlueSky',
@@ -8493,6 +8507,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         </div>
       );
     };
+
+
+
     const primaryActions: any[] = [
         { id: 'transcript', type: 'view', icon: TranscriptIcon, label: () => isAnonymized ? t('transcriptAnonymized') : t('transcript') },
         { id: 'anonymize', type: 'action', icon: AnonymizeIcon, label: () => t('anonymize'), onClick: handleAnonymizeTranscript, disabled: () => isProcessing || isAnonymized || !transcript.trim() },
@@ -8536,6 +8553,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         // Show me tab - alleen zichtbaar voor Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
             [{ id: 'showMe', type: 'view', icon: TeachMeIcon, label: () => t('showMe') }] : []),
+        // Thinking Partner tab - alleen zichtbaar voor Gold, Enterprise, Diamond
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'thinkingPartner', type: 'view', icon: ThinkingPartnerIcon, label: () => t('thinkingPartner') }] : []),
         // Email tab - alleen zichtbaar voor Gold, Enterprise, Diamond en bij email import
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) ? 
             [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : []),
@@ -8544,7 +8564,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -8565,6 +8585,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         if (view === 'email' && emailContent) { setActiveView('email'); return; }
         if (view === 'socialPost' && socialPostData?.post) { setActiveView('socialPost'); return; }
         if (view === 'socialPostX' && socialPostXData?.post) { setActiveView('socialPostX'); return; }
+        if (view === 'thinkingPartner' && thinkingPartnerAnalysis) { setActiveView('thinkingPartner'); return; }
 
         // If content doesn't exist, generate it (except for social posts which need manual generation)
         if (['summary', 'faq', 'learning', 'followUp'].includes(view)) {
@@ -8634,6 +8655,15 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 // Start the show me flow by generating topics
                 handleGenerateShowMe();
             }
+        } else if (view === 'thinkingPartner') {
+            // Check if user has access to thinking partner feature
+            const effectiveTier = userSubscription;
+            if (!subscriptionService.isFeatureAvailable(effectiveTier, 'thinkingPartner')) {
+                displayToast(t('thinkingPartnerAccessRestricted'), 'error');
+                setTimeout(() => setShowPricingPage(true), 2000);
+                return;
+            }
+            setActiveView('thinkingPartner');
         } else if (view === 'email') {
             setActiveView('email');
         } else if (view === 'mindmap') {
@@ -10181,6 +10211,26 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             );
         }
 
+        if (activeView === 'thinkingPartner') {
+            return (
+                <ThinkingPartnerTab
+                    t={t}
+                    transcript={transcript}
+                    summary={summary}
+                    onAnalysisComplete={(data) => {
+                        // Update the analysis data for RecapHorizonPanel
+                        setThinkingPartnerAnalysis(data.aiResponse);
+                        setSelectedThinkingPartnerTopic(data.topic.title);
+                        setSelectedThinkingPartner({ name: data.partner.name });
+                    }}
+                    isGenerating={isGenerating}
+                    language={currentLanguage}
+                    userId={authState.user?.uid || ''}
+                    userTier={userSubscription}
+                />
+            );
+        }
+
         if (activeView === 'socialPost') {
             return (
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg transition-colors">
@@ -10480,6 +10530,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                  blogData={blogData}
                  explainData={explainData}
                  teachMeData={teachMeData}
+                 thinkingPartnerAnalysis={thinkingPartnerAnalysis}
+                 selectedThinkingPartnerTopic={selectedThinkingPartnerTopic}
+                 selectedThinkingPartner={selectedThinkingPartner}
                  socialPostData={socialPostData}
                     socialPostXData={socialPostXData}
                  quizQuestions={quizQuestions}
@@ -10608,6 +10661,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             <option value="teachMe">{t('teachMe')}</option>
                             {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
                                 <option value="showMe">{t('showMe')}</option>
+                            )}
+                            {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
+                                <option value="thinkingPartner">{t('thinkingPartner')}</option>
                             )}
                             {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) && (
                                 <option value="email">{t('email')}</option>

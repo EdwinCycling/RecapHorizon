@@ -328,6 +328,29 @@ export interface StripeWebhookLog {
   processedAt?: Date;
 }
 
+// Thinking Partner interfaces
+export interface ThinkingTopic {
+  id: string;
+  title: string;
+  description: string; // max 90 characters
+}
+
+export interface ThinkingPartner {
+  id: string;
+  name: string;
+  description: string;
+  promptTemplate: string;
+  category: 'analysis' | 'decision' | 'structure' | 'insight';
+}
+
+export interface ThinkingAnalysisData {
+  topic: ThinkingTopic;
+  partner: ThinkingPartner;
+  constructedPrompt: string;
+  aiResponse: string;
+  timestamp: Date;
+}
+
 // Extended user document interface for database
 export interface UserDocument {
   id: string;

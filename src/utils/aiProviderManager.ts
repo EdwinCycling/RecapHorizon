@@ -273,10 +273,10 @@ export class AIProviderManager {
              config.provider === AIProvider.GOOGLE_GEMINI &&
              !error.message.includes('free_tier_requests')) {
            try {
-             console.log('Attempting Gemini model fallback due to quota exceeded');
+            if (import.meta.env.DEV) console.debug('Attempting Gemini model fallback due to quota exceeded');
              return await this.tryGeminiFallback(config, prompt, startTime, error, userId);
            } catch (fallbackError: any) {
-             console.log('All Gemini fallbacks failed, using original error');
+             if (import.meta.env.DEV) console.debug('All Gemini fallbacks failed, using original error');
              // Continue to original error handling below
            }
          }
@@ -880,7 +880,7 @@ export class AIProviderManager {
           const retryDelay = this.extractRetryDelay(error);
           const delay = Math.min(retryDelay * 1000, baseDelay * Math.pow(2, attempt));
           
-          console.log(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+          if (import.meta.env.DEV) console.debug(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
           await this.sleep(delay);
           continue;
         }
@@ -907,11 +907,11 @@ export class AIProviderManager {
     
     for (const fallbackModel of fallbackModels) {
       try {
-        console.log(`Trying fallback Gemini model: ${fallbackModel}`);
+        if (import.meta.env.DEV) console.debug(`Trying fallback Gemini model: ${fallbackModel}`);
         const fallbackConfig = { ...config, model: fallbackModel };
         return await this.callGemini(fallbackConfig, prompt, startTime, userId);
       } catch (fallbackError: any) {
-        console.log(`Fallback model ${fallbackModel} also failed:`, fallbackError.message);
+        if (import.meta.env.DEV) console.debug(`Fallback model ${fallbackModel} also failed:`, fallbackError.message);
         const fallbackErrorType = this.categorizeError(fallbackError);
         
         // If this fallback also hits quota, try the next one

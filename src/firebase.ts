@@ -1060,33 +1060,33 @@ export const getUnprocessedWebhooks = async (): Promise<any[]> => {
 // Referral validation function
 export const validateReferralCode = async (referralCode: string): Promise<{ isValid: boolean; referrerData?: any }> => {
   try {
-    console.log('[REFERRAL] Validating referral code:', referralCode);
+    if (import.meta.env.DEV) console.debug('[REFERRAL] Validating referral code:', referralCode);
     
     if (!referralCode || referralCode.trim() === '') {
-      console.log('[REFERRAL] Empty referral code provided');
+    if (import.meta.env.DEV) console.debug('[REFERRAL] Empty referral code provided');
       return { isValid: false };
     }
 
     const trimmedCode = referralCode.trim();
-    console.log('[REFERRAL] Checking code:', trimmedCode);
+    if (import.meta.env.DEV) console.debug('[REFERRAL] Checking code:', trimmedCode);
     
     // Try to get the referral code document directly
     const referralCodeRef = doc(db, 'referral_codes', trimmedCode);
     const referralCodeDoc = await getDoc(referralCodeRef);
     
-    console.log('[REFERRAL] Code exists:', referralCodeDoc.exists());
+    if (import.meta.env.DEV) console.debug('[REFERRAL] Code exists:', referralCodeDoc.exists());
     
     if (!referralCodeDoc.exists()) {
-      console.log('[DEBUG] No referral code document found for:', trimmedCode);
+    if (import.meta.env.DEV) console.debug('[DEBUG] No referral code document found for:', trimmedCode);
       return { isValid: false };
     }
     
     const referralCodeData = referralCodeDoc.data();
-    console.log('[DEBUG] Referral code data:', referralCodeData);
+    if (import.meta.env.DEV) console.debug('[DEBUG] Referral code data:', referralCodeData);
     
     // Check if the referral code is active
     if (!referralCodeData.active) {
-      console.log('[DEBUG] Referral code is not active:', trimmedCode);
+    if (import.meta.env.DEV) console.debug('[DEBUG] Referral code is not active:', trimmedCode);
       return { isValid: false };
     }
     
@@ -1098,7 +1098,7 @@ export const validateReferralCode = async (referralCode: string): Promise<{ isVa
       referralCode: trimmedCode
     };
     
-    console.log('[DEBUG] Referral code validation successful:', referrerData);
+    if (import.meta.env.DEV) console.debug('[DEBUG] Referral code validation successful:', referrerData);
     
     return { 
       isValid: true, 
@@ -1113,10 +1113,10 @@ export const validateReferralCode = async (referralCode: string): Promise<{ isVa
 // Server-side referral validation (more secure alternative)
 export const validateReferralCodeServerSide = async (referralCode: string): Promise<{ isValid: boolean; referrerData?: any }> => {
   try {
-    console.log('[REFERRAL] Server-side validation for code:', referralCode);
+    if (import.meta.env.DEV) console.debug('[REFERRAL] Server-side validation for code:', referralCode);
     
     if (!referralCode || referralCode.trim() === '') {
-      console.log('[REFERRAL] Empty referral code provided');
+    if (import.meta.env.DEV) console.debug('[REFERRAL] Empty referral code provided');
       return { isValid: false };
     }
 
@@ -1134,13 +1134,13 @@ export const validateReferralCodeServerSide = async (referralCode: string): Prom
     }
 
     const result = await response.json();
-    console.log('[REFERRAL] Server validation result:', result);
+    if (import.meta.env.DEV) console.debug('[REFERRAL] Server validation result:', result);
     
     return result;
   } catch (error) {
     console.error('[REFERRAL] Error in server-side validation:', error);
     // Fallback to client-side validation if server-side fails
-    console.log('[REFERRAL] Falling back to client-side validation');
+    if (import.meta.env.DEV) console.debug('[REFERRAL] Falling back to client-side validation');
     return validateReferralCode(referralCode);
   }
 };

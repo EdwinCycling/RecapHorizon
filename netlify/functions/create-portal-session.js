@@ -39,6 +39,7 @@ export async function handler(event) {
     // Validate environment configuration
     if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.trim().length === 0) {
       console.error('Missing STRIPE_SECRET_KEY environment variable');
+      console.error('Available env vars:', Object.keys(process.env).filter(key => key.includes('STRIPE')));
       return {
         statusCode: 500,
         headers: {
@@ -47,7 +48,8 @@ export async function handler(event) {
         },
         body: JSON.stringify({
           error: 'Stripe configuration error',
-          details: 'STRIPE_SECRET_KEY is not set for serverless functions. Configure it in your Netlify environment or .env file.'
+          details: 'STRIPE_SECRET_KEY is not set for serverless functions. Configure it in your Netlify environment or .env file.',
+          availableStripeVars: Object.keys(process.env).filter(key => key.includes('STRIPE'))
         })
       };
     }
@@ -88,15 +90,34 @@ export async function handler(event) {
   } catch (error) {
     console.error('Error creating portal session:', error);
     
+    // Handle specific Stripe errors
+    let errorMessage = 'Internal server error';
+    let statusCode = 500;
+    
+    if (error.type === 'StripeInvalidRequestError') {
+      errorMessage = 'Invalid Stripe request';
+      statusCode = 400;
+    } else if (error.type === 'StripeAuthenticationError') {
+      errorMessage = 'Stripe authentication failed';
+      statusCode = 401;
+    } else if (error.type === 'StripePermissionError') {
+      errorMessage = 'Stripe permission denied';
+      statusCode = 403;
+    } else if (error.type === 'StripeRateLimitError') {
+      errorMessage = 'Stripe rate limit exceeded';
+      statusCode = 429;
+    }
+    
     return {
-      statusCode: 500,
+      statusCode: statusCode,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type'
       },
       body: JSON.stringify({ 
-        error: 'Internal server error',
-        details: (error && error.message) ? error.message : String(error) 
+        error: errorMessage,
+        details: (error && error.message) ? error.message : String(error),
+        stripeErrorType: error.type || 'unknown'
       })
     };
   }

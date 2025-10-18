@@ -78,12 +78,14 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                 <div className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-line mb-3">
                   {t('sessionOptionAudioUploadFormats')}
                 </div>
-                <button
-                  onClick={() => setIsAudioUploadHelpOpen(true)}
-                  className="text-amber-700 dark:text-amber-300 text-sm underline hover:no-underline"
-                >
-                  {t('audioUploadHelpTitle')}
-                </button>
+                <div className="text-center">
+                  <button
+                    onClick={() => setIsAudioUploadHelpOpen(true)}
+                    className="text-amber-700 dark:text-amber-300 text-sm underline hover:no-underline"
+                  >
+                    {t('audioUploadHelpTitle')}
+                  </button>
+                </div>
               </div>
 
               {/* Notion Upload Help Card */}
@@ -96,12 +98,14 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                   <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('notionOption') || 'Notion'}</h3>
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 text-sm mb-2">{t('notionOptionDesc') || 'Analyseer jouw Notion pagina(s).'}</p>
-                <button
-                  onClick={() => setIsNotionHelpOpen(true)}
-                  className="text-slate-700 dark:text-slate-300 text-sm underline hover:no-underline"
-                >
-                  {t('notionIntegrationInstall')}
-                </button>
+                <div className="text-center">
+                  <button
+                    onClick={() => setIsNotionHelpOpen(true)}
+                    className="text-slate-700 dark:text-slate-300 text-sm underline hover:no-underline"
+                  >
+                    {t('notionIntegrationInstall')}
+                  </button>
+                </div>
               </div>
             </div>
           )}

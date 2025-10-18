@@ -1040,7 +1040,7 @@ export default function App() {
 
 
   const [audioURL, setAudioURL] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState<string>('Dit is een test transcript voor het testen van de Social Post functionaliteit. We bespreken belangrijke onderwerpen zoals digitale transformatie, kunstmatige intelligentie en de toekomst van werk. Deze content zou gebruikt moeten worden om een LinkedIn post te genereren.');
+  const [transcript, setTranscript] = useState<string>('');
   
 
   const [summary, setSummary] = useState<string>('');
@@ -11748,10 +11748,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                           <div className="pt-4 border-t border-cyan-200 dark:border-cyan-700">
                             <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                               <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">
-                                {t('subscriptionScheduledChange')}
+                                {t('subscriptionScheduledChanges')}
                               </p>
                               <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                                {t(`subscriptionScheduled${authState.user.scheduledTierChange.action.charAt(0).toUpperCase() + authState.user.scheduledTierChange.action.slice(1)}`)}: {authState.user.scheduledTierChange.tier} op {new Date(authState.user.scheduledTierChange.effectiveDate).toLocaleDateString(locale)}
+                                {t(`subscriptionScheduled${authState.user.scheduledTierChange.action.charAt(0).toUpperCase() + authState.user.scheduledTierChange.action.slice(1)}`)}: {authState.user.scheduledTierChange.tier} — {t('subscriptionEffectiveDate')}: {(() => {
+                                  const effective: any = authState.user.scheduledTierChange.effectiveDate;
+                                  const date = effective && typeof effective === 'object' && 'seconds' in effective ? new Date(effective.seconds * 1000) : new Date(effective);
+                                  return isNaN(date.getTime()) ? t('dateUnknown', 'Unknown date') : date.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
+                                })()}
                               </p>
                             </div>
                           </div>
@@ -11852,11 +11856,11 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 : t('subscriptionScheduledDowngrade', { tier: authState.user.scheduledTierChange.tier })}
                             </p>
                             <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                              {t('subscriptionEffectiveDate')}: {new Date(authState.user.scheduledTierChange.effectiveDate.seconds * 1000).toLocaleDateString(locale, { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                              })}
+                              {t('subscriptionEffectiveDate')}: {(() => {
+                                const effective: any = authState.user.scheduledTierChange.effectiveDate;
+                                const date = effective && typeof effective === 'object' && 'seconds' in effective ? new Date(effective.seconds * 1000) : new Date(effective);
+                                return isNaN(date.getTime()) ? t('dateUnknown', 'Unknown date') : date.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
+                              })()}
                             </p>
                           </div>
                         </div>

@@ -86,9 +86,62 @@ export class BrowserEmailService {
     return this.send2FAWaitlistEmail(emailData);
   }
 
+  async sendEnterpriseContactEmail(emailData: EmailData): Promise<EmailResult> {
+    try {
+      const response = await fetch(`${this.baseUrl}/.netlify/functions/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          emailType: 'enterprise_contact',
+          emailData: {
+            email: emailData.email,
+            name: emailData.name,
+            company: emailData.company,
+            estimatedUsers: emailData.estimatedUsers,
+            message: emailData.message || '',
+            language: emailData.language || 'en',
+            timestamp: emailData.timestamp || new Date().toISOString()
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const responseText = await response.text();
+      if (!responseText.trim()) {
+        throw new Error('Empty response from server');
+      }
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        throw new Error(`Invalid JSON response: ${responseText}`);
+      }
+
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        error: result.error
+      };
+
+    } catch (error) {
+      console.error('Error sending enterprise contact email:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  }
+
   async logEmailDelivery(messageId: string, email: string, type: string, language: string, result: EmailResult): Promise<void> {
     // Log email delivery status - can be implemented later if needed
-    console.log(`Email delivery logged: ${messageId} | email=${email} | type=${type} | lang=${language} | success=${result.success} | error=${result.error ?? ''}`);
+    if (import.meta.env.DEV) console.debug(`Email delivery logged: ${messageId} | email=${email} | type=${type} | lang=${language} | success=${result.success} | error=${result.error ?? ''}`);
   }
 }
 

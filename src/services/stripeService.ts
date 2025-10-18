@@ -26,6 +26,20 @@ interface CreateCheckoutSessionResponse {
   url: string;
 }
 
+interface ReactivateSubscriptionRequest {
+  customerId: string;
+  priceId: string;
+  startDate?: string;
+}
+
+interface ReactivateSubscriptionResponse {
+  subscriptionId: string;
+  status: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  nextBillingDate: string;
+}
+
 class StripeService {
   private baseUrl: string;
 
@@ -214,6 +228,56 @@ class StripeService {
       return { effectiveDate: data.effectiveDate };
     } catch (error) {
       console.error('Error cancelling subscription:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Heractiveer een geannuleerd abonnement door een nieuw abonnement aan te maken
+   */
+  async reactivateSubscription({
+    customerId,
+    priceId,
+    startDate
+  }: ReactivateSubscriptionRequest): Promise<ReactivateSubscriptionResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/reactivate-subscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerId,
+          priceId,
+          startDate
+        })
+      });
+
+      if (!response.ok) {
+        let errorText = 'Failed to reactivate subscription';
+        try {
+          const errorData = await response.json();
+          if (errorData) {
+            if (errorData.error && errorData.details) {
+              errorText = `${errorData.error}: ${errorData.details}`;
+            } else if (errorData.error) {
+              errorText = errorData.error;
+            } else if (errorData.details) {
+              errorText = errorData.details;
+            }
+          }
+        } catch {
+          try {
+            const text = await response.text();
+            if (text) errorText = text;
+          } catch {}
+        }
+        throw new Error(errorText);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error reactivating subscription:', error);
       throw error;
     }
   }

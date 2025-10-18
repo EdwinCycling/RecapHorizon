@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { SubscriptionTier, TierLimits, UserSubscription } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 import { stripeService } from '../services/stripeService';
-import { getUserStripeData } from '../firebase';
+import { getUserStripeData, db } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import CancellationGoodbyeModal from './CancellationGoodbyeModal';
+import EnterpriseContactModal from './EnterpriseContactModal';
+import ReactivationSuccessModal from './ReactivationSuccessModal';
 
 interface PricingPageProps {
   currentTier: SubscriptionTier;
@@ -19,9 +23,25 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [nextBillingDate, setNextBillingDate] = useState<Date | null>(null);
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
+  const [scheduledTierChange, setScheduledTierChange] = useState<any | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelEffectiveDate, setCancelEffectiveDate] = useState<string | Date | { seconds?: number } | null>(null);
+  const [showEnterpriseModal, setShowEnterpriseModal] = useState<boolean>(false);
+  const [showReactivationModal, setShowReactivationModal] = useState(false);
+  const [reactivationEffectiveDate, setReactivationEffectiveDate] = useState<string | null>(null);
   const isHorizonEligible = currentTier === SubscriptionTier.SILVER || currentTier === SubscriptionTier.GOLD;
   // Get tier comparison - DIAMOND tier alleen tonen indien gewenst
   const tierComparison = subscriptionService.getTierComparison();
+
+  // Bepaal of er een opzegging is ingepland en de ingangsdatum nog in de toekomst ligt
+  const isCancelScheduledInFuture = (() => {
+    if (scheduledTierChange?.action === 'cancel') {
+      const eff = scheduledTierChange?.effectiveDate as any;
+      const d = eff?.seconds ? new Date(eff.seconds * 1000) : new Date(eff);
+      return d.getTime() > Date.now();
+    }
+    return false;
+  })();
 
   useEffect(() => {
     let isMounted = true;
@@ -32,6 +52,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
           if (isMounted) {
             setNextBillingDate(stripeData.nextBillingDate ?? null);
             setStripeCustomerId(stripeData?.stripeCustomerId || null);
+            setScheduledTierChange(stripeData?.scheduledTierChange || null);
           }
         }
       } catch (e) {
@@ -40,6 +61,85 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
     })();
     return () => { isMounted = false; };
   }, [isLoggedIn, userId]);
+
+  // Function to refresh subscription data
+  const refreshSubscriptionData = async () => {
+    try {
+      if (isLoggedIn && userId) {
+        const stripeData = await getUserStripeData(userId);
+        setNextBillingDate(stripeData.nextBillingDate ?? null);
+        setStripeCustomerId(stripeData?.stripeCustomerId || null);
+        setScheduledTierChange(stripeData?.scheduledTierChange || null);
+      }
+    } catch (e) {
+      console.warn('Kon Stripe gegevens niet refreshen:', e);
+    }
+  };
+
+  // Function to verify subscription update after reactivation
+  const verifySubscriptionUpdate = async (subscriptionId: string) => {
+    try {
+      console.log('Verifying subscription update for:', subscriptionId);
+      
+      // Multiple verification attempts with increasing delays
+      const maxAttempts = 3;
+      let attempt = 1;
+      
+      while (attempt <= maxAttempts) {
+        console.log(`Verification attempt ${attempt}/${maxAttempts}`);
+        
+        // Wait for webhook processing (longer delay for later attempts)
+        const delay = attempt * 2000; // 2s, 4s, 6s
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Refresh subscription data
+        await refreshSubscriptionData();
+        
+        // Check if scheduled cancellation is cleared
+        if (isLoggedIn && userId) {
+          const stripeData = await getUserStripeData(userId);
+          
+          if (!stripeData?.scheduledTierChange) {
+            console.log(`Subscription verification successful on attempt ${attempt}`);
+            return; // Success - exit early
+          } else {
+            console.warn(`Attempt ${attempt}: Scheduled tier change still exists:`, stripeData.scheduledTierChange);
+          }
+        }
+        
+        attempt++;
+      }
+      
+      // If verification failed, try to directly remove scheduledTierChange
+      console.log('Webhook processing may have failed, attempting direct Firebase update...');
+      await removeScheduledTierChange();
+      
+      console.warn('Subscription verification completed but scheduled cancellation may still exist');
+      console.log('Note: Changes may take a few minutes to appear due to webhook processing delays');
+      
+    } catch (error) {
+      console.error('Error verifying subscription update:', error);
+      // Don't throw error - this is just verification
+    }
+  };
+
+  // Function to directly remove scheduledTierChange from Firebase
+  const removeScheduledTierChange = async () => {
+    if (!isLoggedIn || !userId) return;
+    
+    try {
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        scheduledTierChange: null
+      });
+      console.log('Successfully removed scheduledTierChange directly');
+      
+      // Refresh data after direct update
+      await refreshSubscriptionData();
+    } catch (error) {
+      console.error('Failed to remove scheduledTierChange directly:', error);
+    }
+  };
 
   const getTierIcon = (tier: SubscriptionTier) => {
     switch (tier) {
@@ -132,7 +232,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
   const handleUpgrade = async (tier: SubscriptionTier) => {
     // Enterprise: contact
     if (tier === SubscriptionTier.ENTERPRISE) {
-      alert(t('pricingEnterpriseContact', 'Neem contact op voor Enterprise prijzen: enterprise@recapsmart.com'));
+      setShowEnterpriseModal(true);
       return;
     }
     // Diamond: admin-only
@@ -168,13 +268,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
       setIsLoading(SubscriptionTier.FREE);
       try {
         const { effectiveDate } = await stripeService.cancelSubscriptionAtPeriodEnd(stripeCustomerId);
-        alert(
-          t('subscriptionCancelPending', 'Je opzegging is ingediend. Je abonnement blijft actief tot het einde van je huidige factureringsperiode.')
-          + `\n\n${t('subscriptionEffectiveDate', 'Ingangsdatum')}: ${new Date(effectiveDate).toLocaleDateString('nl-NL')}`
-        );
+        setCancelEffectiveDate(effectiveDate);
+        setScheduledTierChange({ action: 'cancel', tier: 'free', effectiveDate });
+        setShowCancelModal(true);
       } catch (error) {
         console.error('Error scheduling cancel:', error);
-        alert(t('pricingPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'));
+        alert(t('subscriptionPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'));
       } finally {
         setIsLoading(null);
       }
@@ -186,7 +285,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
       await stripeService.redirectToCustomerPortal(stripeCustomerId);
     } catch (error) {
       console.error('Error redirecting to customer portal:', error);
-      alert(t('pricingPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'));
+      alert(t('subscriptionPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'));
+    } finally {
+      setIsLoading(null);
     }
   };
 
@@ -217,6 +318,26 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
 
   return (
     <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 z-50 overflow-hidden">
+      {/* Enterprise Contact Modal */}
+      <EnterpriseContactModal
+        isOpen={showEnterpriseModal}
+        onClose={() => setShowEnterpriseModal(false)}
+        t={t}
+        userEmail={isLoggedIn ? userEmail : undefined}
+      />
+
+      {/* Reactivation Success Modal */}
+      <ReactivationSuccessModal
+        isOpen={showReactivationModal}
+        onClose={async () => {
+          setShowReactivationModal(false);
+          // Refresh subscription data after closing modal
+          await refreshSubscriptionData();
+        }}
+        t={t}
+        effectiveDate={reactivationEffectiveDate}
+        stripeCustomerId={stripeCustomerId}
+      />
       <div className="h-full overflow-y-auto">
         <div className="min-h-full py-4 sm:py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -292,6 +413,19 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                 <div className="text-2xl sm:text-4xl font-medium text-gray-800 dark:text-white break-words">
                   {getPriceDisplay(tier.tier as SubscriptionTier)}
                 </div>
+                {/* Cancellation scheduled notice on current tier */}
+                {tier.tier === currentTier && scheduledTierChange?.action === 'cancel' && (
+                  <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
+                    <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200 font-medium">{t('subscriptionScheduledCancel')}</p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                      {t('subscriptionCancelActiveUntil', 'Active until')}: {(() => {
+                        const eff = scheduledTierChange?.effectiveDate;
+                        const d = eff?.seconds ? new Date(eff.seconds * 1000) : new Date(eff);
+                        return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                      })()}
+                    </p>
+                  </div>
+                )}
                 {/* Free for 4 weeks text for FREE tier */}
                 {(tier.tier as SubscriptionTier) === SubscriptionTier.FREE && (
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -456,12 +590,63 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
               {isLoggedIn && (
                 <div className="text-center mt-auto">
                   {tier.tier === currentTier ? (
-                    <button
-                      disabled
-                      className="w-full py-3 px-6 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded font-medium cursor-not-allowed"
-                    >
-                      {t('pricingCurrentTierButton')}
-                    </button>
+                    scheduledTierChange?.action === 'cancel' && stripeCustomerId ? (
+                      <button
+                        onClick={async () => {
+                          try {
+                            setIsLoading('reactivate');
+                            
+                            // Bepaal de priceId voor de huidige tier
+                            const priceId = stripeService.getPriceId(currentTier);
+                            if (!priceId) {
+                              throw new Error(`Geen price ID gevonden voor tier ${currentTier}`);
+                            }
+                            
+                            // Bepaal de start datum (einde van huidige periode)
+                            const startDate = scheduledTierChange?.effectiveDate 
+                              ? (scheduledTierChange.effectiveDate as any)?.seconds 
+                                ? new Date(scheduledTierChange.effectiveDate.seconds * 1000).toISOString()
+                                : new Date(scheduledTierChange.effectiveDate).toISOString()
+                              : undefined;
+                            
+                            // Heractiveer het abonnement
+                            const result = await stripeService.reactivateSubscription({
+                              customerId: stripeCustomerId,
+                              priceId: priceId,
+                              startDate: startDate
+                            });
+                            
+                            console.log('Subscription reactivated:', result);
+                            
+                            // Stel de effectieve datum in voor de modal
+                            setReactivationEffectiveDate(startDate || new Date().toISOString());
+                            
+                            // Verifieer dat de subscription status is bijgewerkt
+                            await verifySubscriptionUpdate(result.subscriptionId);
+                            
+                            // Toon de success modal
+                            setShowReactivationModal(true);
+                            
+                          } catch (error) {
+                            console.error('Error reactivating subscription:', error);
+                            alert(t('pricingReactivateError', 'Er is een fout opgetreden bij het heractiveren van het abonnement. Probeer het opnieuw.'));
+                          } finally {
+                            setIsLoading(null);
+                          }
+                        }}
+                        className="w-full py-3 px-6 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors"
+                        disabled={isLoading === 'reactivate'}
+                      >
+                        {isLoading === 'reactivate' ? t('loading', 'Laden...') : t('subscriptionReactivate', 'Re-activate...')}
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full py-3 px-6 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded font-medium cursor-not-allowed"
+                      >
+                        {t('pricingCurrentTierButton')}
+                      </button>
+                    )
                   ) : (tier.tier as SubscriptionTier) === SubscriptionTier.DIAMOND ? (
                     <button
                       disabled
@@ -470,44 +655,55 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                       {t('pricingAdminOnly')}
                     </button>
                   ) : (
-                    <button
-                      onClick={() => handleUpgrade(tier.tier as SubscriptionTier)}
-                      disabled={isLoading === tier.tier}
-                      className={`w-full py-3 px-6 text-white rounded font-medium transition-colors ${
-                        isLoading === tier.tier 
-                          ? 'bg-gray-400 cursor-not-allowed' 
-                          : getTierButtonColor(tier.tier)
-                      }`}
-                    >
-                      {isLoading === tier.tier ? (
-                        <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          {t('pricingProcessing', 'Verwerken...')}
-                        </span>
-                      ) : (
-                        tier.tier === SubscriptionTier.FREE 
-                          ? (currentTier !== SubscriptionTier.FREE ? t('subscriptionCancel') : t('pricingStartFree'))
-                          : tier.tier === SubscriptionTier.ENTERPRISE 
-                            ? t('pricingContactEnterprise') 
-                            : (() => {
-                                const order = {
-                                  [SubscriptionTier.FREE]: 0,
-                                  [SubscriptionTier.SILVER]: 1,
-                                  [SubscriptionTier.GOLD]: 2,
-                                  [SubscriptionTier.ENTERPRISE]: 3,
-                                  [SubscriptionTier.DIAMOND]: 4,
-                                } as const;
-                                const isDowngrade = order[tier.tier as SubscriptionTier] < order[currentTier];
-                                const target = (tier.tier as SubscriptionTier).charAt(0).toUpperCase() + (tier.tier as SubscriptionTier).slice(1);
-                                return isDowngrade 
-                                  ? t('pricingDowngradeTo', { tier: target }) || `Downgraden naar ${target}`
-                                  : t('pricingUpgradeTo', { tier: target });
-                              })()
-                      )}
-                    </button>
+                    (() => {
+                      // Bij GOLD of SILVER met een toekomstige opzegdatum: geen knop tonen voor specifieke tiers
+                      const targetTier = tier.tier as SubscriptionTier;
+                      const hideForCancel = isCancelScheduledInFuture && (
+                        (currentTier === SubscriptionTier.GOLD && (targetTier === SubscriptionTier.FREE || targetTier === SubscriptionTier.SILVER)) ||
+                        (currentTier === SubscriptionTier.SILVER && (targetTier === SubscriptionTier.FREE || targetTier === SubscriptionTier.GOLD))
+                      );
+                      if (hideForCancel) return null;
+                      return (
+                        <button
+                          onClick={() => handleUpgrade(targetTier)}
+                          disabled={isLoading === tier.tier}
+                          className={`w-full py-3 px-6 text-white rounded font-medium transition-colors ${
+                            isLoading === tier.tier 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : getTierButtonColor(tier.tier)
+                          }`}
+                        >
+                          {isLoading === tier.tier ? (
+                            <span className="flex items-center justify-center">
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              {t('pricingProcessing', 'Verwerken...')}
+                            </span>
+                          ) : (
+                            tier.tier === SubscriptionTier.FREE 
+                              ? (currentTier !== SubscriptionTier.FREE ? t('subscriptionCancel') : t('pricingStartFree'))
+                              : tier.tier === SubscriptionTier.ENTERPRISE 
+                                ? t('pricingContactEnterprise') 
+                                : (() => {
+                                    const order = {
+                                      [SubscriptionTier.FREE]: 0,
+                                      [SubscriptionTier.SILVER]: 1,
+                                      [SubscriptionTier.GOLD]: 2,
+                                      [SubscriptionTier.ENTERPRISE]: 3,
+                                      [SubscriptionTier.DIAMOND]: 4,
+                                    } as const;
+                                    const isDowngrade = order[tier.tier as SubscriptionTier] < order[currentTier];
+                                    const target = (tier.tier as SubscriptionTier).charAt(0).toUpperCase() + (tier.tier as SubscriptionTier).slice(1);
+                                    return isDowngrade 
+                                      ? t('pricingDowngradeTo', { tier: target }) || `Downgraden naar ${target}`
+                                      : t('pricingUpgradeTo', { tier: target });
+                                  })()
+                          )}
+                        </button>
+                      );
+                    })()
                   )}
                 </div>
               )}
@@ -602,6 +798,14 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
             </div>
           </div>
         )}
+
+        {/* Cancellation Goodbye Modal */}
+        <CancellationGoodbyeModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          t={t}
+          effectiveDate={cancelEffectiveDate}
+        />
           </div>
         </div>
       </div>

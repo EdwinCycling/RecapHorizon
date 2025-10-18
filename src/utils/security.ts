@@ -1686,7 +1686,7 @@ export const createReferralAccount = async (
     await setDoc(doc(db, 'users', user.uid), userData);
 
     // Log successful account creation for security monitoring
-    console.log('Referral account created successfully:', {
+    if (import.meta.env.DEV) console.debug('Referral account created successfully:', {
       email: email,
       uid: user.uid,
       hasReferral: !!referralCode,

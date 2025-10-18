@@ -31,7 +31,7 @@ exports.handler = async (event, context) => {
     const { emailType, emailData } = JSON.parse(event.body);
 
     // Basic payload validation for security
-    if (emailType !== '2fa_waitlist') {
+    if (emailType !== '2fa_waitlist' && emailType !== 'enterprise_contact') {
       return {
         statusCode: 400,
         headers: {
@@ -54,6 +54,23 @@ exports.handler = async (event, context) => {
         },
         body: JSON.stringify({ success: false, error: 'Invalid email address' })
       };
+    }
+
+    // Additional validation for enterprise contact
+    if (emailType === 'enterprise_contact') {
+      const requiredFields = ['name', 'company', 'estimatedUsers'];
+      const missing = requiredFields.filter(f => !emailData?.[f] || String(emailData?.[f]).trim().length === 0);
+      if (missing.length > 0) {
+        return {
+          statusCode: 400,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS'
+          },
+          body: JSON.stringify({ success: false, error: `Missing required fields: ${missing.join(', ')}` })
+        };
+      }
     }
 
     // Validate required environment variables
@@ -176,6 +193,98 @@ exports.handler = async (event, context) => {
             </html>
           `
         }
+      },
+      'enterprise_contact': {
+        'nl': {
+          subject: 'Nieuwe Enterprise-aanvraag van {{name}} ({{company}})',
+          html: `
+            <!DOCTYPE html>
+            <html lang="nl">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Enterprise contact aanvraag</title>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #6b21a8 0%, #7e22ce 100%); color: white; padding: 24px; border-radius: 10px 10px 0 0; }
+                .content { background: #f8fafc; padding: 24px; border-radius: 0 0 10px 10px; }
+                .item { margin-bottom: 12px; }
+                .label { font-weight: bold; color: #111827; }
+                .footer { text-align: center; margin-top: 24px; color: #64748b; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h2>Enterprise contact aanvraag</h2>
+                <p>RecapHorizon</p>
+              </div>
+              <div class="content">
+                <p>Er is een nieuwe enterprise-aanvraag binnengekomen. Details:</p>
+                <div class="item"><span class="label">Naam:</span> {{name}}</div>
+                <div class="item"><span class="label">E-mail:</span> {{email}}</div>
+                <div class="item"><span class="label">Bedrijf:</span> {{company}}</div>
+                <div class="item"><span class="label">Geschat aantal gebruikers:</span> {{estimatedUsers}}</div>
+                <div class="item"><span class="label">Bericht:</span><br/>{{message}}</div>
+                <div class="item"><span class="label">Tijdstip:</span> {{timestamp}}</div>
+              </div>
+              <div class="footer">© 2024 RecapHorizon</div>
+            </body>
+            </html>
+          `
+        },
+        'en': {
+          subject: 'New Enterprise contact from {{name}} ({{company}})',
+          html: `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Enterprise Contact Request</title>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #6b21a8 0%, #7e22ce 100%); color: white; padding: 24px; border-radius: 10px 10px 0 0; }
+                .content { background: #f8fafc; padding: 24px; border-radius: 0 0 10px 10px; }
+                .item { margin-bottom: 12px; }
+                .label { font-weight: bold; color: #111827; }
+                .footer { text-align: center; margin-top: 24px; color: #64748b; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h2>Enterprise Contact Request</h2>
+                <p>RecapHorizon</p>
+              </div>
+              <div class="content">
+                <p>A new enterprise contact has been submitted. Details:</p>
+                <div class="item"><span class="label">Name:</span> {{name}}</div>
+                <div class="item"><span class="label">Email:</span> {{email}}</div>
+                <div class="item"><span class="label">Company:</span> {{company}}</div>
+                <div class="item"><span class="label">Estimated users:</span> {{estimatedUsers}}</div>
+                <div class="item"><span class="label">Message:</span><br/>{{message}}</div>
+                <div class="item"><span class="label">Timestamp:</span> {{timestamp}}</div>
+              </div>
+              <div class="footer">© 2024 RecapHorizon</div>
+            </body>
+            </html>
+          `
+        },
+        'de': {
+          subject: 'Neue Enterprise-Anfrage von {{name}} ({{company}})',
+          html: `<html><body><p>Enterprise-Anfrage:</p><p><b>Name:</b> {{name}}</p><p><b>E‑Mail:</b> {{email}}</p><p><b>Firma:</b> {{company}}</p><p><b>Nutzer:</b> {{estimatedUsers}}</p><p><b>Nachricht:</b><br/>{{message}}</p><p><b>Zeitpunkt:</b> {{timestamp}}</p></body></html>`
+        },
+        'fr': {
+          subject: 'Nouvelle demande Entreprise de {{name}} ({{company}})',
+          html: `<html><body><p>Demande Entreprise:</p><p><b>Nom:</b> {{name}}</p><p><b>Email:</b> {{email}}</p><p><b>Entreprise:</b> {{company}}</p><p><b>Utilisateurs estimés:</b> {{estimatedUsers}}</p><p><b>Message:</b><br/>{{message}}</p><p><b>Horodatage:</b> {{timestamp}}</p></body></html>`
+        },
+        'es': {
+          subject: 'Nueva solicitud Enterprise de {{name}} ({{company}})',
+          html: `<html><body><p>Solicitud Enterprise:</p><p><b>Nombre:</b> {{name}}</p><p><b>Email:</b> {{email}}</p><p><b>Empresa:</b> {{company}}</p><p><b>Usuarios estimados:</b> {{estimatedUsers}}</p><p><b>Mensaje:</b><br/>{{message}}</p><p><b>Hora:</b> {{timestamp}}</p></body></html>`
+        },
+        'pt': {
+          subject: 'Novo contato Enterprise de {{name}} ({{company}})',
+          html: `<html><body><p>Contato Enterprise:</p><p><b>Nome:</b> {{name}}</p><p><b>Email:</b> {{email}}</p><p><b>Empresa:</b> {{company}}</p><p><b>Usuários estimados:</b> {{estimatedUsers}}</p><p><b>Mensagem:</b><br/>{{message}}</p><p><b>Data/hora:</b> {{timestamp}}</p></body></html>`
+        }
       }
     };
 
@@ -202,18 +311,27 @@ exports.handler = async (event, context) => {
       name: process.env.VITE_BREVO_SENDER_NAME || 'RecapHorizon',
       email: process.env.VITE_BREVO_SENDER_EMAIL || 'RecapHorizonOffice@gmail.com'
     };
+
+    // Recipient logic: enterprise goes to office inbox, waitlist goes to user
+    const enterpriseRecipient = process.env.VITE_ENTERPRISE_CONTACT_RECIPIENT || 'RecapHorizonOffice@gmail.com';
+    const toEmail = emailType === 'enterprise_contact' ? enterpriseRecipient : emailData.email;
+
     sendSmtpEmail.to = [{
-      email: emailData.email,
-      name: emailData.email.split('@')[0]
+      email: toEmail,
+      name: emailType === 'enterprise_contact' ? 'RecapHorizon Office' : emailData.email.split('@')[0]
     }];
+
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
-    sendSmtpEmail.tags = ['2fa', 'waitlist', emailData.language];
+    sendSmtpEmail.tags = emailType === 'enterprise_contact' 
+      ? ['enterprise', 'contact', emailData.language]
+      : ['2fa', 'waitlist', emailData.language];
 
-    if (emailData.supportEmail) {
-      sendSmtpEmail.replyTo = {
-        email: emailData.supportEmail
-      };
+    // For enterprise, set reply-to to the user's email so office can reply directly
+    if (emailType === 'enterprise_contact' && emailData.email) {
+      sendSmtpEmail.replyTo = { email: emailData.email };
+    } else if (emailData.supportEmail) {
+      sendSmtpEmail.replyTo = { email: emailData.supportEmail };
     }
 
     // Send email

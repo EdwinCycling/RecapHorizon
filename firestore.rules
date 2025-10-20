@@ -30,7 +30,13 @@ service cloud.firestore {
     
     // Helper: detect writes that touch referralProfile
     function touchesReferralProfile() {
-      return request.resource.data.keys().hasAny(['referralProfile']);
+      // Deny only when the client attempts to CREATE the field or CHANGE it.
+      // If the field already exists but is unchanged in this update, allow.
+      return (
+        resource == null && request.resource.data.keys().hasAny(['referralProfile'])
+      ) || (
+        resource != null && resource.data.diff(request.resource.data).changedKeys().hasAny(['referralProfile'])
+      );
     }
 
     // User profiles - users can only access their own data, but cannot update referralProfile client-side

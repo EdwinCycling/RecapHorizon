@@ -7,6 +7,8 @@ import { doc, updateDoc } from 'firebase/firestore';
 import CancellationGoodbyeModal from './CancellationGoodbyeModal';
 import EnterpriseContactModal from './EnterpriseContactModal';
 import ReactivationSuccessModal from './ReactivationSuccessModal';
+import DowngradeConfirmationModal from './DowngradeConfirmationModal';
+import CancellationConfirmationModal from './CancellationConfirmationModal';
 
 interface PricingPageProps {
   currentTier: SubscriptionTier;
@@ -29,6 +31,9 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
   const [showEnterpriseModal, setShowEnterpriseModal] = useState<boolean>(false);
   const [showReactivationModal, setShowReactivationModal] = useState(false);
   const [reactivationEffectiveDate, setReactivationEffectiveDate] = useState<string | null>(null);
+  const [showDowngradeModal, setShowDowngradeModal] = useState(false);
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [targetTier, setTargetTier] = useState<SubscriptionTier | null>(null);
   const isHorizonEligible = currentTier === SubscriptionTier.SILVER || currentTier === SubscriptionTier.GOLD;
   // Get tier comparison - DIAMOND tier alleen tonen indien gewenst
   const tierComparison = subscriptionService.getTierComparison();
@@ -263,20 +268,27 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
       return;
     }
 
-    // If selecting Free while paid, schedule cancel at period end without leaving the app
+    // If selecting Free while paid, show cancellation confirmation modal
     if (tier === SubscriptionTier.FREE && currentTier !== SubscriptionTier.FREE) {
-      setIsLoading(SubscriptionTier.FREE);
-      try {
-        const { effectiveDate } = await stripeService.cancelSubscriptionAtPeriodEnd(stripeCustomerId);
-        setCancelEffectiveDate(effectiveDate);
-        setScheduledTierChange({ action: 'cancel', tier: 'free', effectiveDate });
-        setShowCancelModal(true);
-      } catch (error) {
-        console.error('Error scheduling cancel:', error);
-        alert(t('subscriptionPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'));
-      } finally {
-        setIsLoading(null);
-      }
+      setTargetTier(tier);
+      setShowCancellationModal(true);
+      return;
+    }
+
+    // Check if this is a downgrade (excluding Free tier)
+    const tierOrder = {
+      [SubscriptionTier.FREE]: 0,
+      [SubscriptionTier.SILVER]: 1,
+      [SubscriptionTier.GOLD]: 2,
+      [SubscriptionTier.ENTERPRISE]: 3,
+      [SubscriptionTier.DIAMOND]: 4,
+    };
+
+    const isDowngrade = tierOrder[tier] < tierOrder[currentTier] && tier !== SubscriptionTier.FREE;
+    
+    if (isDowngrade) {
+      setTargetTier(tier);
+      setShowDowngradeModal(true);
       return;
     }
 
@@ -337,6 +349,74 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
         t={t}
         effectiveDate={reactivationEffectiveDate}
         stripeCustomerId={stripeCustomerId}
+      />
+
+      {/* Downgrade Confirmation Modal */}
+      <DowngradeConfirmationModal
+        isOpen={showDowngradeModal}
+        onClose={() => {
+          setShowDowngradeModal(false);
+          setTargetTier(null);
+        }}
+        currentTier={currentTier}
+        targetTier={targetTier}
+        renewalDate={(nextBillingDate ? nextBillingDate.toISOString() : new Date().toISOString())}
+        onConfirm={async () => {
+          if (!targetTier || !userId) return;
+          
+          setIsLoading(targetTier);
+          try {
+            const { effectiveDate } = await subscriptionService.scheduleSubscriptionChange(
+              userId,
+              targetTier,
+              'downgrade'
+            );
+            
+            setScheduledTierChange({ 
+              action: 'downgrade', 
+              tier: targetTier, 
+              effectiveDate 
+            });
+            
+            await refreshSubscriptionData();
+          } catch (error) {
+            console.error('Error scheduling downgrade:', error);
+            throw error;
+          } finally {
+            setIsLoading(null);
+          }
+        }}
+        t={t}
+      />
+
+      {/* Cancellation Confirmation Modal */}
+      <CancellationConfirmationModal
+        isOpen={showCancellationModal}
+        onClose={() => {
+          setShowCancellationModal(false);
+          setTargetTier(null);
+        }}
+        currentTier={currentTier}
+        renewalDate={(nextBillingDate ? nextBillingDate.toISOString() : new Date().toISOString())}
+        onConfirm={async () => {
+          if (!stripeCustomerId) return;
+          
+          setIsLoading(SubscriptionTier.FREE);
+          try {
+            const { effectiveDate } = await stripeService.cancelSubscriptionAtPeriodEnd(stripeCustomerId);
+            setCancelEffectiveDate(effectiveDate);
+            setScheduledTierChange({ action: 'cancel', tier: 'free', effectiveDate });
+            setShowCancelModal(true);
+            
+            await refreshSubscriptionData();
+          } catch (error) {
+            console.error('Error scheduling cancellation:', error);
+            throw error;
+          } finally {
+            setIsLoading(null);
+          }
+        }}
+        t={t}
       />
       <div className="h-full overflow-y-auto">
         <div className="min-h-full py-4 sm:py-8">

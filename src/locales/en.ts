@@ -2410,7 +2410,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   usageOverview: "Usage Overview",
   currentPlan: "Current Plan",
   tokenUsage: "Token Usage",
-  sessionUsage: "Session Usage",
+  sessionUsage: "Session Usage (audio sessions)",
   unlimitedSessions: "Unlimited Sessions",
   loadingUsage: "Loading usage data...",
   upgradeForMore: "Upgrade for more",
@@ -2478,4 +2478,49 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,referralInstruction2: "The URL can be used by everyone"
   ,referralInstruction3: "Save the URL in a safe place"
   ,referralInstruction4: "For communication with RecapHorizon about your referral program, always provide your unique code"
+
+  // Cancellation Confirmation Modal
+  ,cancellationConfirmationTitle: "Cancel Subscription"
+  ,cancellationSadTitle: "We're sorry to see you go"
+  ,cancellationSadSubtitle: "Your feedback helps us improve"
+  ,cancellationCurrentPlan: "Current plan"
+  ,cancellationActiveUntil: "Active until {date}"
+  ,cancellationWillLose: "What you'll lose:"
+  ,cancellationFeatureTokens: "Increased token limits"
+  ,cancellationFeatureSessions: "More sessions per month"
+  ,cancellationFeatureAudioTime: "Longer audio recording time"
+  ,cancellationFeaturePowerPoint: "PowerPoint export feature"
+  ,cancellationFeatureBusinessCase: "Business case generator"
+  ,cancellationFeatureChat: "Chat with transcript"
+  ,cancellationFeatureUnlimited: "Unlimited tokens and sessions"
+  ,cancellationFeaturePriority: "Priority support"
+  ,cancellationFreeTierTitle: "What you'll keep with the free tier:"
+  ,cancellationFreeBenefit1: "Basic transcription functionality"
+  ,cancellationFreeBenefit2: "Limited monthly tokens"
+  ,cancellationFreeBenefit3: "Access to all basic features"
+  ,cancellationEffectiveDate: "Effective date"
+  ,cancellationWillTakeEffect: "Cancellation will take effect on {date}"
+  ,cancellationConfirmed: "Confirmed"
+  ,cancellationSliderText: "Slide to confirm cancellation"
+  ,keepSubscription: "Keep subscription"
+  ,cancellationAdditionalInfo: "You can reactivate your subscription at any time."
+  ,cancellationReactivateInfo: "All features remain available until the expiration date."
+  ,cancellationError: "An error occurred while cancelling. Please try again."
+
+  // Downgrade Confirmation Modal
+  ,downgradeConfirmationTitle: "Downgrade Subscription"
+  ,downgradeWarningTitle: "Warning: You're about to downgrade"
+  ,downgradeWarningSubtitle: "Some features will no longer be available"
+  ,newTier: "New tier"
+  ,downgradeWillLose: "Features you'll lose:"
+  ,downgradeFeatureLimitedTokens: "Limited token limits"
+  ,downgradeFeatureLimitedSessions: "Limited sessions per month"
+  ,downgradeFeatureNoPowerPoint: "No PowerPoint export"
+  ,downgradeFeatureNoBusinessCase: "No business case generator"
+  ,downgradeEffectiveDate: "Effective date"
+  ,downgradeWillTakeEffect: "Downgrade will take effect on {date}"
+  ,downgradeConfirmed: "Confirmed"
+  ,downgradeSliderText: "Slide to confirm downgrade"
+  ,downgradeAdditionalInfo: "You can upgrade to a higher plan at any time."
+  ,downgradeError: "An error occurred while downgrading. Please try again."
 };

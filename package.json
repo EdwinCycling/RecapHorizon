@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.91018.2",
+  "version": "0.92010.1",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3000",
@@ -12,7 +12,6 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
-    "@getbrevo/brevo": "^2.5.0",
     "@google/genai": "^1.13.0",
     "@google/generative-ai": "^0.24.1",
     "@heroicons/react": "^2.2.0",

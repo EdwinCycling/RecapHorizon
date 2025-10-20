@@ -153,16 +153,13 @@ const UsageModal: React.FC<UsageModalProps> = ({
                   <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
                     {t('usageOverview')}
                   </h3>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {t('currentPlan')}: <span className="font-medium">{t(userTier)}</span>
-                    </p>
+                  <div className="flex items-center justify-end">
                     <button
                       onClick={() => {
                         onShowPricing();
                         onClose();
                       }}
-                      className="ml-4 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 border border-blue-200 dark:border-blue-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
+                      className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 border border-blue-200 dark:border-blue-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
                     >
                       {t('changePlan')}
                     </button>

@@ -508,6 +508,134 @@ export class SubscriptionService {
       features: TIER_FEATURES[tier]
     }));
   }
+
+  // Schedule subscription change (downgrade) at period end
+  public async scheduleSubscriptionChange(
+    userId: string,
+    targetTier: SubscriptionTier,
+    changeType: 'downgrade' | 'upgrade'
+  ): Promise<{ effectiveDate: string }> {
+    try {
+      // Import Firebase functions here to avoid circular dependencies
+      const { db, auth, ensureUserDocument } = await import('./firebase');
+      const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+      
+      // Resolve uid from param or current auth session to avoid mismatch
+      const uid = userId || (auth.currentUser ? auth.currentUser.uid : '');
+      if (!uid) {
+        throw new Error('Not authenticated: geen ingelogde gebruiker gevonden.');
+      }
+
+      // Ensure user doc exists to avoid update errors
+      await ensureUserDocument(uid);
+      
+      // Calculate effective date (end of current billing period)
+      // For now, we'll set it to the end of the current month
+      // In a real implementation, this would come from Stripe subscription data
+      const now = new Date();
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const effectiveDate = endOfMonth.toISOString();
+      
+      // Store the scheduled change in Firestore (user document keyed by Firebase Auth UID)
+      const userDocRef = doc(db, 'users', uid);
+      await updateDoc(userDocRef, {
+        scheduledTierChange: {
+          targetTier,
+          changeType,
+          effectiveDate,
+          scheduledAt: serverTimestamp(),
+          status: 'pending'
+        }
+      });
+      
+      console.log(`Scheduled ${changeType} to ${targetTier} for user ${uid}, effective ${effectiveDate}`);
+      
+      return { effectiveDate };
+    } catch (error) {
+      console.error('Error scheduling subscription change:', error);
+      throw new Error(`Failed to schedule ${changeType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Cancel scheduled subscription change
+  public async cancelScheduledChange(userId: string): Promise<void> {
+    try {
+      const { db, ensureUserDocument } = await import('./firebase');
+      const { doc, updateDoc, deleteField } = await import('firebase/firestore');
+      
+      // Ensure doc exists
+      await ensureUserDocument(userId);
+      const userDocRef = doc(db, 'users', userId);
+      await updateDoc(userDocRef, {
+        scheduledTierChange: deleteField()
+      });
+      
+      console.log(`Cancelled scheduled change for user ${userId}`);
+    } catch (error) {
+      console.error('Error cancelling scheduled change:', error);
+      throw new Error(`Failed to cancel scheduled change: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Get scheduled subscription change
+  public async getScheduledChange(userId: string): Promise<any | null> {
+    try {
+      const { db, ensureUserDocument } = await import('./firebase');
+      const { doc, getDoc } = await import('firebase/firestore');
+      
+      await ensureUserDocument(userId);
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return userData.scheduledTierChange || null;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting scheduled change:', error);
+      return null;
+    }
+  }
+
+  // Check if scheduled change should be applied (called by webhook or cron job)
+  public async processScheduledChanges(): Promise<void> {
+    try {
+      const { db } = await import('./firebase');
+      const { collection, query, where, getDocs, updateDoc, doc } = await import('firebase/firestore');
+      
+      const now = new Date();
+      const usersRef = collection(db, 'users');
+      
+      // Query for users with pending scheduled changes that should be effective now
+      const q = query(
+        usersRef,
+        where('scheduledTierChange.status', '==', 'pending'),
+        where('scheduledTierChange.effectiveDate', '<=', now.toISOString())
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      for (const userDoc of querySnapshot.docs) {
+        const userData = userDoc.data();
+        const scheduledChange = userData.scheduledTierChange;
+        
+        if (scheduledChange) {
+          // Apply the tier change
+          await updateDoc(doc(db, 'users', userDoc.id), {
+            tier: scheduledChange.targetTier,
+            'scheduledTierChange.status': 'completed',
+            'scheduledTierChange.appliedAt': now.toISOString()
+          });
+          
+          console.log(`Applied scheduled ${scheduledChange.changeType} to ${scheduledChange.targetTier} for user ${userDoc.id}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing scheduled changes:', error);
+    }
+  }
 }
 
 // Export singleton instance

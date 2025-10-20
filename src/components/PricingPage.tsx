@@ -444,12 +444,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <span className="text-green-600 dark:text-green-400 text-lg mr-2">✓</span>
-                <span className="text-green-800 dark:text-green-200">
+                <div className="text-green-800 dark:text-green-200">
                   {currentTier === SubscriptionTier.DIAMOND
                     ? t('pricingCurrentTierAdmin', { tier: currentTier.charAt(0).toUpperCase() + currentTier.slice(1) })
                     : t('pricingCurrentTier', { tier: currentTier.charAt(0).toUpperCase() + currentTier.slice(1) })
                   }
-                </span>
+                </div>
               </div>
               {/* Trial End Date for Free Users */}
               {currentTier === SubscriptionTier.FREE && userSubscription && (

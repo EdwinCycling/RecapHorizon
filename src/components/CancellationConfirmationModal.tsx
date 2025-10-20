@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ExclamationTriangleIcon, HeartIcon } from '@heroicons/react/24/outline';
 import Modal from './Modal';
-import ConfirmationSlider from './ConfirmationSlider';
+import EnableButtonSlider from './EnableButtonSlider';
 import { SubscriptionTier } from '../../types';
 
 interface CancellationConfirmationModalProps {
@@ -25,6 +25,7 @@ const CancellationConfirmationModal: React.FC<CancellationConfirmationModalProps
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCancellationEnabled, setIsCancellationEnabled] = useState(false);
 
   const handleConfirm = async () => {
     setIsLoading(true);
@@ -184,12 +185,12 @@ const CancellationConfirmationModal: React.FC<CancellationConfirmationModalProps
           </div>
         )}
 
-        {/* Confirmation Slider */}
+        {/* Enable Button Slider */}
         <div className="pt-4">
-          <ConfirmationSlider
-            onConfirm={handleConfirm}
+          <EnableButtonSlider
+            onSliderComplete={setIsCancellationEnabled}
             isLoading={isLoading}
-            confirmText={t('cancellationConfirmed')}
+            enabledText={t('cancellationEnabled', 'Opzegging knop geactiveerd')}
             sliderText={t('cancellationSliderText')}
             theme={theme}
             disabled={isLoading}
@@ -204,6 +205,24 @@ const CancellationConfirmationModal: React.FC<CancellationConfirmationModalProps
             className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('keepSubscription')}
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!isCancellationEnabled || isLoading}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+              isCancellationEnabled && !isLoading
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+            }`}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                {t('processing', 'Verwerken...')}
+              </div>
+            ) : (
+              t('confirmCancellation', 'Bevestig Opzegging')
+            )}
           </button>
         </div>
 

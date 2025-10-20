@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.92010.1",
+  "version": "0.91020.2",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3000",

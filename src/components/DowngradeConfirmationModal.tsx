@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import Modal from './Modal';
-import ConfirmationSlider from './ConfirmationSlider';
+import EnableButtonSlider from './EnableButtonSlider';
 import { SubscriptionTier } from '../../types';
 
 interface DowngradeConfirmationModalProps {
@@ -27,6 +27,7 @@ const DowngradeConfirmationModal: React.FC<DowngradeConfirmationModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDowngradeEnabled, setIsDowngradeEnabled] = useState(false);
 
   const handleConfirm = async () => {
     setIsLoading(true);
@@ -169,12 +170,12 @@ const DowngradeConfirmationModal: React.FC<DowngradeConfirmationModalProps> = ({
           </div>
         )}
 
-        {/* Confirmation Slider */}
+        {/* Enable Button Slider */}
         <div className="pt-4">
-          <ConfirmationSlider
-            onConfirm={handleConfirm}
+          <EnableButtonSlider
+            onSliderComplete={setIsDowngradeEnabled}
             isLoading={isLoading}
-            confirmText={t('downgradeConfirmed')}
+            enabledText={t('downgradeEnabled', 'Downgrade knop geactiveerd')}
             sliderText={t('downgradeSliderText')}
             theme={theme}
             disabled={isLoading}
@@ -189,6 +190,24 @@ const DowngradeConfirmationModal: React.FC<DowngradeConfirmationModalProps> = ({
             className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('cancel')}
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!isDowngradeEnabled || isLoading}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+              isDowngradeEnabled && !isLoading
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+            }`}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                {t('processing', 'Verwerken...')}
+              </div>
+            ) : (
+              t('confirmDowngrade', 'Bevestig Downgrade')
+            )}
           </button>
         </div>
 

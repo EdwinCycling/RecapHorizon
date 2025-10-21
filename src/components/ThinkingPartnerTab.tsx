@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ThinkingTopic, ThinkingPartner, ThinkingAnalysisData } from '../../types';
 import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck } from 'react-icons/fi';
+import { generateThinkingTopics, generateThinkingPartnerAnalysis } from '../services/thinkingPartnerService';
 import { displayToast } from '../utils/clipboard';
+import BlurredLoadingOverlay from './BlurredLoadingOverlay';
 
 interface ThinkingPartnerTabProps {
   t: (key: string, params?: Record<string, unknown>) => string;
@@ -227,17 +229,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
     }
   };
 
-  const renderGeneratingStep = () => (
-    <div className="flex flex-col items-center justify-center py-12 space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
-      <p className="text-lg font-medium text-slate-700 dark:text-slate-300">
-        {t('generatingTopics', 'Onderwerpen genereren...')}
-      </p>
-      <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
-        {t('generatingTopicsDesc', 'AI analyseert je transcript om relevante denkonderwerpen te identificeren')}
-      </p>
-    </div>
-  );
+
 
   const renderTopicSelection = () => (
     <div className="space-y-6">
@@ -342,18 +334,16 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
     </div>
   );
 
+  const renderGeneratingStep = () => (
+    <BlurredLoadingOverlay text={t('generatingTopics', 'Onderwerpen genereren...')} />
+  );
+
   const renderAnalyzingStep = () => (
-    <div className="flex flex-col items-center justify-center py-12 space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
-      <p className="text-lg font-medium text-slate-700 dark:text-slate-300">
-        {t('analyzingWithPartner', 'Analyseren met {partnerName}...', { 
-          partnerName: state.selectedPartner ? t(`thinkingPartner.${state.selectedPartner.id}`, state.selectedPartner.name) : ''
-        })}
-      </p>
-      <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
-        {t('analyzingDesc', 'Je denkpartner analyseert het onderwerp en formuleert inzichten')}
-      </p>
-    </div>
+    <BlurredLoadingOverlay 
+      text={t('analyzingWithPartner', 'Analyseren met {partnerName}...', {
+        partnerName: state.selectedPartner ? t(`thinkingPartner.${state.selectedPartner.id}`, state.selectedPartner.name) : ''
+      })} 
+    />
   );
 
   const renderCompleteStep = () => (

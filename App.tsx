@@ -48,6 +48,7 @@ import AudioUploadModal from './src/components/AudioUploadModal.tsx';
 import ImageGenerationModal from './src/components/ImageGenerationModal.tsx';
 import { SafeUserText } from './src/utils/SafeHtml';
 import { sanitizeTextInput, extractEmailAddresses } from './src/utils/security';
+
 import { isMobileDevice } from './src/utils/deviceDetection';
 import { readEml } from 'eml-parse-js';
 import MsgReader from '@kenjiuno/msgreader';
@@ -10794,6 +10795,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         onUpgrade={() => setShowUpgradeModal(true)}
       />
     )}
+    
+
     
     <div className="min-h-screen text-slate-800 dark:text-white font-sans flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       {isProcessing && (

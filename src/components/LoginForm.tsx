@@ -252,6 +252,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
           placeholder={t('email')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              if (isCreateMode) {
+                if (canCreateAccount()) {
+                  handleSubmitCreateAccount();
+                }
+              } else {
+                if (canLogin()) {
+                  handleSubmitLogin();
+                }
+              }
+            }
+          }}
           className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </div>
@@ -263,6 +276,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
             placeholder={t('password')}
             value={password}
             onChange={handlePasswordChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (isCreateMode) {
+                  if (canCreateAccount()) {
+                    handleSubmitCreateAccount();
+                  }
+                } else {
+                  if (canLogin()) {
+                    handleSubmitLogin();
+                  }
+                }
+              }
+            }}
             className="w-full p-3 pr-10 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           />
           <button
@@ -365,6 +391,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
               placeholder={t('confirmPassword')}
               value={confirmPassword}
               onChange={handleConfirmPasswordChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (isCreateMode && canCreateAccount()) {
+                    handleSubmitCreateAccount();
+                  }
+                }
+              }}
               className={`w-full p-3 pr-10 rounded text-sm ${
                 confirmPassword && !confirmPasswordValid 
                   ? 'border border-red-500 dark:border-red-400' 

@@ -2126,5 +2126,13 @@ notionIntegrationSecurityDesc: "Vos données Notion restent sécurisées car nou
   showMeUpgradePrompt: "Mettez à niveau votre abonnement pour accéder à cette fonctionnalité",
   showMeBackToTopics: "Retour aux sujets",
   showMeNewsArticles: "Articles de presse",
-  showMeRegenerateTopics: "Régénérer les sujets"
+  showMeRegenerateTopics: "Régénérer les sujets",
+  
+  // New Modal Button Functionality
+  cancellationEnabled: "Bouton d'annulation activé",
+  cancellationSliderText: "Glissez pour activer le bouton d'annulation",
+  confirmCancellation: "Confirmer l'annulation",
+  downgradeEnabled: "Bouton de rétrogradation activé",
+  downgradeSliderText: "Glissez pour activer le bouton de rétrogradation",
+  confirmDowngrade: "Confirmer la rétrogradation"
 };

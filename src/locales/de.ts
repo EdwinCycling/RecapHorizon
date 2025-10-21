@@ -2129,5 +2129,13 @@ notionIntegrationSecurityDesc: "Ihre Notion-Daten bleiben sicher, da wir nur auf
   showMeUpgradePrompt: "Upgraden Sie Ihr Abonnement, um auf diese Funktion zuzugreifen",
   showMeBackToTopics: "Zurück zu den Themen",
   showMeNewsArticles: "Nachrichtenartikel",
-  showMeRegenerateTopics: "Themen neu generieren"
+  showMeRegenerateTopics: "Themen neu generieren",
+  
+  // New Modal Button Functionality
+  cancellationEnabled: "Kündigungsschaltfläche aktiviert",
+  cancellationSliderText: "Schieben Sie, um die Kündigungsschaltfläche zu aktivieren",
+  confirmCancellation: "Kündigung bestätigen",
+  downgradeEnabled: "Downgrade-Schaltfläche aktiviert",
+  downgradeSliderText: "Schieben Sie, um die Downgrade-Schaltfläche zu aktivieren",
+  confirmDowngrade: "Downgrade bestätigen"
 };

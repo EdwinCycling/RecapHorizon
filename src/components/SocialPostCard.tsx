@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Copy, MoreVertical, Image, ChevronDown } from 'lucide-react';
 import { SocialPostData } from '../../types';
+import BlurredLoadingOverlay from './BlurredLoadingOverlay';
 
 interface SocialPostCardProps {
   socialPostData: SocialPostData;
@@ -242,7 +243,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-md text-sm font-medium transition-colors"
           >
             <Image className="w-4 h-4" />
-            {isGeneratingImage ? (t('imageGenerating') || 'Generating...') : (t('generateImage') || 'Generate Image')}
+{t('generateImage') || 'Generate Image'}
           </button>
 
           {/* Image Instructions Display */}
@@ -266,6 +267,11 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* Loading Overlay */}
+      {isGeneratingImage && (
+        <BlurredLoadingOverlay text={t('generatingImage', 'Afbeelding genereren...')} />
       )}
     </div>
   );

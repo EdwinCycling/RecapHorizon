@@ -1,17 +1,21 @@
 import React from 'react';
 
 interface BlurredLoadingOverlayProps {
-  isVisible: boolean;
+  isVisible?: boolean;
   loadingText?: string;
+  text?: string;
   children?: React.ReactNode;
 }
 
 const BlurredLoadingOverlay: React.FC<BlurredLoadingOverlayProps> = ({
-  isVisible,
+  isVisible = true,
   loadingText,
+  text,
   children
 }) => {
   if (!isVisible) return null;
+  
+  const displayText = text || loadingText;
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[9998] animate-in fade-in duration-300">
@@ -21,9 +25,9 @@ const BlurredLoadingOverlay: React.FC<BlurredLoadingOverlayProps> = ({
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           
           {/* Loading Text */}
-          {loadingText && (
+          {displayText && (
             <div className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-2">
-              {loadingText}
+              {displayText}
             </div>
           )}
           

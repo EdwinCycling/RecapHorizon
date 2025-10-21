@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Copy, MoreVertical, Image } from 'lucide-react';
 import { SocialPostData } from '../../types';
+import BlurredLoadingOverlay from './BlurredLoadingOverlay';
 
 interface SocialPostXCardProps {
   socialPostXData: SocialPostData;
@@ -126,7 +127,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                 className="px-3 py-1 text-sm bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-400 text-white rounded transition-colors"
                 title="Genereer nieuwe berichten"
               >
-                {isGenerating ? t('socialPostGenerating') || 'Generating...' : t('generate') || 'Generate'}
+{t('generate') || 'Generate'}
               </button>
             </div>
           )}
@@ -284,6 +285,14 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* Loading Overlay */}
+      {isGenerating && (
+        <BlurredLoadingOverlay text={t('generatingPost', 'Post genereren...')} />
+      )}
+      {isGeneratingImage && (
+        <BlurredLoadingOverlay text={t('generatingImage', 'Afbeelding genereren...')} />
       )}
     </div>
   );

@@ -2145,5 +2145,13 @@ notionIntegrationSecurityDesc: "Seus dados do Notion permanecem seguros porque s
   showMeUpgradePrompt: "Atualize sua assinatura para acessar esta função",
   showMeBackToTopics: "Voltar aos tópicos",
   showMeNewsArticles: "Artigos de notícias",
-  showMeRegenerateTopics: "Regenerar tópicos"
+  showMeRegenerateTopics: "Regenerar tópicos",
+  
+  // New Modal Button Functionality
+  cancellationEnabled: "Botão de cancelamento ativado",
+  cancellationSliderText: "Deslize para ativar o botão de cancelamento",
+  confirmCancellation: "Confirmar cancelamento",
+  downgradeEnabled: "Botão de downgrade ativado",
+  downgradeSliderText: "Deslize para ativar o botão de downgrade",
+  confirmDowngrade: "Confirmar downgrade"
 };

@@ -18,7 +18,7 @@ import {
 import { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { TokenUsage, UserPreferences, SubscriptionTier } from '../types';
 import { useTranslation } from './hooks/useTranslation';
-import { showDiamondTokenToast } from './utils/toastNotification';
+
 
 const { t } = useTranslation();
 
@@ -378,16 +378,7 @@ export const addUserMonthlyTokens = async (userId: string, inputTokens: number, 
       }, { merge: true });
     });
 
-    // Show toast notification for Diamond tier users
-    try {
-      const userTier = await getUserSubscriptionTier(userId);
-      if (userTier === 'diamond') {
-        showDiamondTokenToast(inputTokens, outputTokens, userTier);
-      }
-    } catch (toastError) {
-      // Don't let toast errors affect the main functionality
-      console.warn('Failed to show Diamond tier toast notification:', toastError);
-    }
+
   } catch (error: any) {
     // Handle Firebase permissions errors gracefully
     if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {

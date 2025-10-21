@@ -114,6 +114,7 @@ import {
   increment
 } from 'firebase/firestore';
 import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, getUserStripeData, getUserMonthlyAudioMinutes, validateReferralCode, validateReferralCodeServerSide, type MonthlyTokensUsage } from './src/firebase';
+import { showDiamondTokenToast } from './src/utils/toastNotification';
 import { sessionManager, UserSession } from './src/utils/security';
 import LoginForm from './src/components/LoginForm';
 import SessionTimeoutWarning from './src/components/SessionTimeoutWarning.tsx';
@@ -6959,11 +6960,18 @@ ${transcript}
         
         try {
           await tokenManager.recordTokenUsage(user.uid, estimatedInputTokens, estimatedOutputTokens);
-          setAudioTokenUsage({
+          const sessionTokens = {
             inputTokens: estimatedInputTokens,
             outputTokens: estimatedOutputTokens,
             totalTokens: estimatedInputTokens + estimatedOutputTokens
-          });
+          };
+          setAudioTokenUsage(sessionTokens);
+          
+          // Show Diamond toast with session token information
+          if (userSubscription === SubscriptionTier.DIAMOND) {
+            showDiamondTokenToast(estimatedInputTokens, estimatedOutputTokens, 'diamond', sessionTokens);
+          }
+          
           console.log(`[${transcribeTimestamp}] handleTranscribe: Token usage recorded successfully`);
         } catch (error) {
           console.error(`[${transcribeTimestamp}] handleTranscribe: Error recording token usage:`, error);
@@ -11694,7 +11702,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                           <div>
                             <p className="text-lg font-semibold text-cyan-900 dark:text-cyan-200 mb-1">
-                              {t(`tier${userSubscription.charAt(0).toUpperCase() + userSubscription.slice(1)}`)}
+                              {userSubscription ? t(`tier${userSubscription.charAt(0).toUpperCase() + userSubscription.slice(1)}`) : t('tierFree')}
                             </p>
                             <p className="text-sm text-cyan-700 dark:text-cyan-300">
                               {userSubscription === 'free' ? t('subscriptionFreeTier') : t('subscriptionPaidTier')}
@@ -11810,7 +11818,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 {t('subscriptionScheduledChanges')}
                               </p>
                               <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                                {t(`subscriptionScheduled${authState.user.scheduledTierChange.action.charAt(0).toUpperCase() + authState.user.scheduledTierChange.action.slice(1)}`)}: {authState.user.scheduledTierChange.tier} — {t('subscriptionEffectiveDate')}: {(() => {
+                                {authState.user.scheduledTierChange.action ? t(`subscriptionScheduled${authState.user.scheduledTierChange.action.charAt(0).toUpperCase() + authState.user.scheduledTierChange.action.slice(1)}`) : t('subscriptionScheduledChange')}: {authState.user.scheduledTierChange.tier} — {t('subscriptionEffectiveDate')}: {(() => {
                                   const effective: any = authState.user.scheduledTierChange.effectiveDate;
                                   const date = effective && typeof effective === 'object' && 'seconds' in effective ? new Date(effective.seconds * 1000) : new Date(effective);
                                   return isNaN(date.getTime()) ? t('dateUnknown', 'Unknown date') : date.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });

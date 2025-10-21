@@ -102,16 +102,29 @@ const toastManager = new ToastManager();
 /**
  * Show a toast notification for Diamond tier users when tokens are added
  */
-export function showDiamondTokenToast(inputTokens: number, outputTokens: number, userTier: string) {
+export function showDiamondTokenToast(
+  inputTokens: number, 
+  outputTokens: number, 
+  userTier: string, 
+  sessionTokens?: {inputTokens: number, outputTokens: number, totalTokens: number}
+) {
   // Only show for Diamond tier users
   if (userTier !== 'diamond') {
     return;
   }
 
   const totalTokens = inputTokens + outputTokens;
-  const message = `Added ${totalTokens.toLocaleString()} tokens (${inputTokens.toLocaleString()} input + ${outputTokens.toLocaleString()} output)`;
+  let message = `Added ${totalTokens.toLocaleString()} tokens (${inputTokens.toLocaleString()} input + ${outputTokens.toLocaleString()} output)`;
   
-  toastManager.show(message, 'success', 4000);
+  // Add session token ratio if available
+  if (sessionTokens) {
+    const sessionRatio = sessionTokens.outputTokens > 0 ? 
+      (sessionTokens.inputTokens / sessionTokens.outputTokens).toFixed(2) : 
+      'N/A';
+    message += `\nSession total: ${sessionTokens.totalTokens.toLocaleString()} tokens (ratio ${sessionRatio}:1)`;
+  }
+  
+  toastManager.show(message, 'success', 5000);
 }
 
 /**

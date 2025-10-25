@@ -111,6 +111,19 @@ export const en = {
   apiKeyMissing: "API_KEY is missing.",
   aiError: "AI processing failed",
   transcriptEmpty: "The transcript is empty, so no analysis can be generated.",
+
+  // AI Provider error messages (centralized)
+  "aiErrors.gemini.serverOverloaded": "Google Gemini servers are currently overloaded. The system will automatically try alternative models. Please try again in {minutes} if the issue persists.",
+  "aiErrors.gemini.dailyQuotaLimit": "You've reached the daily quota of 50 requests for Google Gemini. Please try again in {minutes}, or upgrade to a paid plan for more requests.",
+  "aiErrors.gemini.rateLimit": "Google Gemini rate limit reached. Please try again in {minutes}.",
+  "aiErrors.gemini.contentFiltered": "Your content was blocked by Google Gemini's safety policies. Adjust your input and try again.",
+  "aiErrors.generic.serverOverloaded": "{provider} servers are currently overloaded. Please try again in {minutes}.",
+  "aiErrors.generic.rateLimit": "Rate limit reached for {provider}. Please try again in {minutes}.",
+  "aiErrors.generic.apiKeyInvalid": "API key for {provider} is invalid or missing. Check your configuration and try again.",
+  "aiErrors.generic.modelUnavailable": "The selected AI model is temporarily unavailable. Please try again later or choose a different model.",
+  "aiErrors.generic.networkError": "Network error while communicating with {provider}. Check your internet connection and try again.",
+  "aiErrors.generic.contentFiltered": "Your content was blocked by {provider}'s safety policies. Adjust your input and try again.",
+  "aiErrors.generic.unknown": "An unexpected error occurred with {provider}. Please try again later.",
   
   // Firestore error messages
   firestoreConnectionError: "Cannot connect to Firestore",
@@ -910,6 +923,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   thinkingPartnerFeatureUpgrade: "Thinking Partner is available from Gold tier. Upgrade your subscription to access structured thinking guidance.",
   showMeFeatureUpgrade: "Show Me is available from Gold tier. Upgrade your subscription to access guided topic exploration.",
   defaultFeatureUpgrade: "This functionality is available from Gold tier. Upgrade your subscription for more possibilities.",
+  aiDiscussionFeatureUpgrade: "AI Discussion is available from Gold tier. Upgrade your subscription to use multi‑agent discussions.",
   thinkingPartnerAccessRestricted: "Thinking Partner is available from Gold tier. Please upgrade to access this feature.",
   
   // Anonymization tips and buttons
@@ -1549,6 +1563,108 @@ RecapHorizon: Beyond the chaos, the essence first.`,
     renewableEnergy: { name: "Renewable Energy", description: "Solar/wind technologies, energy storage, grid integration, sustainability metrics, policy frameworks, and renewable energy development" },
     smartCities: { name: "Smart Cities", description: "Urban technology, IoT infrastructure, citizen services, data analytics, sustainability initiatives, and smart city planning" }
   },
+  
+  // AI Discussion functionality
+  aiDiscussion: "AI Discussion",
+  aiDiscussionTitle: "AI Discussion - Multi-Agent Simulation",
+  aiDiscussionDescription: "Conduct a structured discussion with 4 AI experts about your topic",
+  aiDiscussionUpgradeRequired: "Upgrade Required for AI Discussion",
+  aiDiscussionAccessDenied: "AI Discussion is only available for Premium and Enterprise users",
+  aiDiscussionUpgradeMessage: "AI Discussion is available for Gold, Diamond and Enterprise users. This functionality provides multi-agent discussions with different organizational roles.",
+  aiDiscussionAvailableForTiers: "Available for:",
+  aiDiscussionUpgradeNote: "Upgrade your subscription to access this advanced AI functionality.",
+  
+  // AI Discussion Configuration
+  aiDiscussionConfigTitle: "Configure your AI Discussion",
+  aiDiscussionConfigDescription: "Set up your discussion by selecting a topic, roles, and goal",
+  aiDiscussionSelectTopic: "Select a topic",
+  aiDiscussionTopicPlaceholder: "Choose a topic for discussion...",
+  aiDiscussionSelectGoal: "Select discussion goal",
+  aiDiscussionGoalPlaceholder: "Choose the goal of the discussion...",
+  aiDiscussionSelectRoles: "Select organizational roles (4 required)",
+  aiDiscussionRolesPlaceholder: "Choose 4 roles for the discussion...",
+  aiDiscussionStartDiscussion: "Start Discussion",
+  aiDiscussionConfigurationRequired: "Configuration required to proceed",
+  
+  // AI Discussion Goals
+  aiDiscussionGoals: {
+    // Category 1: Vision and Concept Validation
+    v1: { name: "V1 - Core Hypothesis Validation", description: "What must absolutely be true for this idea to succeed, and how do we test it quickly?" },
+    v2: { name: "V2 - Blue Sky Ideation", description: "Exploring the most ambitious and 'wildest' versions of the idea." },
+    v3: { name: "V3 - Minimum Viable Solution (MVP) Definition", description: "What is the smallest, fastest version we can build to deliver value?" },
+    v4: { name: "V4 - Scenario Development (Best & Worst Case)", description: "What are the most extreme success and failure scenarios and how do we respond?" },
+    v5: { name: "V5 - Core Values and Brand Positioning", description: "What emotion or problem do we primarily solve and how do we translate this to our identity?" },
+    
+    // Category 2: Lean Finance and Resources
+    l1: { name: "L1 - Cost-Smart Implementation Paths", description: "How can we execute this initiative with minimal initial investments (bootstrapping)?" },
+    l2: { name: "L2 - Possible Revenue Streams", description: "Brainstorming all possible ways to make money (direct, indirect, data)." },
+    l3: { name: "L3 - Efficient Use of Current Resources", description: "How can we deploy existing talents, systems or partners to save costs?" },
+    l4: { name: "L4 - Focus on Early Cashflow", description: "Which parts of the idea can generate money fastest to finance the rest?" },
+    l5: { name: "L5 - Resource Bartering / Partnerships", description: "What value can we offer partners in exchange for their resources or expertise?" },
+    
+    // Category 3: Speed and Flexible Execution
+    u1: { name: "U1 - Feature Prioritization (Must/Should/Could)", description: "Determining which functions are crucial for the MVP and which are luxury." },
+    u2: { name: "U2 - Timeline Acceleration", description: "How can we accelerate the delivery of the first version by 30%?" },
+    u3: { name: "U3 - Dependency Elimination", description: "How do we make ourselves less dependent on slow or expensive external factors?" },
+    u4: { name: "U4 - Operational Simplicity", description: "How do we design the process so it's scalable with minimal effort?" },
+    u5: { name: "U5 - Feedback Loop Design", description: "How do we create the fastest and most effective mechanism to collect and process feedback from early users?" },
+    
+    // Category 4: People, Talent and Culture
+    m1: { name: "M1 - Identifying Critical Talent Gaps", description: "What critical expertise are we currently missing to build this?" },
+    m2: { name: "M2 - Attracting Early Adopters (Internal & External)", description: "How do we make the first customers/employees excited and willing to take risks?" },
+    m3: { name: "M3 - Small Team Structure", description: "How do we assemble the most effective, compact team for the first 6 months?" },
+    m4: { name: "M4 - Stimulating Mindset Change", description: "How do we communicate this idea to reduce organizational resistance and spark curiosity?" },
+    m5: { name: "M5 - Fast Decision Framework", description: "How do we accelerate decision-making around this project?" },
+    
+    // Category 5: Market and Adoption
+    a1: { name: "A1 - Creative Solutions for Legal Frameworks", description: "How can we be innovative within existing laws and regulations?" },
+    a2: { name: "A2 - Zero Budget Marketing", description: "What guerrilla marketing or viral strategies can we use?" },
+    a3: { name: "A3 - Competitive Advantage through Process", description: "What can we do better or differently than competitors that's barely copyable?" },
+    a4: { name: "A4 - Early Market Segmentation", description: "Who are the first 100 customers we absolutely want to win and why?" },
+    a5: { name: "A5 - Integral Innovation Analysis", description: "How can this idea help every department become more innovative?" }
+  },
+  
+  // AI Discussion Roles
+  aiDiscussionRoles: {
+    ceo: { name: "CEO", description: "Chief Executive Officer - Strategic leadership and vision" },
+    cto: { name: "CTO", description: "Chief Technology Officer - Technical leadership and innovation" },
+    cfo: { name: "CFO", description: "Chief Financial Officer - Financial strategy and risk management" },
+    cmo: { name: "CMO", description: "Chief Marketing Officer - Marketing strategy and brand management" },
+    coo: { name: "COO", description: "Chief Operating Officer - Operational excellence and processes" }
+  },
+  
+  // Multi-Agent Discussion Interface
+  aiDiscussionInterface: "Discussion Interface",
+  aiDiscussionTurn: "Turn {current} of {total}",
+  aiDiscussionWaitingForResponse: "Waiting for response...",
+  aiDiscussionGeneratingResponse: "Generating response...",
+  aiDiscussionComplete: "Discussion complete",
+  aiDiscussionViewReport: "View Report",
+  aiDiscussionNewDiscussion: "New Discussion",
+  aiDiscussionError: "An error occurred during the discussion",
+  aiDiscussionRetry: "Retry",
+  
+  // Discussion Report
+  aiDiscussionReport: "Discussion Report",
+  aiDiscussionReportTitle: "AI Discussion Report",
+  aiDiscussionReportSummary: "Summary",
+  aiDiscussionReportKeyPoints: "Key Points",
+  aiDiscussionReportRecommendations: "Recommendations",
+  aiDiscussionReportFullTranscript: "Full Transcript",
+  aiDiscussionReportExportPDF: "Export as PDF",
+  aiDiscussionReportGenerating: "Generating report...",
+  aiDiscussionReportError: "Error generating report",
+  aiDiscussionReportBackToDiscussion: "Back to Discussion",
+  
+  // PDF Export
+  aiDiscussionPDFTitle: "AI Discussion Report",
+  aiDiscussionPDFGeneratedOn: "Generated on",
+  aiDiscussionPDFTopic: "Topic",
+  aiDiscussionPDFGoal: "Goal",
+  aiDiscussionPDFParticipants: "Participants",
+  aiDiscussionPDFExporting: "Exporting PDF...",
+  aiDiscussionPDFExportSuccess: "PDF exported successfully",
+  aiDiscussionPDFExportError: "Error exporting PDF",
   emailTone: {
     formal: {
       label: "Formal",
@@ -1874,8 +1990,18 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   rateLimitExceeded: "Rate limit exceeded",
   
   // File handling errors
-  unsupportedFileFormat: "Bestandsformaat wordt niet ondersteund. Probeer PDF, RTF, HTML, MD, DOCX of TXT.",
-  noTextFound: "Geen tekst gevonden in het bestand.",
+  unsupportedFileFormat: "Unsupported file format. Try PDF, RTF, HTML, MD, DOCX or TXT.",
+  noTextFound: "No text found in the file.",
+  processingFile: "Processing file...",
+  uploadFailedTierFreeTxtOnly: "Upload failed: Your current subscription only supports TXT files for transcription. Upgrade to Silver or Gold to upload other file types.",
+  uploadFailedUnsupportedTier: "Upload failed: This file type is not supported for your tier.",
+  errorMarkdownProcessingFailed: "Markdown processing failed.",
+  errorMarkdownReadFailed: "Failed to read Markdown.",
+  errorDocxReadFailed: "Failed to read DOCX.",
+  errorDocxNoTextFound: "No text found in the DOCX file.",
+  errorDocxProcessingFailed: "DOCX processing failed: {message}",
+  errorDocxLibraryLoadFailed: "DOCX library failed to load: {message}",
+  errorTokenLimitFileProcessing: "Token limit reached for file processing.",
   firecrawlNotConfigured: "Firecrawl API key is not configured.",
   noContentRetrieved: "No content could be retrieved from any of the provided URLs.",
   littleTextRetrieved: "Very little text could be retrieved from these web pages.",
@@ -2352,6 +2478,166 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   subscriptionChangeplan: "Change Plan",
   subscriptionChangeplanDesc: "Upgrade or downgrade your current plan",
   manageSubscription: "Manage subscription",
+
+  // AI Discussion - common UI keys
+  "aiDiscussion.turnCount": "Turn {{count}}",
+  "aiDiscussion.participants": "Participants",
+  "aiDiscussion.statusActive": "Active",
+  "aiDiscussion.statusCompleted": "Completed",
+  "aiDiscussion.discussionFlow": "Discussion flow",
+  "aiDiscussion.welcomeTitle": "Discussion started!",
+  "aiDiscussion.welcomeMessage": "The AI experts will now discuss the topic from their unique perspectives. Each participant will contribute their expertise to reach valuable insights.",
+  "aiDiscussion.welcomeAction": "Click \"Continue discussion\" to generate the first responses.",
+  "aiDiscussion.participantsPreview": "These experts will participate in the discussion:",
+  "aiDiscussion.moreParticipants": "And {{count}} other experts...",
+  "aiDiscussion.generating": "Generating new responses...",
+  "aiDiscussion.progress": "Progress",
+  "aiDiscussion.turns": "turns",
+  "aiDiscussion.canContinue": "You can continue the discussion or generate a report",
+  "aiDiscussion.maxReached": "Maximum number of turns reached - generate a report",
+  "aiDiscussion.reportCopied": "Report copied to clipboard",
+  "aiDiscussion.copyError": "Error copying to clipboard",
+  "aiDiscussion.pdfGenerated": "PDF report generated",
+  "aiDiscussion.pdfError": "Error generating PDF",
+  "aiDiscussion.discussionReport": "Discussion Report",
+  "aiDiscussion.copyReport": "Copy Report",
+  "aiDiscussion.generatingPDF": "Generating PDF...",
+  "aiDiscussion.downloadPDF": "Download PDF",
+  "aiDiscussion.discussionGoal": "Discussion goal",
+  "aiDiscussion.summary": "Summary",
+  "aiDiscussion.keyPoints": "Key points",
+  "aiDiscussion.recommendations": "Recommendations",
+  "aiDiscussion.fullTranscript": "Full discussion",
+  "aiDiscussion.copyTranscript": "Copy transcript",
+  "aiDiscussion.rateLimitWarning": "Please wait... You can try again in a few seconds.",
+  "aiDiscussion.topicGenerationError": "An error occurred while generating discussion topics",
+  "aiDiscussion.serverOverloadError": "The AI service is currently overloaded. Please try again in a few minutes.",
+  "aiDiscussion.quotaExceededError": "Daily AI service usage has been reached. Please try again later or upgrade your subscription.",
+  "aiDiscussion.networkError": "Network error connecting to the AI service. Check your internet connection and try again.",
+  "aiDiscussion.startError": "An error occurred while starting the discussion",
+  "aiDiscussion.continueError": "An error occurred while continuing the discussion",
+  "aiDiscussion.reportError": "An error occurred while generating the report",
+  "aiDiscussion.selectTopic": "Select a discussion topic",
+  "aiDiscussion.selectTopicDesc": "Choose the topic for the AI discussion with different organizational roles",
+  "aiDiscussion.refreshTopics": "Refresh topics",
+  "aiDiscussion.backToTopics": "Back to topics",
+  "aiDiscussion.rolesModeratorTitle": "Roles & moderator",
+  "aiDiscussion.rolesModeratorHelp": "Select exactly 4 roles for this discussion. The first selected role acts as the moderator: facilitates the discussion, asks clarifying questions and summarizes. In the discussion UI this is indicated by \“(Moderator)\” after the role name.",
+  "aiDiscussion.backToConfig": "Back to configuration",
+  "aiDiscussion.continueDiscussion": "Continue discussion",
+  "aiDiscussion.generateReport": "Generate report",
+  "aiDiscussion.selectedTopic": "Selected topic",
+  "aiDiscussion.selectGoal": "Select discussion goal",
+  "aiDiscussion.selectGoalDesc": "Choose the main goal for this discussion from 5 categories",
+  "aiDiscussion.selectedGoal": "Selected goal",
+  "aiDiscussion.selectRoles": "Select 4 organizational roles",
+  "aiDiscussion.selectRolesDesc": "Choose which roles will participate in the discussion",
+  "aiDiscussion.rolesSelected": "roles selected",
+  "aiDiscussion.moderatorInfo": "The 1st selected role is the moderator. This role facilitates the conversation, asks clarifying questions, and summarizes.",
+  "aiDiscussion.currentModerator": "Current moderator",
+  "aiDiscussion.backToGoals": "Back to goals",
+  "aiDiscussion.startDiscussion": "Start discussion",
+
+  // AI Discussion goals (names and descriptions by ID)
+  "aiDiscussion.goal.v1": "Core Hypothesis Validation",
+  "aiDiscussion.goal.v1Desc": "What must absolutely be true for this idea to succeed, and how do we test it quickly?",
+  "aiDiscussion.goal.v2": "Blue Sky Ideation",
+  "aiDiscussion.goal.v2Desc": "Exploring the most ambitious and 'wildest' versions of the idea.",
+  "aiDiscussion.goal.v3": "Minimum Viable Solution (MVP) Definition",
+  "aiDiscussion.goal.v3Desc": "What is the smallest, fastest version we can build to deliver value?",
+  "aiDiscussion.goal.v4": "Scenario Development (Best & Worst Case)",
+  "aiDiscussion.goal.v4Desc": "What are the most extreme success and failure scenarios and how do we respond?",
+  "aiDiscussion.goal.v5": "Core Values and Brand Positioning",
+  "aiDiscussion.goal.v5Desc": "What emotion or problem do we primarily solve and how do we translate this to our identity?",
+  "aiDiscussion.goal.l1": "Cost-Smart Implementation Paths",
+  "aiDiscussion.goal.l1Desc": "How can we execute this initiative with minimal initial investments (bootstrapping)?",
+  "aiDiscussion.goal.l2": "Possible Revenue Streams",
+  "aiDiscussion.goal.l2Desc": "Brainstorming all possible ways to make money (direct, indirect, data).",
+  "aiDiscussion.goal.l3": "Efficient Use of Current Resources",
+  "aiDiscussion.goal.l3Desc": "How can we deploy existing talents, systems or partners to save costs?",
+  "aiDiscussion.goal.l4": "Focus on Early Cashflow",
+  "aiDiscussion.goal.l4Desc": "Which parts of the idea can generate money fastest to finance the rest?",
+  "aiDiscussion.goal.l5": "Resource Bartering / Partnerships",
+  "aiDiscussion.goal.l5Desc": "What value can we offer partners in exchange for their resources or expertise?",
+  "aiDiscussion.goal.u1": "Feature Prioritization (Must/Should/Could)",
+  "aiDiscussion.goal.u1Desc": "Determining which functions are crucial for the MVP and which are luxury.",
+  "aiDiscussion.goal.u2": "Timeline Acceleration",
+  "aiDiscussion.goal.u2Desc": "How can we accelerate the delivery of the first version by 30%?",
+  "aiDiscussion.goal.u3": "Dependency Elimination",
+  "aiDiscussion.goal.u3Desc": "How do we make ourselves less dependent on slow or expensive external factors?",
+  "aiDiscussion.goal.u4": "Operational Simplicity",
+  "aiDiscussion.goal.u4Desc": "How do we design the process so it's scalable with minimal effort?",
+  "aiDiscussion.goal.u5": "Feedback Loop Design",
+  "aiDiscussion.goal.u5Desc": "How do we create the fastest and most effective mechanism to collect and process feedback from early users?",
+  "aiDiscussion.goal.m1": "Identifying Critical Talent Gaps",
+  "aiDiscussion.goal.m1Desc": "What critical expertise are we currently missing to build this?",
+  "aiDiscussion.goal.m2": "Attracting Early Adopters (Internal & External)",
+  "aiDiscussion.goal.m2Desc": "How do we make the first customers/employees excited and willing to take risks?",
+  "aiDiscussion.goal.m3": "Small Team Structure",
+  "aiDiscussion.goal.m3Desc": "How do we assemble the most effective, compact team for the first 6 months?",
+  "aiDiscussion.goal.m4": "Stimulating Mindset Change",
+  "aiDiscussion.goal.m4Desc": "How do we communicate this idea to reduce organizational resistance and spark curiosity?",
+  "aiDiscussion.goal.m5": "Fast Decision Framework",
+  "aiDiscussion.goal.m5Desc": "How do we accelerate decision-making around this project?",
+  "aiDiscussion.goal.a1": "Creative Solutions for Legal Frameworks",
+  "aiDiscussion.goal.a1Desc": "How can we be innovative within existing laws and regulations?",
+  "aiDiscussion.goal.a2": "Zero Budget Marketing",
+  "aiDiscussion.goal.a2Desc": "What guerrilla marketing or viral strategies can we use?",
+  "aiDiscussion.goal.a3": "Competitive Advantage through Process",
+  "aiDiscussion.goal.a3Desc": "What can we do better or differently than competitors that's barely copyable?",
+  "aiDiscussion.goal.a4": "Early Market Segmentation",
+  "aiDiscussion.goal.a4Desc": "Who are the first 100 customers we absolutely want to win and why?",
+  "aiDiscussion.goal.a5": "Integral Innovation Analysis",
+  "aiDiscussion.goal.a5Desc": "How can this idea help every department become more innovative?",
+
+  // AI Discussion roles (names and descriptions by ID)
+  "aiDiscussion.role.ceo": "CEO",
+  "aiDiscussion.role.ceoDesc": "Chief Executive Officer – Focus on vision, market leadership and long-term strategy",
+  "aiDiscussion.role.cfo": "CFO",
+  "aiDiscussion.role.cfoDesc": "Chief Financial Officer – Focus on budget, ROI, financial risks and scalability",
+  "aiDiscussion.role.hr_hoofd": "Head of HR & Culture",
+  "aiDiscussion.role.hr_hoofdDesc": "Focus on personnel impact, talent acquisition and organizational change",
+  "aiDiscussion.role.juridisch_directeur": "Director of Legal Affairs",
+  "aiDiscussion.role.juridisch_directeurDesc": "Focus on compliance, legislation and ethical risks",
+  "aiDiscussion.role.cpo": "CPO",
+  "aiDiscussion.role.cpoDesc": "Chief Product Officer – Focus on product development, user experience and roadmap",
+  "aiDiscussion.role.marketing_specialist": "Marketing Specialist",
+  "aiDiscussion.role.marketing_specialistDesc": "Focus on market positioning, customer segmentation and communication",
+  "aiDiscussion.role.verkoopdirecteur": "Sales Director",
+  "aiDiscussion.role.verkoopdirecteurDesc": "Focus on sales channels, revenue forecasts and customer acquisition",
+  "aiDiscussion.role.customer_success": "Customer Success Lead",
+  "aiDiscussion.role.customer_successDesc": "Focus on customer satisfaction, retention and service quality",
+  "aiDiscussion.role.product_owner": "Product Owner",
+  "aiDiscussion.role.product_ownerDesc": "Attention to details, clarity, alignment with customers, and fit with the current product",
+  "aiDiscussion.role.lead_architect": "Lead IT Architect",
+  "aiDiscussion.role.lead_architectDesc": "Focus on technical infrastructure, security and integration",
+  "aiDiscussion.role.data_analist": "Data Analyst",
+  "aiDiscussion.role.data_analistDesc": "Focus on measurability, data quality and insights",
+  "aiDiscussion.role.security_expert": "Security Expert",
+  "aiDiscussion.role.security_expertDesc": "Focus on data security, privacy (GDPR) and cyber risks",
+  "aiDiscussion.role.devops_engineer": "DevOps Engineer",
+  "aiDiscussion.role.devops_engineerDesc": "Focus on deployment speed, automation and operational stability",
+  "aiDiscussion.role.operationeel_manager": "Operations Manager",
+  "aiDiscussion.role.operationeel_managerDesc": "Focus on efficiency, process optimization and resource management",
+  "aiDiscussion.role.project_manager": "Project/Program Manager",
+  "aiDiscussion.role.project_managerDesc": "Focus on planning, milestones, scope management and delivery",
+  "aiDiscussion.role.kwaliteitsmanager": "Quality Manager",
+  "aiDiscussion.role.kwaliteitsmanagerDesc": "Focus on standards, audit procedures and error reduction",
+  "aiDiscussion.role.innovatie_manager": "Innovation Manager",
+  "aiDiscussion.role.innovatie_managerDesc": "Focus on new technologies, experiments and disruption",
+  "aiDiscussion.role.duurzaamheidsadviseur": "Sustainability Advisor",
+  "aiDiscussion.role.duurzaamheidsadviseurDesc": "Focus on ecological and social impact (ESG)",
+  "aiDiscussion.role.externe_consultant": "External Consultant (Neutral)",
+  "aiDiscussion.role.externe_consultantDesc": "Focus on best practices, external benchmarks and independent advice",
+  "aiDiscussion.role.eindgebruiker": "End User/Customer Representative",
+  "aiDiscussion.role.eindgebruikerDesc": "Focus on the actual needs and problems of the user",
+  "aiDiscussion.role.interne_auditor": "Internal Auditor",
+  "aiDiscussion.role.interne_auditorDesc": "Focus on risk control and compliance with internal policies",
+  "aiDiscussion.role.invester": "The Investor",
+  "aiDiscussion.role.investerDesc": "Focus on opportunities, costs, profitability and time to market",
+  "aiDiscussion.role.generaal": "The General",
+  "aiDiscussion.role.generaalDesc": "Wants structure, alignment, makes decisions when facing multiple options, cuts the knot",
+
   manageSubscriptionDesc: "View and modify your payment information via Stripe",
   customerPortalTitleDiamond: "Manage RecapHorizon subscription",
   customerPortalTitle: "Stripe Customer Portal",
@@ -2527,4 +2813,112 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,confirmDowngrade: "Confirm Downgrade"
   ,downgradeAdditionalInfo: "You can upgrade to a higher plan at any time."
   ,downgradeError: "An error occurred while downgrading. Please try again."
+
+  // Opportunities module
+  ,opportunities: "Opportunities"
+  ,opportunitiesTitle: "Opportunities Generation"
+  ,opportunitiesDescription: "Discover new business opportunities and possibilities based on your content"
+  ,opportunitiesFeatureUpgrade: "Opportunities generation is available from Silver tier. Upgrade your subscription to discover AI-generated business opportunities."
+  ,opportunitiesAccessRestricted: "Opportunities generation is available from Silver tier. Upgrade to use this functionality."
+  ,opportunitiesUpgradeRequired: "Upgrade required for Opportunities Generation"
+  ,opportunitiesUpgradeMessage: "Opportunities generation is available for Silver, Gold, Diamond and Enterprise users. This functionality provides AI-generated business opportunities and possibilities."
+  ,opportunitiesAvailableForTiers: "Available for:"
+  ,opportunitiesUpgradeNote: "Upgrade your subscription to access this advanced AI functionality."
+
+  // Opportunities workflow
+  ,opportunitiesSelectTopic: "Select a topic"
+  ,opportunitiesSelectTopicDesc: "Choose the topic for opportunities generation"
+  ,opportunitiesSelectRole: "Select an AI role"
+  ,opportunitiesSelectRoleDesc: "Choose which AI expert will analyze the opportunities"
+  ,opportunitiesSelectType: "Select opportunity type"
+  ,opportunitiesSelectTypeDesc: "Choose the type of opportunities you want to explore"
+  ,opportunitiesGenerate: "Generate Opportunities"
+  ,opportunitiesGenerating: "Generating opportunities..."
+  ,opportunitiesGeneratingDesc: "AI is analyzing your content and generating relevant business opportunities..."
+  ,opportunitiesComplete: "Opportunities generated"
+  ,opportunitiesRegenerateAnalysis: "Regenerate opportunities"
+  ,opportunitiesStartNewAnalysis: "Start new opportunities analysis"
+  ,opportunitiesCopyAnalysis: "Copy opportunities"
+  ,opportunitiesAnalysisCopied: "Opportunities copied to clipboard"
+
+  // Opportunities roles
+  ,"opportunities.role.strategic-advisor": "The Strategic Advisor"
+  ,"opportunities.role.strategic-advisorDesc": "Focuses on long-term vision, market leadership, and overarching growth strategies."
+  ,"opportunities.role.marketing-director": "The Marketing Director"
+  ,"opportunities.role.marketing-directorDesc": "Focuses on brand positioning, campaign ideas, and effective target audience reach."
+  ,"opportunities.role.sales-expert": "The Sales Expert"
+  ,"opportunities.role.sales-expertDesc": "Analyzes sales strategies, lead generation, and conversion optimization."
+  ,"opportunities.role.product-manager": "The Product Manager"
+  ,"opportunities.role.product-managerDesc": "Focuses on product development, feature expansion, and user experience (UX) enhancement."
+  ,"opportunities.role.innovation-specialist": "The Innovation Specialist"
+  ,"opportunities.role.innovation-specialistDesc": "Generates disruptive ideas, R&D directions, and out-of-the-box solutions."
+  ,"opportunities.role.financial-analyst": "The Financial Analyst"
+  ,"opportunities.role.financial-analystDesc": "Identifies cost savings, investment opportunities, and revenue streams."
+  ,"opportunities.role.operations-director": "The Operations Director"
+  ,"opportunities.role.operations-directorDesc": "Focuses on process optimization, workflow improvement, and operational scalability."
+  ,"opportunities.role.hr-manager": "The HR Manager"
+  ,"opportunities.role.hr-managerDesc": "Explores opportunities for talent development, employee satisfaction, and retention."
+  ,"opportunities.role.customer-service-expert": "The Customer Service Expert"
+  ,"opportunities.role.customer-service-expertDesc": "Seeks ways to increase customer satisfaction and support efficiency."
+  ,"opportunities.role.business-development-manager": "The Business Development Manager"
+  ,"opportunities.role.business-development-managerDesc": "Uncovers new business opportunities, potential partnerships, and strategic alliances."
+  ,"opportunities.role.data-analyst": "The Data Analyst"
+  ,"opportunities.role.data-analystDesc": "Analyzes data collection, reporting needs, and data-driven decision-making."
+  ,"opportunities.role.legal-advisor": "The Legal Advisor"
+  ,"opportunities.role.legal-advisorDesc": "Identifies compliance opportunities, legal risks, and ethical considerations."
+  ,"opportunities.role.technology-strategist": "The Technology Strategist"
+  ,"opportunities.role.technology-strategistDesc": "Advises on new technology adoption, IT infrastructure, and digital transformation."
+  ,"opportunities.role.csr-esg-specialist": "The CSR / ESG Specialist"
+  ,"opportunities.role.csr-esg-specialistDesc": "Focuses on corporate social responsibility, sustainability, and social impact."
+  ,"opportunities.role.internal-communications-specialist": "The Internal Communications Specialist"
+  ,"opportunities.role.internal-communications-specialistDesc": "Analyzes knowledge sharing, internal communication flows, and employee engagement."
+  ,"opportunities.role.external-communications-specialist": "The External Communications Specialist"
+  ,"opportunities.role.external-communications-specialistDesc": "Generates ideas for public relations, stakeholder communication, and reputation management."
+  ,"opportunities.role.project-manager": "The Project Manager"
+  ,"opportunities.role.project-managerDesc": "Provides insights into project planning, resource allocation, and risk management within projects."
+  ,"opportunities.role.training-development-specialist": "The Training & Development Specialist"
+  ,"opportunities.role.training-development-specialistDesc": "Identifies training needs, skill gaps, and learning opportunities."
+  ,"opportunities.role.international-expansion-expert": "The International Expansion Expert"
+  ,"opportunities.role.international-expansion-expertDesc": "Advises on globalization strategies, local adaptation, and international market entry."
+  ,"opportunities.role.customer-journey-mapper": "The Customer Journey Mapper"
+  ,"opportunities.role.customer-journey-mapperDesc": "Analyzes the complete customer journey, identifying pain points and improvement opportunities."
+  ,"opportunities.role.content-strategist": "The Content Strategist"
+  ,"opportunities.role.content-strategistDesc": "Focuses on content creation, distribution channels, storytelling, and SEO/SEA implications."
+  ,"opportunities.role.talent-acquisition-specialist": "The Talent Acquisition Specialist"
+  ,"opportunities.role.talent-acquisition-specialistDesc": "Looks for opportunities in recruitment strategies, employer branding, and talent pools."
+  ,"opportunities.role.sustainability-analyst": "The Sustainability Analyst"
+  ,"opportunities.role.sustainability-analystDesc": "Evaluates environmental impact, circular economy, and green initiatives."
+  ,"opportunities.role.innovation-facilitator": "The Innovation Facilitator"
+  ,"opportunities.role.innovation-facilitatorDesc": "Facilitates brainstorming sessions, idea generation, and validation of new concepts."
+  ,"opportunities.role.policymaker": "The Policymaker"
+  ,"opportunities.role.policemakerDesc": "Advises on internal company policies, ethical guidelines, and governance structures."
+
+  // Opportunities types
+  ,"opportunities.type.revenue-streams": "Revenue Streams"
+  ,"opportunities.type.revenue-streamsDesc": "New ways to make money"
+  ,"opportunities.type.cost-optimization": "Cost Optimization"
+  ,"opportunities.type.cost-optimizationDesc": "Opportunities to reduce costs"
+  ,"opportunities.type.market-expansion": "Market Expansion"
+  ,"opportunities.type.market-expansionDesc": "New markets and customer groups"
+  ,"opportunities.type.operational-efficiency": "Operational Efficiency"
+  ,"opportunities.type.operational-efficiencyDesc": "Process and workflow improvements"
+  ,"opportunities.type.strategic-partnerships": "Strategic Partnerships"
+  ,"opportunities.type.strategic-partnershipsDesc": "Collaborations and alliances"
+
+  // Opportunities errors
+  ,opportunitiesTopicGenerationError: "An error occurred while generating topics"
+  ,opportunitiesGenerationError: "An error occurred while generating opportunities"
+  ,opportunitiesServerOverloadError: "The AI service is currently overloaded. Please try again in a few minutes."
+  ,opportunitiesQuotaExceededError: "Daily AI usage limit reached. Please try again later or upgrade your subscription."
+  ,opportunitiesNetworkError: "Network error connecting to AI service. Check your internet connection and try again."
+  ,opportunitiesRateLimitWarning: "Please wait... You can try again in a few seconds."
+
+  // Opportunities navigation
+  ,opportunitiesBackToTopics: "Back to topics"
+  ,opportunitiesBackToRoles: "Back to roles"
+  ,opportunitiesBackToTypes: "Back to types"
+  ,opportunitiesRefreshTopics: "Refresh topics"
+  ,opportunitiesSelectedTopic: "Selected topic"
+  ,opportunitiesSelectedRole: "Selected role"
+  ,opportunitiesSelectedType: "Selected type"
 };

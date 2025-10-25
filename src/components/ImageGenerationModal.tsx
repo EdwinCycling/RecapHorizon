@@ -34,7 +34,7 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
-            <X size={24} />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -79,12 +79,12 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
                   >
                     {instructionsCopied ? (
                       <>
-                        <Check size={16} />
+                        <Check className="w-4 h-4" />
                         Gekopieerd!
                       </>
                     ) : (
                       <>
-                        <Copy size={16} />
+                        <Copy className="w-4 h-4" />
                         {t('copyImageInstruction') || 'Kopieer'}
                       </>
                     )}

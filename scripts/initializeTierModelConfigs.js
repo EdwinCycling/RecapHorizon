@@ -58,14 +58,14 @@ const TIER_MODEL_CONFIGS = {
     generalAnalysis: 'gemini-2.0-flash-exp'
   },
   [SubscriptionTier.DIAMOND]: {
-    audioTranscription: 'gemini-2.0-flash-exp',
-    expertChat: 'gemini-2.0-flash-exp',
-    emailComposition: 'gemini-2.0-flash-exp',
-    analysisGeneration: 'gemini-2.0-flash-exp',
-    pptExport: 'gemini-2.0-flash-exp',
-    businessCase: 'gemini-2.0-flash-exp',
-    sessionImport: 'gemini-2.0-flash-exp',
-    generalAnalysis: 'gemini-2.0-flash-exp'
+    audioTranscription: 'gemini-2.5-flash-lite',
+    expertChat: 'gemini-2.5-flash-lite',
+    emailComposition: 'gemini-2.5-flash-lite',
+    analysisGeneration: 'gemini-2.5-flash-lite',
+    pptExport: 'gemini-2.5-flash-lite',
+    businessCase: 'gemini-2.5-flash-lite',
+    sessionImport: 'gemini-2.5-flash-lite',
+    generalAnalysis: 'gemini-2.5-flash-lite'
   },
   [SubscriptionTier.ENTERPRISE]: {
     audioTranscription: 'gemini-2.0-flash-exp',
@@ -129,7 +129,7 @@ async function initializeTierModelConfigs() {
     console.log(`   - FREE tier: Uses gemini-2.5-flash-lite for all functions (most cost-effective)`);
     console.log(`   - SILVER tier: Uses gemini-2.5-flash for important functions, lite for simple ones`);
     console.log(`   - GOLD tier: Uses gemini-2.0-flash-exp for advanced functions, flash for others`);
-    console.log(`   - DIAMOND tier: Uses gemini-2.0-flash-exp for all functions (best quality)`);
+    console.log(`   - DIAMOND tier: Uses gemini-2.5-flash-lite for all functions (cost-effective)`);
     console.log(`   - ENTERPRISE tier: Uses gemini-2.0-flash-exp for all functions (best quality)`);
     console.log('');
     console.log('💡 Next steps:');

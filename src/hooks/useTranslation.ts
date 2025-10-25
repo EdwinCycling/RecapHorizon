@@ -1,4 +1,5 @@
 import { translations, type Language } from '../locales';
+import { setErrorHandlerTranslation } from '../utils/errorHandler';
 
 export const useTranslation = (uiLang: Language = 'en') => {
   // Translation function that supports optional fallback string as second argument
@@ -31,6 +32,9 @@ export const useTranslation = (uiLang: Language = 'en') => {
 
     return str;
   };
+
+  // Make translation function available to global error handler
+  setErrorHandlerTranslation(t);
 
   return {
     t,

@@ -12,7 +12,9 @@ import {
 export async function generateThinkingTopics(
   transcript: string,
   summary?: string,
-  language: string = 'nl'
+  language: string = 'nl',
+  userId: string = 'anonymous',
+  userTier: SubscriptionTier = SubscriptionTier.FREE
 ): Promise<ThinkingTopic[]> {
   const content = summary || transcript;
   
@@ -25,9 +27,9 @@ export async function generateThinkingTopics(
   try {
     // Create provider selection request
     const request: ProviderSelectionRequest = {
-      userId: 'anonymous', // Will be replaced with actual userId when available
+      userId,
       functionType: AIFunction.ANALYSIS_GENERATION,
-      userTier: SubscriptionTier.FREE // Will be replaced with actual tier
+      userTier
     };
 
     const response = await AIProviderManager.generateContentWithProviderSelection(
@@ -49,16 +51,18 @@ export async function generateThinkingTopics(
 export async function generateThinkingPartnerAnalysis(
   topic: ThinkingTopic,
   partner: ThinkingPartner,
-  language: string = 'nl'
+  language: string = 'nl',
+  userId: string = 'anonymous',
+  userTier: SubscriptionTier = SubscriptionTier.FREE
 ): Promise<string> {
   const prompt = createAnalysisPrompt(topic, partner, language);
   
   try {
     // Create provider selection request
     const request: ProviderSelectionRequest = {
-      userId: 'anonymous', // Will be replaced with actual userId when available
+      userId,
       functionType: AIFunction.ANALYSIS_GENERATION,
-      userTier: SubscriptionTier.FREE // Will be replaced with actual tier
+      userTier
     };
 
     const response = await AIProviderManager.generateContentWithProviderSelection(
@@ -82,7 +86,7 @@ function createTopicGenerationPrompt(content: string, language: string): string 
   
   return `${languageInstructions.systemPrompt}
 
-Analyseer de volgende content en genereer 3-5 strategische denkonderwerpen die geschikt zijn voor diepere reflectie met een denkpartner.
+Analyseer de volgende content en genereer 5-8 strategische denkonderwerpen die geschikt zijn voor diepere reflectie met een denkpartner.
 
 Elk onderwerp moet:
 - Een specifieke strategische vraag of uitdaging identificeren
@@ -192,25 +196,25 @@ function getLanguageInstructions(language: string) {
     case 'en':
       return {
         systemPrompt: 'You are an expert strategic thinking facilitator who helps identify key topics for deeper reflection.',
-        outputFormat: 'Generate the topics in Dutch (Nederlands), as this is the primary language of the application.',
-        analysisInstructions: 'Provide your analysis in Dutch (Nederlands). Use clear, professional language that is accessible to business professionals.'
+        outputFormat: 'Generate the topics in English. Use clear, professional language that is accessible to business professionals.',
+        analysisInstructions: 'Provide your analysis in English. Use clear, professional language that is accessible to business professionals.'
       };
     case 'de':
       return {
         systemPrompt: 'Du bist ein Experte für strategisches Denken, der dabei hilft, wichtige Themen für tiefere Reflexion zu identifizieren.',
-        outputFormat: 'Generiere die Themen auf Niederländisch (Nederlands), da dies die Hauptsprache der Anwendung ist.',
-        analysisInstructions: 'Gib deine Analyse auf Niederländisch (Nederlands) ab. Verwende eine klare, professionelle Sprache, die für Geschäftsleute zugänglich ist.'
+        outputFormat: 'Generiere die Themen auf Deutsch. Verwende eine klare, professionelle Sprache, die für Geschäftsleute zugänglich ist.',
+        analysisInstructions: 'Gib deine Analyse auf Deutsch ab. Verwende eine klare, professionelle Sprache, die für Geschäftsleute zugänglich ist.'
       };
     case 'fr':
       return {
         systemPrompt: 'Vous êtes un expert en facilitation de la pensée stratégique qui aide à identifier les sujets clés pour une réflexion plus approfondie.',
-        outputFormat: 'Générez les sujets en néerlandais (Nederlands), car c\'est la langue principale de l\'application.',
-        analysisInstructions: 'Fournissez votre analyse en néerlandais (Nederlands). Utilisez un langage clair et professionnel accessible aux professionnels des affaires.'
+        outputFormat: 'Générez les sujets en français. Utilisez un langage clair et professionnel accessible aux professionnels des affaires.',
+        analysisInstructions: 'Fournissez votre analyse en français. Utilisez un langage clair et professionnel accessible aux professionnels des affaires.'
       };
     default: // Dutch
       return {
         systemPrompt: 'Je bent een expert strategische denkfacilitator die helpt bij het identificeren van belangrijke onderwerpen voor diepere reflectie.',
-        outputFormat: 'Genereer de onderwerpen in het Nederlands.',
+        outputFormat: 'Genereer de onderwerpen in het Nederlands. Gebruik heldere, professionele taal die toegankelijk is voor zakelijke professionals.',
         analysisInstructions: 'Geef je analyse in het Nederlands. Gebruik heldere, professionele taal die toegankelijk is voor zakelijke professionals.'
       };
   }

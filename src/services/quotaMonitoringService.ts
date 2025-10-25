@@ -4,6 +4,9 @@ interface QuotaUsage {
   userId: string;
   date: string; // YYYY-MM-DD format
   geminiRequests: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
   lastUpdated: Date;
 }
 
@@ -34,7 +37,7 @@ export class QuotaMonitoringService {
   /**
    * Record a Google Gemini API request
    */
-  public async recordGeminiRequest(userId: string): Promise<void> {
+  public async recordGeminiRequest(userId: string, inputTokens: number = 0, outputTokens: number = 0): Promise<void> {
     try {
       const today = new Date().toISOString().split('T')[0];
       const cacheKey = `${userId}_${today}`;
@@ -50,12 +53,18 @@ export class QuotaMonitoringService {
             userId,
             date: today,
             geminiRequests: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            totalTokens: 0,
             lastUpdated: new Date()
           };
         }
       }
 
       usage.geminiRequests += 1;
+      usage.inputTokens += inputTokens;
+      usage.outputTokens += outputTokens;
+      usage.totalTokens = usage.inputTokens + usage.outputTokens;
       usage.lastUpdated = new Date();
       
       // Update cache and localStorage
@@ -86,6 +95,9 @@ export class QuotaMonitoringService {
           userId,
           date: today,
           geminiRequests: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
           lastUpdated: new Date()
         };
       }

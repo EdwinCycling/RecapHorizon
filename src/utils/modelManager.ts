@@ -86,14 +86,14 @@ export const TIER_MODEL_CONFIGS: Record<SubscriptionTier, ModelConfig> = {
     generalAnalysis: 'gemini-2.0-flash-exp' // Latest features for gold
   },
   [SubscriptionTier.DIAMOND]: {
-    audioTranscription: 'gemini-2.0-flash-exp', // Best quality
-    expertChat: 'gemini-2.0-flash-exp', // Best conversations
-    emailComposition: 'gemini-2.0-flash-exp', // Best text generation
-    analysisGeneration: 'gemini-2.0-flash-exp', // Best analysis
-    pptExport: 'gemini-2.0-flash-exp', // Best structured output
-    businessCase: 'gemini-2.0-flash-exp', // Best reasoning
-    sessionImport: 'gemini-2.0-flash-exp', // Best processing
-    generalAnalysis: 'gemini-2.0-flash-exp' // Best quality for diamond
+    audioTranscription: 'gemini-2.5-flash-lite', // Cost-effective with good quality
+    expertChat: 'gemini-2.5-flash-lite', // Simple conversations
+    emailComposition: 'gemini-2.5-flash-lite', // Simple text generation
+    analysisGeneration: 'gemini-2.5-flash-lite', // Cost-effective analysis
+    pptExport: 'gemini-2.5-flash-lite', // Basic structured output
+    businessCase: 'gemini-2.5-flash-lite', // Basic reasoning
+    sessionImport: 'gemini-2.5-flash-lite', // Simple processing
+    generalAnalysis: 'gemini-2.5-flash-lite' // Cost-effective for diamond
   },
   [SubscriptionTier.ENTERPRISE]: {
     audioTranscription: 'gemini-2.0-flash-exp', // Best quality

@@ -152,7 +152,19 @@ export const getUserSubscriptionTier = async (userId: string): Promise<string> =
     
     const userDoc = await getDoc(doc(db, 'users', userId));
     if (userDoc.exists()) {
-      return userDoc.data()?.subscriptionTier || 'free';
+      let tier = userDoc.data()?.subscriptionTier || 'free';
+      
+      // Auto-correct common spelling errors
+      if (tier === 'daimond') {
+        console.warn('Auto-correcting spelling error: "daimond" -> "diamond"');
+        tier = 'diamond';
+        // Optionally update the incorrect value in Firestore
+        await updateDoc(doc(db, 'users', userId), {
+          subscriptionTier: 'diamond'
+        });
+      }
+      
+      return tier;
     }
     return 'free';
   } catch (error) {
@@ -161,6 +173,46 @@ export const getUserSubscriptionTier = async (userId: string): Promise<string> =
       userId,
       additionalContext: { action: 'getUserSubscriptionTier' }
     });
+    return 'free';
+  }
+};
+
+export const refreshUserSubscriptionData = async (userId: string): Promise<void> => {
+  try {
+    // Force refresh by re-fetching from Firestore
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      console.log('User subscription data refreshed:', userData?.subscriptionTier);
+      
+      // Clear any potential client-side caches
+      if (typeof window !== 'undefined') {
+        // Remove any cached tier data
+        localStorage.removeItem('cached_subscription_tier');
+        sessionStorage.removeItem('cached_subscription_tier');
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing subscription data:', error);
+  }
+};
+
+export const forceRefreshSubscriptionTier = async (): Promise<string> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) return 'free';
+    
+    // Force immediate refresh without cache
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const tier = userData?.subscriptionTier || 'free';
+      console.log('Force refreshed subscription tier:', tier);
+      return tier;
+    }
+    return 'free';
+  } catch (error) {
+    console.error('Error force refreshing subscription tier:', error);
     return 'free';
   }
 };
@@ -706,7 +758,7 @@ export const getTokenUsageToday = async (userId: string): Promise<TokenUsage | n
   } catch (error: any) {
     // Handle Firebase permissions errors gracefully
     if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
-      console.warn('Token usage retrieval unavailable due to permissions. Returning null.');
+      // Silent handling - permissions are expected to be restricted for some users
       return null;
     } else {
       console.error(t('errorGettingTokenUsageToday', 'Error getting token usage today:'), error);

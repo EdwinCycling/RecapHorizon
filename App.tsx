@@ -32,6 +32,7 @@ import ExpertHelpModal from './src/components/ExpertHelpModal.tsx';
 import { getGeminiCode, getBcp47Code, getTotalLanguageCount } from './src/languages';
 import { useTabCache } from './src/hooks/useTabCache';
 import { fetchHTML, fetchMultipleHTML, extractTextFromHTML, FetchError } from './src/utils/fetchPage';
+import { markdownToPlainText } from './src/utils/textUtils';
 import { useTranslation } from './src/hooks/useTranslation';
 import { Language } from './src/locales';
 import { AudioRecorder } from './src/utils/AudioRecorder';
@@ -54,6 +55,8 @@ import { readEml } from 'eml-parse-js';
 import MsgReader from '@kenjiuno/msgreader';
 import EmailCompositionTab, { EmailData } from './src/components/EmailCompositionTab.tsx';
 import ThinkingPartnerTab from './src/components/ThinkingPartnerTab.tsx';
+import AIDiscussionTab from './src/components/AIDiscussionTab.tsx';
+import OpportunitiesTab from './src/components/OpportunitiesTab.tsx';
 import TokenUsageMeter from './src/components/TokenUsageMeter.tsx';
 import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.tsx';
 import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
@@ -113,7 +116,7 @@ import {
   deleteField,
   increment
 } from 'firebase/firestore';
-import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, getUserStripeData, getUserMonthlyAudioMinutes, validateReferralCode, validateReferralCodeServerSide, type MonthlyTokensUsage } from './src/firebase';
+import { auth, db, getUserDailyUsage, incrementUserDailyUsage, incrementUserMonthlySessions, addUserMonthlyTokens, getUserMonthlyTokens, getUserMonthlySessions, getUserPreferences, saveUserPreferences, getUserStripeData, getUserMonthlyAudioMinutes, validateReferralCode, validateReferralCodeServerSide, getUserSubscriptionTier, refreshUserSubscriptionData, forceRefreshSubscriptionTier, type MonthlyTokensUsage } from './src/firebase';
 import { showDiamondTokenToast } from './src/utils/toastNotification';
 import { sessionManager, UserSession } from './src/utils/security';
 import LoginForm from './src/components/LoginForm';
@@ -299,6 +302,23 @@ const SocialPostIcon: React.FC<{ className?: string }> = ({ className }) => (
 const ThinkingPartnerIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+    </svg>
+);
+
+const AIDiscussionIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        <circle cx="9" cy="10" r="1"/>
+        <circle cx="15" cy="10" r="1"/>
+        <circle cx="12" cy="14" r="1"/>
+    </svg>
+);
+
+const OpportunitiesIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
     </svg>
 );
 
@@ -649,7 +669,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'email' | 'socialPost' | 'socialPostX';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'opportunities' | 'email' | 'socialPost' | 'socialPostX';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -1106,6 +1126,22 @@ export default function App() {
   const [showInfoPage, setShowInfoPage] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getCachedTabContent, resetTabCache, isTabCached } = useTabCache();
+
+  // Clear topic cache function for session changes
+  const clearTopicCache = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const keys = Object.keys(window.localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('rh_topics:')) {
+            window.localStorage.removeItem(key);
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to clear topic cache:', error);
+    }
+  }, []);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -2385,16 +2421,16 @@ ${getTranscriptSlice(transcript, 20000)}`;
     try {
       const params = new URLSearchParams(window.location.search);
       const refCode = params.get('ref');
-      console.log('[DEBUG App] URL params ref code:', refCode);
+  
       
       if (refCode) {
-        console.log('[DEBUG App] Setting referral code from URL:', refCode);
+
         setReferralCodeFromURL(refCode);
         
         // Validate the referral code using server-side validation for enhanced security
-        console.log('[DEBUG App] Starting server-side validation for code:', refCode);
+
         validateReferralCodeServerSide(refCode).then(({ isValid, referrerData: validationReferrerData }) => {
-          console.log('[DEBUG App] Validation result - isValid:', isValid, 'referrerData:', validationReferrerData);
+
           setIsValidReferralCode(isValid);
           
           if (isValid && validationReferrerData) {
@@ -2402,7 +2438,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
           }
           
           if (isValid && !authState.user) {
-            console.log('[DEBUG App] Valid code and no user - showing modals');
+
             // Show info page and referral registration modal for valid codes
             setShowInfoPage(true);
             setShowReferralRegistrationModal(true);
@@ -2410,14 +2446,14 @@ ${getTranscriptSlice(transcript, 20000)}`;
             console.warn('[Referral] Invalid referral code:', refCode);
             displayToast(t('invalidReferralCode', 'Ongeldige referral code'), 'error');
           } else if (isValid && authState.user) {
-            console.log('[DEBUG App] Valid code but user is already logged in');
+
           }
         }).catch(error => {
           console.error('[Referral] Error validating referral code:', error);
           setIsValidReferralCode(false);
         });
       } else {
-        console.log('[DEBUG App] No ref code in URL');
+
       }
     } catch (e) {
       console.error('[DEBUG App] Error in referral useEffect:', e);
@@ -2811,8 +2847,8 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                             isLoading: false,
                         });
                         
-                        // Load user subscription tier
-                        const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
+                        // Load user subscription tier - always get from database for security
+                        const tier = await getUserSubscriptionTier(firebaseUser.uid);
                         setUserSubscription(tier);
                         
                         // Ensure user is redirected to start session screen after auth
@@ -2920,6 +2956,8 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                 setUserSubscription(SubscriptionTier.FREE);
                 setDailyAudioCount(0);
                 setDailyUploadCount(0);
+                // Clear topic cache on logout
+                try { clearTopicCache(); } catch {}
             }
         });
 
@@ -3743,7 +3781,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                 try {
                     const markdown = e.target?.result as string;
                     if (!markdown) {
-                        reject(new Error('Kon Markdown niet lezen'));
+                        reject(new Error(t('errorMarkdownReadFailed', 'Failed to read Markdown.')));
                         return;
                     }
                     
@@ -3763,10 +3801,10 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                     
                     resolve(text.trim());
                 } catch (error) {
-                    reject(new Error('Markdown verwerking mislukt'));
+                    reject(new Error(t('errorMarkdownProcessingFailed', 'Markdown processing failed.')));
                 }
             };
-            reader.onerror = () => reject(new Error('Markdown lezen mislukt'));
+            reader.onerror = () => reject(new Error(t('errorMarkdownReadFailed', 'Failed to read Markdown.')));
             reader.readAsText(file);
         });
     };
@@ -3782,7 +3820,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                     try {
                         const arrayBuffer = e.target?.result as ArrayBuffer;
                         if (!arrayBuffer) {
-                            reject(new Error('Kon DOCX niet lezen'));
+                            reject(new Error(t('errorDocxReadFailed', 'Failed to read DOCX.')));
                             return;
                         }
 
@@ -3790,19 +3828,19 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                         const text = result.value;
                         
                         if (!text.trim()) {
-                            reject(new Error('Geen tekst gevonden in DOCX bestand.'));
+                            reject(new Error(t('errorDocxNoTextFound', 'No text found in the DOCX file.')));
                             return;
                         }
                         
                         resolve(text.trim());
                     } catch (error: unknown) {
-                        reject(new Error(`DOCX verwerking mislukt: ${(error as Error).message || 'onbekende fout'}`));
+                        reject(new Error(t('errorDocxProcessingFailed', 'DOCX processing failed: {message}', { message: (error as Error).message || t('unknownError') })));
                     }
                 };
-                reader.onerror = () => reject(new Error('DOCX lezen mislukt'));
+                reader.onerror = () => reject(new Error(t('errorDocxReadFailed', 'Failed to read DOCX.')));
                 reader.readAsArrayBuffer(file);
             } catch (error: any) {
-                reject(new Error(`DOCX library laden mislukt: ${error.message || 'onbekende fout'}`));
+                reject(new Error(t('errorDocxLibraryLoadFailed', 'DOCX library failed to load: {message}', { message: error.message || t('unknownError') })));
             }
         });
     };
@@ -3824,15 +3862,27 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
         // Enforce Free only TXT
         if (effectiveTier === SubscriptionTier.FREE && !isTxt) {
             setShowUpgradeModal(true);
-            setError('Upload mislukt: Je huidige abonnement ondersteunt alleen TXT-bestanden voor transcriptie. Upgrade naar Silver of Gold om andere type bestanden te uploaden.');
+            setError(t('uploadFailedTierFreeTxtOnly', 'Upload failed: Your current plan only supports TXT files for transcription. Upgrade to Silver or Gold to upload other file types.'));
             return;
         }
 
-        // Generic allowed types per tier
-        const allowed = subscriptionService.isFileTypeAllowed(effectiveTier, isTxt ? 'text/plain' : fileType || (fileName.endsWith('.md') ? 'text/markdown' : ''));
-        if (!allowed) {
+        // Normalize file type (handle browsers that don't set file.type reliably)
+        const extToMime = (name: string) => {
+            if (name.endsWith('.pdf')) return 'application/pdf';
+            if (name.endsWith('.rtf')) return 'application/rtf';
+            if (name.endsWith('.html') || name.endsWith('.htm')) return 'text/html';
+            if (name.endsWith('.md')) return 'text/markdown';
+            if (name.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            if (name.endsWith('.txt')) return 'text/plain';
+            return '';
+        };
+        const normalizedType = isTxt ? 'text/plain' : (fileType || extToMime(fileName));
+
+        // Validate types via subscription service (with user-friendly reasons)
+        const uploadValidation = subscriptionService.validateFileUpload(effectiveTier, normalizedType || '', t);
+        if (!uploadValidation.allowed) {
             setShowUpgradeModal(true);
-            setError('Upload mislukt: Dit bestandstype wordt niet ondersteund voor jouw tier.');
+            setError(uploadValidation.reason || t('uploadFailedUnsupportedTier', 'Upload failed: This file type is not supported for your tier.'));
             return;
         }
 
@@ -3853,7 +3903,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
 
         setError(null);
         setAnonymizationReport(null);
-        setLoadingText('Bestand verwerken...');
+        setLoadingText(t('processingFile', 'Processing file...'));
 
         try {
             let text = '';
@@ -3871,7 +3921,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                 );
                 
                 if (!tokenValidation.allowed) {
-                    setError(tokenValidation.reason || 'Token limiet bereikt voor bestandsverwerking.');
+                    setError(tokenValidation.reason || t('errorTokenLimitFileProcessing', 'Token limit reached for file processing.'));
                     setLoadingText('');
                     return;
                 }
@@ -4421,12 +4471,31 @@ Provide a detailed analysis that could be used for further AI processing and ana
     };
 
     const handleWebPage = async (url: string, useDeepseekOption = false, multipleUrls: string[] = []) => {
+
+        
+        // Check if user has access to web page import (available from Gold tier)
+        if (userSubscription !== SubscriptionTier.GOLD && 
+            userSubscription !== SubscriptionTier.DIAMOND &&
+            userSubscription !== SubscriptionTier.ENTERPRISE) {
+
+            setWebPageError(t("webPageFeatureUpgrade", "Web page import is available from Gold tier. Upgrade your subscription to import text directly from web pages."));
+            setShowUpgradeModal(true);
+            return;
+        }
+        
+
+        
         // Check if user is on Gold or Diamond tier if trying to use WebExpert
   if (useDeepseekOption && 
       userSubscription !== SubscriptionTier.GOLD && 
       userSubscription !== SubscriptionTier.DIAMOND) {
+
     setWebPageError(t("goldTierRequired", "WebExpert option is only available for Gold and Diamond tier subscribers."));
             return;
+        }
+        
+        if (useDeepseekOption) {
+
         }
 
         if (!language) {
@@ -4494,7 +4563,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                         },
                         body: JSON.stringify({
                             url: singleUrl,
-                            formats: ['markdown', 'html'],
+                            formats: ['markdown'],
                             onlyMainContent: true,
                             includeTags: ['title', 'meta', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'article', 'section'],
                             removeBase64Images: true,
@@ -4514,11 +4583,12 @@ Provide a detailed analysis that could be used for further AI processing and ana
                     // Firecrawl v2 Response Data processed
                     
                     if (data.success && data.data) {
-                        // Prefer HTML content, fallback to markdown, then general content
-                        const content = data.data.html || data.data.markdown || data.data.content || '';
+                        // Use markdown content and convert to plain text
+                        const markdownContent = data.data.markdown || data.data.content || '';
+                        const plainTextContent = markdownToPlainText(markdownContent);
                         allResults.push({
                             url: singleUrl,
-                            content: content,
+                            content: plainTextContent,
                             metadata: data.data.metadata || {}
                         });
                     }
@@ -4835,7 +4905,7 @@ For the "imageInstruction" field:
 };
 
 const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => {
-    console.log('DEBUG: handleGenerateAnalysis called with type:', type, 'transcript length:', transcript.length);
+  
     
     // Additional debug for social media types
     if (type === 'socialPost' || type === 'socialPostX') {
@@ -5334,6 +5404,15 @@ const handleAnalyzeSentiment = async () => {
         const tier = (userData.subscriptionTier as SubscriptionTier) || SubscriptionTier.FREE;
         setUserSubscription(tier);
         setShowInfoPage(false);
+        
+        // Force refresh subscription tier to ensure latest data from Firestore
+        try {
+          await forceRefreshSubscriptionTier();
+          console.log('Subscription tier forcerefresh completed');
+        } catch (refreshError) {
+          console.warn('Forcerefresh subscription tier failed:', refreshError);
+          // Non-blocking: continue with login even if refresh fails
+        }
       } else {
         // Automatically create user document in Firestore
         const newUserData = {
@@ -6704,7 +6783,7 @@ ${transcript}
     console.log(`📊 [${timestamp}] handleTranscribe: Audio URL exists:`, !!audioURL);
     
     if (!audioChunksRef.current.length) {
-      console.log(`🔍 [${timestamp}] handleTranscribe: No audio chunks, trying fallback to audioURL`);
+
       // Probeer terug te vallen op audioURL als die bestaat
       if (audioURL) {
         try {
@@ -7397,24 +7476,24 @@ ${transcript}
         {/* Real-time transcriptie UI verwijderd */}
 
         {/* Opname Controls */}
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-4 flex-wrap">
           {status === RecordingStatus.RECORDING ? (
             <>
               <button 
                 onClick={pauseRecording} 
                 disabled={isProcessing} 
-                className="flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 disabled:bg-slate-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-yellow-500 text-white hover:bg-yellow-600 disabled:bg-slate-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
               >
-                <PauseIcon className="w-6 h-6" /> 
-                <span className="text-lg font-semibold">{t('pause')}</span>
+                <PauseIcon className="w-5 h-5" /> 
+                <span className="text-base font-semibold">{t('pause')}</span>
               </button>
               <button 
                 onClick={stopRecording} 
                 disabled={isProcessing} 
-                className="flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:bg-slate-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:bg-slate-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
               >
-                <StopIcon className="w-6 h-6" /> 
-                <span className="text-lg font-semibold">{t('stop')}</span>
+                <StopIcon className="w-5 h-5" /> 
+                <span className="text-base font-semibold">{t('stop')}</span>
               </button>
             </>
           ) : status === RecordingStatus.PAUSED ? (
@@ -7422,18 +7501,18 @@ ${transcript}
               <button 
                 onClick={resumeRecording} 
                 disabled={isProcessing} 
-                className="flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-green-500 text-white hover:bg-green-600 disabled:bg-slate-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-green-500 text-white hover:bg-green-600 disabled:bg-slate-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
               >
-                <PlayIcon className="w-6 h-6" /> 
-                <span className="text-lg font-semibold">{t('resume')}</span>
+                <PlayIcon className="w-5 h-5" /> 
+                <span className="text-base font-semibold">{t('resume')}</span>
               </button>
               <button 
                 onClick={stopRecording} 
                 disabled={isProcessing} 
-                className="flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:bg-slate-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:bg-slate-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
               >
-                <StopIcon className="w-6 h-6" /> 
-                <span className="text-lg font-semibold">{t('stop')}</span>
+                <StopIcon className="w-5 h-5" /> 
+                <span className="text-base font-semibold">{t('stop')}</span>
               </button>
             </>
           ) : null}
@@ -8565,6 +8644,12 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         // Thinking Partner tab - alleen zichtbaar voor Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
             [{ id: 'thinkingPartner', type: 'view', icon: ThinkingPartnerIcon, label: () => t('thinkingPartner') }] : []),
+        // AI Discussion tab - alleen zichtbaar voor Gold, Enterprise, Diamond
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'aiDiscussion', type: 'view', icon: AIDiscussionIcon, label: () => t('aiDiscussion') }] : []),
+        // Opportunities tab - alleen zichtbaar voor Silver, Gold, Enterprise, Diamond
+        ...((userSubscription === SubscriptionTier.SILVER || userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'opportunities', type: 'view', icon: OpportunitiesIcon, label: () => t('opportunities') }] : []),
         // Email tab - alleen zichtbaar voor Gold, Enterprise, Diamond en bij email import
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) ? 
             [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : []),
@@ -8573,7 +8658,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', opportunities: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -8598,7 +8683,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
         // If content doesn't exist, generate it (except for social posts which need manual generation)
         if (['summary', 'faq', 'learning', 'followUp'].includes(view)) {
-            console.log('DEBUG: handleTabClick called for', view, 'transcript length:', transcript.length, 'transcript preview:', transcript.slice(0, 100));
+          
             handleGenerateAnalysis(view, 1);
         } else if (view === 'socialPost' || view === 'socialPostX') {
             // Just switch to the view without auto-generating content
@@ -8673,6 +8758,24 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 return;
             }
             setActiveView('thinkingPartner');
+        } else if (view === 'aiDiscussion') {
+            // Check if user has access to AI discussion feature
+            const effectiveTier = userSubscription;
+            if (!subscriptionService.isFeatureAvailable(effectiveTier, 'aiDiscussion')) {
+                displayToast(t('aiDiscussionAccessRestricted'), 'error');
+                setTimeout(() => setShowPricingPage(true), 2000);
+                return;
+            }
+            setActiveView('aiDiscussion');
+        } else if (view === 'opportunities') {
+            // Check if user has access to opportunities feature
+            const effectiveTier = userSubscription;
+            if (!subscriptionService.isFeatureAvailable(effectiveTier, 'opportunities')) {
+                displayToast(t('opportunitiesAccessRestricted'), 'error');
+                setTimeout(() => setShowPricingPage(true), 2000);
+                return;
+            }
+            setActiveView('opportunities');
         } else if (view === 'email') {
             setActiveView('email');
         } else if (view === 'mindmap') {
@@ -10236,6 +10339,45 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     language={currentLanguage}
                     userId={authState.user?.uid || ''}
                     userTier={userSubscription}
+                    sessionId={sessionId}
+                />
+            );
+        }
+
+        if (activeView === 'aiDiscussion') {
+            return (
+                <AIDiscussionTab
+                    t={t}
+                    transcript={transcript}
+                    summary={summary}
+                    isGenerating={isGenerating}
+                    language={currentLanguage}
+                    userId={authState.user?.uid || ''}
+                    userTier={userSubscription}
+                    sessionId={sessionId}
+                    onDiscussionComplete={(report) => {
+                        // Handle discussion completion
+                        console.log('Discussion completed:', report);
+                    }}
+                />
+            );
+        }
+
+        if (activeView === 'opportunities') {
+            return (
+                <OpportunitiesTab
+                    t={t}
+                    transcript={transcript}
+                    summary={summary}
+                    isGenerating={isGenerating}
+                    language={currentLanguage}
+                    userId={authState.user?.uid || ''}
+                    userTier={userSubscription}
+                    sessionId={sessionId}
+                    onOpportunitiesComplete={(data) => {
+                        // Handle opportunity completion
+                        console.log('Opportunity completed:', data);
+                    }}
                 />
             );
         }
@@ -10646,7 +10788,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 const newAnalysis = e.target.value as ViewType;
                                 setSelectedAnalysis(newAnalysis);
                                 if (newAnalysis) {
-                                    console.log('Analysis dropdown changed:', newAnalysis);
                                     setActiveView(newAnalysis);
                                     handleTabClick(newAnalysis);
                                 }
@@ -10673,6 +10814,12 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             )}
                             {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
                                 <option value="thinkingPartner">{t('thinkingPartner')}</option>
+                            )}
+                            {(userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
+                                <option value="opportunities">Kansen & Opportunities</option>
+                            )}
+                            {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
+                                <option value="aiDiscussion">{t('aiDiscussion')}</option>
                             )}
                             {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) && (
                                 <option value="email">{t('email')}</option>
@@ -10995,8 +11142,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                           setSocialPostData(null);
                           setSocialPostXData(null);
                           setEmailAddresses([]);
-                          // Reset tab caches
+                          // Reset tab caches and clear topic cache
                           try { resetTabCache(); } catch {}
+                          try { clearTopicCache(); } catch {}
                           // Bump startStamp to trigger full panel reset
                           setRecordingStartMs(Date.now());
                         }} 
@@ -11078,10 +11226,21 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                       setSocialPostData(null);
                       setSocialPostXData(null);
                       setEmailAddresses([]);
-                      // Reset tab caches
+                      // Reset tab caches and clear topic cache
                       try { resetTabCache(); } catch {}
+                      try { clearTopicCache(); } catch {}
                       // Bump startStamp to trigger full panel reset
                       setRecordingStartMs(Date.now());
+                      
+                      // Test popup met sessie informatie
+                      const sessionInfo = {
+                        timestamp: new Date().toLocaleString('nl-NL'),
+                        userTier: userSubscription,
+                        userId: auth.currentUser?.uid || 'guest',
+                        sessionId: Date.now().toString()
+                      };
+                      
+
                     }} 
                     className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[120px]"
                   >

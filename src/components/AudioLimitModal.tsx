@@ -65,7 +65,7 @@ const AudioLimitModal: React.FC<AudioLimitModalProps> = ({
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center">
-            <AlertTriangle className="text-red-500 mr-3" size={24} />
+            <AlertTriangle className="text-red-500 mr-3 w-6 h-6" />
             <h2 className="text-2xl font-medium text-gray-800 dark:text-slate-100 tracking-tight">
               {t('audioLimitReached')}
             </h2>
@@ -81,7 +81,7 @@ const AudioLimitModal: React.FC<AudioLimitModalProps> = ({
         {/* Message */}
         <div className="p-6">
           <div className="flex items-start mb-6">
-            <Clock className="text-red-500 mr-3 mt-1" size={20} />
+            <Clock className="text-red-500 mr-3 mt-1 w-5 h-5" />
             <div>
               <p className="text-gray-700 dark:text-slate-300 text-lg mb-2">
                 {t('audioLimitReachedMessage', { 

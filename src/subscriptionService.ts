@@ -99,7 +99,9 @@ export const TIER_FEATURES = {
     webExpert: false,
     multipleUrls: false,
     showMe: false,
-    thinkingPartner: false
+    thinkingPartner: false,
+    aiDiscussion: false,
+    opportunities: false
   },
   [SubscriptionTier.SILVER]: {
     chat: false,
@@ -109,7 +111,9 @@ export const TIER_FEATURES = {
     webExpert: false,
     multipleUrls: false,
     showMe: false,
-    thinkingPartner: false
+    thinkingPartner: false,
+    aiDiscussion: false,
+    opportunities: true
   },
   [SubscriptionTier.GOLD]: {
     chat: true,
@@ -119,7 +123,9 @@ export const TIER_FEATURES = {
     webExpert: true,
     multipleUrls: true,
     showMe: true,
-    thinkingPartner: true
+    thinkingPartner: true,
+    aiDiscussion: true,
+    opportunities: true
   },
   [SubscriptionTier.ENTERPRISE]: {
     chat: true,
@@ -129,7 +135,9 @@ export const TIER_FEATURES = {
     webExpert: true,
     multipleUrls: true,
     showMe: true,
-    thinkingPartner: true
+    thinkingPartner: true,
+    aiDiscussion: true,
+    opportunities: true
   },
   [SubscriptionTier.DIAMOND]: {
     chat: true,
@@ -139,7 +147,9 @@ export const TIER_FEATURES = {
     webExpert: true,
     multipleUrls: true,
     showMe: true,
-    thinkingPartner: true
+    thinkingPartner: true,
+    aiDiscussion: true,
+    opportunities: true
   }
 };
 
@@ -158,7 +168,9 @@ export class SubscriptionService {
 
   // Get tier limits for a specific subscription
   public getTierLimits(tier: SubscriptionTier): TierLimits {
-    return TIER_LIMITS[tier];
+    // Guard against undefined or unexpected tier values by falling back to FREE
+    const limits = TIER_LIMITS[tier];
+    return limits ?? TIER_LIMITS[SubscriptionTier.FREE];
   }
 
   // Get tier pricing for a specific subscription
@@ -411,7 +423,7 @@ export class SubscriptionService {
   // Validate file upload
   public validateFileUpload(tier: SubscriptionTier, fileType: string, t: (key: string, options?: any) => string): { allowed: boolean; reason?: string } {
     if (!this.isFileTypeAllowed(tier, fileType)) {
-      const allowedTypes = TIER_LIMITS[tier].allowedFileTypes.join(', ');
+      const allowedTypes = this.getTierLimits(tier).allowedFileTypes.join(', ');
       return {
         allowed: false,
         reason: t('fileUploadNotAllowed', { allowedTypes: allowedTypes })
@@ -481,6 +493,10 @@ export class SubscriptionService {
         return t('showMeFeatureUpgrade');
       case 'thinkingPartner':
         return t('thinkingPartnerFeatureUpgrade');
+      case 'aiDiscussion':
+        return t('aiDiscussionFeatureUpgrade');
+      case 'opportunities':
+        return t('opportunitiesFeatureUpgrade');
       default:
         return t('defaultFeatureUpgrade');
     }

@@ -3,6 +3,7 @@ import SocialPostCard from './SocialPostCard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData, SocialPostData, TeachMeData } from '../../types';
+import { OpportunityAnalysisData } from './OpportunitiesTab';
 import { getBcp47Code } from '../languages';
 import EmailCompositionTab, { EmailData } from './EmailCompositionTab';
 
@@ -18,7 +19,7 @@ import EmailCompositionTab, { EmailData } from './EmailCompositionTab';
 
 
 
-type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email' | 'socialPost' | 'socialPostX' | 'teachMe' | 'thinkingPartner';
+type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email' | 'socialPost' | 'socialPostX' | 'teachMe' | 'thinkingPartner' | 'opportunities';
 
 interface RecapItem {
 	id: string;
@@ -52,6 +53,7 @@ socialPostXData?: SocialPostData | null;
 	thinkingPartnerAnalysis?: string;
 	selectedThinkingPartnerTopic?: string;
 	selectedThinkingPartner?: { name: string };
+	opportunitiesData?: OpportunityAnalysisData | null;
 	quizQuestions?: QuizQuestion[] | null;
 	quizIncludeAnswers?: boolean;
 	outputLanguage?: string; // Output language for BCP47 display
@@ -126,6 +128,7 @@ export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	thinkingPartnerAnalysis,
 	selectedThinkingPartnerTopic,
 	selectedThinkingPartner,
+	opportunitiesData,
 	quizQuestions,
 	quizIncludeAnswers,
 	outputLanguage,
@@ -204,6 +207,7 @@ useEffect(() => {
 		if (!!explainData && explainData.explanation && explainData.explanation.trim().length > 0) availableContent.add('explain');
 		if (!!teachMeData && teachMeData.content && teachMeData.content.trim().length > 0) availableContent.add('teachMe');
 		if (!!thinkingPartnerAnalysis && thinkingPartnerAnalysis.trim().length > 0) availableContent.add('thinkingPartner');
+		if (!!opportunitiesData && opportunitiesData.results && opportunitiesData.results.length > 0) availableContent.add('opportunities');
 		if (emailEnabled && !!emailAddresses && emailAddresses.length > 0) availableContent.add('email');
 		// Social post (LinkedIn) - handle both string and array for backward compatibility
 		if (
@@ -255,6 +259,7 @@ useEffect(() => {
 					case 'explain': title = t('explain'); break;
 					case 'teachMe': title = t('teachMe'); break;
 					case 'thinkingPartner': title = t('thinkingPartner'); break;
+					case 'opportunities': title = t('opportunities'); break;
 					case 'email': title = t('emailFormTitle', 'E-mail Samenstelling'); break;
 					case 'socialPost': title = t('socialPost', 'Social Post'); break;
           case 'socialPostX': title = t('socialPostX', 'X / BlueSky post'); break;
@@ -267,7 +272,7 @@ useEffect(() => {
 			// Update welke content we hebben verwerkt
 			newContent.forEach(type => processedContentRef.current.add(type));
 		}
-	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, socialPostData]);
+	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, opportunitiesData, socialPostData]);
 
 	const hasAnyItem = persistentItems.length > 0;
 	const numEnabled = persistentItems.filter(i => i.enabled).length;
@@ -420,6 +425,32 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 				parts.push(thinkingPartnerAnalysis);
 				return { title: `${t('thinkingPartner')}`, text: parts.join('\n') };
 			}
+			case 'opportunities': {
+				if (!opportunitiesData || !opportunitiesData.results || opportunitiesData.results.length === 0) {
+					return { title: `${t('opportunities')}`, text: '' };
+				}
+				const parts: string[] = [];
+				
+				// Add metadata
+				parts.push(`${t('opportunitiesSelectedTopics')}: ${opportunitiesData.selectedTopics.map(t => t.title).join(', ')}`);
+				parts.push(`${t('opportunitiesSelectedRoles')}: ${opportunitiesData.selectedRoles.map(r => r.name).join(', ')}`);
+				parts.push(`${t('opportunitiesSelectedTypes')}: ${opportunitiesData.selectedOpportunityTypes.map(t => t.name).join(', ')}`);
+				parts.push(`${t('opportunitiesGeneratedAt')}: ${opportunitiesData.timestamp.toLocaleString()}`);
+				parts.push('');
+				
+				// Add each opportunity result
+				opportunitiesData.results.forEach((result, index) => {
+					parts.push(`--- ${t('opportunity')} ${index + 1} ---`);
+					parts.push(`${t('opportunityTopic')}: ${result.topic}`);
+					parts.push(`${t('opportunityRole')}: ${result.role}`);
+					parts.push(`${t('opportunityType')}: ${result.type}`);
+					parts.push('');
+					parts.push(result.content);
+					parts.push('');
+				});
+				
+				return { title: `${t('opportunities')}`, text: parts.join('\n') };
+			}
 			case 'socialPost': {
 				// Show full social post content in exports
 				const postContent = socialPostData?.post;
@@ -447,7 +478,7 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 				return { title: `${t('socialPostX')}`, text: content };
 			}
 		}
-	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, selectedThinkingPartnerTopic, selectedThinkingPartner, socialPostData, quizQuestions, quizIncludeAnswers]);
+	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, selectedThinkingPartnerTopic, selectedThinkingPartner, opportunitiesData, socialPostData, quizQuestions, quizIncludeAnswers]);
 
 	const enabledItems = persistentItems.filter(i => i.enabled);
 

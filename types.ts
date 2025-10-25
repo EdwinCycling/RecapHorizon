@@ -351,6 +351,89 @@ export interface ThinkingAnalysisData {
   timestamp: Date;
 }
 
+// AI Discussion interfaces
+export interface AIDiscussionTopic {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface AIDiscussionGoal {
+  id: string;
+  name: string;
+  description: string;
+  icon: any; // React icon component
+}
+
+export interface AIDiscussionRole {
+  id: string;
+  name: string;
+  description: string;
+  focusArea: string;
+  category: 'leiding_strategie' | 'product_markt' | 'technologie' | 'operaties' | 'marketing' | 'externe_stakeholders';
+  promptTemplate: string;
+}
+
+export interface AIDiscussionMessage {
+  id: string;
+  role: string; // role id of the participant who authored the message
+  content: string;
+  timestamp: Date;
+}
+
+export type DiscussionPhase = 
+  | 'introduction'
+  | 'problem_analysis'
+  | 'root_cause'
+  | 'stakeholder_perspective'
+  | 'solution_generation'
+  | 'critical_evaluation'
+  | 'risk_assessment'
+  | 'implementation_planning'
+  | 'success_metrics'
+  | 'synthesis';
+
+export interface AIDiscussionTurn {
+  id: string;
+  turnNumber: number;
+  phase: DiscussionPhase;
+  messages: AIDiscussionMessage[];
+  timestamp: Date;
+}
+
+export interface AIDiscussionSession {
+  id: string;
+  topic: AIDiscussionTopic;
+  goal: AIDiscussionGoal;
+  roles: AIDiscussionRole[];
+  turns: AIDiscussionTurn[];
+  status: 'active' | 'completed' | 'cancelled' | 'configuring';
+  createdAt: Date;
+  language: string;
+}
+
+export interface AIDiscussionReport {
+  id: string;
+  sessionId: string;
+  summary: string;
+  keyPoints: string[];
+  recommendations: string[];
+  fullTranscript: string;
+  generatedAt: Date;
+}
+
+export interface AIDiscussionState {
+  step: 'selectTopic' | 'selectGoal' | 'selectRoles' | 'discussing' | 'completed';
+  topics: AIDiscussionTopic[];
+  selectedTopic?: AIDiscussionTopic;
+  selectedGoal?: AIDiscussionGoal;
+  selectedRoles: AIDiscussionRole[];
+  currentSession?: AIDiscussionSession;
+  report?: AIDiscussionReport;
+  isLoading: boolean;
+  error?: string;
+}
+
 // Extended user document interface for database
 export interface UserDocument {
   id: string;

@@ -1,6 +1,7 @@
 import { SubscriptionTier } from '../../types';
 import ModelManager, { TIER_MODEL_CONFIGS, ModelConfig } from './modelManager';
-import { getUserSubscriptionTier } from '../firebase';
+import { getUserSubscriptionTier, db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 /**
  * Service for managing tier-based model selection
@@ -33,7 +34,17 @@ export class TierModelService {
       const tierString = await getUserSubscriptionTier(userId);
       const tier = tierString as SubscriptionTier;
       
-      // Get model for this tier and function
+      // Try to get model from database first
+      try {
+        const modelFromDb = await this.getModelFromDatabase(tier, functionName);
+        if (modelFromDb) {
+          return modelFromDb;
+        }
+      } catch (dbError) {
+        console.warn('Failed to get model from database, falling back to local config:', dbError);
+      }
+      
+      // Fallback to local config if database is not available
       return this.modelManager.getModelForFunctionByTier(functionName, tier);
     } catch (error) {
       console.warn('Failed to get user tier, falling back to default model:', error);
@@ -51,6 +62,18 @@ export class TierModelService {
     try {
       const tierString = await getUserSubscriptionTier(userId);
       const tier = tierString as SubscriptionTier;
+      
+      // Try to get config from database first
+      try {
+        const configFromDb = await this.getModelConfigFromDatabase(tier);
+        if (configFromDb) {
+          return configFromDb;
+        }
+      } catch (dbError) {
+        console.warn('Failed to get model config from database, falling back to local config:', dbError);
+      }
+      
+      // Fallback to local config if database is not available
       return this.modelManager.getModelConfigForTier(tier);
     } catch (error) {
       console.warn('Failed to get user tier, falling back to free tier config:', error);
@@ -62,17 +85,39 @@ export class TierModelService {
    * Get model directly by tier (useful for admin interfaces)
    * @param tier - The subscription tier
    * @param functionName - The function name
-   * @returns string - The model name to use
+   * @returns Promise<string> - The model name to use
    */
-  getModelByTier(tier: SubscriptionTier, functionName: keyof ModelConfig): string {
+  async getModelByTier(tier: SubscriptionTier, functionName: keyof ModelConfig): Promise<string> {
+    // Try to get model from database first
+    try {
+      const modelFromDb = await this.getModelFromDatabase(tier, functionName);
+      if (modelFromDb) {
+        return modelFromDb;
+      }
+    } catch (dbError) {
+      console.warn('Failed to get model from database, falling back to local config:', dbError);
+    }
+    
+    // Fallback to local config if database is not available
     return this.modelManager.getModelForFunctionByTier(functionName, tier);
   }
 
   /**
    * Get all available tier configurations (useful for admin interfaces)
-   * @returns Record<SubscriptionTier, ModelConfig> - All tier configurations
+   * @returns Promise<Record<SubscriptionTier, ModelConfig>> - All tier configurations
    */
-  getAllTierConfigs(): Record<SubscriptionTier, ModelConfig> {
+  async getAllTierConfigs(): Promise<Record<SubscriptionTier, ModelConfig>> {
+    // Try to get all configs from database first
+    try {
+      const configsFromDb = await this.getAllModelConfigsFromDatabase();
+      if (configsFromDb) {
+        return configsFromDb;
+      }
+    } catch (dbError) {
+      console.warn('Failed to get model configs from database, falling back to local config:', dbError);
+    }
+    
+    // Fallback to local config if database is not available
     return TIER_MODEL_CONFIGS;
   }
 
@@ -120,6 +165,78 @@ export class TierModelService {
       shouldUpgrade: false,
       reason: 'Current tier is appropriate for your usage patterns.'
     };
+  }
+
+  /**
+   * Get model configuration from Firestore database
+   * @param tier - The subscription tier
+   * @param functionName - The function name
+   * @returns Promise<string | null> - The model name or null if not found
+   */
+  private async getModelFromDatabase(tier: SubscriptionTier, functionName: keyof ModelConfig): Promise<string | null> {
+    try {
+      const docRef = doc(db, 'settings', `modelConfig_${tier}`);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const config = docSnap.data() as ModelConfig;
+        return config[functionName] || null;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting model from database:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get complete model configuration for a tier from Firestore
+   * @param tier - The subscription tier
+   * @returns Promise<ModelConfig | null> - The complete model configuration or null if not found
+   */
+  private async getModelConfigFromDatabase(tier: SubscriptionTier): Promise<ModelConfig | null> {
+    try {
+      const docRef = doc(db, 'settings', `modelConfig_${tier}`);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        return docSnap.data() as ModelConfig;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting model config from database:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all tier configurations from Firestore database
+   * @returns Promise<Record<SubscriptionTier, ModelConfig> | null> - All tier configurations or null if not found
+   */
+  private async getAllModelConfigsFromDatabase(): Promise<Record<SubscriptionTier, ModelConfig> | null> {
+    try {
+      const configs: Record<SubscriptionTier, ModelConfig> = {} as Record<SubscriptionTier, ModelConfig>;
+      const tiers = Object.values(SubscriptionTier);
+      
+      for (const tier of tiers) {
+        const docRef = doc(db, 'settings', `modelConfig_${tier}`);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          configs[tier as SubscriptionTier] = docSnap.data() as ModelConfig;
+        } else {
+          // If any tier config is missing, return null to fallback to local config
+          return null;
+        }
+      }
+      
+      return configs;
+    } catch (error) {
+      console.error('Error getting all model configs from database:', error);
+      throw error;
+    }
   }
 }
 

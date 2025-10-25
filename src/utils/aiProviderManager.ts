@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getUserPreferences } from '../firebase';
 import { quotaMonitoringService } from '../services/quotaMonitoringService';
+import { getAIProviderErrorMessage } from './errorHandler';
 
 // AI Provider enumeration
 export enum AIProvider {
@@ -99,6 +100,7 @@ export enum AIProviderError {
   NETWORK_ERROR = 'NETWORK_ERROR',
   QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
   CONTENT_FILTERED = 'CONTENT_FILTERED',
+  SERVER_OVERLOADED = 'SERVER_OVERLOADED',
   UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 }
 
@@ -264,31 +266,39 @@ export class AIProviderManager {
             throw new Error(`Unsupported provider: ${config.provider}`);
         }
       } catch (error: any) {
-         console.error(`AI Provider error for ${config.provider}:`, error);
-         
-         const errorType = this.categorizeError(error);
-         
-         // Try fallback for Google Gemini quota exceeded errors
-         if (errorType === AIProviderError.QUOTA_EXCEEDED && 
-             config.provider === AIProvider.GOOGLE_GEMINI &&
-             !error.message.includes('free_tier_requests')) {
-           try {
-            if (import.meta.env.DEV) console.debug('Attempting Gemini model fallback due to quota exceeded');
-             return await this.tryGeminiFallback(config, prompt, startTime, error, userId);
-           } catch (fallbackError: any) {
-             if (import.meta.env.DEV) console.debug('All Gemini fallbacks failed, using original error');
-             // Continue to original error handling below
-           }
-         }
-         
-         // Handle rate limit and quota errors with user-friendly messages
-         if (errorType === AIProviderError.QUOTA_EXCEEDED) {
-           const userFriendlyMessage = this.createRateLimitErrorMessage(error, config.provider);
-           throw new Error(userFriendlyMessage);
-         }
-         
-         throw new Error(`${config.provider} error: ${error.message}`);
-       }
+        console.error(`AI Provider error for ${config.provider}:`, error);
+        
+        const errorType = this.categorizeError(error);
+        
+        // Try fallback for Google Gemini quota exceeded or server overload errors
+        if ((errorType === AIProviderError.QUOTA_EXCEEDED || 
+             errorType === AIProviderError.SERVER_OVERLOADED) && 
+            config.provider === AIProvider.GOOGLE_GEMINI &&
+            !((error instanceof Error) && error.message.includes('free_tier_requests'))) {
+          try {
+           const fallbackReason = errorType === AIProviderError.SERVER_OVERLOADED ? 'server overload' : 'quota exceeded';
+           if (import.meta.env.DEV) console.debug(`Attempting Gemini model fallback due to ${fallbackReason}`);
+            return await this.tryGeminiFallback(config, prompt, startTime, error, userId);
+          } catch (fallbackError: any) {
+            if (import.meta.env.DEV) console.debug('All Gemini fallbacks failed, using original error');
+            // Continue to original error handling below
+          }
+        }
+        
+        // Determine user's language for localized error messages
+        let language = 'nl';
+        if (userId) {
+          try {
+            const prefs = await getUserPreferences(userId);
+            language = (prefs?.outputLanguage || prefs?.sessionLanguage || language);
+          } catch (langErr) {
+            // Ignore language retrieval errors
+          }
+        }
+        
+        const userFriendlyMessage = this.createServerErrorMessage(error, config.provider, errorType, language);
+        throw new Error(userFriendlyMessage);
+      }
     });
   }
 
@@ -316,13 +326,19 @@ export class AIProviderManager {
       
       const errorType = this.categorizeError(error);
       
-      // Handle rate limit and quota errors with user-friendly messages
-      if (errorType === AIProviderError.QUOTA_EXCEEDED) {
-        const userFriendlyMessage = this.createRateLimitErrorMessage(error, config.provider);
-        throw new Error(userFriendlyMessage);
+      // Determine user's language for localized error messages
+      let language = 'nl';
+      if (userId) {
+        try {
+          const prefs = await getUserPreferences(userId);
+          language = (prefs?.outputLanguage || prefs?.sessionLanguage || language);
+        } catch (langErr) {
+          // ignore language retrieval errors
+        }
       }
       
-      throw new Error(`${config.provider} streaming error: ${error.message}`);
+      const userFriendlyMessage = this.createServerErrorMessage(error, config.provider, errorType, language);
+      throw new Error(userFriendlyMessage);
     }
   }
 
@@ -410,7 +426,11 @@ export class AIProviderManager {
     // Record quota usage for monitoring
     if (userId) {
       try {
-        await quotaMonitoringService.recordGeminiRequest(userId);
+        await quotaMonitoringService.recordGeminiRequest(
+          userId, 
+          response.usageMetadata?.promptTokenCount || 0,
+          response.usageMetadata?.candidatesTokenCount || 0
+        );
       } catch (error) {
         console.warn('Failed to record quota usage:', error);
       }
@@ -461,7 +481,11 @@ export class AIProviderManager {
     // Record quota usage for monitoring
     if (userId) {
       try {
-        await quotaMonitoringService.recordGeminiRequest(userId);
+        await quotaMonitoringService.recordGeminiRequest(
+          userId, 
+          inputTokens,
+          outputTokens
+        );
       } catch (error) {
         console.warn('Failed to record quota usage:', error);
       }
@@ -750,6 +774,14 @@ export class AIProviderManager {
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
       
+      // Check for server overload errors (503, 502, 500)
+      if (message.includes('503') || message.includes('overloaded') || 
+          message.includes('502') || message.includes('bad gateway') ||
+          message.includes('500') || message.includes('internal server error') ||
+          message.includes('service unavailable') || message.includes('temporarily unavailable')) {
+        return AIProviderError.SERVER_OVERLOADED;
+      }
+      
       // Check for Google Gemini specific rate limit and quota errors
       if (message.includes('rate limit') || message.includes('429') || 
           message.includes('quota exceeded') || 
@@ -806,16 +838,30 @@ export class AIProviderManager {
    */
   private static createRateLimitErrorMessage(error: any, provider: AIProvider): string {
     const retryDelay = this.extractRetryDelay(error);
-    const minutes = Math.ceil(retryDelay / 60);
-    
-    if (provider === AIProvider.GOOGLE_GEMINI) {
-      if (error.message.includes('free_tier_requests')) {
-        return `Je hebt het dagelijkse quotum van 50 verzoeken voor Google Gemini bereikt. Probeer het over ${minutes} ${minutes === 1 ? 'minuut' : 'minuten'} opnieuw, of upgrade naar een betaald abonnement voor meer verzoeken.`;
-      }
-      return `Google Gemini rate limit bereikt. Probeer het over ${minutes} ${minutes === 1 ? 'minuut' : 'minuten'} opnieuw.`;
-    }
-    
-    return `Rate limit bereikt voor ${provider}. Probeer het over ${minutes} ${minutes === 1 ? 'minuut' : 'minuten'} opnieuw.`;
+    const isFreeTier = (error instanceof Error) && (error.message.includes('free_tier_requests') || error.message.toLowerCase().includes('daily quota'));
+    const providerCode = provider === AIProvider.GOOGLE_GEMINI ? 'google_gemini' : 'openrouter';
+    return getAIProviderErrorMessage(
+      isFreeTier ? AIProviderError.QUOTA_EXCEEDED : AIProviderError.RATE_LIMIT_EXCEEDED,
+      providerCode,
+      undefined,
+      { retryDelaySeconds: retryDelay, isFreeTier }
+    );
+  }
+
+  /**
+   * Create user-friendly, localized error message for AI provider errors
+   * Supports multiple error types and languages (nl, en, de, fr, es, pt)
+   */
+  private static createServerErrorMessage(
+    error: any,
+    provider: AIProvider,
+    errorType: AIProviderError,
+    language: string = 'nl'
+  ): string {
+    const retryDelay = this.extractRetryDelay(error);
+    const isFreeTier = (error instanceof Error) && (error.message.includes('free_tier_requests') || error.message.toLowerCase().includes('daily quota'));
+    const providerCode = provider === AIProvider.GOOGLE_GEMINI ? 'google_gemini' : 'openrouter';
+    return getAIProviderErrorMessage(errorType, providerCode, language, { retryDelaySeconds: retryDelay, isFreeTier });
   }
 
   /**
@@ -852,7 +898,7 @@ export class AIProviderManager {
   }
 
   /**
-   * Retry mechanism with exponential backoff for rate limits
+   * Retry mechanism with exponential backoff for rate limits and server overload
    */
   private static async retryWithBackoff<T>(
     operation: () => Promise<T>,
@@ -875,12 +921,25 @@ export class AIProviderManager {
           throw error;
         }
         
-        if (errorType === AIProviderError.QUOTA_EXCEEDED && attempt < maxRetries) {
+        // Retry for rate limits and server overload
+        if ((errorType === AIProviderError.QUOTA_EXCEEDED || 
+             errorType === AIProviderError.SERVER_OVERLOADED) && 
+            attempt < maxRetries) {
           // Extract retry delay from error or use exponential backoff
           const retryDelay = this.extractRetryDelay(error);
-          const delay = Math.min(retryDelay * 1000, baseDelay * Math.pow(2, attempt));
+          let delay: number;
           
-          if (import.meta.env.DEV) console.debug(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+          if (errorType === AIProviderError.SERVER_OVERLOADED) {
+            // For server overload, use longer delays
+            delay = Math.min(retryDelay * 1000, baseDelay * Math.pow(3, attempt));
+          } else {
+            delay = Math.min(retryDelay * 1000, baseDelay * Math.pow(2, attempt));
+          }
+          
+          if (import.meta.env.DEV) {
+            const errorTypeName = errorType === AIProviderError.SERVER_OVERLOADED ? 'Server overload' : 'Rate limit';
+            console.debug(`${errorTypeName} hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+          }
           await this.sleep(delay);
           continue;
         }

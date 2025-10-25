@@ -14,6 +14,7 @@ interface ThinkingPartnerTabProps {
   language: string;
   userId: string;
   userTier: import('../../types').SubscriptionTier;
+  sessionId?: string; // Add sessionId prop for cache scoping
 }
 
 interface ThinkingPartnerState {
@@ -93,7 +94,8 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
   isGenerating = false,
   language,
   userId,
-  userTier
+  userTier,
+  sessionId // Add sessionId parameter
 }) => {
   const [state, setState] = useState<ThinkingPartnerState>({
     step: 'generating',
@@ -101,12 +103,45 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
     error: undefined
   });
 
-  // Generate topics when component mounts
+  // Shared topics cache key across tabs (AI Discussion and Thinking Partner)
+  const getTopicsCacheKey = useCallback(() => {
+    const content = (summary || transcript || '').trim();
+    const base = `${userId || 'anon'}:${language}:${sessionId || 'noSession'}`;
+    let h = 0; for (let i = 0; i < content.length; i++) { h = ((h << 5) - h) + content.charCodeAt(i); h |= 0; }
+    return `rh_topics:${base}:${h}`;
+  }, [userId, language, sessionId, transcript, summary]);
+
+  // Load topics from cache first; generate only if needed
   useEffect(() => {
-    if (transcript && transcript.trim().length > 0) {
-      generateTopics();
+    let cancelled = false;
+
+    const content = (summary || transcript || '').trim();
+    if (!content) {
+      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError', 'Er is onvoldoende inhoud om onderwerpen te genereren') }));
+      return;
     }
-  }, [transcript, summary]);
+
+    const tryLoadFromCache = () => {
+      try {
+        const key = getTopicsCacheKey();
+        const cached = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+        if (cached) {
+          const topics = JSON.parse(cached) as ThinkingTopic[];
+          if (!cancelled) {
+            setState(prev => ({ ...prev, step: 'selectTopic', topics }));
+            return true;
+          }
+        }
+      } catch {}
+      return false;
+    };
+
+    if (tryLoadFromCache()) return () => { cancelled = true; };
+
+    generateTopics();
+
+    return () => { cancelled = true; };
+  }, [transcript, summary, language, getTopicsCacheKey, t]);
 
   const generateTopics = async () => {
     setState(prev => ({ ...prev, step: 'generating', error: undefined }));
@@ -115,8 +150,13 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       // Import AI service functions
       const { generateThinkingTopics } = await import('../services/thinkingPartnerService');
       
-      const topics = await generateThinkingTopics(transcript, summary, language);
+      const topics = await generateThinkingTopics(transcript, summary, language, userId, userTier);
       
+      try {
+        const key = getTopicsCacheKey();
+        window.localStorage.setItem(key, JSON.stringify(topics));
+      } catch {}
+
       setState(prev => ({
         ...prev,
         step: 'selectTopic',
@@ -160,7 +200,9 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       const analysis = await generateThinkingPartnerAnalysis(
         state.selectedTopic,
         partner,
-        language
+        language,
+        userId,
+        userTier
       );
 
       const analysisData: ThinkingAnalysisData = {

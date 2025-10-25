@@ -1,15 +1,15 @@
-Write-Host "Starting RecapHorizon development server on port 3000..." -ForegroundColor Green
+Write-Host "Starting RecapHorizon development server on port 3001..." -ForegroundColor Green
 Write-Host ""
-Write-Host "If port 3000 is already in use, please close the application using that port first." -ForegroundColor Yellow
+Write-Host "If port 3001 is already in use, please close the application using that port first." -ForegroundColor Yellow
 Write-Host ""
 
-# Check if port 3000 is already in use
-$portInUse = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
+# Check if port 3001 is already in use
+$portInUse = Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue
 if ($portInUse) {
-    Write-Host "ERROR: Port 3000 is already in use!" -ForegroundColor Red
-    Write-Host "Please close the application using port 3000 first." -ForegroundColor Red
+    Write-Host "ERROR: Port 3001 is already in use!" -ForegroundColor Red
+    Write-Host "Please close the application using port 3001 first." -ForegroundColor Red
     Write-Host ""
-    Write-Host "Applications using port 3000:" -ForegroundColor Yellow
+    Write-Host "Applications using port 3001:" -ForegroundColor Yellow
     $portInUse | ForEach-Object {
         $process = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
         if ($process) {
@@ -20,6 +20,6 @@ if ($portInUse) {
     exit 1
 }
 
-Write-Host "Port 3000 is available. Starting development server..." -ForegroundColor Green
+Write-Host "Port 3001 is available. Starting development server..." -ForegroundColor Green
 Write-Host ""
 npm run dev

@@ -519,6 +519,18 @@ function getLanguageInstructions(language: string) {
         outputFormat: 'Générez les sujets en français. Utilisez un langage commercial clair et professionnel accessible aux dirigeants et aux décideurs.',
         analysisInstructions: 'Fournissez votre analyse en français. Utilisez un langage commercial clair et professionnel accessible aux dirigeants et aux décideurs.'
       };
+    case 'es':
+      return {
+        systemPrompt: 'Eres un experto en estrategia empresarial que ayuda a identificar oportunidades estratégicas e insights accionables.',
+        outputFormat: 'Genera los temas en español. Usa un lenguaje comercial claro y profesional accesible para ejecutivos y tomadores de decisiones.',
+        analysisInstructions: 'Proporciona tu análisis en español. Usa un lenguaje comercial claro y profesional accesible para ejecutivos y tomadores de decisiones.'
+      };
+    case 'pt':
+      return {
+        systemPrompt: 'Você é um especialista em estratégia empresarial que ajuda a identificar oportunidades estratégicas e insights acionáveis.',
+        outputFormat: 'Gere os tópicos em português. Use linguagem comercial clara e profissional acessível para executivos e tomadores de decisão.',
+        analysisInstructions: 'Forneça sua análise em português. Use linguagem comercial clara e profissional acessível para executivos e tomadores de decisão.'
+      };
     default: // Dutch
       return {
         systemPrompt: 'Je bent een ervaren business strategist die helpt bij het identificeren van strategische kansen en actionable inzichten.',

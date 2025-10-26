@@ -157,22 +157,16 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       
       if (isSelected) {
         // Deselect the topic
-        const newSelectedTopics = prev.selectedTopics.filter(t => t.id !== topic.id);
         return {
           ...prev,
-          selectedTopics: newSelectedTopics,
+          selectedTopics: [],
           error: undefined
         };
       } else {
-        // Select the topic only if we haven't reached the limit of 2
-        if (prev.selectedTopics.length >= 2) {
-          return prev; // Don't allow more than 2 selections
-        }
-        
-        const newSelectedTopics = [...prev.selectedTopics, topic];
+        // Select only this topic (replace any existing selection)
         return {
           ...prev,
-          selectedTopics: newSelectedTopics,
+          selectedTopics: [topic],
           error: undefined
         };
       }
@@ -188,6 +182,8 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       return;
     }
     setState(prev => ({ ...prev, step: 'selectRole', error: undefined }));
+    // Auto-scroll to top to show AI role selection
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleRoleSelect = (role: OpportunityRole) => {
@@ -196,22 +192,16 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       
       if (isSelected) {
         // Deselect the role
-        const newSelectedRoles = prev.selectedRoles.filter(r => r.id !== role.id);
         return {
           ...prev,
-          selectedRoles: newSelectedRoles,
+          selectedRoles: [],
           error: undefined
         };
       } else {
-        // Select the role only if we haven't reached the limit of 2
-        if (prev.selectedRoles.length >= 2) {
-          return prev; // Don't allow more than 2 selections
-        }
-        
-        const newSelectedRoles = [...prev.selectedRoles, role];
+        // Select only this role (replace any existing selection)
         return {
           ...prev,
-          selectedRoles: newSelectedRoles,
+          selectedRoles: [role],
           error: undefined
         };
       }
@@ -232,15 +222,28 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
   const handleOpportunityTypeSelect = (type: OpportunityType) => {
     setState(prev => {
       const isSelected = prev.selectedOpportunityTypes.some(t => t.id === type.id);
-      const newSelectedTypes = isSelected 
-        ? prev.selectedOpportunityTypes.filter(t => t.id !== type.id)
-        : [...prev.selectedOpportunityTypes, type];
       
-      return {
-        ...prev,
-        selectedOpportunityTypes: newSelectedTypes,
-        error: undefined
-      };
+      if (isSelected) {
+        // Deselect the type
+        const newSelectedTypes = prev.selectedOpportunityTypes.filter(t => t.id !== type.id);
+        return {
+          ...prev,
+          selectedOpportunityTypes: newSelectedTypes,
+          error: undefined
+        };
+      } else {
+        // Select the type only if we haven't reached the limit of 2
+        if (prev.selectedOpportunityTypes.length >= 2) {
+          return prev; // Don't allow more than 2 selections
+        }
+        
+        const newSelectedTypes = [...prev.selectedOpportunityTypes, type];
+        return {
+          ...prev,
+          selectedOpportunityTypes: newSelectedTypes,
+          error: undefined
+        };
+      }
     });
   };
 
@@ -398,7 +401,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           {t('selectOpportunityTopics', 'Selecteer onderwerpen')}
         </h3>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('selectOpportunityTopicsDesc', 'Kies 1-10 onderwerpen voor opportunity generatie')}
+          {t('selectOpportunityTopicsDesc', 'Kies 1 onderwerp voor opportunity generatie')}
         </p>
       </div>
 
@@ -464,7 +467,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       {state.topics.length > 0 && (
         <div className="flex justify-between items-center pt-4">
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            {state.selectedTopics.length} van 2 onderwerpen geselecteerd (selecteer 1 of 2)
+            {state.selectedTopics.length > 0 ? t('opportunitiesTopicSelected', '1 onderwerp geselecteerd') : t('opportunitiesSelectOneTopic', 'Selecteer 1 onderwerp')}
           </p>
           <button
             onClick={handleContinueToRoles}
@@ -549,7 +552,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
 
       <div className="flex justify-between items-center pt-4">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {state.selectedRoles.length} van 2 rollen geselecteerd (selecteer 1 of 2)
+          {state.selectedRoles.length > 0 ? t('opportunitiesRoleSelected', '1 rol geselecteerd') : t('opportunitiesSelectOneRole', 'Selecteer 1 rol')}
         </p>
         <button
           onClick={handleContinueToTypes}
@@ -579,7 +582,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           {t('selectOpportunityTypes', 'Kies opportunity types')}
         </h3>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          {t('selectOpportunityTypesDesc', 'Selecteer 1-3 types voor verschillende analyses')}
+          {t('selectOpportunityTypesDesc', 'Selecteer 1-2 types voor verschillende analyses')}
         </p>
         <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-3 mb-6">
           <p className="text-sm text-cyan-800 dark:text-cyan-200">
@@ -629,7 +632,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
 
       <div className="flex justify-between items-center pt-4">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {state.selectedOpportunityTypes.length} van {OPPORTUNITY_TYPES.length} types geselecteerd
+          {state.selectedOpportunityTypes.length} {t('opportunitiesTypesSelected', 'van {total} types geselecteerd', { total: OPPORTUNITY_TYPES.length })}
         </p>
         <button
           onClick={handleGenerateOpportunities}

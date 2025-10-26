@@ -485,6 +485,25 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   const rateLimiterRef = useRef(new RateLimiter(3000));
   const lastGenerationAttemptRef = useRef<number>(0);
   
+  // Ref for auto-scrolling to top after step changes
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Auto-scroll to top function
+  const scrollToTop = useCallback(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    } else {
+      // Fallback to window scroll
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth' 
+      });
+    }
+  }, []);
+  
   // Shared topics cache key across tabs (same as ThinkingPartnerTab and OpportunitiesTab)
   const getTopicsCacheKey = useCallback(() => {
     const content = (summary || transcript || '').trim();
@@ -601,7 +620,9 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       step: 'configure',
       error: undefined 
     }));
-  }, []);
+    // Auto-scroll to top after step change
+    setTimeout(scrollToTop, 100);
+  }, [scrollToTop]);
 
   const handleConfigurationComplete = useCallback(async (goal: AIDiscussionGoal, roles: AIDiscussionRole[]) => {
     if (!state.selectedTopic) return;
@@ -627,6 +648,9 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
         isDiscussionActive: true,
         error: undefined
       }));
+      
+      // Auto-scroll to top after step change
+      setTimeout(scrollToTop, 100);
 
       const session = await startDiscussion(state.selectedTopic, goal, rolesWithModerator, language, userId, userTier);
       setState(prev => ({
@@ -720,6 +744,9 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
         isDiscussionActive: false,
         error: undefined 
       }));
+      
+      // Auto-scroll to top after step change
+      setTimeout(scrollToTop, 100);
 
       onDiscussionComplete(report);
     } catch (error) {
@@ -744,7 +771,10 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       error: undefined,
       isDiscussionActive: false
     }));
-  }, []);
+    
+    // Auto-scroll to top after step change
+    setTimeout(scrollToTop, 100);
+  }, [scrollToTop]);
 
   const handleBackToConfiguration = useCallback(() => {
     setState(prev => ({ 
@@ -755,7 +785,10 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       error: undefined,
       isDiscussionActive: false
     }));
-  }, []);
+    
+    // Auto-scroll to top after step change
+    setTimeout(scrollToTop, 100);
+  }, [scrollToTop]);
 
   // Access control check
   if (!hasAccess) {
@@ -828,7 +861,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   // Topic selection
   if (state.step === 'selectTopic') {
     return (
-      <div className="space-y-6">
+      <div ref={containerRef} className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
@@ -871,7 +904,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   // Configuration step
   if (state.step === 'configure') {
     return (
-      <div className="space-y-6">
+      <div ref={containerRef} className="space-y-6">
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={handleBackToTopics}
@@ -905,39 +938,39 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   // Discussion interface
   if (state.step === 'discussing') {
     return (
-      <div className="space-y-6">
+      <div ref={containerRef} className="space-y-6">
         {/* Global loader overlay for discussion generation */}
         <BlurredLoadingOverlay 
           isVisible={state.isDiscussionActive}
           text={t('aiDiscussion.generating', 'AI experts discussiëren...')}
         />
         
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <button
             onClick={handleBackToConfiguration}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors w-fit"
           >
             <FiArrowLeft size={16} />
             {t('aiDiscussion.backToConfig', 'Terug naar configuratie')}
           </button>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <button
               onClick={handleContinueDiscussion}
               disabled={state.isDiscussionActive || !state.session || state.session.status !== 'active'}
-              className="flex items-center gap-2 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
             >
               <FiPlay size={18} />
-              {t('aiDiscussion.continueDiscussion', 'Discussie voortzetten')}
+              <span className="truncate">{t('aiDiscussion.continueDiscussion', 'Discussie voortzetten')}</span>
             </button>
 
             <button
               onClick={handleGenerateReport}
               disabled={state.isDiscussionActive || !state.session || state.session.turns.length === 0}
-              className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
             >
               <FiFileText size={18} />
-              {t('aiDiscussion.generateReport', 'Rapport genereren')}
+              <span className="truncate">{t('aiDiscussion.generateReport', 'Rapport genereren')}</span>
             </button>
           </div>
         </div>
@@ -1053,28 +1086,28 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
 
         {/* Action buttons placed under the discussion window */}
         {state.session && state.session.turns.length > 0 && (
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center p-4 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-lg">
+          <div className="flex flex-col gap-4 justify-center items-center p-4 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-lg">
             <div className="text-sm text-slate-600 dark:text-slate-400 text-center">
               {t('aiDiscussion.nextActions', 'Wat wil je nu doen?')}
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
                 onClick={handleContinueDiscussion}
                 disabled={state.isDiscussionActive || !state.session || state.session.status !== 'active' || state.session.turns.length >= 10}
-                className="flex items-center gap-2 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
               >
                 <FiPlay size={18} />
-                {t('aiDiscussion.continueDiscussion', 'Discussie voortzetten')}
+                <span className="truncate">{t('aiDiscussion.continueDiscussion', 'Discussie voortzetten')}</span>
               </button>
 
               <button
                 onClick={handleGenerateReport}
                 disabled={state.isDiscussionActive || !state.session || state.session.turns.length === 0}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
               >
                 <FiFileText size={18} />
-                {t('aiDiscussion.generateReport', 'Rapport genereren')}
+                <span className="truncate">{t('aiDiscussion.generateReport', 'Rapport genereren')}</span>
               </button>
             </div>
           </div>
@@ -1086,7 +1119,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   // Report view
   if (state.step === 'report' && state.report) {
     return (
-      <div className="space-y-6">
+      <div ref={containerRef} className="space-y-6">
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={handleBackToTopics}

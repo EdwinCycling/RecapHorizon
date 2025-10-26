@@ -634,6 +634,16 @@ function getLanguageInstructions(language: string) {
         systemPrompt: 'Vous participez à une discussion stratégique IA avec plusieurs rôles organisationnels.',
         responseInstructions: 'Répondez en français avec un ton professionnel et constructif.'
       };
+    case 'es':
+      return {
+        systemPrompt: 'Participas en una discusión estratégica de IA con múltiples roles organizacionales.',
+        responseInstructions: 'Responde en español con un tono profesional y constructivo.'
+      };
+    case 'pt':
+      return {
+        systemPrompt: 'Você está participando de uma discussão estratégica de IA com múltiplos papéis organizacionais.',
+        responseInstructions: 'Responda em português com um tom profissional e construtivo.'
+      };
     default: // Dutch
       return {
         systemPrompt: 'Je neemt deel aan een strategische AI discussie met meerdere organisatierollen.',

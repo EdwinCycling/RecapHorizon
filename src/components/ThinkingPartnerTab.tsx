@@ -26,62 +26,62 @@ interface ThinkingPartnerState {
   error?: string;
 }
 
-// Static thinking partner data as defined in the technical architecture
-const THINKING_PARTNERS: ThinkingPartner[] = [
+// Function to get thinking partners with translations
+const getThinkingPartners = (t: (key: string) => string): ThinkingPartner[] => [
   {
     id: 'challenge-thinking',
-    name: 'Challenge my thinking',
-    description: 'Question assumptions, logic, and blind spots',
-    promptTemplate: 'Here\'s what I\'m planning: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Act as a critical thinker - Question my assumptions, logic, or blind spots - but don\'t rewrite anything. I want to stress test my own thinking, not get new ideas.',
+    name: t('challengeThinking'),
+    description: t('challengeThinkingDescription'),
+    promptTemplate: t('promptTemplate.challenge-thinking'),
     category: 'analysis'
   },
   {
     id: 'reframe-lens',
-    name: 'Reframe through a different lens',
-    description: 'View from new audience POV or positioning angle',
-    promptTemplate: 'Here\'s the core idea I\'m working with: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me reframe it through a different lens - like a new audience POV, emotional trigger, or brand positioning angle.',
+    name: t('reframeLens'),
+    description: t('reframeLensDescription'),
+    promptTemplate: t('promptTemplate.reframe-lens'),
     category: 'insight'
   },
   {
     id: 'translate-gut-feeling',
-    name: 'Translate my gut feeling',
-    description: 'Put words to tensions and misalignments',
-    promptTemplate: 'Something about this feels off, but I can\'t explain why: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me put words to the tension I\'m sensing. What might be misaligned or unclear?',
+    name: t('translateGutFeeling'),
+    description: t('translateGutFeelingDescription'),
+    promptTemplate: t('promptTemplate.translate-gut-feeling'),
     category: 'insight'
   },
   {
     id: 'structure-thinking',
-    name: 'Structure my messy thinking',
-    description: 'Organize ideas into clear structure',
-    promptTemplate: 'Here\'s a braindump of what I\'m thinking: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Organize this into a clear structure or outline - but don\'t change the voice or inject new ideas.',
+    name: t('structureThinking'),
+    description: t('structureThinkingDescription'),
+    promptTemplate: t('promptTemplate.structure-thinking'),
     category: 'structure'
   },
   {
     id: 'face-decision',
-    name: 'Help me face the decision',
-    description: 'Identify avoided or overcomplicated decisions',
-    promptTemplate: 'Here\'s the context I\'m working with: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. What decision am I avoiding or overcomplicating? Reflect back where I\'m hesitating or dragging things out.',
+    name: t('faceDecision'),
+    description: t('faceDecisionDescription'),
+    promptTemplate: t('promptTemplate.face-decision'),
     category: 'decision'
   },
   {
     id: 'surface-question',
-    name: 'Surface the deeper question',
-    description: 'Find the real strategic question underneath',
-    promptTemplate: 'Here\'s the situation I\'m thinking through: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me surface the "real" strategic question underneath this. What should I actually be asking myself?',
+    name: t('surfaceQuestion'),
+    description: t('surfaceQuestionDescription'),
+    promptTemplate: t('promptTemplate.surface-question'),
     category: 'insight'
   },
   {
     id: 'spot-risks',
-    name: 'Spot execution risks',
-    description: 'Identify real-world implementation challenges',
-    promptTemplate: 'This is the strategy I\'m planning to roll out: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Walk me through how this could go wrong in real-world execution. Think about resourcing, timing, team alignment, dependencies, etc.',
+    name: t('spotRisks'),
+    description: t('spotRisksDescription'),
+    promptTemplate: t('promptTemplate.spot-risks'),
     category: 'analysis'
   },
   {
     id: 'reverse-engineer',
-    name: 'Reverse-engineer my gut instinct',
-    description: 'Unpack why an idea feels right',
-    promptTemplate: 'Here\'s what I\'m thinking, and it feels right to me: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Can you help me unpack "why" this might be a smart move - even if I can\'t fully explain it yet?',
+    name: t('reverseEngineer'),
+    description: t('reverseEngineerDescription'),
+    promptTemplate: t('promptTemplate.reverse-engineer'),
     category: 'insight'
   }
 ];
@@ -358,17 +358,17 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {THINKING_PARTNERS.map((partner) => (
+        {getThinkingPartners(t).map((partner) => (
           <button
             key={partner.id}
             onClick={() => handlePartnerSelect(partner)}
             className={`text-left p-4 border rounded-lg transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 ${getCategoryColor(partner.category)}`}
           >
             <h4 className="font-semibold mb-2">
-              {t(`thinkingPartner.${partner.id}`, partner.name)}
+              {partner.name}
             </h4>
             <p className="text-sm opacity-90">
-              {t(`thinkingPartner.${partner.id}Desc`, partner.description)}
+              {partner.description}
             </p>
           </button>
         ))}

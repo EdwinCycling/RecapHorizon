@@ -10751,7 +10751,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
              <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 border-b border-gray-200 dark:border-slate-600 shadow-sm">
                 <div className="flex items-center gap-4 flex-wrap min-w-0">
                     <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 min-w-fit">
-                        Kies modus:
+                        {t('chooseModeLabel')}
                     </label>
                     <select
                         value={mainMode}
@@ -10764,6 +10764,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 setActiveView('transcript');
                             } else if (newMode === 'analysis') {
                                 setActiveView(selectedAnalysis);
+                                // Scroll to top when switching to analysis mode
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
                             } else if (newMode === 'actions') {
                                 // Keep current view for actions mode
                             }
@@ -10780,7 +10782,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 {mainMode === 'analysis' && (
                     <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-2 sm:gap-4 mt-4 min-w-0">
                         <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 sm:min-w-fit">
-                            Kies analyse:
+                            {t('chooseAnalysisLabel')}
                         </label>
                         <select
                             value={selectedAnalysis}

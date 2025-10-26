@@ -2905,6 +2905,18 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,"opportunities.type.strategic-partnerships": "Strategic Partnerships"
   ,"opportunities.type.strategic-partnershipsDesc": "Collaborations and alliances"
 
+  // AI Discussion Phase translations
+  ,"aiDiscussion.phase.introduction": "Introduction"
+  ,"aiDiscussion.phase.problem_analysis": "Problem Analysis"
+  ,"aiDiscussion.phase.root_cause": "Root Cause Analysis"
+  ,"aiDiscussion.phase.stakeholder_perspective": "Stakeholder Perspective"
+  ,"aiDiscussion.phase.solution_generation": "Solution Generation"
+  ,"aiDiscussion.phase.critical_evaluation": "Critical Evaluation"
+  ,"aiDiscussion.phase.risk_assessment": "Risk Assessment"
+  ,"aiDiscussion.phase.implementation_planning": "Implementation Planning"
+  ,"aiDiscussion.phase.success_metrics": "Success Metrics"
+  ,"aiDiscussion.phase.synthesis": "Synthesis"
+
   // Opportunities errors
   ,opportunitiesTopicGenerationError: "An error occurred while generating topics"
   ,opportunitiesGenerationError: "An error occurred while generating opportunities"
@@ -2921,4 +2933,86 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,opportunitiesSelectedTopic: "Selected topic"
   ,opportunitiesSelectedRole: "Selected role"
   ,opportunitiesSelectedType: "Selected type"
+
+  // Opportunities status texts
+  ,opportunitiesTopicSelected: "1 topic selected"
+  ,opportunitiesSelectOneTopic: "Select 1 topic"
+  ,opportunitiesRoleSelected: "1 role selected"
+  ,opportunitiesSelectOneRole: "Select 1 role"
+  ,opportunitiesTypesSelected: "of {total} types selected"
+  ,continueToRoles: "Continue to AI roles"
+  ,continueToTypes: "Continue to opportunity types"
+  ,backToTopics: "Back to topics"
+  ,backToRoles: "Back to AI roles"
+  ,selectedTopics: "Selected topics"
+  ,selectedRoles: "Selected roles"
+
+  // Thinking Partner translations
+  ,thinkingPartner: "Thinking Partner"
+  ,thinkingPartnerTitle: "Thinking Partner"
+  ,thinkingPartnerDescription: "Let AI guide you through structured thinking processes"
+  ,selectTopicDesc: "Choose the topic you want to think deeper about"
+  ,selectThinkingPartner: "Choose your thinking partner"
+  ,selectPartnerDesc: "Select the thinking approach that best fits your question"
+  ,thinkingPartnerSelected: "Thinking partner selected"
+  ,backToPartners: "Back to partners"
+
+  // Partner names and descriptions
+  ,challengeThinking: "Challenge my thinking"
+  ,challengeThinkingDesc: "Question assumptions, logic, and blind spots"
+  ,reframeLens: "Reframe through a different lens"
+  ,reframeLensDesc: "View from new audience POV or positioning angle"
+  ,translateGutFeeling: "Translate my gut feeling"
+  ,translateGutFeelingDesc: "Give words to tensions and misalignments"
+  ,structureThinking: "Structure my messy thinking"
+  ,structureThinkingDesc: "Organize ideas into clear structure"
+  ,faceDecision: "Help me face the decision"
+  ,faceDecisionDesc: "Identify avoided or complicated decisions"
+  ,surfaceQuestion: "Surface the deeper question"
+  ,surfaceQuestionDesc: "Find the real strategic question underneath"
+  ,spotRisks: "Spot execution risks"
+  ,spotRisksDesc: "Identify practical implementation challenges"
+  ,reverseEngineer: "Reverse-engineer my intuition"
+  ,reverseEngineerDesc: "Unravel why an idea feels right"
+
+  // ThinkingPartner component specific keys
+  ,"thinkingPartner.challenge-thinking": "Challenge my thinking"
+  ,"thinkingPartner.challenge-thinkingDesc": "Question assumptions, logic, and blind spots"
+  ,"thinkingPartner.reframe-lens": "Reframe through a different lens"
+  ,"thinkingPartner.reframe-lensDesc": "View from new audience POV or positioning angle"
+  ,"thinkingPartner.translate-gut-feeling": "Translate my gut feeling"
+  ,"thinkingPartner.translate-gut-feelingDesc": "Give words to tensions and misalignments"
+  ,"thinkingPartner.structure-thinking": "Structure my messy thinking"
+  ,"thinkingPartner.structure-thinkingDesc": "Organize ideas into clear structure"
+  ,"thinkingPartner.face-decision": "Help me face the decision"
+  ,"thinkingPartner.face-decisionDesc": "Identify avoided or complicated decisions"
+  ,"thinkingPartner.surface-question": "Surface the deeper question"
+  ,"thinkingPartner.surface-questionDesc": "Find the real strategic question underneath"
+  ,"thinkingPartner.spot-risks": "Spot execution risks"
+  ,"thinkingPartner.spot-risksDesc": "Identify practical implementation challenges"
+  ,"thinkingPartner.reverse-engineer": "Reverse-engineer my intuition"
+  ,"thinkingPartner.reverse-engineerDesc": "Unravel why an idea feels right"
+
+  // Analysis
+  ,analyzingWithPartner: "Analyzing with {partnerName}..."
+  ,analyzingDesc: "Your thinking partner is analyzing the topic and generating insights..."
+  ,analysisComplete: "Analysis complete"
+  ,regenerateAnalysis: "Regenerate analysis"
+  ,startNewAnalysis: "Start new analysis"
+  ,copyAnalysis: "Copy analysis"
+  ,analysisCopied: "Analysis copied to clipboard"
+
+  // Thinking Partner Prompt Templates
+  ,"promptTemplate.challenge-thinking": "Here's what I'm planning: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Act as a critical thinker - Question my assumptions, logic, or blind spots - but don't rewrite anything. I want to stress test my own thinking, not get new ideas."
+  ,"promptTemplate.reframe-lens": "Here's the core idea I'm working with: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me reframe it through a different lens - like a new audience POV, emotional trigger, or brand positioning angle."
+  ,"promptTemplate.translate-gut-feeling": "Something about this feels off, but I can't explain why: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me put words to the tension I'm sensing. What might be misaligned or unclear?"
+  ,"promptTemplate.structure-thinking": "Here's a braindump of what I'm thinking: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Organize this into a clear structure or outline - but don't change the voice or inject new ideas."
+  ,"promptTemplate.face-decision": "Here's the context I'm working with: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. What decision am I avoiding or overcomplicating? Reflect back where I'm hesitating or dragging things out."
+  ,"promptTemplate.surface-question": "Here's the situation I'm thinking through: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me surface the 'real' strategic question underneath this. What should I actually be asking myself?"
+  ,"promptTemplate.spot-risks": "This is the strategy I'm planning to roll out: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Walk me through how this could go wrong in real-world execution. Think about resourcing, timing, team alignment, dependencies, etc."
+  ,"promptTemplate.reverse-engineer": "Here's what I'm thinking, and it feels right to me: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Can you help me unpack 'why' this might be a smart move - even if I can't fully explain it yet?"
+
+  // Analysis screen dropdown labels
+  ,chooseModeLabel: "Choose mode:"
+  ,chooseAnalysisLabel: "Choose analysis:"
 };

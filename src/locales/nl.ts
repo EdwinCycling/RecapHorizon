@@ -1424,7 +1424,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   "aiDiscussion.role.duurzaamheidsadviseurDesc": "Focus op ecologische en sociale impact (ESG)",
   "aiDiscussion.role.externe_consultant": "Externe Consultant (Neutraal)",
   "aiDiscussion.role.externe_consultantDesc": "Focus op best practices, externe benchmarks en onafhankelijk advies",
-  "aiDiscussion.role.eindgebruiker": "Eindgebruiker/Klantenvertegenwoordiger",
+  "aiDiscussion.role.eindgebruiker": "Eindgebruiker/Klant",
   "aiDiscussion.role.eindgebruikerDesc": "Focus op de daadwerkelijke behoeften en problemen van de gebruiker",
   "aiDiscussion.role.interne_auditor": "Interne Auditor",
   "aiDiscussion.role.interne_auditorDesc": "Focus op risicobeheersing en naleving van interne beleidsregels",
@@ -3014,5 +3014,31 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   opportunitiesSelectedTopic: "Geselecteerd onderwerp",
   opportunitiesSelectedRole: "Geselecteerde rol",
   opportunitiesSelectedType: "Geselecteerd type",
+
+  // Opportunities status texts
+  opportunitiesTopicSelected: "1 onderwerp geselecteerd",
+  opportunitiesSelectOneTopic: "Selecteer 1 onderwerp",
+  opportunitiesRoleSelected: "1 rol geselecteerd", 
+  opportunitiesSelectOneRole: "Selecteer 1 rol",
+  opportunitiesTypesSelected: "van {total} types geselecteerd",
+  continueToRoles: "Verder naar AI-rollen",
+  continueToTypes: "Verder naar opportunity types",
+  backToRoles: "Terug naar AI-rollen",
+  selectedTopics: "Geselecteerde onderwerpen",
+  selectedRoles: "Geselecteerde rollen",
+
+  // Thinking Partner Prompt Templates
+  "promptTemplate.challenge-thinking": "Dit is wat ik van plan ben: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Gedraag je als een kritische denker - Stel mijn aannames, logica of blinde vlekken ter discussie - maar herschrijf niets. Ik wil mijn eigen denken testen, geen nieuwe ideeën krijgen.",
+  "promptTemplate.reframe-lens": "Dit is het kernidee waar ik mee werk: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me het te herkaderen door een andere lens - zoals een nieuw publiek POV, emotionele trigger, of merkpositioneringshoek.",
+  "promptTemplate.translate-gut-feeling": "Er klopt iets niet aan dit, maar ik kan niet uitleggen waarom: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me woorden te geven aan de spanning die ik voel. Wat zou er verkeerd uitgelijnd of onduidelijk kunnen zijn?",
+  "promptTemplate.structure-thinking": "Hier is een braindump van wat ik denk: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Organiseer dit in een duidelijke structuur of outline - maar verander de stem niet of voeg geen nieuwe ideeën toe.",
+  "promptTemplate.face-decision": "Dit is de context waar ik mee werk: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Welke beslissing vermijd ik of maak ik te ingewikkeld? Reflecteer terug waar ik aarzel of dingen uitrek.",
+  "promptTemplate.surface-question": "Dit is de situatie waar ik over nadenk: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Help me de 'echte' strategische vraag hieronder naar boven te halen. Wat zou ik mezelf eigenlijk moeten vragen?",
+  "promptTemplate.spot-risks": "Dit is de strategie die ik van plan ben uit te rollen: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Loop me door hoe dit mis kan gaan in de praktijk. Denk aan middelen, timing, teamafstemming, afhankelijkheden, etc.",
+  "promptTemplate.reverse-engineer": "Dit is wat ik denk, en het voelt goed voor mij: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Kun je me helpen uitpakken 'waarom' dit een slimme zet zou kunnen zijn - ook al kan ik het nog niet volledig uitleggen?",
+
+  // Analysis screen dropdown labels
+  chooseModeLabel: "Kies modus:",
+  chooseAnalysisLabel: "Kies analyse:"
 
 };

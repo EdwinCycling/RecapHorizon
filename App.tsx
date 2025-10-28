@@ -57,6 +57,7 @@ import EmailCompositionTab, { EmailData } from './src/components/EmailCompositio
 import ThinkingPartnerTab from './src/components/ThinkingPartnerTab.tsx';
 import AIDiscussionTab from './src/components/AIDiscussionTab.tsx';
 import OpportunitiesTab from './src/components/OpportunitiesTab.tsx';
+import McKinseyTab from './src/components/McKinseyTab.tsx';
 import TokenUsageMeter from './src/components/TokenUsageMeter.tsx';
 import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.tsx';
 import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
@@ -669,7 +670,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'opportunities' | 'email' | 'socialPost' | 'socialPostX';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'opportunities' | 'mckinsey' | 'email' | 'socialPost' | 'socialPostX';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -1936,6 +1937,14 @@ Prompt for AI image generator: ${imagePrompt}`;
   const [selectedThinkingPartnerTopic, setSelectedThinkingPartnerTopic] = useState<string>('');
   const [selectedThinkingPartner, setSelectedThinkingPartner] = useState<{ name: string } | null>(null);
   
+  // Opportunities state
+  const [opportunitiesData, setOpportunitiesData] = useState<import('./src/components/OpportunitiesTab').OpportunityAnalysisData | null>(null);
+
+  // McKinsey state
+  const [mckinseyAnalysis, setMckinseyAnalysis] = useState<import('./src/components/McKinseyTab').McKinseyAnalysisData | null>(null);
+  const [selectedMckinseyTopic, setSelectedMckinseyTopic] = useState<string>('');
+  const [selectedMckinseyRole, setSelectedMckinseyRole] = useState<string>('');
+  const [selectedMckinseyFramework, setSelectedMckinseyFramework] = useState<string>('');
 
   // Social media post options state
   const [socialPostOptions, setSocialPostOptions] = useState<SocialPostOptions>({
@@ -8650,6 +8659,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         // Opportunities tab - alleen zichtbaar voor Silver, Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.SILVER || userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
             [{ id: 'opportunities', type: 'view', icon: OpportunitiesIcon, label: () => t('opportunities') }] : []),
+        // McKinsey tab - alleen zichtbaar voor Gold, Enterprise, Diamond
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'mckinsey', type: 'view', icon: OpportunitiesIcon, label: () => t('mckinsey') }] : []),
         // Email tab - alleen zichtbaar voor Gold, Enterprise, Diamond en bij email import
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) ? 
             [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : []),
@@ -8658,7 +8670,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', opportunities: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', opportunities: '', mckinsey: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -8776,6 +8788,15 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 return;
             }
             setActiveView('opportunities');
+        } else if (view === 'mckinsey') {
+            // Check if user has access to McKinsey feature
+            const effectiveTier = userSubscription;
+            if (!subscriptionService.isFeatureAvailable(effectiveTier, 'mckinsey')) {
+                displayToast(t('mckinseyAccessRestricted'), 'error');
+                setTimeout(() => setShowPricingPage(true), 2000);
+                return;
+            }
+            setActiveView('mckinsey');
         } else if (view === 'email') {
             setActiveView('email');
         } else if (view === 'mindmap') {
@@ -10336,7 +10357,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         setSelectedThinkingPartner({ name: data.partner.name });
                     }}
                     isGenerating={isGenerating}
-                    language={currentLanguage}
+                    language={outputLang}
                     userId={authState.user?.uid || ''}
                     userTier={userSubscription}
                     sessionId={sessionId}
@@ -10351,7 +10372,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     transcript={transcript}
                     summary={summary}
                     isGenerating={isGenerating}
-                    language={currentLanguage}
+                    language={outputLang}
                     userId={authState.user?.uid || ''}
                     userTier={userSubscription}
                     sessionId={sessionId}
@@ -10370,14 +10391,40 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     transcript={transcript}
                     summary={summary}
                     isGenerating={isGenerating}
-                    language={currentLanguage}
+                    language={outputLang}
                     userId={authState.user?.uid || ''}
                     userTier={userSubscription}
                     sessionId={sessionId}
                     onOpportunitiesComplete={(data) => {
                         // Handle opportunity completion
                         console.log('Opportunity completed:', data);
+                        setOpportunitiesData(data);
                     }}
+                />
+            );
+        }
+
+        if (activeView === 'mckinsey') {
+            return (
+                <McKinseyTab
+                    t={t}
+                    transcript={transcript}
+                    summary={summary}
+                    onAnalysisComplete={(data) => {
+                        // Update the analysis data for RecapHorizonPanel
+                        setMckinseyAnalysis(data);
+                        setSelectedMckinseyTopic(data.topic.title);
+                        setSelectedMckinseyRole(data.roleId);
+                        setSelectedMckinseyFramework(data.framework);
+                        
+                        // Show toast notification and trigger RecapHorizon update
+                        displayToast(t('mckinseyAnalysisComplete', 'McKinsey analyse voltooid! Beschikbaar in RecapHorizon.'), 'success');
+                    }}
+                    isGenerating={isGenerating}
+                    language={outputLang}
+                    userId={authState.user?.uid || ''}
+                    userTier={userSubscription}
+                    sessionId={sessionId}
                 />
             );
         }
@@ -10684,6 +10731,11 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                  thinkingPartnerAnalysis={thinkingPartnerAnalysis}
                  selectedThinkingPartnerTopic={selectedThinkingPartnerTopic}
                  selectedThinkingPartner={selectedThinkingPartner}
+                 opportunitiesData={opportunitiesData}
+                 mckinseyAnalysis={mckinseyAnalysis}
+                 selectedMckinseyTopic={selectedMckinseyTopic}
+                 selectedMckinseyRole={selectedMckinseyRole}
+                 selectedMckinseyFramework={selectedMckinseyFramework}
                  socialPostData={socialPostData}
                     socialPostXData={socialPostXData}
                  quizQuestions={quizQuestions}
@@ -10773,7 +10825,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         className="w-full sm:flex-1 min-w-0 max-w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer"
                     >
                         <option value="transcript">Transcript</option>
-                        <option value="analysis">Analyse Resultaten</option>
+                        <option value="analysis">{t('analysisResults')}</option>
                         <option value="actions">Acties & Export</option>
                     </select>
                 </div>
@@ -10797,7 +10849,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             }}
                             className="w-full sm:flex-1 min-w-0 max-w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none cursor-pointer text-sm sm:text-base min-h-[44px] touch-manipulation"
                         >
-                            <option value="">-- Selecteer een analyse --</option>
+                            <option value="">{t('selectAnalysis')}</option>
                             <option value="summary">{t('summary')}</option>
                             <option value="exec">{t('executiveSummary')}</option>
                             <option value="keyword">{t('keywordAnalysis')}</option>
@@ -10818,7 +10870,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 <option value="thinkingPartner">{t('thinkingPartner')}</option>
                             )}
                             {(userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
-                                <option value="opportunities">Kansen & Opportunities</option>
+                                <option value="opportunities">{t('opportunitiesAnalysis')}</option>
+                            )}
+                            {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
+                                <option value="mckinsey">{t('mckinsey')}</option>
                             )}
                             {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
                                 <option value="aiDiscussion">{t('aiDiscussion')}</option>

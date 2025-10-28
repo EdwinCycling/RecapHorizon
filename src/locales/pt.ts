@@ -2213,6 +2213,7 @@ notionIntegrationSecurityDesc: "Seus dados do Notion permanecem seguros porque s
   teachMeTryAgain: "Tentar novamente",
   teachMeRegenerateTopics: "Regenerar tópicos",
   teachMeSelectedTopic: "Tópico selecionado",
+  selectedTopic: "Tópico selecionado",
   teachMeGeneratingContent: "Gerando conteúdo...",
   
   // Learning methods
@@ -2419,17 +2420,45 @@ notionIntegrationSecurityDesc: "Seus dados do Notion permanecem seguros porque s
   "opportunities.role.international": "Especialista em Negócios Internacionais",
   "opportunities.role.internationalDesc": "Especializa-se em expansão global e mercados internacionais",
 
-  // Opportunity Types
-  "opportunities.type.market": "Oportunidades de Mercado",
-  "opportunities.type.marketDesc": "Novos mercados, segmentos de clientes e oportunidades de negócio",
-  "opportunities.type.innovation": "Oportunidades de Inovação",
-  "opportunities.type.innovationDesc": "Avanços tecnológicos e soluções inovadoras",
-  "opportunities.type.efficiency": "Oportunidades de Eficiência",
-  "opportunities.type.efficiencyDesc": "Otimização de processos e economia de custos",
-  "opportunities.type.partnership": "Oportunidades de Parceria",
-  "opportunities.type.partnershipDesc": "Alianças estratégicas e oportunidades de cooperação",
-  "opportunities.type.investment": "Oportunidades de Investimento",
-  "opportunities.type.investmentDesc": "Investimentos financeiros e oportunidades de crescimento",
+  // Opportunity Types - 14 comprehensive types
+  "opportunities.type.new-product-development": "Desenvolvimento de Novos Produtos ou Serviços",
+  "opportunities.type.new-product-developmentDesc": "Sugestões para desenvolver produtos, serviços ou funcionalidades completamente novos",
+  "opportunities.type.market-expansion": "Expansão de Mercado & Segmentação",
+  "opportunities.type.market-expansionDesc": "Oportunidades para entrar em novos mercados geográficos ou segmentos de clientes",
+  "opportunities.type.process-optimization": "Otimização de Processos & Eficiência",
+  "opportunities.type.process-optimizationDesc": "Sugestões para agilizar fluxos de trabalho e aumentar a eficiência operacional",
+  "opportunities.type.cost-reduction": "Redução de Custos",
+  "opportunities.type.cost-reductionDesc": "Identificação de áreas onde custos podem ser reduzidos sem comprometer a qualidade",
+  "opportunities.type.customer-engagement": "Engajamento do Cliente & Lealdade",
+  "opportunities.type.customer-engagementDesc": "Ideias para melhorar a interação com clientes e aumentar sua lealdade",
+  "opportunities.type.partnerships": "Parcerias & Alianças",
+  "opportunities.type.partnershipsDesc": "Colaborações potenciais com outras empresas ou parceiros estratégicos",
+  "opportunities.type.competitive-advantage": "Vantagem Competitiva",
+  "opportunities.type.competitive-advantageDesc": "Formas de se diferenciar da concorrência e criar propostas de valor únicas",
+  "opportunities.type.risk-prevention": "Prevenção & Mitigação de Riscos",
+  "opportunities.type.risk-preventionDesc": "Oportunidades para identificar riscos potenciais e estratégias para preveni-los",
+  "opportunities.type.knowledge-sharing": "Compartilhamento de Conhecimento Interno & Treinamento",
+  "opportunities.type.knowledge-sharingDesc": "Oportunidades para melhorar a transferência de conhecimento interno e habilidades dos funcionários",
+  "opportunities.type.revenue-growth": "Crescimento de Receita",
+  "opportunities.type.revenue-growthDesc": "Estratégias para aumentar receita através de otimização de preços ou novos modelos de negócio",
+  "opportunities.type.sustainability": "Sustentabilidade & Impacto Social",
+  "opportunities.type.sustainabilityDesc": "Oportunidades para integrar práticas sustentáveis e aumentar o impacto social",
+  "opportunities.type.employer-branding": "Marca Empregadora & Aquisição de Talentos",
+  "opportunities.type.employer-brandingDesc": "Oportunidades para tornar a empresa mais atrativa para os melhores talentos e melhorar a estratégia de recrutamento",
+  "opportunities.type.technology-adoption": "Adoção & Integração Tecnológica",
+  "opportunities.type.technology-adoptionDesc": "Possibilidades para implementar novas tecnologias ou integrar sistemas existentes",
+  "opportunities.type.ux-improvement": "Melhoria da Experiência do Usuário (UX)",
+  "opportunities.type.ux-improvementDesc": "Oportunidades para otimizar a usabilidade e experiência geral do app/serviço",
+  "opportunities.type.niche-targeting": "Segmentação de Nicho",
+  "opportunities.type.niche-targetingDesc": "Oportunidades para identificar e servir mercados de nicho específicos e mal atendidos",
+  "opportunities.type.financial-injection": "Injeção Financeira & Financiamento",
+  "opportunities.type.financial-injectionDesc": "Oportunidades para atrair investimentos, subsídios ou otimizar fluxos de capital",
+  "opportunities.type.internal-communication": "Melhoria da Comunicação Interna",
+  "opportunities.type.internal-communicationDesc": "Oportunidades para melhorar a clareza e eficácia da comunicação dentro da organização",
+  "opportunities.type.automation-ai": "Automação & Aplicação de IA",
+  "opportunities.type.automation-aiDesc": "Oportunidades para automatizar tarefas manuais e aproveitar a IA para tomada de decisões mais inteligente",
+  "opportunities.type.reputation-management": "Gestão de Reputação",
+  "opportunities.type.reputation-managementDesc": "Oportunidades para melhorar a percepção pública, promover mensagens positivas e gerenciar críticas",
 
   // AI Discussion Phase translations
   "aiDiscussion.phase.introduction": "Introdução",
@@ -2520,5 +2549,90 @@ notionIntegrationSecurityDesc: "Seus dados do Notion permanecem seguros porque s
   "promptTemplate.face-decision": "Este é o contexto com o qual estou trabalhando: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Que decisão estou evitando ou complicando demais? Reflita sobre onde estou hesitando ou arrastando as coisas.",
   "promptTemplate.surface-question": "Esta é a situação sobre a qual estou pensando: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Ajude-me a trazer à tona a pergunta estratégica 'real' subjacente a isso. O que eu deveria realmente estar me perguntando?",
   "promptTemplate.spot-risks": "Esta é a estratégia que planejo implementar: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Oriente-me sobre como isso poderia dar errado na execução do mundo real. Pense em recursos, timing, alinhamento da equipe, dependências, etc.",
-  "promptTemplate.reverse-engineer": "Isto é o que estou pensando, e parece certo para mim: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Você pode me ajudar a desvendar 'por que' isso poderia ser um movimento inteligente - mesmo que eu ainda não consiga explicá-lo completamente?"
+  "promptTemplate.reverse-engineer": "Isto é o que estou pensando, e parece certo para mim: {TOPIC_TITLE} - {TOPIC_DESCRIPTION}. Você pode me ajudar a desvendar 'por que' isso poderia ser um movimento inteligente - mesmo que eu ainda não consiga explicá-lo completamente?",
+  
+  chooseModeLabel: "Escolher modo:",
+  chooseAnalysisLabel: "Escolher análise:",
+
+  // RecapHorizon panel status
+  noItems: "(nenhum item)",
+  selectItems: "(selecionar itens)",
+  itemsSelected: "({count} selecionados)",
+
+  // Analysis mode options
+  analysisResults: "Resultados da análise",
+  selectAnalysis: "-- Selecionar uma análise --",
+  opportunitiesAnalysis: "Oportunidades & Possibilidades",
+
+  // McKinsey Analysis
+  mckinseyAccessRestricted: "A análise McKinsey está disponível apenas para usuários Gold, Enterprise e Diamond.",
+  mckinseyFeatureUpgrade: "Atualize seu plano para acessar a análise McKinsey",
+  mckinseyGeneratingTopics: "Gerando tópicos de análise McKinsey...",
+  mckinseySelectTopic: "Selecione um tópico para analisar",
+  mckinseySelectRole: "Selecione seu papel de consultoria",
+  mckinseySelectFramework: "Selecione uma estrutura de análise",
+  mckinseyGeneratingAnalysis: "Gerando análise McKinsey...",
+  mckinseyAnalysisComplete: "Análise McKinsey completa",
+  
+  // McKinsey Roles
+  mckinseyRoleStrategyConsultant: "Consultor de Estratégia",
+  mckinseyRoleBusinessAnalyst: "Analista de Negócios",
+  mckinseyRoleProjectManager: "Gerente de Projeto",
+  mckinseyRoleExecutive: "Executivo",
+  
+  // McKinsey Frameworks
+  mckinseyFramework3C: "Análise 3C (Cliente, Concorrência, Companhia)",
+  mckinseyFramework7S: "Modelo 7S da McKinsey",
+  mckinseyFrameworkCustomerLifecycle: "Análise do Ciclo de Vida do Cliente",
+  mckinseyFrameworkValueChain: "Análise da Cadeia de Valor",
+  mckinseyFrameworkForceField: "Análise de Campo de Forças",
+  mckinseyFrameworkCoreCompetencies: "Análise de Competências Centrais",
+  mckinseyFrameworkScenarioPlanning: "Resumo de Planejamento de Cenários",
+  mckinseyFrameworkPESTEL: "Análise PESTEL",
+  mckinseyFrameworkPortersFiveForces: "Análise de Forças Competitivas (Five Forces de Porter)",
+  mckinseyFrameworkAnsoffMatrix: "Análise de Estratégias de Crescimento (Matriz de Ansoff)",
+  mckinseyFrameworkMAIntegration: "Scan de Integração M&A",
+  mckinseyFrameworkOperationalBenchmarking: "Análise de Benchmarking Operacional",
+  mckinseyFrameworkDigitalTransformation: "Scorecard de Prontidão para Transformação Digital",
+  mckinseyFrameworkPortfolioManagement: "Análise de Gestão de Portfólio (Crescimento/Retorno)",
+  mckinseyFrameworkCustomerSegmentation: "Análise de Segmentação de Clientes",
+  mckinseyFrameworkOrganizationalStructure: "Scan de Estrutura Organizacional e Governança",
+  
+  // McKinsey Framework Descriptions
+  mckinseyFramework3CDesc: "Analisa a estratégia por três pilares: Companhia (forças internas e estratégia), Clientes (segmentos, necessidades e valor) e Concorrentes (posicionamento e vantagens).",
+  mckinseyFramework7SDesc: "Avalia a eficácia organizacional nas 7S: Estratégia, Estrutura, Sistemas, Valores Compartilhados, Estilo, Equipe e Competências para identificar desalinhamentos.",
+  mckinseyFrameworkCustomerLifecycleDesc: "Identifica e analisa as diferentes etapas que um cliente percorre, desde a conscientização até a lealdade, incluindo oportunidades e pontos de dor.",
+  mckinseyFrameworkValueChainDesc: "Desconstrói as atividades primárias e de apoio que agregam valor a um produto ou serviço, identificando áreas para otimização.",
+  mckinseyFrameworkForceFieldDesc: "Analisa uma mudança desejada mapeando as forças impulsoras (que apoiam a mudança) e forças restritivas (que se opõem à mudança).",
+  mckinseyFrameworkCoreCompetenciesDesc: "Identifica as capacidades e conhecimentos únicos nos quais a empresa se destaca e que proporcionam uma vantagem competitiva sustentável.",
+  mckinseyFrameworkScenarioPlanningDesc: "Resume os possíveis cenários futuros discutidos, incluindo os principais fatores impulsores e suas implicações potenciais.",
+  mckinseyFrameworkPESTELDesc: "Analisa o macro-ambiente externo a partir de perspectivas Políticas, Econômicas, Socioculturais, Tecnológicas, Ecológicas e Legais.",
+  mckinseyFrameworkPortersFiveForcesDesc: "Analisa a intensidade competitiva de uma indústria usando cinco forças: ameaça de novos entrantes, ameaça de substitutos, poder de barganha dos compradores, poder de barganha dos fornecedores, e intensidade da rivalidade.",
+  mckinseyFrameworkAnsoffMatrixDesc: "Avalia as estratégias de crescimento discutidas usando combinações Produto/Mercado: Penetração de Mercado, Desenvolvimento de Mercado, Desenvolvimento de Produto e Diversificação.",
+  mckinseyFrameworkMAIntegrationDesc: "Avalia a prontidão para integração pós-fusão, identificando sinergias, riscos culturais e desafios operacionais em processos de fusões e aquisições.",
+  mckinseyFrameworkOperationalBenchmarkingDesc: "Compara métricas operacionais com benchmarks do setor para identificar oportunidades de melhoria de eficiência e redução de custos.",
+  mckinseyFrameworkDigitalTransformationDesc: "Avalia a maturidade digital da organização e identifica lacunas em capacidades tecnológicas, cultura digital e prontidão para transformação.",
+  mckinseyFrameworkPortfolioManagementDesc: "Analisa o portfólio de negócios ou produtos com base no potencial de crescimento e retorno, priorizando investimentos estratégicos.",
+  mckinseyFrameworkCustomerSegmentationDesc: "Divide a base de clientes em grupos distintos com necessidades e comportamentos semelhantes para estratégias de marketing direcionadas.",
+  mckinseyFrameworkOrganizationalStructureDesc: "Avalia a eficácia da estrutura organizacional, governança e processos de tomada de decisão para otimizar a agilidade organizacional.",
+  mckinseyTopicDependencyTitle: "Importante: Análise dependente do tópico",
+  mckinseyTopicDependencyDesc: "Os relatórios McKinsey dependem fortemente do tópico escolhido. A qualidade e relevância da análise depende de quão específico e claramente o tópico selecionado está definido.",
+  
+  // McKinsey Fallback Topics
+  mckinseyFallbackTopic1: "Otimização de Estratégia de Negócios",
+  mckinseyFallbackTopic2: "Análise de Eficiência Operacional",
+  mckinseyFallbackTopic3: "Avaliação de Oportunidades de Mercado",
+  mckinseyFallbackDescription: "Análise estratégica baseada no conteúdo da sua sessão",
+  
+  // McKinsey Error Messages
+  mckinseyErrorGeneral: "Erro ao gerar análise McKinsey. Por favor, tente novamente.",
+  mckinseyErrorTopics: "Erro ao gerar tópicos. Usando tópicos padrão.",
+  
+  // McKinsey Actions
+  mckinseyDownloadText: "Baixar como Texto",
+  mckinseyDownloadPDF: "Baixar como PDF",
+  mckinseyEmail: "Enviar por Email",
+  mckinseyCopy: "Copiar Análise",
+  mckinseyReset: "Reiniciar Análise",
+  mckinseyRegenerate: "Regenerar Análise"
 };

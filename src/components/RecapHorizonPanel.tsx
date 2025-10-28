@@ -19,7 +19,7 @@ import EmailCompositionTab, { EmailData } from './EmailCompositionTab';
 
 
 
-type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email' | 'socialPost' | 'socialPostX' | 'teachMe' | 'thinkingPartner' | 'opportunities';
+type RecapItemType = 'summary' | 'keywords' | 'sentiment' | 'faq' | 'learnings' | 'followup' | 'chat' | 'mindmap' | 'exec' | 'quiz' | 'storytelling' | 'businessCase' | 'blog' | 'explain' | 'email' | 'socialPost' | 'socialPostX' | 'teachMe' | 'thinkingPartner' | 'opportunities' | 'mckinsey';
 
 interface RecapItem {
 	id: string;
@@ -54,6 +54,10 @@ socialPostXData?: SocialPostData | null;
 	selectedThinkingPartnerTopic?: string;
 	selectedThinkingPartner?: { name: string };
 	opportunitiesData?: OpportunityAnalysisData | null;
+	mckinseyAnalysis?: string;
+	selectedMckinseyTopic?: string;
+	selectedMckinseyRole?: string;
+	selectedMckinseyFramework?: string;
 	quizQuestions?: QuizQuestion[] | null;
 	quizIncludeAnswers?: boolean;
 	outputLanguage?: string; // Output language for BCP47 display
@@ -129,6 +133,10 @@ export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	selectedThinkingPartnerTopic,
 	selectedThinkingPartner,
 	opportunitiesData,
+	mckinseyAnalysis,
+	selectedMckinseyTopic,
+	selectedMckinseyRole,
+	selectedMckinseyFramework,
 	quizQuestions,
 	quizIncludeAnswers,
 	outputLanguage,
@@ -146,7 +154,10 @@ export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	startStamp,
 }) => {
 	const [isOpen, setIsOpen] = useState<boolean>(true);
-const [quizMenuOpen, setQuizMenuOpen] = useState<boolean>(false);
+	const [quizMenuOpen, setQuizMenuOpen] = useState<boolean>(false);
+	const [thinkingPartnerMenuOpen, setThinkingPartnerMenuOpen] = useState<boolean>(false);
+	const [teachMeMenuOpen, setTeachMeMenuOpen] = useState<boolean>(false);
+	const [opportunitiesMenuOpen, setOpportunitiesMenuOpen] = useState<boolean>(false);
 	const [persistentItems, setPersistentItems] = useState<RecapItem[]>([]);
 	const [resultsCache, setResultsCache] = useState<{ [key in RecapItemType]?: string }>({});
 
@@ -233,6 +244,7 @@ useEffect(() => {
 		) {
 		  availableContent.add('socialPostX');
 		}
+		if (!!mckinseyAnalysis && typeof mckinseyAnalysis === 'string' && mckinseyAnalysis.trim().length > 0) availableContent.add('mckinsey');
 
 		// Vind nieuwe content die nog niet is verwerkt
 		const newContent = Array.from(availableContent).filter(type => !processedContentRef.current.has(type));
@@ -263,6 +275,7 @@ useEffect(() => {
 					case 'email': title = t('emailFormTitle', 'E-mail Samenstelling'); break;
 					case 'socialPost': title = t('socialPost', 'Social Post'); break;
           case 'socialPostX': title = t('socialPostX', 'X / BlueSky post'); break;
+					case 'mckinsey': title = t('mckinseyAnalysisComplete'); break;
 				}
 				itemsToAdd.push({ id: type, type: type as RecapItemType, title, enabled: false });
 			});
@@ -272,7 +285,7 @@ useEffect(() => {
 			// Update welke content we hebben verwerkt
 			newContent.forEach(type => processedContentRef.current.add(type));
 		}
-	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, opportunitiesData, socialPostData]);
+	}, [summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, quizQuestions, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, opportunitiesData, mckinseyAnalysis, socialPostData]);
 
 	const hasAnyItem = persistentItems.length > 0;
 	const numEnabled = persistentItems.filter(i => i.enabled).length;
@@ -477,8 +490,24 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 				}
 				return { title: `${t('socialPostX')}`, text: content };
 			}
+			case 'mckinsey': {
+				if (!mckinseyAnalysis || typeof mckinseyAnalysis !== 'string') return { title: `${t('mckinseyAnalysisComplete')}`, text: '' };
+				const parts: string[] = [];
+				if (selectedMckinseyTopic) {
+					parts.push(`${t('mckinseySelectTopic')}: ${selectedMckinseyTopic}`);
+				}
+				if (selectedMckinseyRole) {
+					parts.push(`${t('mckinseySelectRole')}: ${selectedMckinseyRole}`);
+				}
+				if (selectedMckinseyFramework) {
+					parts.push(`${t('mckinseySelectFramework')}: ${selectedMckinseyFramework}`);
+				}
+				parts.push('');
+				parts.push(mckinseyAnalysis);
+				return { title: `${t('mckinseyAnalysisComplete')}`, text: parts.join('\n') };
+			}
 		}
-	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, selectedThinkingPartnerTopic, selectedThinkingPartner, opportunitiesData, socialPostData, quizQuestions, quizIncludeAnswers]);
+	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, selectedThinkingPartnerTopic, selectedThinkingPartner, opportunitiesData, socialPostData, socialPostXData, quizQuestions, quizIncludeAnswers, mckinseyAnalysis, selectedMckinseyTopic, selectedMckinseyRole, selectedMckinseyFramework]);
 
 	const enabledItems = persistentItems.filter(i => i.enabled);
 
@@ -797,7 +826,7 @@ To send via email:
 					<span className="text-base font-medium text-slate-800 dark:text-slate-100">
 						RecapHorizon{outputLanguage ? ` (${getBcp47Code(outputLanguage)})` : ''}
 					</span>
-					<span className="text-xs text-slate-500 dark:text-slate-400">{!hasAnyItem ? '(geen items)' : numEnabled === 0 ? '(selecteer items)' : `(${numEnabled} geselecteerd)`}</span>
+					<span className="text-xs text-slate-500 dark:text-slate-400">{!hasAnyItem ? t('noItems') : numEnabled === 0 ? t('selectItems') : t('itemsSelected', { count: numEnabled })}</span>
 				</div>
 				<ChevronIcon className="w-5 h-5 text-slate-600 dark:text-slate-300" direction={isOpen ? 'up' : 'down'} />
 			</button>
@@ -819,16 +848,60 @@ To send via email:
 											/>
 											<span className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.title}</span>
 										</div>
-										{item.type === 'quiz' ? (
+										{['quiz', 'thinkingPartner', 'teachMe', 'opportunities'].includes(item.type) ? (
 											<div className="relative flex items-center gap-1">
-												<button onClick={() => setQuizMenuOpen(prev => !prev)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300">
+												<button 
+													onClick={() => {
+														if (item.type === 'quiz') setQuizMenuOpen(prev => !prev);
+														else if (item.type === 'thinkingPartner') setThinkingPartnerMenuOpen(prev => !prev);
+														else if (item.type === 'teachMe') setTeachMeMenuOpen(prev => !prev);
+														else if (item.type === 'opportunities') setOpportunitiesMenuOpen(prev => !prev);
+													}} 
+													className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+												>
 													<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
 												</button>
-												{quizMenuOpen && (
+												{((item.type === 'quiz' && quizMenuOpen) || 
+												  (item.type === 'thinkingPartner' && thinkingPartnerMenuOpen) ||
+												  (item.type === 'teachMe' && teachMeMenuOpen) ||
+												  (item.type === 'opportunities' && opportunitiesMenuOpen)) && (
 													<div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg z-10">
-														<button onClick={() => { handleExportText(); setQuizMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700">{t('exportToText')}</button>
-														<button onClick={() => { handleExportPdf(); setQuizMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700">{t('exportToPdf')}</button>
-														<button onClick={() => { handleMailComposed(); setQuizMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700">{t('copyForEmail')}</button>
+														<button 
+															onClick={() => { 
+																handleExportText(); 
+																setQuizMenuOpen(false);
+																setThinkingPartnerMenuOpen(false);
+																setTeachMeMenuOpen(false);
+																setOpportunitiesMenuOpen(false);
+															}} 
+															className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
+														>
+															{t('exportToText')}
+														</button>
+														<button 
+															onClick={() => { 
+																handleExportPdf(); 
+																setQuizMenuOpen(false);
+																setThinkingPartnerMenuOpen(false);
+																setTeachMeMenuOpen(false);
+																setOpportunitiesMenuOpen(false);
+															}} 
+															className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
+														>
+															{t('exportToPdf')}
+														</button>
+														<button 
+															onClick={() => { 
+																handleMailComposed(); 
+																setQuizMenuOpen(false);
+																setThinkingPartnerMenuOpen(false);
+																setTeachMeMenuOpen(false);
+																setOpportunitiesMenuOpen(false);
+															}} 
+															className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
+														>
+															{t('copyForEmail')}
+														</button>
 													</div>
 												)}
 											</div>

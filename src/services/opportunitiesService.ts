@@ -229,47 +229,159 @@ export const OPPORTUNITY_ROLES: OpportunityRole[] = [
   }
 ];
 
-// Static data: Opportunity Types Configuration (5 types as specified in PRD)
+// Static data: Opportunity Types Configuration (14 comprehensive types)
 export const OPPORTUNITY_TYPES: OpportunityType[] = [
   {
-    id: 'swot-analysis',
-    name: 'SWOT-Analyse',
-    nameEn: 'SWOT Analysis',
-    description: 'Een overzicht van de Sterkten, Zwakten, Kansen en Bedreigingen',
-    descriptionEn: 'An overview of the Strengths, Weaknesses, Opportunities, and Threats',
-    promptInstructions: 'Identificeer interne positieve (sterkten) en negatieve (zwakten) aspecten, evenals externe kansen en bedreigingen. Structureer de analyse in vier duidelijke categorieën met concrete voorbeelden en actionable inzichten.'
+    id: 'new-product-development',
+    name: 'Nieuwe Product- of Dienstontwikkeling',
+    nameEn: 'New Product or Service Development',
+    description: 'Suggesties voor geheel nieuwe producten, diensten of functies om te ontwikkelen.',
+    descriptionEn: 'Suggestions for entirely new products, services, or features to develop.',
+    promptInstructions: 'Genereer ideeën voor innovatieve producten/diensten gebaseerd op onvervulde behoeften of nieuwe mogelijkheden uit de transcriptie.'
   },
   {
-    id: 'risk-analysis',
-    name: 'Risicoanalyse',
-    nameEn: 'Risk Analysis',
-    description: 'Identificatie en evaluatie van potentiële risico\'s en hun impact',
-    descriptionEn: 'Identification and evaluation of potential risks and their impact',
-    promptInstructions: 'Identificeer besproken risico\'s, hun mogelijke gevolgen en waarschijnlijkheid. Categoriseer risico\'s naar type (operationeel, financieel, strategisch) en stel mitigatie strategieën voor.'
+    id: 'market-expansion',
+    name: 'Marktuitbreiding & Segmentatie',
+    nameEn: 'Market Expansion & Segmentation',
+    description: 'Kansen om nieuwe geografische markten of klantsegmenten te betreden.',
+    descriptionEn: 'Opportunities to enter new geographical markets or customer segments.',
+    promptInstructions: 'Identificeer potentiële nieuwe markten of klantgroepen uit de transcriptie en hoe deze te benaderen.'
   },
   {
-    id: 'decision-matrix',
-    name: 'Besluitvormingsmatrix',
-    nameEn: 'Decision Matrix',
-    description: 'Gestructureerde evaluatie van opties en beslissingscriteria',
-    descriptionEn: 'Structured evaluation of options and decision criteria',
-    promptInstructions: 'Creëer een besluitvormingsmatrix met relevante criteria, weging van factoren en evaluatie van verschillende opties. Geef een duidelijke aanbeveling gebaseerd op de analyse.'
+    id: 'process-optimization',
+    name: 'Procesoptimalisatie & Efficiëntie',
+    nameEn: 'Process Optimization & Efficiency',
+    description: 'Suggesties voor het stroomlijnen van workflows en het verhogen van de operationele efficiëntie.',
+    descriptionEn: 'Suggestions for streamlining workflows and increasing operational efficiency.',
+    promptInstructions: 'Wijzen op inefficiënties of knelpunten in processen en stel verbeteringen voor die leiden tot efficiëntie.'
   },
   {
-    id: 'action-plan',
-    name: 'Actiepunten & Verantwoordelijkheden',
-    nameEn: 'Action Points & Responsibilities',
-    description: 'Concrete actiestappen met eigenaarschap en deadlines',
-    descriptionEn: 'Concrete action steps with ownership and deadlines',
-    promptInstructions: 'Definieer specifieke, meetbare actiepunten met duidelijke eigenaren, deadlines en success criteria. Prioriteer acties en identificeer afhankelijkheden.'
+    id: 'cost-reduction',
+    name: 'Kostenbesparing',
+    nameEn: 'Cost Reduction',
+    description: 'Identificatie van gebieden waar kosten gereduceerd kunnen worden zonder kwaliteitsverlies.',
+    descriptionEn: 'Identification of areas where costs can be reduced without compromising quality.',
+    promptInstructions: 'Zoek naar mogelijkheden om uitgaven te verminderen, middelen efficiënter in te zetten of verspilling te elimineren.'
   },
   {
-    id: 'progress-report',
-    name: 'Voortgangsrapportage',
-    nameEn: 'Progress Report',
-    description: 'Status update met KPI\'s en volgende stappen',
-    descriptionEn: 'Status update with KPIs and next steps',
-    promptInstructions: 'Analyseer de huidige voortgang, identificeer KPI\'s en metrics, highlight successen en uitdagingen, en definieer concrete volgende stappen.'
+    id: 'customer-engagement',
+    name: 'Klantbetrokkenheid & Loyaliteit',
+    nameEn: 'Customer Engagement & Loyalty',
+    description: 'Ideeën om de interactie met klanten te verbeteren en hun loyaliteit te verhogen.',
+    descriptionEn: 'Ideas to improve customer interaction and increase their loyalty.',
+    promptInstructions: 'Genereer manieren om de klantrelatie te versterken, tevredenheid te verhogen en klantverloop te verminderen.'
+  },
+  {
+    id: 'partnerships',
+    name: 'Partnerschap & Allianties',
+    nameEn: 'Partnership & Alliances',
+    description: 'Potentiële samenwerkingen met andere bedrijven of strategische partners.',
+    descriptionEn: 'Potential collaborations with other companies or strategic partners.',
+    promptInstructions: 'Identificeer potentiële partners en de voordelen van gezamenlijke initiatieven die uit de transcriptie naar voren komen.'
+  },
+  {
+    id: 'competitive-advantage',
+    name: 'Concurrentievoordeel',
+    nameEn: 'Competitive Advantage',
+    description: 'Manieren om zich te onderscheiden van de concurrentie en unieke waardeproposities te creëren.',
+    descriptionEn: 'Ways to differentiate from competitors and create unique value propositions.',
+    promptInstructions: 'Stel voor hoe het bedrijf zich uniek kan positioneren of onderscheidende kenmerken kan ontwikkelen ten opzichte van concurrenten.'
+  },
+  {
+    id: 'risk-prevention',
+    name: 'Risicopreventie & Beperking',
+    nameEn: 'Risk Prevention & Mitigation',
+    description: 'Kansen om potentiële risico\'s te identificeren en strategieën om deze te voorkomen.',
+    descriptionEn: 'Opportunities to identify potential risks and strategies to prevent them.',
+    promptInstructions: 'Analyseer de transcriptie op potentiële problemen, bedreigingen of valkuilen en stel proactieve oplossingen voor.'
+  },
+  {
+    id: 'knowledge-sharing',
+    name: 'Interne Kennisdeling & Training',
+    nameEn: 'Internal Knowledge Sharing & Training',
+    description: 'Kansen om de kennisoverdracht en de vaardigheden van medewerkers te verbeteren.',
+    descriptionEn: 'Opportunities to improve internal knowledge transfer and employee skills.',
+    promptInstructions: 'Genereer ideeën voor het verbeteren van interne communicatie, leerprogramma\'s of kennismanagement.'
+  },
+  {
+    id: 'revenue-growth',
+    name: 'Revenue Groei',
+    nameEn: 'Revenue Growth',
+    description: 'Strategieën om de omzet te verhogen door prijsoptimalisatie of nieuwe verdienmodellen.',
+    descriptionEn: 'Strategies to increase revenue through pricing optimization or new business models.',
+    promptInstructions: 'Stel manieren voor om de inkomsten te verhogen, zoals prijsstrategieën, nieuwe verkoopkanalen of productbundels.'
+  },
+  {
+    id: 'sustainability',
+    name: 'Duurzaamheid & Maatschappelijke Impact',
+    nameEn: 'Sustainability & Social Impact',
+    description: 'Kansen om duurzame praktijken te integreren en de maatschappelijke impact te vergroten.',
+    descriptionEn: 'Opportunities to integrate sustainable practices and increase social impact.',
+    promptInstructions: 'Identificeer mogelijkheden om de ecologische of sociale voetafdruk te verbeteren of maatschappelijke waarde te creëren.'
+  },
+  {
+    id: 'employer-branding',
+    name: 'Employer Branding & Talent Acquisition',
+    nameEn: 'Employer Branding & Talent Acquisition',
+    description: 'Kansen om het bedrijf aantrekkelijker te maken voor toptalent en de wervingsstrategie te verbeteren.',
+    descriptionEn: 'Opportunities to make the company more attractive to top talent and improve recruitment strategy.',
+    promptInstructions: 'Genereer ideeën om het imago als werkgever te verbeteren, talent aan te trekken en het wervingsproces te optimaliseren.'
+  },
+  {
+    id: 'technology-adoption',
+    name: 'Technologische Adoptie & Integratie',
+    nameEn: 'Technology Adoption & Integration',
+    description: 'Mogelijkheden om nieuwe technologieën te implementeren of bestaande systemen te integreren.',
+    descriptionEn: 'Possibilities to implement new technologies or integrate existing systems.',
+    promptInstructions: 'Stel voor hoe technologie kan worden ingezet om processen te verbeteren, nieuwe diensten te leveren of de operatie te stroomlijnen.'
+  },
+  {
+    id: 'ux-improvement',
+    name: 'Gebruikerservaring (UX) Verbetering',
+    nameEn: 'User Experience (UX) Improvement',
+    description: 'Kansen om de gebruiksvriendelijkheid en de algehele ervaring van de app/service te optimaliseren.',
+    descriptionEn: 'Opportunities to optimize the usability and overall experience of the app/service.',
+    promptInstructions: 'Identificeer pijnpunten in de gebruikersreis en stel verbeteringen voor om de tevredenheid en het gebruiksgemak te verhogen.'
+  },
+  {
+    id: 'niche-targeting',
+    name: 'Niche Targeting',
+    nameEn: 'Niche Targeting',
+    description: 'Kansen om specifieke, onderbediende nichemarkten te identificeren en te bedienen.',
+    descriptionEn: 'Opportunities to identify and serve specific, underserved niche markets.',
+    promptInstructions: 'Ontdek kleine, gespecialiseerde segmenten die nog niet optimaal worden bediend en stel een aanpak voor.'
+  },
+  {
+    id: 'financial-injection',
+    name: 'Financiële Injectie & Funding',
+    nameEn: 'Financial Injection & Funding',
+    description: 'Mogelijkheden voor het aantrekken van investeringen, subsidies of optimalisatie van kapitaalstromen.',
+    descriptionEn: 'Opportunities for attracting investments, grants, or optimizing capital flows.',
+    promptInstructions: 'Identificeer routes voor financiering of manieren om de financiële slagkracht te vergroten.'
+  },
+  {
+    id: 'internal-communication',
+    name: 'Interne Communicatie Verbetering',
+    nameEn: 'Internal Communication Improvement',
+    description: 'Kansen om de helderheid en effectiviteit van de communicatie binnen de organisatie te vergroten.',
+    descriptionEn: 'Opportunities to enhance the clarity and effectiveness of communication within the organization.',
+    promptInstructions: 'Genereer ideeën om de stroom van informatie binnen het bedrijf te verbeteren, de cohesie te versterken en misverstanden te voorkomen.'
+  },
+  {
+    id: 'automation-ai',
+    name: 'Automatisering & AI-Toepassing',
+    nameEn: 'Automation & AI Application',
+    description: 'Kansen om handmatige taken te automatiseren en AI in te zetten voor slimmere besluitvorming.',
+    descriptionEn: 'Opportunities to automate manual tasks and leverage AI for smarter decision-making.',
+    promptInstructions: 'Stel processen of taken voor die geautomatiseerd kunnen worden of waar AI toegevoegde waarde kan leveren.'
+  },
+  {
+    id: 'reputation-management',
+    name: 'Reputatiemanagement',
+    nameEn: 'Reputation Management',
+    description: 'Kansen om de publieke perceptie te verbeteren, positieve berichtgeving te stimuleren en kritiek te beheren.',
+    descriptionEn: 'Opportunities to improve public perception, foster positive messaging, and manage criticism.',
+    promptInstructions: 'Genereer strategieën om het imago van het bedrijf te versterken, de online aanwezigheid te optimaliseren en proactief te reageren op publieke sentimenten.'
   }
 ];
 

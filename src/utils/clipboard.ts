@@ -26,7 +26,12 @@ export async function copyToClipboard(text: string): Promise<void> {
 }
 
 // Utility: displayToast
-export function displayToast(message: string, type: 'success' | 'error' = 'success'): void {
-  // Placeholder: Replace with your toast implementation
-  alert(t ? t('clipboardToastMessage', { type: type.toUpperCase(), message }) : `${type.toUpperCase()}: ${message}`);
-}
+export const displayToast = async (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  try {
+    const { showToast } = await import('./toastNotification');
+    showToast(message, type);
+  } catch (error) {
+    // Fallback to alert if toast system fails
+    console.warn('Toast system failed, using console fallback:', message);
+  }
+};

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck, FiDownload, FiArrowRight } from 'react-icons/fi';
+import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck, FiDownload, FiArrowRight, FiMoreVertical, FiMail } from 'react-icons/fi';
 import { 
   OpportunityTopic, 
   OpportunityRole, 
@@ -68,6 +68,9 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     error: undefined,
     isGenerating: false
   });
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Shared topics cache key (same as ThinkingPartnerTab for cross-tab sharing)
   const getTopicsCacheKey = useCallback(() => {
@@ -328,6 +331,97 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     }
   };
 
+  const downloadAllAsText = () => {
+    if (state.results.length === 0) return;
+    
+    const content = state.results.map(result => 
+      `=== ${result.type} - ${result.role} ===\n${result.topic}\n\n${result.content}\n\n`
+    ).join('\n'.repeat(3));
+    
+    const element = document.createElement('a');
+    const file = new Blob([content], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `kansen-analyse-${new Date().getTime()}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    displayToast(t('opportunitiesDownloaded', 'Alle opportunities gedownload als tekstbestand'), 'success');
+  };
+
+  const downloadAllAsPDF = async () => {
+    if (state.results.length === 0) return;
+    
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      
+      doc.setFontSize(16);
+      doc.text('Kansen Analyse', 20, 20);
+      
+      if (state.selectedTopics.length > 0 && state.selectedRoles.length > 0) {
+        doc.setFontSize(12);
+        doc.text(`Onderwerpen: ${state.selectedTopics.map(t => t.title).join(', ')}`, 20, 30);
+        doc.text(`Rollen: ${state.selectedRoles.map(r => r.name).join(', ')}`, 20, 40);
+        doc.text(`Datum: ${new Date().toLocaleDateString('nl-NL')}`, 20, 50);
+      }
+      
+      let yPosition = 70;
+      doc.setFontSize(10);
+      
+      state.results.forEach((result, index) => {
+        if (index > 0 && yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        doc.setFontSize(12);
+        doc.text(`${result.type} - ${result.role}`, 20, yPosition);
+        yPosition += 8;
+        
+        doc.setFontSize(10);
+        doc.text(`Onderwerp: ${result.topic}`, 20, yPosition);
+        yPosition += 8;
+        
+        const lines = doc.splitTextToSize(result.content, 170);
+        doc.text(lines, 20, yPosition);
+        yPosition += lines.length * 6 + 12;
+      });
+      
+      doc.save(`kansen-analyse-${new Date().getTime()}.pdf`);
+      displayToast(t('opportunitiesDownloadedPDF', 'Alle opportunities gedownload als PDF'), 'success');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      displayToast(t('pdfGenerationError', 'PDF genereren mislukt'), 'error');
+    }
+  };
+
+  const emailAllOpportunities = () => {
+    if (state.results.length === 0) return;
+    
+    const content = state.results.map(result => 
+      `=== ${result.type} - ${result.role} ===\n${result.topic}\n\n${result.content}\n\n`
+    ).join('\n'.repeat(3));
+    
+    const subject = encodeURIComponent('Kansen Analyse');
+    const body = encodeURIComponent(`Kansen Analyse\n\n${content}`);
+    window.open(`mailto:?subject=${subject}&body=${body}`);
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const getCategoryColor = (category: OpportunityRole['category']) => {
     switch (category) {
       case 'analysis': return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200';
@@ -502,7 +596,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           {t('selectOpportunityRoles', 'Kies AI-rollen')}
         </h3>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          {t('selectOpportunityRolesDesc', 'Selecteer 1-3 AI-rollen voor verschillende perspectieven')}
+          {t('selectOpportunityRolesDesc', 'Selecteer 1 rol voor een specifiek perspectief')}
         </p>
         <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-3 mb-6">
           <p className="text-sm text-cyan-800 dark:text-cyan-200">
@@ -533,10 +627,10 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h4 className="font-semibold mb-2">
-                    {t(`opportunityRole.${role.id}`, role.name)}
+                    {t(`opportunities.role.${role.id}`, role.name)}
                   </h4>
                   <p className="text-sm opacity-90">
-                    {t(`opportunityRole.${role.id}Desc`, role.description)}
+                    {t(`opportunities.role.${role.id}Desc`, role.description)}
                   </p>
                 </div>
                 {isSelected && (
@@ -677,42 +771,81 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           >
             {t('startNewOpportunityAnalysis', 'Nieuwe analyse starten')}
           </button>
+          <div className="relative" ref={menuRef}>
+            <button
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <FiMoreVertical size={16} />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg z-10">
+                <button
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                  onClick={() => {
+                    downloadAllAsText();
+                    setMenuOpen(false);
+                  }}
+                >
+                  <FiDownload size={16} />
+                  {t('downloadAsText', 'Downloaden als tekst')}
+                </button>
+                <button
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                  onClick={() => {
+                    downloadAllAsPDF();
+                    setMenuOpen(false);
+                  }}
+                >
+                  <FiDownload size={16} />
+                  {t('downloadAsPDF', 'Downloaden als PDF')}
+                </button>
+                <button
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                  onClick={() => {
+                    emailAllOpportunities();
+                    setMenuOpen(false);
+                  }}
+                >
+                  <FiMail size={16} />
+                  {t('email', 'E-mailen')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      <div className="space-y-6">
-        {state.results.map((result, index) => (
-          <div key={result.id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <FiZap size={24} color="#0891b2" />
-                <div>
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-200">
-                    {result.type} - {result.role}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {result.topic}
-                  </p>
-                </div>
+      {state.results.map((result, index) => (
+        <div key={result.id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <FiZap size={24} color="#0891b2" />
+              <div>
+                <h3 className="font-semibold text-slate-800 dark:text-slate-200">
+                  {result.type} - {result.role}
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {result.topic}
+                </p>
               </div>
-              <button
-                onClick={() => copyToClipboard(result.content)}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
-              >
-                <FiCopy size={16} />
-                {t('copyOpportunity', 'Kopiëren')}
-              </button>
             </div>
-
-            <div className="prose prose-slate dark:prose-invert max-w-none">
-              <div 
-                className="text-slate-700 dark:text-slate-300 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: formatOpportunityContent(result.content) }}
-              />
-            </div>
+            <button
+              onClick={() => copyToClipboard(result.content)}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+            >
+              <FiCopy size={16} />
+              {t('copyOpportunity', 'Kopiëren')}
+            </button>
           </div>
-        ))}
-      </div>
+
+          <div className="prose prose-slate dark:prose-invert max-w-none">
+            <div 
+              className="text-slate-700 dark:text-slate-300 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: formatOpportunityContent(result.content) }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 

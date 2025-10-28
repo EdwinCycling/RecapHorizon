@@ -363,6 +363,7 @@ export interface AIDiscussionGoal {
   name: string;
   description: string;
   icon: any; // React icon component
+  category: string; // Category for filtering goals
 }
 
 export interface AIDiscussionRole {
@@ -372,6 +373,7 @@ export interface AIDiscussionRole {
   focusArea: string;
   category: 'leiding_strategie' | 'product_markt' | 'technologie' | 'operaties' | 'marketing' | 'externe_stakeholders';
   promptTemplate: string;
+  enthusiasmLevel?: number; // Schaal 1-5 (1 = pessimistisch, 5 = super enthousiast)
 }
 
 export interface AIDiscussionMessage {
@@ -379,6 +381,36 @@ export interface AIDiscussionMessage {
   role: string; // role id of the participant who authored the message
   content: string;
   timestamp: Date;
+  votes?: AIDiscussionVote[]; // votes received on this message
+  votingPrompt?: AIDiscussionVotingPrompt; // if this message contains a voting prompt
+  isUserIntervention?: boolean; // indicates if this is a user intervention message
+  targetRoles?: string[]; // for user interventions: which roles should respond (empty = all roles)
+  userName?: string; // for user interventions: display name (email prefix)
+}
+
+export interface AIDiscussionVote {
+  id: string;
+  voterId: string; // role id of the voter
+  messageId: string; // message being voted on
+  voteType: 'agree' | 'disagree' | 'neutral' | 'option_a' | 'option_b' | 'option_c';
+  reasoning?: string; // optional explanation for the vote
+  timestamp: Date;
+}
+
+export interface AIDiscussionVotingPrompt {
+  id: string;
+  question: string;
+  options: AIDiscussionVotingOption[];
+  voteType: 'agreement' | 'multiple_choice' | 'ranking';
+  deadline?: Date; // optional voting deadline
+  isActive: boolean;
+}
+
+export interface AIDiscussionVotingOption {
+  id: string;
+  label: string;
+  description: string;
+  votes: number; // vote count for this option
 }
 
 export type DiscussionPhase = 
@@ -407,9 +439,14 @@ export interface AIDiscussionSession {
   goal: AIDiscussionGoal;
   roles: AIDiscussionRole[];
   turns: AIDiscussionTurn[];
-  status: 'active' | 'completed' | 'cancelled' | 'configuring';
+  status: 'active' | 'completed' | 'cancelled' | 'configuring' | 'awaiting_user_input';
   createdAt: Date;
   language: string;
+  discussionStyles?: DiscussionStyleConfiguration; // optional discussion style configuration
+  awaitingUserIntervention?: boolean; // indicates if the discussion is paused for user input
+  userEmail?: string; // user's email for displaying name in interventions
+  userInterventionCount?: number; // tracks number of user interventions (max 5)
+  actualTurnNumber?: number; // tracks actual discussion turns (excluding user interventions)
 }
 
 export interface AIDiscussionReport {
@@ -420,15 +457,94 @@ export interface AIDiscussionReport {
   recommendations: string[];
   fullTranscript: string;
   generatedAt: Date;
+  analytics?: AIDiscussionAnalytics; // optional analytics data
+}
+
+export interface AIDiscussionAnalytics {
+  id: string;
+  sessionId: string;
+  roleActivity: RoleActivityMetrics[];
+  controversialTopics: ControversialTopic[];
+  votingResults: VotingResults[];
+  discussionFlow: DiscussionFlowMetrics;
+  engagementMetrics: EngagementMetrics;
+  generatedAt: Date;
+}
+
+export interface RoleActivityMetrics {
+  roleId: string;
+  roleName: string;
+  messageCount: number;
+  wordCount: number;
+  averageMessageLength: number;
+  participationPercentage: number;
+  influenceScore: number; // based on votes received and responses generated
+  topTopics: string[]; // most discussed topics by this role
+}
+
+export interface ControversialTopic {
+  id: string;
+  topic: string;
+  disagreementLevel: number; // 0-100 scale
+  involvedRoles: string[];
+  keyPoints: string[];
+  votingResults?: VotingResults;
+}
+
+export interface VotingResults {
+  promptId: string;
+  question: string;
+  totalVotes: number;
+  results: VotingOptionResult[];
+  consensus: boolean; // whether there was clear agreement
+  controversyLevel: number; // 0-100 scale
+}
+
+export interface VotingOptionResult {
+  optionId: string;
+  label: string;
+  voteCount: number;
+  percentage: number;
+  voterRoles: string[];
+}
+
+export interface DiscussionFlowMetrics {
+  totalTurns: number;
+  averageResponseTime: number; // simulated metric
+  topicTransitions: TopicTransition[];
+  phaseEffectiveness: PhaseEffectiveness[];
+}
+
+export interface TopicTransition {
+  fromTopic: string;
+  toTopic: string;
+  frequency: number;
+  triggeringRole: string;
+}
+
+export interface PhaseEffectiveness {
+  phase: DiscussionPhase;
+  messageCount: number;
+  engagementLevel: number;
+  keyOutcomes: string[];
+}
+
+export interface EngagementMetrics {
+  overallEngagement: number; // 0-100 scale
+  roleEngagement: { [roleId: string]: number };
+  peakEngagementTurn: number;
+  engagementTrend: 'increasing' | 'decreasing' | 'stable';
 }
 
 export interface AIDiscussionState {
-  step: 'selectTopic' | 'selectGoal' | 'selectRoles' | 'discussing' | 'completed';
+  step: 'selectTopic' | 'selectGoal' | 'selectRoles' | 'configure' | 'discussing' | 'analytics' | 'report' | 'completed';
   topics: AIDiscussionTopic[];
   selectedTopic?: AIDiscussionTopic;
   selectedGoal?: AIDiscussionGoal;
   selectedRoles: AIDiscussionRole[];
+  discussionStyles?: DiscussionStyleConfiguration;
   currentSession?: AIDiscussionSession;
+  session?: AIDiscussionSession; // alias for currentSession
   report?: AIDiscussionReport;
   isLoading: boolean;
   error?: string;
@@ -468,4 +584,77 @@ export interface UserDocument {
   monthlyAudioMinutes: number;
   audioMinutesMonth: string; // YYYY-MM format for tracking month
   lastAudioResetDate: Date;
+}
+
+// McKinsey analysis interfaces
+export enum McKinseyFramework {
+  ThreeC = '3C',
+  SevenS = '7S',
+  CustomerLifecycle = 'CustomerLifecycle',
+  ValueChain = 'ValueChain',
+  ForceField = 'ForceField',
+  CoreCompetencies = 'CoreCompetencies',
+  ScenarioPlanning = 'ScenarioPlanning',
+  PESTEL = 'PESTEL',
+  PortersFiveForces = 'PortersFiveForces',
+  AnsoffMatrix = 'AnsoffMatrix'
+}
+
+export interface McKinseyTopic {
+  id: string;
+  title: string;
+  description: string;
+  context?: string;
+  businessImpact?: string;
+  complexity?: string;
+}
+
+export interface McKinseyOptions {
+  framework: McKinseyFramework;
+  roleId?: string; // optional role reference (reused from opportunities roles or custom)
+  language?: string; // output language code
+}
+
+// Generic section shape for reports
+export interface McKinseyReportSection {
+  name: string; // e.g., 'Company', 'Customers', 'Competitors' or 'Strategy', 'Structure', etc.
+  content: string;
+}
+
+// Unified analysis payload for McKinsey feature
+export interface McKinseyAnalysisData {
+  topic: McKinseyTopic;
+  framework: McKinseyFramework;
+  roleId: string; // consultant role identifier
+  analysis: string; // full analysis text
+  constructedPrompt?: string; // actual prompt sent to AI
+  sections?: McKinseyReportSection[]; // optional structured sections when available
+  roleName?: string; // optional human-readable role name
+  timestamp: Date;
+}
+
+// Discussion Style Types
+export interface DiscussionStyleOption {
+  id: string;
+  nameNL: string;
+  nameEN: string;
+  descriptionNL: string;
+  descriptionEN: string;
+  aiInstruction: string;
+  category: 'communication_tone' | 'interaction_pattern' | 'depth_focus';
+  type: 'concise_direct' | 'elaborate_indepth' | 'encouraging_positive' | 'critical_challenging' | 
+        'highly_questioning' | 'solution_oriented' | 'collaborative' | 'drawing_comparisons' |
+        'action_oriented' | 'big_picture_thinker' | 'narrative_example_rich';
+}
+
+export interface RoleDiscussionStyles {
+  roleId: string;
+  selectedStyles: string[]; // array of DiscussionStyleOption ids
+  customInstructions?: string; // optional additional instructions
+}
+
+export interface DiscussionStyleConfiguration {
+  roleStyles: { [roleId: string]: RoleDiscussionStyles };
+  allowRuntimeAdjustment?: boolean;
+  defaultStyles?: { [roleCategory: string]: string[] }; // default styles per role category
 }

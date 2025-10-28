@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.91026.1",
+  "version": "0.91028.1",
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173",
@@ -46,6 +46,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^22.14.0",
+    "@types/react": "^19.2.2",
     "autoprefixer": "^10.4.21",
     "gh-pages": "^6.3.0",
     "netlify": "^23.5.1",

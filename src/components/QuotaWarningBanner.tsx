@@ -51,7 +51,7 @@ const QuotaWarningBanner: React.FC<QuotaWarningBannerProps> = ({ onUpgrade }) =>
   const isNearLimit = usageData.percentage >= 90;
 
   return (
-    <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full mx-4 p-4 rounded-lg shadow-lg border ${
+    <div className={`fixed top-20 sm:top-24 left-4 right-4 z-40 max-w-md mx-auto p-4 rounded-lg shadow-lg border ${
       isNearLimit 
         ? 'bg-red-50 border-red-200 text-red-800' 
         : 'bg-yellow-50 border-yellow-200 text-yellow-800'

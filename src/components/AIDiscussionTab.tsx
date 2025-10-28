@@ -5,10 +5,12 @@ import {
   AIDiscussionRole, 
   AIDiscussionSession,
   AIDiscussionReport,
-  SubscriptionTier 
+  AIDiscussionMessage,
+  SubscriptionTier,
+  DiscussionStyleConfiguration
 } from '../../types';
-import { FiUsers, FiArrowLeft, FiRefreshCw, FiFileText, FiPlay, FiPause, FiTarget, FiTool, FiCheckCircle, FiZap, FiShield } from 'react-icons/fi';
-import { generateDiscussionTopics, startDiscussion, continueDiscussion, generateDiscussionReport } from '../services/aiDiscussionService';
+import { FiUsers, FiArrowLeft, FiRefreshCw, FiFileText, FiPlay, FiPause, FiTarget, FiTool, FiCheckCircle, FiZap, FiShield, FiSettings } from 'react-icons/fi';
+import { generateDiscussionTopics, startDiscussion, continueDiscussion, handleUserIntervention as handleUserInterventionService, generateDiscussionReport, generateDiscussionAnalytics } from '../services/aiDiscussionService';
 import { displayToast } from '../utils/clipboard';
 import { useTranslation } from '../hooks/useTranslation';
 import { RateLimiter } from '../utils/debounce';
@@ -18,6 +20,9 @@ import BlurredLoadingOverlay from './BlurredLoadingOverlay';
 import AIDiscussionConfiguration from './AIDiscussionConfiguration';
 import MultiAgentDiscussionInterface from './MultiAgentDiscussionInterface';
 import DiscussionReportPage from './DiscussionReportPage';
+import AIDiscussionAnalytics from './AIDiscussionAnalytics';
+import DiscussionStyleModal from './DiscussionStyleModal';
+import Modal from './Modal';
 
 interface AIDiscussionTabProps {
   t: (key: string, params?: Record<string, unknown>) => string;
@@ -33,16 +38,19 @@ interface AIDiscussionTabProps {
 }
 
 interface AIDiscussionState {
-  step: 'generating' | 'selectTopic' | 'configure' | 'discussing' | 'report';
+  step: 'generating' | 'selectTopic' | 'configure' | 'discussing' | 'analytics' | 'report';
   topics: AIDiscussionTopic[];
   selectedTopic?: AIDiscussionTopic;
   selectedGoal?: AIDiscussionGoal;
   selectedRoles: AIDiscussionRole[];
+  discussionStyles: DiscussionStyleConfiguration;
   session?: AIDiscussionSession;
   report?: AIDiscussionReport;
   error?: string;
   isDiscussionActive: boolean;
   newTurnIds: string[]; // Track IDs of turns added in the current round
+  isStyleModalOpen: boolean;
+  showReportConfirmationModal: boolean;
 }
 
 // Comprehensive discussion categories and goals as defined by user requirements
@@ -251,7 +259,8 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
     description: 'Chief Executive Officer - Focus op visie, marktleiderschap en lange termijn strategie',
     focusArea: 'Visie, marktleiderschap en lange termijn strategie',
     category: 'leiding_strategie',
-    promptTemplate: 'Als CEO focus ik op visie, marktleiderschap en lange termijn strategie. Ik benader vraagstukken vanuit een holistisch perspectief met focus op waardecreatie en stakeholder management.'
+    promptTemplate: 'Als CEO focus ik op visie, marktleiderschap en lange termijn strategie. Ik benader vraagstukken vanuit een holistisch perspectief met focus op waardecreatie en stakeholder management.',
+    enthusiasmLevel: 4
   },
   {
     id: 'cfo',
@@ -259,7 +268,8 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
     description: 'Chief Financial Officer - Focus op budget, ROI, financiële risico\'s en schaalbaarheid',
     focusArea: 'Budget, ROI, financiële risico\'s en schaalbaarheid',
     category: 'leiding_strategie',
-    promptTemplate: 'Als CFO focus ik op budget, ROI, financiële risico\'s en schaalbaarheid. Ik benader vraagstukken vanuit financieel perspectief met focus op kostenbeheersing en winstgevendheid.'
+    promptTemplate: 'Als CFO focus ik op budget, ROI, financiële risico\'s en schaalbaarheid. Ik benader vraagstukken vanuit financieel perspectief met focus op kostenbeheersing en winstgevendheid.',
+    enthusiasmLevel: 2
   },
   {
     id: 'hr_hoofd',
@@ -267,7 +277,8 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
     description: 'Focus op personeelsimpact, talentwerving en organisatieverandering',
     focusArea: 'Personeelsimpact, talentwerving en organisatieverandering',
     category: 'leiding_strategie',
-    promptTemplate: 'Als Hoofd HR & Cultuur focus ik op personeelsimpact, talentwerving en organisatieverandering. Ik benader vraagstukken vanuit menselijk perspectief met focus op engagement en cultuurontwikkeling.'
+    promptTemplate: 'Als Hoofd HR & Cultuur focus ik op personeelsimpact, talentwerving en organisatieverandering. Ik benader vraagstukken vanuit menselijk perspectief met focus op engagement en cultuurontwikkeling.',
+    enthusiasmLevel: 4
   },
   {
     id: 'juridisch_directeur',
@@ -275,7 +286,8 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
     description: 'Focus op compliance, wetgeving en ethische risico\'s',
     focusArea: 'Compliance, wetgeving en ethische risico\'s',
     category: 'leiding_strategie',
-    promptTemplate: 'Als Directeur Juridische Zaken focus ik op compliance, wetgeving en ethische risico\'s. Ik benader vraagstukken vanuit juridisch perspectief met focus op regelgeving en risicobeheer.'
+    promptTemplate: 'Als Directeur Juridische Zaken focus ik op compliance, wetgeving en ethische risico\'s. Ik benader vraagstukken vanuit juridisch perspectief met focus op regelgeving en risicobeheer.',
+    enthusiasmLevel: 2
   },
   
   // Product & Markt
@@ -285,7 +297,8 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
     description: 'Chief Product Officer - Focus op productontwikkeling, user experience en roadmap',
     focusArea: 'Productontwikkeling, user experience en roadmap',
     category: 'product_markt',
-    promptTemplate: 'Als CPO focus ik op productontwikkeling, user experience en roadmap. Ik benader vraagstukken vanuit productperspectief met focus op gebruikerswaarde en marktfit.'
+    promptTemplate: 'Als CPO focus ik op productontwikkeling, user experience en roadmap. Ik benader vraagstukken vanuit productperspectief met focus op gebruikerswaarde en marktfit.',
+    enthusiasmLevel: 4
   },
   {
     id: 'marketing_specialist',
@@ -293,7 +306,8 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
     description: 'Focus op marktpositionering, klantsegmentatie en communicatie',
     focusArea: 'Marktpositionering, klantsegmentatie en communicatie',
     category: 'product_markt',
-    promptTemplate: 'Als Marketing Specialist focus ik op marktpositionering, klantsegmentatie en communicatie. Ik benader vraagstukken vanuit marketingperspectief met focus op merkwaarde en klantbereik.'
+    promptTemplate: 'Als Marketing Specialist focus ik op marktpositionering, klantsegmentatie en communicatie. Ik benader vraagstukken vanuit marketingperspectief met focus op merkwaarde en klantbereik.',
+    enthusiasmLevel: 5
   },
   {
     id: 'verkoopdirecteur',
@@ -440,22 +454,61 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
     focusArea: 'Structuur, consensus en besluitvorming',
     category: 'leiding_strategie',
     promptTemplate: 'Als Generaal wil ik structuur, zorg ik dat iedereen mee is, neem ik beslissingen bij meerdere keuzes en hak ik knopen door. Ik benader vraagstukken vanuit leiderschapsperspectief met focus op duidelijkheid en actie.'
+  },
+  {
+    id: 'dromer',
+    name: 'De Dromer / The Visionary',
+    description: 'Denkt in onbegrensde mogelijkheden en genereert vergezichten. Focust op baanbrekende ideeën, toekomstige trends en disruptieve concepten, zonder rekening te houden met huidige beperkingen.',
+    focusArea: 'Onbegrensde mogelijkheden en toekomstvisies',
+    category: 'leiding_strategie',
+    promptTemplate: 'Als Dromer denk ik in onbegrensde mogelijkheden en genereer ik vergezichten. Ik focus op baanbrekende ideeën, toekomstige trends en disruptieve concepten, zonder rekening te houden met huidige beperkingen. Focus: Extreem forward-looking. Beschrijf een ideale, toekomstige staat gebaseerd op de onderliggende behoeften die in de transcriptie besproken worden, en stel radicale manieren voor om die te vervullen. Negeer huidige operationele of budgettaire restricties.'
+  },
+  {
+    id: 'skeptische_advocaat',
+    name: 'De Skeptische Advocaat van de Duivel / The Skeptical Devil\'s Advocate',
+    description: 'Zoekt actief naar zwakke punten, onuitgesproken aannames en potentiële valkuilen in besproken plannen of ideeën, om ze robuuster te maken.',
+    focusArea: 'Kritische analyse en risicobewustzijn',
+    category: 'operaties',
+    promptTemplate: 'Als Skeptische Advocaat van de Duivel zoek ik actief naar zwakke punten, onuitgesproken aannames en potentiële valkuilen in besproken plannen of ideeën, om ze robuuster te maken. Focus: Kritisch en risicobewust. Identificeer gaten, tegenargumenten, onrealistische aannames, en potentiële negatieve gevolgen van de besproken onderwerpen. Presenteer deze als uitdagingen om te overwinnen of te mitigeren.'
+  },
+  {
+    id: 'gamification_architect',
+    name: 'De Gamification Architect / The Gamification Architect',
+    description: 'Ontwerpt methoden om betrokkenheid en motivatie te verhogen door spelelementen, beloningsstructuren en interactieve uitdagingen toe te passen.',
+    focusArea: 'Betrokkenheid en motivatie door gamification',
+    category: 'product_markt',
+    promptTemplate: 'Als Gamification Architect ontwerp ik methoden om betrokkenheid en motivatie te verhogen door spelelementen, beloningsstructuren en interactieve uitdagingen toe te passen. Focus: Betrokkenheid en motivatie. Neem een besproken proces, project of doel en stel spelelementen, scoresystemen, badges, leaderboards of uitdagingen voor om de participatie en het succes te stimuleren.'
+  },
+  {
+    id: 'ethicus_impact_analist',
+    name: 'De Ethicus & Impact Analist / The Ethicist & Impact Analyst',
+    description: 'Evalueert besproken plannen of initiatieven op hun ethische implicaties, maatschappelijke impact, privacy en potentiële onbedoelde gevolgen.',
+    focusArea: 'Ethische implicaties en maatschappelijke impact',
+    category: 'externe_stakeholders',
+    promptTemplate: 'Als Ethicus & Impact Analist evalueer ik besproken plannen of initiatieven op hun ethische implicaties, maatschappelijke impact, privacy en potentiële onbedoelde gevolgen. Focus: Maatschappelijke verantwoordelijkheid. Analyseer de transcriptie op potentiële ethische dilemma\'s, privacyrisico\'s, sociale of ecologische impact, en onbedoelde neveneffecten van de besproken acties of producten. Stel oplossingen of overwegingen voor.'
+  },
+  {
+    id: 'storyteller',
+    name: 'De Storyteller / The Storyteller',
+    description: 'Vertaalt complexe informatie, strategieën of ideeën naar een boeiend verhaal dat resoneert met verschillende doelgroepen, om begrip en buy-in te creëren.',
+    focusArea: 'Verhaalvertelling en communicatie',
+    category: 'product_markt',
+    promptTemplate: 'Als Storyteller vertaal ik complexe informatie, strategieën of ideeën naar een boeiend verhaal dat resoneert met verschillende doelgroepen, om begrip en buy-in te creëren. Focus: Begrijpelijkheid en emotionele connectie. Neem het user_selected_topic en de hoofdconclusies uit de transcriptie, en construeer een kort, overtuigend verhaal (bijv. een \'Elevator Pitch\', een \'Case Study Narrative\' of een \'Vision Story\') dat de essentie communiceert en de beoogde impact van een besproken idee/project beschrijft.'
   }
 ];
 
 // Helper function to get display name for discussion phases
 const getPhaseDisplayName = (phase: string, t: (key: string, params?: Record<string, unknown>) => string): string => {
   const phaseNames: Record<string, string> = {
-    introduction: t('aiDiscussion.phaseIntroduction') || 'Introductie',
-    problem_analysis: t('aiDiscussion.phaseProblemAnalysis') || 'Probleemanalyse',
-    root_cause: t('aiDiscussion.phaseRootCause') || 'Oorzaakanalyse',
-    stakeholder_perspective: t('aiDiscussion.phaseStakeholder') || 'Stakeholderperspectief',
-    solution_generation: t('aiDiscussion.phaseSolutionGeneration') || 'Oplossingsgeneratie',
-    critical_evaluation: t('aiDiscussion.phaseCriticalEvaluation') || 'Kritische evaluatie',
-    risk_assessment: t('aiDiscussion.phaseRiskAssessment') || 'Risicoanalyse',
-    implementation_planning: t('aiDiscussion.phaseImplementation') || 'Implementatieplanning',
-    success_metrics: t('aiDiscussion.phaseSuccessMetrics') || 'Succesindicatoren',
-    synthesis: t('aiDiscussion.phaseSynthesis') || 'Synthese'
+    introduction: t('aiDiscussion.phase.introduction') || 'Introductie',
+    problem_analysis: t('aiDiscussion.phase.problem_analysis') || 'Probleemanalyse',
+    root_cause: t('aiDiscussion.phase.root_cause') || 'Oorzaakanalyse',
+    solution_generation: t('aiDiscussion.phase.solution_generation') || 'Oplossingsgeneratie',
+    critical_evaluation: t('aiDiscussion.phase.critical_evaluation') || 'Kritische Evaluatie',
+    risk_assessment: t('aiDiscussion.phase.risk_assessment') || 'Risicoanalyse',
+    implementation_planning: t('aiDiscussion.phase.implementation_planning') || 'Implementatieplanning',
+    success_metrics: t('aiDiscussion.phase.success_metrics') || 'Succesmetrieken',
+    synthesis: t('aiDiscussion.phase.synthesis') || 'Synthese'
   };
   
   return phaseNames[phase] || phase;
@@ -476,9 +529,12 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     step: 'generating',
     topics: [],
     selectedRoles: [],
+    discussionStyles: {},
     error: undefined,
     isDiscussionActive: false,
-    newTurnIds: []
+    newTurnIds: [],
+    isStyleModalOpen: false,
+    showReportConfirmationModal: false
   });
 
   // Rate limiter to prevent too frequent topic generation (minimum 3 seconds between calls)
@@ -519,10 +575,10 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   const generateTopics = useCallback(async () => {
     const content = (summary || transcript || '').trim();
     if (!content) {
-      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('aiDiscussion.topicGenerationError', 'Er is onvoldoende inhoud om onderwerpen te genereren') }));
+      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('aiDiscussion.topicGenerationError') || 'Er is onvoldoende inhoud om onderwerpen te genereren' }));
       return;
     }
-  
+
     setState(prev => ({ ...prev, step: 'generating', error: undefined, topics: [] }));
     
     try {
@@ -543,17 +599,17 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     } catch (error) {
       console.error('Error generating discussion topics:', error);
       
-      let errorMessage = t('aiDiscussion.topicGenerationError', 'Er is een fout opgetreden bij het genereren van discussieonderwerpen');
+      let errorMessage = t('aiDiscussion.topicGenerationError') || 'Er is een fout opgetreden bij het genereren van discussieonderwerpen';
       
       if (error instanceof Error) {
         const errorText = error.message.toLowerCase();
         
         if (errorText.includes('overloaded') || errorText.includes('503')) {
-          errorMessage = t('aiDiscussion.serverOverloadError', 'De AI-service is momenteel overbelast. Probeer het over een paar minuten opnieuw.');
+          errorMessage = t('aiDiscussion.serverOverloadError') || 'De AI-service is momenteel overbelast. Probeer het over een paar minuten opnieuw.';
         } else if (errorText.includes('quota') || errorText.includes('rate limit')) {
-          errorMessage = t('aiDiscussion.quotaExceededError', 'Het dagelijkse gebruik van de AI-service is bereikt. Probeer het later opnieuw of upgrade je abonnement.');
+          errorMessage = t('aiDiscussion.quotaExceededError') || 'Het dagelijkse gebruik van de AI-service is bereikt. Probeer het later opnieuw of upgrade je abonnement.';
         } else if (errorText.includes('network') || errorText.includes('fetch')) {
-          errorMessage = t('aiDiscussion.networkError', 'Netwerkfout bij het verbinden met de AI-service. Controleer je internetverbinding en probeer opnieuw.');
+          errorMessage = t('aiDiscussion.networkError') || 'Netwerkfout bij het verbinden met de AI-service. Controleer je internetverbinding en probeer opnieuw.';
         }
       }
       
@@ -624,12 +680,12 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     setTimeout(scrollToTop, 100);
   }, [scrollToTop]);
 
-  const handleConfigurationComplete = useCallback(async (goal: AIDiscussionGoal, roles: AIDiscussionRole[]) => {
+  const handleConfigurationComplete = useCallback(async (goal: AIDiscussionGoal, roles: AIDiscussionRole[], discussionStyles: DiscussionStyleConfiguration) => {
     if (!state.selectedTopic) return;
 
-    // Handhaaf precies 4 AI-rollen en maak de eerste rol de gespreksleider
-    const exactlyFour = roles.slice(0, 4);
-    const rolesWithModerator: AIDiscussionRole[] = exactlyFour.map((r, idx) => (
+    // Handhaaf 2-4 AI-rollen en maak de eerste rol de gespreksleider
+    const selectedRoles = roles.slice(0, 4);
+    const rolesWithModerator: AIDiscussionRole[] = selectedRoles.map((r, idx) => (
       idx === 0
         ? {
             ...r,
@@ -644,6 +700,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
         ...prev,
         selectedGoal: goal,
         selectedRoles: rolesWithModerator,
+        discussionStyles,
         step: 'discussing',
         isDiscussionActive: true,
         error: undefined
@@ -652,13 +709,19 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       // Auto-scroll to top after step change
       setTimeout(scrollToTop, 100);
 
-      const session = await startDiscussion(state.selectedTopic, goal, rolesWithModerator, language, userId, userTier);
+      const session = await startDiscussion(state.selectedTopic, goal, rolesWithModerator, language, userId, userTier, discussionStyles);
+      // Na de initiële AI-ronde: zet sessie in staat om gebruikersinterventie toe te laten
+      const sessionAwaiting = {
+        ...session,
+        awaitingUserIntervention: true,
+        status: 'awaiting_user_input' as const
+      };
       setState(prev => ({
         ...prev,
-        session,
+        session: sessionAwaiting,
         error: undefined,
         isDiscussionActive: false,
-        newTurnIds: [] // Reset new turn IDs when starting a new session
+        newTurnIds: [] // Reset new turn IDs wanneer een nieuwe sessie start
       }));
     } catch (error) {
       console.error('Error starting discussion:', error);
@@ -671,6 +734,34 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     }
   }, [state.selectedTopic, language, t]);
 
+  // Style modal management functions
+  const handleOpenStyleModal = useCallback(() => {
+    setState(prev => ({ ...prev, isStyleModalOpen: true }));
+  }, []);
+
+  const handleCloseStyleModal = useCallback(() => {
+    setState(prev => ({ ...prev, isStyleModalOpen: false }));
+  }, []);
+
+  const handleStylesUpdate = useCallback((newStyles: DiscussionStyleConfiguration) => {
+    setState(prev => ({ 
+      ...prev, 
+      discussionStyles: newStyles,
+      isStyleModalOpen: false
+    }));
+    
+    // If there's an active session, update it with new styles
+    if (state.session) {
+      setState(prev => ({
+        ...prev,
+        session: prev.session ? {
+          ...prev.session,
+          discussionStyles: newStyles
+        } : undefined
+      }));
+    }
+  }, [state.session]);
+
   const handleContinueDiscussion = useCallback(async () => {
     if (!state.session) return;
 
@@ -682,19 +773,29 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       setState(prev => {
         if (!prev.session) return prev;
         
-        // Check if this turn already exists to prevent duplicates
-        const turnExists = prev.session.turns.some(turn => turn.id === newTurn.id);
+        // Check if this turn already exists to prevent duplicates - use timestamp and content for better detection
+        const turnExists = prev.session.turns.some(turn => 
+          turn.id === newTurn.id || 
+          (turn.messages.length > 0 && newTurn.messages.length > 0 &&
+           Math.abs(turn.messages[0].timestamp.getTime() - newTurn.messages[0].timestamp.getTime()) < 1000 &&
+           turn.messages[0].content === newTurn.messages[0].content)
+        );
         if (turnExists) {
           console.warn('Duplicate turn detected, skipping update');
           return { ...prev, isDiscussionActive: false, error: undefined };
         }
         
+        // After each turn, check if we should pause for user intervention
+        const updatedSession = { 
+          ...prev.session, 
+          turns: [...prev.session.turns, newTurn],
+          awaitingUserIntervention: true,
+          status: 'awaiting_user_input' as const
+        };
+        
         return { 
           ...prev, 
-          session: { 
-            ...prev.session, 
-            turns: [...prev.session.turns, newTurn] 
-          },
+          session: updatedSession,
           isDiscussionActive: false,
           error: undefined,
           newTurnIds: [newTurn.id] // Track the new turn ID for highlighting
@@ -704,11 +805,74 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       console.error('Error continuing discussion:', error);
       setState(prev => ({ 
         ...prev, 
-        error: t('aiDiscussion.continueError', 'Er is een fout opgetreden bij het voortzetten van de discussie'),
+        error: t('aiDiscussion.continueError') || 'Er is een fout opgetreden bij het voortzetten van de discussie',
         isDiscussionActive: false
       }));
     }
   }, [state.session, t, userId, userTier]);
+
+  // Handle user intervention
+  const handleUserIntervention = useCallback(async (content: string, targetRoles: string[]) => {
+    if (!state.session || !auth.currentUser?.email) return;
+
+    // Guard: only allow user intervention when the session is awaiting user input
+    if (state.session.status !== 'awaiting_user_input') {
+      setState(prev => ({
+        ...prev,
+        error: t('aiDiscussion.notAwaitingUserInput') || 'Op dit moment kan je geen vraag stellen. Klik eerst op "Discussie voortzetten".'
+      }));
+      return;
+    }
+
+    try {
+      setState(prev => ({ ...prev, isDiscussionActive: true, error: undefined }));
+      
+      // Get user name from email (part before @)
+      const userName = auth.currentUser!.email!.split('@')[0];
+      
+      // Create user intervention message
+      const userMessage: AIDiscussionMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: content,
+        timestamp: new Date(),
+        isUserIntervention: true,
+        targetRoles: targetRoles,
+        userName: userName
+      };
+
+      // Handle user intervention with role responses using the correct service function
+      // Note: The service function returns a new turn and mutates the original session
+      const newTurn = await handleUserInterventionService(state.session, userMessage, userId, userTier);
+      
+      setState(prev => {
+        if (!prev.session || !newTurn) return prev;
+
+        // Force the session back into 'awaiting_user_input' so de gebruiker meerdere vragen na elkaar kan stellen
+        const updatedSession: AIDiscussionSession = {
+          ...prev.session,
+          awaitingUserIntervention: true,
+          status: 'awaiting_user_input'
+        };
+
+        return {
+          ...prev,
+          session: updatedSession,
+          isDiscussionActive: false,
+          error: undefined,
+          newTurnIds: [newTurn.id]
+        };
+      });
+      
+    } catch (error) {
+      console.error('Error handling user intervention:', error);
+      setState(prev => ({ 
+        ...prev, 
+        error: t('aiDiscussion.interventionError') || 'Er is een fout opgetreden bij het verwerken van je vraag',
+        isDiscussionActive: false
+      }));
+    }
+  }, [state.session, userId, userTier, t]);
 
   // Auto-advance to vraagronde (ronde 2) na voorstelronde - DISABLED voor gebruikerscontrole
   // const autoContinueRef = useRef(false);
@@ -730,11 +894,24 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   //   }
   // }, [state.step, state.session, state.isDiscussionActive, handleContinueDiscussion]);
 
-  const handleGenerateReport = useCallback(async () => {
+  // Show confirmation modal before generating report
+  const handleGenerateReport = useCallback(() => {
+    setState(prev => ({ ...prev, showReportConfirmationModal: true }));
+  }, []);
+
+  // Actually generate the report after confirmation
+  const handleConfirmGenerateReport = useCallback(async () => {
     if (!state.session) return;
 
     try {
-      setState(prev => ({ ...prev, isDiscussionActive: true, error: undefined }));
+      setState(prev => ({ 
+        ...prev, 
+        showReportConfirmationModal: false,
+        isDiscussionActive: true, 
+        error: undefined,
+        session: prev.session ? { ...prev.session, status: 'completed' } : prev.session
+      }));
+      
       const report = await generateDiscussionReport(state.session, language, userId, userTier);
       
       setState(prev => ({ 
@@ -753,11 +930,17 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       console.error('Error generating report:', error);
       setState(prev => ({ 
         ...prev, 
-        error: t('aiDiscussion.reportError', 'Er is een fout opgetreden bij het genereren van het rapport'),
-        isDiscussionActive: false
+        error: t('aiDiscussion.reportError') || 'Er is een fout opgetreden bij het genereren van het rapport',
+        isDiscussionActive: false,
+        showReportConfirmationModal: false
       }));
     }
-  }, [state.session, language, onDiscussionComplete, t]);
+  }, [state.session, language, onDiscussionComplete, t, userId, userTier, scrollToTop]);
+
+  // Cancel report generation
+  const handleCancelGenerateReport = useCallback(() => {
+    setState(prev => ({ ...prev, showReportConfirmationModal: false }));
+  }, []);
 
   const handleBackToTopics = useCallback(() => {
     setState(prev => ({ 
@@ -819,7 +1002,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             </div>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('aiDiscussionUpgradeNote', 'Upgrade je abonnement om toegang te krijgen tot deze geavanceerde AI functionaliteit.')}
+            {t('aiDiscussionUpgradeNote') || 'Upgrade je abonnement om toegang te krijgen tot deze geavanceerde AI functionaliteit.'}
           </p>
         </div>
       </div>
@@ -832,7 +1015,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
           <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-            {t('error', 'Er is een fout opgetreden')}
+            {t('error') || 'Er is een fout opgetreden'}
           </h3>
           <p className="text-red-600 dark:text-red-400 mb-4">
             {state.error}
@@ -841,7 +1024,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             onClick={handleBackToTopics}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            {t('tryAgain', 'Opnieuw proberen')}
+            {t('tryAgain') || 'Opnieuw proberen'}
           </button>
         </div>
       </div>
@@ -853,7 +1036,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     return (
       <BlurredLoadingOverlay 
         isVisible={true}
-        text={t('generatingTopics', 'Onderwerpen genereren...')}
+        text={t('generatingTopics') || 'Onderwerpen genereren...'}
       />
     );
   }
@@ -865,10 +1048,10 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-              {t('aiDiscussion.selectTopic', 'Selecteer een discussieonderwerp')}
+              {t('aiDiscussion.selectTopic') || 'Selecteer een discussieonderwerp'}
             </h3>
             <p className="text-slate-600 dark:text-slate-400">
-              {t('aiDiscussion.selectTopicDesc', 'Kies het onderwerp voor de AI discussie met verschillende organisatierollen')}
+              {t('aiDiscussion.selectTopicDesc') || 'Kies het onderwerp voor de AI discussie met verschillende organisatierollen'}
             </p>
           </div>
           <button
@@ -877,7 +1060,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiRefreshCw size={16} />
-            {t('aiDiscussion.refreshTopics', 'Onderwerpen vernieuwen')}
+            {t('aiDiscussion.refreshTopics') || 'Onderwerpen vernieuwen'}
           </button>
         </div>
 
@@ -945,7 +1128,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
           text={t('aiDiscussion.generating', 'AI experts discussiëren...')}
         />
         
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex justify-start mb-6">
           <button
             onClick={handleBackToConfiguration}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors w-fit"
@@ -953,61 +1136,46 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             <FiArrowLeft size={16} />
             {t('aiDiscussion.backToConfig', 'Terug naar configuratie')}
           </button>
-
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-            <button
-              onClick={handleContinueDiscussion}
-              disabled={state.isDiscussionActive || !state.session || state.session.status !== 'active'}
-              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
-            >
-              <FiPlay size={18} />
-              <span className="truncate">{t('aiDiscussion.continueDiscussion', 'Discussie voortzetten')}</span>
-            </button>
-
-            <button
-              onClick={handleGenerateReport}
-              disabled={state.isDiscussionActive || !state.session || state.session.turns.length === 0}
-              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
-            >
-              <FiFileText size={18} />
-              <span className="truncate">{t('aiDiscussion.generateReport', 'Rapport genereren')}</span>
-            </button>
-          </div>
         </div>
 
         {/* Enhanced Discussion progress indicator with all phases */}
         {state.session && state.session.turns.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              <span className="text-sm font-medium text-green-800 dark:text-green-200">
                 {t('aiDiscussion.turnProgress', 'Discussie voortgang')}:
               </span>
-              <span className="text-sm text-blue-600 dark:text-blue-400">
-                {t('aiDiscussion.turnCount', 'Beurt {{count}}/10', { count: state.session.turns.length })}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-sm text-green-600 dark:text-green-400">
+                  {t('aiDiscussion.turnCount', 'Beurt {{count}}/10', { count: state.session.actualTurnNumber || 0 })}
+                </span>
+                <span className="text-xs text-blue-600 dark:text-blue-400">
+                  {t('aiDiscussion.interventionCount', 'Vragen: {{count}}/5', { count: state.session.userInterventionCount || 0 })}
+                </span>
+              </div>
             </div>
             
             {/* Enhanced Phase indicator with all phases */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                <span className="text-xs font-medium text-green-700 dark:text-green-300">
                   {t('aiDiscussion.currentPhase', 'Huidige fase')}:
                 </span>
-                <span className="text-xs font-semibold text-blue-800 dark:text-blue-200 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">
+                <span className="text-xs font-semibold text-green-800 dark:text-green-200 bg-green-100 dark:bg-green-800 px-2 py-1 rounded">
                   {getPhaseDisplayName(state.session.turns[state.session.turns.length - 1].phase, t)}
                 </span>
               </div>
               
               {/* Phase progress bar */}
-              <div className="w-full bg-blue-100 dark:bg-blue-800 rounded-full h-2 mb-2">
+              <div className="w-full bg-green-100 dark:bg-green-800 rounded-full h-2 mb-2">
                 <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${Math.min(100, ((state.session.turns.length - 1) / 9) * 100)}%` }}
                 />
               </div>
               
               {/* All phases overview - responsive design with descriptive titles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 text-sm">
                 {[
                   'introduction', 'problem_analysis', 'root_cause', 'solution_generation',
                   'solution_evaluation', 'implementation_plan', 'risk_assessment', 
@@ -1022,17 +1190,17 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
                       key={phase}
                       className={`p-2 rounded text-center ${
                         isCurrent 
-                          ? 'bg-blue-600 text-white font-medium border-2 border-blue-700' 
+                          ? 'bg-green-600 text-white font-medium border-2 border-green-700' 
                           : isCompleted 
                             ? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-600' 
                             : isUpcoming
                               ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600'
-                              : 'bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-600'
+                              : 'bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-600'
                       }`}
                       title={getPhaseDisplayName(phase as any, t)}
                     >
-                      <div className="font-bold text-xs">{index + 1}</div>
-                      <div className="mt-1 text-[10px] leading-tight">
+                      <div className="font-bold text-sm">{index + 1}</div>
+                      <div className="mt-1 text-xs leading-tight">
                         {getPhaseDisplayName(phase as any, t)}
                       </div>
                     </div>
@@ -1040,36 +1208,36 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
                 })}
               </div>
               
-              <div className="text-xs text-blue-600 dark:text-blue-400 mt-2 text-center">
-                {t('aiDiscussion.phaseProgress', 'Fase {{current}}/{{total}}', { 
+              <div className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
+                {t('aiDiscussion.phaseProgress', { 
                   current: state.session.turns.length, 
                   total: 10 
-                })}
+                }) || `Fase ${state.session.turns.length}/10`}
               </div>
             </div>
             
             {/* Overall progress bar */}
             <div className="mb-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                  {t('aiDiscussion.overallProgress', 'Totale voortgang')}:
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                  {t('aiDiscussion.overallProgress') || 'Totale voortgang'}:
                 </span>
-                <span className="text-xs text-blue-600 dark:text-blue-400">
+                <span className="text-sm text-green-600 dark:text-green-400">
                   {Math.min(100, (state.session.turns.length / 10) * 100)}%
                 </span>
               </div>
-              <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-3">
+              <div className="w-full bg-green-200 dark:bg-green-800 rounded-full h-3">
                 <div 
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                  className="bg-green-600 h-3 rounded-full transition-all duration-300"
                   style={{ width: `${Math.min(100, (state.session.turns.length / 10) * 100)}%` }}
                 />
               </div>
             </div>
             
-            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 text-center">
+            <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
               {state.session.turns.length >= 10 
-                ? t('aiDiscussion.maxReached', 'Maximum aantal beurten bereikt - genereer een rapport')
-                : t('aiDiscussion.canContinue', 'Je kunt de discussie voortzetten of een rapport genereren')
+                ? t('aiDiscussion.maxReached') || 'Maximum aantal beurten bereikt - genereer een rapport'
+                : t('aiDiscussion.canContinue') || 'Je kunt de discussie voortzetten of een rapport genereren'
               }
             </p>
           </div>
@@ -1081,24 +1249,46 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             session={state.session}
             isActive={state.isDiscussionActive}
             newTurnIds={state.newTurnIds}
+            onUserIntervention={handleUserIntervention}
           />
         )}
 
         {/* Action buttons placed under the discussion window */}
         {state.session && state.session.turns.length > 0 && (
           <div className="flex flex-col gap-4 justify-center items-center p-4 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-lg">
-            <div className="text-sm text-slate-600 dark:text-slate-400 text-center">
-              {t('aiDiscussion.nextActions', 'Wat wil je nu doen?')}
+            <div className="text-base text-slate-600 dark:text-slate-400 text-center">
+              {t('aiDiscussion.nextActions') || 'Wat wil je nu doen?'}
             </div>
-            
+
+            {/* New order: Continue, Analytics, Styles, End Discussion/Generate Report */}
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
                 onClick={handleContinueDiscussion}
-                disabled={state.isDiscussionActive || !state.session || state.session.status !== 'active' || state.session.turns.length >= 10}
-                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
+                disabled={state.isDiscussionActive || !state.session || (state.session.status !== 'active' && state.session.status !== 'awaiting_user_input') || (state.session.actualTurnNumber || 0) >= 10}
+                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-base"
               >
                 <FiPlay size={18} />
-                <span className="truncate">{t('aiDiscussion.continueDiscussion', 'Discussie voortzetten')}</span>
+                <span className="truncate">{t('aiDiscussion.continueDiscussion') || 'Discussie voortzetten'}</span>
+              </button>
+
+              <button
+                onClick={() => setState(prev => ({ ...prev, step: 'analytics' }))}
+                disabled={state.isDiscussionActive || !state.session || state.session.turns.length === 0}
+                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-base"
+              >
+                <FiTarget size={18} />
+                <span className="truncate">{t('aiDiscussion.viewAnalytics') || 'Analytics bekijken'}</span>
+              </button>
+
+              <button
+                onClick={handleOpenStyleModal}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
+                title={t('aiDiscussion.adjustStyles') || 'Discussiestijlen aanpassen'}
+              >
+                <div className="w-4 h-4">
+                  <FiSettings />
+                </div>
+                {t('aiDiscussion.adjustStyles') || 'Stijlen Aanpassen'}
               </button>
 
               <button
@@ -1107,11 +1297,85 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
                 className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
               >
                 <FiFileText size={18} />
-                <span className="truncate">{t('aiDiscussion.generateReport', 'Rapport genereren')}</span>
+                <span className="truncate">{t('aiDiscussion.generateReport') || 'Einde discussie / Rapport genereren'}</span>
               </button>
             </div>
           </div>
         )}
+
+        {/* Style Modal */}
+        <DiscussionStyleModal
+          isOpen={state.isStyleModalOpen}
+          onClose={handleCloseStyleModal}
+          onStylesUpdate={handleStylesUpdate}
+          currentStyles={state.discussionStyles}
+          selectedRoles={state.selectedRoles}
+          t={t}
+        />
+
+        {/* Report Confirmation Modal (also available in 'discussing' view) */}
+        <Modal
+          isOpen={state.showReportConfirmationModal}
+          onClose={handleCancelGenerateReport}
+          title={t('aiDiscussion.endDiscussionTitle') || 'Einde discussie / Rapport genereren'}
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <FiFileText size={14} />
+              </div>
+              <div>
+                <h4 className="text-slate-800 dark:text-slate-200 font-medium">
+                  {t('aiDiscussion.confirmGenerateReportTitle') || 'Rapport genereren en discussie beëindigen?'}
+                </h4>
+                <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+                  {t('aiDiscussion.confirmGenerateReportDescription') || 'Wanneer je een rapport genereert, wordt de discussie afgesloten. Je ontvangt een overzicht van de belangrijkste punten, meningsverschillen, aanbevelingen en de volledige transcriptie.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={handleCancelGenerateReport}
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                {t('common.cancel') || 'Annuleren'}
+              </button>
+              <button
+                onClick={handleConfirmGenerateReport}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <FiFileText size={16} />
+                {t('common.ok') || 'OK'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    );
+  }
+
+  // Analytics view
+  if (state.step === 'analytics' && state.session) {
+    const analytics = generateDiscussionAnalytics(state.session);
+    
+    return (
+      <div ref={containerRef} className="space-y-6">
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => setState(prev => ({ ...prev, step: 'discussing' }))}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+          >
+            <FiArrowLeft size={16} />
+            {t('aiDiscussion.backToDiscussion') || 'Terug naar discussie'}
+          </button>
+        </div>
+
+        <AIDiscussionAnalytics
+          t={t}
+          analytics={analytics}
+          session={state.session}
+        />
       </div>
     );
   }
@@ -1126,7 +1390,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
             <FiArrowLeft size={16} />
-            {t('aiDiscussion.backToTopics', 'Nieuwe discussie')}
+            {t('aiDiscussion.backToTopics') || 'Nieuwe discussie'}
           </button>
         </div>
 
@@ -1135,6 +1399,62 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
           report={state.report}
           session={state.session!}
         />
+        
+        {/* Style Modal */}
+        <DiscussionStyleModal
+          isOpen={state.isStyleModalOpen}
+          onClose={handleCloseStyleModal}
+          onStylesUpdate={handleStylesUpdate}
+          currentStyles={state.discussionStyles}
+          selectedRoles={state.selectedRoles}
+          t={t}
+        />
+
+        {/* Report Confirmation Modal */}
+        <Modal
+          isOpen={state.showReportConfirmationModal}
+          onClose={handleCancelGenerateReport}
+          title={t('aiDiscussion.endDiscussionTitle') || 'Einde discussie / Rapport genereren'}
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                <span className="w-4 h-4 text-amber-600 dark:text-amber-400">
+                  <FiFileText size={16} />
+                </span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+                  Discussie beëindigen en rapport genereren?
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  Door het rapport te genereren wordt de huidige discussie beëindigd. Je kunt daarna geen nieuwe berichten meer toevoegen aan deze discussie.
+                </p>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <strong>Let op:</strong> Deze actie kan niet ongedaan worden gemaakt. Zorg ervoor dat de discussie compleet is voordat je doorgaat.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <button
+                onClick={handleCancelGenerateReport}
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                {t('common.cancel') || 'Annuleren'}
+              </button>
+              <button
+                onClick={handleConfirmGenerateReport}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <FiFileText size={16} />
+                {t('common.ok') || 'OK'}
+              </button>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   }

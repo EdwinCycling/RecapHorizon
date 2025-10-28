@@ -1,26 +1,122 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AIDiscussionSession, AIDiscussionMessage, AIDiscussionRole } from '../../types';
-import { FiUser, FiClock, FiMessageCircle } from 'react-icons/fi';
+import { FiUser, FiClock, FiMessageCircle, FiSend, FiUsers } from 'react-icons/fi';
 
 interface MultiAgentDiscussionInterfaceProps {
   t: (key: string, params?: Record<string, unknown>) => string;
   session: AIDiscussionSession;
   isActive: boolean;
   newTurnIds?: string[]; // IDs of turns that are new in the current round
+  onUserIntervention?: (content: string, targetRoles: string[]) => void; // callback for user intervention
 }
 
 const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps> = ({
   t,
   session,
   isActive,
-  newTurnIds = []
+  newTurnIds = [],
+  onUserIntervention
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [highlightedTurnIds, setHighlightedTurnIds] = useState<string[]>([]);
+  
+  // User intervention state
+  const [userInput, setUserInput] = useState('');
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [showInterventionForm, setShowInterventionForm] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [session.turns]);
+
+  // Always show intervention form for user input
+  useEffect(() => {
+    setShowInterventionForm(true);
+  }, []);
+
+  // Handle user intervention submission
+  const handleUserIntervention = () => {
+    const trimmedInput = userInput.trim();
+    
+    // Validation checks
+    if (!trimmedInput) {
+      alert(t('aiDiscussion.emptyInput', 'Voer een vraag of opmerking in'));
+      return;
+    }
+    
+    if (trimmedInput.length < 25) {
+      alert(t('aiDiscussion.minCharacters', 'Je vraag moet minimaal 25 karakters bevatten'));
+      return;
+    }
+    
+    if (trimmedInput.length > 250) {
+      alert(t('aiDiscussion.maxCharacters', 'Je vraag mag maximaal 250 karakters bevatten'));
+      return;
+    }
+    
+    if (selectedRoles.length === 0) {
+      alert(t('aiDiscussion.selectTargetRoles', 'Selecteer minimaal één rol om te antwoorden'));
+      return;
+    }
+    
+    // Basic security check - prevent potential injection attempts
+    const suspiciousPatterns = [
+      /<script/i,
+      /javascript:/i,
+      /on\w+\s*=/i,
+      /eval\s*\(/i,
+      /document\./i,
+      /window\./i
+    ];
+    
+    if (suspiciousPatterns.some(pattern => pattern.test(trimmedInput))) {
+      alert(t('aiDiscussion.invalidInput', 'Je invoer bevat niet-toegestane tekens'));
+      return;
+    }
+
+    // Only allow sending when the session is awaiting user input
+    if (session.status !== 'awaiting_user_input') {
+      alert(t('aiDiscussion.notAwaitingUserInput', 'Op dit moment kan je geen vraag stellen. Klik eerst op "Discussie voortzetten".'));
+      return;
+    }
+    
+    if (onUserIntervention) {
+      onUserIntervention(trimmedInput, selectedRoles);
+      setUserInput('');
+      setSelectedRoles([]);
+      // Keep the intervention form visible for more questions
+    }
+  };
+
+  // Handle role selection for intervention
+  const handleRoleToggle = (roleId: string) => {
+    setSelectedRoles(prev => 
+      prev.includes(roleId) 
+        ? prev.filter(id => id !== roleId)
+        : [...prev, roleId]
+    );
+  };
+
+  // Handle select all roles
+  const handleSelectAllRoles = () => {
+    if (selectedRoles.length === session.roles.length) {
+      setSelectedRoles([]);
+    } else {
+      setSelectedRoles(session.roles.map(role => role.id));
+    }
+  };
+
+  // Update highlighted turns when new turns are added
+  useEffect(() => {
+    if (newTurnIds.length > 0) {
+      // When a new question round starts, highlight the new questions
+      setHighlightedTurnIds(newTurnIds);
+    } else {
+      // When starting a new question round, reset all highlighting
+      setHighlightedTurnIds([]);
+    }
+  }, [newTurnIds]);
 
   const getRoleIcon = (roleId: string) => {
     switch (roleId) {
@@ -128,7 +224,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
   // Helper function to check if a message is new (from the latest turn)
   const isNewMessage = (message: AIDiscussionMessage): boolean => {
     const messageTurn = session.turns.find(turn => turn.messages.some(msg => msg.id === message.id));
-    return messageTurn ? newTurnIds.includes(messageTurn.id) : false;
+    return messageTurn ? highlightedTurnIds.includes(messageTurn.id) : false;
   };
 
   return (
@@ -146,7 +242,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
             <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
               <div className="flex items-center gap-1">
                 <FiMessageCircle size={14} />
-                <span>{t('aiDiscussion.turnCount', 'Beurt {{count}}', { count: session.turns.length })}</span>
+                <span>{t('aiDiscussion.turnCount', 'Beurt {{count}}', { count: session.actualTurnNumber || 0 })}</span>
               </div>
               <div className="flex items-center gap-1">
                 <FiClock size={14} />
@@ -173,14 +269,14 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
 
         {/* Participants */}
         <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
-          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+          <h4 className="text-base font-medium text-slate-700 dark:text-slate-300 mb-3">
             {t('aiDiscussion.participants', 'Deelnemers')}
           </h4>
           <div className="flex flex-wrap gap-2">
             {session.roles.map((role) => (
               <div
                 key={role.id}
-                className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs border ${getRoleColor(role.id)}`}
+                className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm border ${getRoleColor(role.id)}`}
               >
                 <span>{getRoleIcon(role.id)}</span>
                 <span className="font-medium">
@@ -200,7 +296,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
           </h4>
         </div>
         
-        <div className="max-h-96 overflow-y-auto p-4 space-y-4">
+        <div className="max-h-[600px] overflow-y-auto p-4 space-y-4">
           {allMessages.length === 0 ? (
             <div className="space-y-4">
               {/* Welcome Message */}
@@ -251,35 +347,70 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
           ) : (
             allMessages.map((message) => {
               const role = getRoleByIdFromSession(message.role);
-              if (!role) return null;
-
+              const isUserMessage = message.isUserIntervention;
+              
               return (
-                <div key={message.id} className="flex gap-3">
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm border ${getRoleColor(role.id)}`}>
-                    {getRoleIcon(role.id)}
+                <div key={message.id} className={`flex gap-3 ${isUserMessage ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm border ${
+                    isUserMessage 
+                      ? 'bg-cyan-100 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-800 text-cyan-600 dark:text-cyan-400 order-2'
+                      : role ? getRoleColor(role.id) : 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200'
+                  }`}>
+                    {isUserMessage ? <FiUser /> : (role ? getRoleIcon(role.id) : '👤')}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm text-slate-800 dark:text-slate-200">
-                        {t(`aiDiscussion.role.${role.id}`, role.name)}
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <div className={`flex items-center gap-2 mb-1 ${isUserMessage ? 'flex-row-reverse' : ''}`}>
+                      {isUserMessage && message.targetRoles && message.targetRoles.length > 0 && (
+                        <span className="text-xs text-cyan-600 dark:text-cyan-400">
+                          → {message.targetRoles.length === session.roles.length 
+                            ? t('aiDiscussion.allRoles', 'Alle rollen')
+                            : message.targetRoles.map(roleId => 
+                                session.roles.find(r => r.id === roleId)?.name || roleId
+                              ).join(', ')
+                          }
+                        </span>
+                      )}
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
                         {formatTime(message.timestamp)}
+                      </span>
+                      {!isUserMessage && (
+                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200">
+                          {t('aiDiscussion.enthusiasmLevel', 'Enthousiasme')}: {session.roles.find(r => r.id === message.role)?.enthusiasmLevel || 3}/5
+                        </span>
+                      )}
+                      <span className={`font-medium text-base ${
+                        isUserMessage 
+                          ? 'text-cyan-800 dark:text-cyan-200'
+                          : 'text-slate-800 dark:text-slate-200'
+                      }`}>
+                        {isUserMessage 
+                          ? (message.userName || t('aiDiscussion.user', 'Gebruiker'))
+                          : (role ? t(`aiDiscussion.role.${role.id}`, role.name) : 'Unknown')
+                        }
+                        {isUserMessage && (
+                          <span className="text-xs text-cyan-600 dark:text-cyan-400 ml-1">
+                            ({t('aiDiscussion.userIntervention', 'Gebruiker')})
+                          </span>
+                        )}
                       </span>
                     </div>
                     
-                    <div className={`rounded-lg p-3 ${
-                      isNewMessage(message) 
-                        ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700' 
-                        : 'bg-gray-50 dark:bg-slate-700'
+                    <div className={`rounded-lg p-3 transition-all duration-1000 ${
+                      isUserMessage
+                        ? 'bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-700 border-l-4 border-l-cyan-500'
+                        : isNewMessage(message) 
+                          ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700' 
+                          : 'bg-gray-50 dark:bg-slate-700'
                     }`}>
-                      <p className={`text-sm leading-relaxed ${
-                        isNewMessage(message) 
-                          ? 'text-blue-800 dark:text-blue-200' 
-                          : 'text-slate-700 dark:text-slate-300'
+                      <p className={`text-base leading-relaxed ${
+                        isUserMessage
+                          ? 'text-cyan-800 dark:text-cyan-200'
+                          : isNewMessage(message) 
+                            ? 'text-green-800 dark:text-green-200' 
+                            : 'text-slate-700 dark:text-slate-300'
                       }`}>
-                        {message.content}
+                        {message.content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1')}
                       </p>
                     </div>
                   </div>
@@ -296,7 +427,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
               </div>
               <div className="flex-1">
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
-                  <p className="text-sm text-slate-500 dark:text-slate-400 italic">
+                  <p className="text-base text-slate-500 dark:text-slate-400 italic">
                     {t('aiDiscussion.generating', 'Nieuwe reacties worden gegenereerd...')}
                   </p>
                 </div>
@@ -311,28 +442,134 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
       {/* Discussion Progress */}
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="font-medium text-slate-800 dark:text-slate-200">
+          <h4 className="font-medium text-lg text-slate-800 dark:text-slate-200">
             {t('aiDiscussion.progress', 'Voortgang')}
           </h4>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
-            {session.turns.length}/10 {t('aiDiscussion.turns', 'beurten')}
+          <span className="text-base text-slate-500 dark:text-slate-400">
+            {session.actualTurnNumber || 0}/10 {t('aiDiscussion.turns', 'beurten')}
           </span>
         </div>
         
         <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
           <div 
             className="bg-cyan-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(session.turns.length / 10) * 100}%` }}
+            style={{ width: `${((session.actualTurnNumber || 0) / 10) * 100}%` }}
           />
         </div>
         
-        <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          {session.turns.length < 10 
+        <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          {(session.actualTurnNumber || 0) < 10 
             ? t('aiDiscussion.canContinue', 'Je kunt de discussie voortzetten of een rapport genereren')
             : t('aiDiscussion.maxReached', 'Maximum aantal beurten bereikt - genereer een rapport')
           }
         </div>
       </div>
+
+      {/* User Intervention Form */}
+      {showInterventionForm && (
+        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <FiMessageCircle size={20} color="#0891b2" />
+              <h4 className="font-medium text-lg text-slate-800 dark:text-slate-200">
+                {t('aiDiscussion.userIntervention', 'Stel een vraag of geef een opmerking')}
+              </h4>
+            </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {t('aiDiscussion.interventionCount', 'Vragen: {{count}}/5', { count: session.userInterventionCount || 0 })}
+            </div>
+          </div>
+
+          {/* Status hint */}
+          {session.status === 'awaiting_user_input' ? (
+            <div className="mb-4 flex items-start gap-2 rounded-md border border-green-200 bg-green-50 dark:border-emerald-900/40 dark:bg-emerald-900/20 p-3 text-sm text-emerald-800 dark:text-emerald-200">
+              <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-emerald-500" />
+              <p>
+                {t('aiDiscussion.readyForIntervention', 'Je kunt nu je vraag stellen. Druk op Ctrl+Enter of klik op Verstuur.')}
+              </p>
+            </div>
+          ) : (
+            <div className="mb-4 flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 dark:border-amber-900/40 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-200">
+              <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-amber-500" />
+              <p>
+                {t('aiDiscussion.notAwaitingIntervention', "Je kunt nog niet versturen. Klik eerst op 'Discussie voortzetten' om een vraag te kunnen stellen.")}
+              </p>
+            </div>
+          )}
+          
+          {/* Role Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              {t('aiDiscussion.selectTargetRoles', 'Selecteer rollen om te antwoorden:')}
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              <button
+                onClick={handleSelectAllRoles}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  selectedRoles.length === session.roles.length
+                    ? 'bg-cyan-600 text-white'
+                    : 'bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+                }`}
+              >
+                <span className="inline mr-1"><FiUsers size={16} /></span>
+                {t('aiDiscussion.allRoles', 'Alle rollen')}
+              </button>
+              {session.roles.map(role => (
+                <button
+                  key={role.id}
+                  onClick={() => handleRoleToggle(role.id)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    selectedRoles.includes(role.id)
+                      ? 'bg-cyan-600 text-white'
+                      : 'bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  {role.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Input Field */}
+          <div className="mb-4">
+            <textarea
+              value={userInput}
+              onChange={(e) => setUserInput(e.target.value)}
+              placeholder={t('aiDiscussion.interventionPlaceholder', 'Typ hier je vraag of opmerking...')}
+              className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+              rows={3}
+              maxLength={250}
+              onKeyDown={(e) => {
+                if (
+                  e.key === 'Enter' &&
+                  (e.ctrlKey || e.metaKey) &&
+                  session.status === 'awaiting_user_input'
+                ) {
+                  handleUserIntervention();
+                }
+              }}
+            />
+            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <span>{t('aiDiscussion.submitHint', 'Druk op Ctrl+Enter om te verzenden')}</span>
+              <span className={userInput.length < 20 ? 'text-red-500' : userInput.length > 200 ? 'text-orange-500' : 'text-green-500'}>
+                {userInput.length}/250 karakters
+              </span>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleUserIntervention}
+              disabled={!userInput.trim() || userInput.trim().length < 20 || userInput.trim().length > 250 || selectedRoles.length === 0 || session.status !== 'awaiting_user_input'}
+              className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+              <FiSend />
+              {t('aiDiscussion.submitIntervention', 'Verstuur')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

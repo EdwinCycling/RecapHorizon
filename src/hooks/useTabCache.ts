@@ -20,7 +20,8 @@ export const useTabCache = () => {
     mindmap: null,
     storytelling: null,
     blog: null,
-    businessCase: null
+    businessCase: null,
+    mckinsey: null
   });
 
   // Helper voor async content met caching - GEFIXT voor infinite loop
@@ -100,7 +101,8 @@ export const useTabCache = () => {
       mindmap: null,
       storytelling: null,
       blog: null,
-      businessCase: null
+      businessCase: null,
+      mckinsey: null
     });
 
   }, []);

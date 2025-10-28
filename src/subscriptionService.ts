@@ -101,7 +101,8 @@ export const TIER_FEATURES = {
     showMe: false,
     thinkingPartner: false,
     aiDiscussion: false,
-    opportunities: false
+    opportunities: false,
+    mckinsey: false
   },
   [SubscriptionTier.SILVER]: {
     chat: false,
@@ -113,7 +114,8 @@ export const TIER_FEATURES = {
     showMe: false,
     thinkingPartner: false,
     aiDiscussion: false,
-    opportunities: true
+    opportunities: true,
+    mckinsey: false
   },
   [SubscriptionTier.GOLD]: {
     chat: true,
@@ -125,7 +127,8 @@ export const TIER_FEATURES = {
     showMe: true,
     thinkingPartner: true,
     aiDiscussion: true,
-    opportunities: true
+    opportunities: true,
+    mckinsey: true
   },
   [SubscriptionTier.ENTERPRISE]: {
     chat: true,
@@ -137,7 +140,8 @@ export const TIER_FEATURES = {
     showMe: true,
     thinkingPartner: true,
     aiDiscussion: true,
-    opportunities: true
+    opportunities: true,
+    mckinsey: true
   },
   [SubscriptionTier.DIAMOND]: {
     chat: true,
@@ -149,7 +153,8 @@ export const TIER_FEATURES = {
     showMe: true,
     thinkingPartner: true,
     aiDiscussion: true,
-    opportunities: true
+    opportunities: true,
+    mckinsey: true
   }
 };
 
@@ -497,6 +502,8 @@ export class SubscriptionService {
         return t('aiDiscussionFeatureUpgrade');
       case 'opportunities':
         return t('opportunitiesFeatureUpgrade');
+      case 'mckinsey':
+        return t('mckinseyFeatureUpgrade');
       default:
         return t('defaultFeatureUpgrade');
     }

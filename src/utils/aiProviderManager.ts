@@ -30,11 +30,11 @@ export enum AIFunction {
 
 // Subscription tiers
 export enum SubscriptionTier {
-  FREE = 'FREE',
-  SILVER = 'SILVER',
-  GOLD = 'GOLD',
-  DIAMOND = 'DIAMOND',
-  ENTERPRISE = 'ENTERPRISE'
+  FREE = 'free',
+  SILVER = 'silver',
+  GOLD = 'gold',
+  DIAMOND = 'diamond',
+  ENTERPRISE = 'enterprise'
 }
 
 // Rate limit status interface

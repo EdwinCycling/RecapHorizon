@@ -4,6 +4,7 @@ import { subscriptionService } from '../subscriptionService';
 import { stripeService } from '../services/stripeService';
 import { getUserStripeData, db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { displayToast } from '../utils/clipboard';
 import CancellationGoodbyeModal from './CancellationGoodbyeModal';
 import EnterpriseContactModal from './EnterpriseContactModal';
 import ReactivationSuccessModal from './ReactivationSuccessModal';
@@ -256,7 +257,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
         await stripeService.redirectToCheckout(tier, userId, userEmail);
       } catch (error) {
         console.error('Error redirecting to checkout:', error);
-        alert(t('pricingCheckoutError', 'Er is een fout opgetreden bij het starten van de checkout. Probeer het opnieuw.'));
+        displayToast(t('pricingCheckoutError', 'Er is een fout opgetreden bij het starten van de checkout. Probeer het opnieuw.'), 'error');
         setIsLoading(null);
       }
       return;
@@ -264,7 +265,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
 
     // Paid user -> cancel to Free OR change plan
     if (!stripeCustomerId) {
-      alert(t('pricingPortalMissingCustomer', 'Stripe klant-ID ontbreekt. Open abonnementbeheer via Instellingen.'));
+      displayToast(t('pricingPortalMissingCustomer', 'Stripe klant-ID ontbreekt. Open abonnementbeheer via Instellingen.'), 'error');
       return;
     }
 
@@ -297,7 +298,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
       await stripeService.redirectToCustomerPortal(stripeCustomerId);
     } catch (error) {
       console.error('Error redirecting to customer portal:', error);
-      alert(t('subscriptionPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'));
+      displayToast(t('subscriptionPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'), 'error');
     } finally {
       setIsLoading(null);
     }
@@ -709,7 +710,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                             
                           } catch (error) {
                             console.error('Error reactivating subscription:', error);
-                            alert(t('pricingReactivateError', 'Er is een fout opgetreden bij het heractiveren van het abonnement. Probeer het opnieuw.'));
+                            displayToast(t('pricingReactivateError', 'Er is een fout opgetreden bij het heractiveren van het abonnement. Probeer het opnieuw.'), 'error');
                           } finally {
                             setIsLoading(null);
                           }

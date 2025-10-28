@@ -1,4 +1,13 @@
 export const en = {
+  yes: "Yes",
+  no: "No",
+  confirmAnalysis: "Chat ready, proceed to analysis?",
+  confirmAnalysisDesc: "The complete chat will be analyzed and added to your RecapHorizon analysis.",
+  pwaInstallIosTitle: "Install RecapHorizon on iOS",
+  pwaInstallIosStep1: "1. Tap the share icon",
+  pwaInstallIosStep2: "2. Scroll down and tap 'Add to Home Screen'",
+  pwaInstallIosStep3: "3. Tap 'Add' to confirm",
+  pwaInstallIosShareIcon: "📤",
   cookieTitle: "Cookies for Analytics",
   cookiePoint1: "Essential cookies only",
   cookiePoint2: "No tracking of personal data",
@@ -318,6 +327,75 @@ export const en = {
   formatMd: "Markdown is read as text",
   formatDocx: "Automatically converted to plain text",
   supportedFormatsNote: "Note: PDF, RTF and DOCX are automatically converted to plain text. Results may vary depending on source document quality.",
+  
+  // McKinsey Framework Analysis
+  mckinsey: "McKinsey Analysis",
+  mckinseyAccessRestricted: "McKinsey analysis is only available for Gold, Enterprise and Diamond subscriptions. Upgrade your subscription to get access.",
+  mckinseyFeatureUpgrade: "Upgrade to Gold for McKinsey strategic analysis",
+  mckinseyGeneratingTopics: "Generating strategic topics...",
+  mckinseySelectTopic: "Select a strategic topic",
+  mckinseySelectRole: "Select your role",
+  mckinseySelectFramework: "Select a framework",
+  mckinseyGeneratingAnalysis: "Generating McKinsey analysis...",
+  mckinseyAnalysisComplete: "Analysis complete",
+  mckinseyRoleStrategyConsultant: "Strategy Consultant",
+  mckinseyRoleBusinessAnalyst: "Business Analyst",
+  mckinseyRoleProjectManager: "Project Manager",
+  mckinseyRoleExecutive: "Executive",
+  mckinseyFramework3C: "3C Framework (Company, Customers, Competitors)",
+  mckinseyFramework7S: "7S Framework (Strategy, Structure, Systems, Shared Values, Skills, Style, Staff)",
+  mckinseyFrameworkCustomerLifecycle: "Customer Lifecycle Analysis",
+  mckinseyFrameworkValueChain: "Value Chain Analysis",
+  mckinseyFrameworkForceField: "Force Field Analysis",
+  mckinseyFrameworkCoreCompetencies: "Core Competencies Analysis",
+  mckinseyFrameworkScenarioPlanning: "Scenario Planning Summary",
+  mckinseyFrameworkPESTEL: "PESTEL Analysis",
+  mckinseyFrameworkPortersFiveForces: "Competitive Forces Analysis (Porter's Five Forces)",
+  mckinseyFrameworkAnsoffMatrix: "Growth Strategies Analysis (Ansoff Matrix)",
+  mckinseyFrameworkMAIntegration: "M&A Integration Scan",
+  mckinseyFrameworkOperationalBenchmarking: "Operational Benchmarking Analysis",
+  mckinseyFrameworkDigitalTransformation: "Digital Transformation Readiness Scorecard",
+  mckinseyFrameworkPortfolioManagement: "Portfolio Management Analysis (Growth/Return)",
+  mckinseyFrameworkCustomerSegmentation: "Customer Segmentation Analysis",
+  mckinseyFrameworkOrganizationalStructure: "Organizational Structure & Governance Scan",
+  
+  // McKinsey Framework Descriptions
+  mckinseyFramework3CDesc: "Analyzes strategy through three pillars: Company (internal strengths and strategy), Customers (segments, needs and value), and Competitors (positioning and advantages).",
+  mckinseyFramework7SDesc: "Assesses organizational effectiveness across the 7S: Strategy, Structure, Systems, Shared Values, Style, Staff and Skills to identify alignment gaps.",
+  mckinseyFrameworkCustomerLifecycleDesc: "Identifies and analyzes the different stages a customer goes through, from awareness to loyalty, including opportunities and pain points.",
+  mckinseyFrameworkValueChainDesc: "Deconstructs the primary and support activities that add value to a product or service, identifying areas for optimization.",
+  mckinseyFrameworkForceFieldDesc: "Analyzes a desired change by mapping the driving forces (supporting the change) and restraining forces (opposing the change).",
+  mckinseyFrameworkCoreCompetenciesDesc: "Identifies the unique capabilities and knowledge in which the company excels and which provide a sustainable competitive advantage.",
+  mckinseyFrameworkScenarioPlanningDesc: "Summarizes the discussed possible future scenarios, including key driving factors and their potential implications.",
+  mckinseyFrameworkPESTELDesc: "Analyzes the external macro-environment from Political, Economic, Socio-cultural, Technological, Ecological, and Legal perspectives.",
+  mckinseyFrameworkPortersFiveForcesDesc: "Analyzes the competitive intensity of an industry using five forces: threat of new entrants, threat of substitutes, bargaining power of buyers, bargaining power of suppliers, and intensity of rivalry.",
+  mckinseyFrameworkAnsoffMatrixDesc: "Evaluates discussed growth strategies using Product/Market combinations: Market Penetration, Market Development, Product Development, and Diversification.",
+  mckinseyFrameworkMAIntegrationDesc: "Analyzes discussed aspects of a proposed merger or acquisition, focusing on integration challenges and synergy opportunities.",
+  mckinseyFrameworkOperationalBenchmarkingDesc: "Compares discussed operational performance (processes, efficiency, costs) with best practices or competitors (if discussed).",
+  mckinseyFrameworkDigitalTransformationDesc: "Evaluates the discussed readiness of the organization for digital transformation based on technological capabilities, culture, leadership, and strategy.",
+  mckinseyFrameworkPortfolioManagementDesc: "Evaluates a portfolio of business units or investments based on growth potential and expected return, similar to McKinsey's GE-Matrix.",
+  mckinseyFrameworkCustomerSegmentationDesc: "Categorizes discussed customer groups based on shared characteristics, needs, behavior, or value, and identifies optimal approaches per segment.",
+  mckinseyFrameworkOrganizationalStructureDesc: "Evaluates discussed aspects of organizational setup, decision-making processes, roles, and responsibilities.",
+  mckinseyTopicDependencyTitle: "Important: Topic-dependent analysis",
+  mckinseyTopicDependencyDesc: "McKinsey reports are highly dependent on the chosen topic. The quality and relevance of the analysis depends on how specific and clearly the selected topic is defined.",
+  mckinseyTopicFallback1: "Strategic positioning and competitive advantage",
+  mckinseyTopicFallback2: "Operational efficiency and process optimization",
+  mckinseyTopicFallback3: "Market expansion and growth opportunities",
+  mckinseyTopicFallback4: "Organizational development and change management",
+  mckinseyTopicFallback5: "Digital transformation and innovation",
+  mckinseyNoTopics: "No topics available. Please try again.",
+  mckinseyRegenerateTopics: "Generate new topics",
+  mckinseyBackToTopics: "Back to topics",
+  mckinseyBackToRole: "Back to role selection",
+  mckinseyBackToFramework: "Back to framework selection",
+  mckinseyAnalysisError: "An error occurred while generating the analysis. Please try again.",
+  mckinseyTopicsError: "An error occurred while generating topics. Please try again.",
+  mckinseyDownloadPdf: "Download as PDF",
+  mckinseyDownloadText: "Download as text",
+  mckinseyEmailAnalysis: "Email analysis",
+  mckinseyCopyAnalysis: "Copy analysis",
+  mckinseyAnalysisCopied: "Analysis copied to clipboard",
+  mckinseyReset: "Reset analysis",
   landingHeroSubtitle: "Transform your meetings, webinars and conversations into professional documents, export and insights with AI",
   waitlistTitle: "📋 Access by Invitation",
   waitlistLead: "RecapHorizon is currently available by invitation only. Join the waitlist!",
@@ -1066,6 +1144,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   teachMeTryAgain: "Try again",
   teachMeRegenerateTopics: "Regenerate topics",
   teachMeSelectedTopic: "Selected topic",
+  selectedTopic: "Selected topic",
   teachMeGeneratingContent: "Generating content...",
   
   // Learning methods
@@ -1308,12 +1387,10 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   intro: "Introduction",
   outro: "Conclusion",
   maand: "month",
-  no: "No",
   none: "None",
   noSubject: "No Subject",
   noEmailAddressesFound: "No email addresses found",
   conclusions: "Conclusions",
-  confirmAnalysisDesc: "Please confirm that you want to proceed with the analysis",
   compressingAudio: "Compressing audio...",
   copyAll: "Copy All",
   copyBody: "Copy Body",
@@ -1383,7 +1460,6 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   expertSystemPromptTemplate: "You are a {role}. Your expertise lies within {branche}. The discussion will be about \"{topic}\".\n\nYour task is to guide and inform the user within the boundaries of your role, industry and the chosen topic. Stick strictly to the delineation of these selections. Do NOT give answers or information about topics that fall outside this specific context. If a question falls outside your expertise, indicate that you cannot answer that within this context.\n\nThe output language should ALWAYS be English.\nYou behave helpfully, professionally and objectively. Keep answers relevant and to-the-point.\n\nAdditional guidelines:\n- Never present generated, derived, speculated or inferred content as fact.\n- {verificationGuideline}\n- Label unverified content at the beginning of a sentence: [Inference] [Speculation] [Unverified]\n- Ask for clarification if information is missing. Don't guess and don't fill in gaps.\n- If a part is unverified, label the entire response.\n- Don't paraphrase or interpret my input unless I ask you to.\n- For claims about LLM behavior (including yourself), add: [Inference] or [Unverified], with a note that it's based on observed patterns.",
   expertChatUser: "User",
   expertChatExpert: "Expert",
-  confirmAnalysis: "Chat complete, proceed to analysis?",
 
   // Expert Configuration Options - 50 Topics
   expertTopics: {
@@ -1582,7 +1658,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   aiDiscussionSelectGoal: "Select discussion goal",
   aiDiscussionGoalPlaceholder: "Choose the goal of the discussion...",
   aiDiscussionSelectRoles: "Select organizational roles (4 required)",
-  aiDiscussionRolesPlaceholder: "Choose 4 roles for the discussion...",
+  aiDiscussionRolesPlaceholder: "Choose 2-4 roles for the discussion...",
   aiDiscussionStartDiscussion: "Start Discussion",
   aiDiscussionConfigurationRequired: "Configuration required to proceed",
   
@@ -2522,7 +2598,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   "aiDiscussion.refreshTopics": "Refresh topics",
   "aiDiscussion.backToTopics": "Back to topics",
   "aiDiscussion.rolesModeratorTitle": "Roles & moderator",
-  "aiDiscussion.rolesModeratorHelp": "Select exactly 4 roles for this discussion. The first selected role acts as the moderator: facilitates the discussion, asks clarifying questions and summarizes. In the discussion UI this is indicated by \“(Moderator)\” after the role name.",
+  "aiDiscussion.rolesModeratorHelp": "Select 2-4 roles for this discussion. The first selected role acts as the moderator: facilitates the discussion, asks clarifying questions and summarizes. In the discussion UI this is indicated by \"(Moderator)\" after the role name.",
   "aiDiscussion.backToConfig": "Back to configuration",
   "aiDiscussion.continueDiscussion": "Continue discussion",
   "aiDiscussion.generateReport": "Generate report",
@@ -2530,8 +2606,8 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   "aiDiscussion.selectGoal": "Select discussion goal",
   "aiDiscussion.selectGoalDesc": "Choose the main goal for this discussion from 5 categories",
   "aiDiscussion.selectedGoal": "Selected goal",
-  "aiDiscussion.selectRoles": "Select 4 organizational roles",
-  "aiDiscussion.selectRolesDesc": "Choose which roles will participate in the discussion",
+  "aiDiscussion.selectRoles": "Select 2-4 organizational roles",
+  "aiDiscussion.selectRolesDesc": "Choose which roles will participate in the discussion (minimum 2, maximum 4)",
   "aiDiscussion.rolesSelected": "roles selected",
   "aiDiscussion.moderatorInfo": "The 1st selected role is the moderator. This role facilitates the conversation, asks clarifying questions, and summarizes.",
   "aiDiscussion.currentModerator": "Current moderator",
@@ -2893,17 +2969,45 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,"opportunities.role.policymaker": "The Policymaker"
   ,"opportunities.role.policemakerDesc": "Advises on internal company policies, ethical guidelines, and governance structures."
 
-  // Opportunities types
-  ,"opportunities.type.revenue-streams": "Revenue Streams"
-  ,"opportunities.type.revenue-streamsDesc": "New ways to make money"
-  ,"opportunities.type.cost-optimization": "Cost Optimization"
-  ,"opportunities.type.cost-optimizationDesc": "Opportunities to reduce costs"
-  ,"opportunities.type.market-expansion": "Market Expansion"
-  ,"opportunities.type.market-expansionDesc": "New markets and customer groups"
-  ,"opportunities.type.operational-efficiency": "Operational Efficiency"
-  ,"opportunities.type.operational-efficiencyDesc": "Process and workflow improvements"
-  ,"opportunities.type.strategic-partnerships": "Strategic Partnerships"
-  ,"opportunities.type.strategic-partnershipsDesc": "Collaborations and alliances"
+  // Opportunities types - 14 comprehensive types
+  ,"opportunities.type.new-product-development": "New Product or Service Development"
+  ,"opportunities.type.new-product-developmentDesc": "Suggestions for entirely new products, services, or features to develop"
+  ,"opportunities.type.market-expansion": "Market Expansion & Segmentation"
+  ,"opportunities.type.market-expansionDesc": "Opportunities to enter new geographical markets or customer segments"
+  ,"opportunities.type.process-optimization": "Process Optimization & Efficiency"
+  ,"opportunities.type.process-optimizationDesc": "Suggestions for streamlining workflows and increasing operational efficiency"
+  ,"opportunities.type.cost-reduction": "Cost Reduction"
+  ,"opportunities.type.cost-reductionDesc": "Identification of areas where costs can be reduced without compromising quality"
+  ,"opportunities.type.customer-engagement": "Customer Engagement & Loyalty"
+  ,"opportunities.type.customer-engagementDesc": "Ideas to improve customer interaction and increase their loyalty"
+  ,"opportunities.type.partnerships": "Partnership & Alliances"
+  ,"opportunities.type.partnershipsDesc": "Potential collaborations with other companies or strategic partners"
+  ,"opportunities.type.competitive-advantage": "Competitive Advantage"
+  ,"opportunities.type.competitive-advantageDesc": "Ways to differentiate from competitors and create unique value propositions"
+  ,"opportunities.type.risk-prevention": "Risk Prevention & Mitigation"
+  ,"opportunities.type.risk-preventionDesc": "Opportunities to identify potential risks and strategies to prevent them"
+  ,"opportunities.type.knowledge-sharing": "Internal Knowledge Sharing & Training"
+  ,"opportunities.type.knowledge-sharingDesc": "Opportunities to improve internal knowledge transfer and employee skills"
+  ,"opportunities.type.revenue-growth": "Revenue Growth"
+  ,"opportunities.type.revenue-growthDesc": "Strategies to increase revenue through pricing optimization or new business models"
+  ,"opportunities.type.sustainability": "Sustainability & Social Impact"
+  ,"opportunities.type.sustainabilityDesc": "Opportunities to integrate sustainable practices and increase social impact"
+  ,"opportunities.type.employer-branding": "Employer Branding & Talent Acquisition"
+  ,"opportunities.type.employer-brandingDesc": "Opportunities to make the company more attractive to top talent and improve recruitment strategy"
+  ,"opportunities.type.technology-adoption": "Technology Adoption & Integration"
+  ,"opportunities.type.technology-adoptionDesc": "Possibilities to implement new technologies or integrate existing systems"
+  ,"opportunities.type.ux-improvement": "User Experience (UX) Improvement"
+  ,"opportunities.type.ux-improvementDesc": "Opportunities to optimize the usability and overall experience of the app/service"
+  ,"opportunities.type.niche-targeting": "Niche Targeting"
+  ,"opportunities.type.niche-targetingDesc": "Opportunities to identify and serve specific, underserved niche markets"
+  ,"opportunities.type.financial-injection": "Financial Injection & Funding"
+  ,"opportunities.type.financial-injectionDesc": "Opportunities for attracting investments, grants, or optimizing capital flows"
+  ,"opportunities.type.internal-communication": "Internal Communication Improvement"
+  ,"opportunities.type.internal-communicationDesc": "Opportunities to enhance the clarity and effectiveness of communication within the organization"
+  ,"opportunities.type.automation-ai": "Automation & AI Application"
+  ,"opportunities.type.automation-aiDesc": "Opportunities to automate manual tasks and leverage AI for smarter decision-making"
+  ,"opportunities.type.reputation-management": "Reputation Management"
+  ,"opportunities.type.reputation-managementDesc": "Opportunities to improve public perception, foster positive messaging, and manage criticism"
 
   // AI Discussion Phase translations
   ,"aiDiscussion.phase.introduction": "Introduction"
@@ -3015,4 +3119,131 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   // Analysis screen dropdown labels
   ,chooseModeLabel: "Choose mode:"
   ,chooseAnalysisLabel: "Choose analysis:"
+
+  // RecapHorizon panel status
+  ,noItems: "(no items)"
+  ,selectItems: "(select items)"
+  ,itemsSelected: "({count} selected)"
+
+  // Analysis mode options
+  ,analysisResults: "Analysis Results"
+  ,selectAnalysis: "-- Select an analysis --"
+  ,opportunitiesAnalysis: "Opportunities & Chances"
+
+  // AI Discussion Phase translations (already exist above but adding missing ones)
+  ,aiDiscussionAccessRestricted: "AI Discussion is available from Gold tier. Upgrade to access this functionality."
+  ,aiDiscussionGenerating: "AI agents discussing..."
+  ,aiDiscussionGoalDecisionMaking: "Decision Making"
+  ,aiDiscussionGoalDecisionMakingDesc: "Support complex decision-making processes"
+  ,aiDiscussionGoalInnovation: "Innovation & Creativity"
+  ,aiDiscussionGoalInnovationDesc: "Generate creative solutions and new ideas"
+  ,aiDiscussionGoalProblemSolving: "Problem Solving"
+  ,aiDiscussionGoalProblemSolvingDesc: "Identify and solve complex problems"
+  ,aiDiscussionGoalRiskAssessment: "Risk Assessment"
+  ,aiDiscussionGoalRiskAssessmentDesc: "Evaluate and mitigate potential risks"
+  ,aiDiscussionGoalStrategyDevelopment: "Strategy Development"
+  ,aiDiscussionGoalStrategyDevelopmentDesc: "Develop strategic plans and roadmaps"
+  ,aiDiscussionReportCopied: "Discussion report copied to clipboard"
+  ,aiDiscussionReportCopy: "Copy Discussion Report"
+  ,aiDiscussionReportKeyInsights: "Key Insights"
+  ,aiDiscussionReportNextSteps: "Next Steps"
+  ,aiDiscussionRoleCEO: "CEO"
+  ,aiDiscussionRoleCEODesc: "Strategic leadership and vision"
+  ,aiDiscussionRoleCFO: "CFO"
+  ,aiDiscussionRoleCFODesc: "Financial strategy and risk management"
+  ,aiDiscussionRoleCTO: "CTO"
+  ,aiDiscussionRoleCTODesc: "Technical leadership and innovation"
+  ,aiDiscussionRoleMarketing: "Marketing Director"
+  ,aiDiscussionRoleMarketingDesc: "Market positioning and customer engagement"
+  ,aiDiscussionRoleOperations: "Operations Manager"
+  ,aiDiscussionRoleOperationsDesc: "Operational efficiency and processes"
+  ,aiDiscussionRound: "Round"
+  ,aiDiscussionStartNew: "Start New Discussion"
+  ,aiImageGeneration: "AI Image Generation"
+  
+  // Missing translations from Dutch file
+  ,analysisError: "Error performing analysis"
+  ,ben: "am"
+  ,both: "both"
+  ,copyError: "Error copying to clipboard"
+  ,denk: "think"
+  ,discussie: "discussion"
+  ,emailComposition: "Email Composition"
+  ,emailTemplates: "Email Templates"
+  ,errorValidatingReferralCode: "Error validating referral code"
+  ,expertHelpAvailability: "Expert Help Availability"
+  ,expertHelpAvailabilityText: "Expert help is available 24/7"
+  ,expertHelpHowItWorks: "How Expert Help Works"
+  ,expertHelpTips: "Expert Help Tips"
+  ,faqEmailUpload: "FAQ Email Upload"
+  ,faqEmailUploadAnswer: "FAQ Email Upload Answer"
+  ,generatingTopics: "Generating topics..."
+  ,generatingTopicsDesc: "Generating topics description"
+  ,imageColor: "Image Color"
+  ,invalidReferralCode: "Invalid referral code"
+  ,mckinseyRoleBusinessAnalystDesc: "Business analysis and process optimization"
+  ,mckinseyRoleCeoAdvisor: "CEO Advisor"
+  ,mckinseyRoleCeoAdvisorDesc: "Strategic leadership and executive guidance"
+  ,mckinseyRoleManagementConsultant: "Management Consultant"
+  ,mckinseyRoleManagementConsultantDesc: "Management consulting and organizational improvement"
+  ,mckinseyRoleStrategyConsultantDesc: "Strategic planning and business development"
+  ,mij: "me"
+  ,nadenk: "think"
+  ,noTopicsGenerated: "No topics generated"
+  ,opportunitiesGeneratedAt: "Generated at"
+  ,opportunitiesSelectedRoles: "Selected roles"
+  ,opportunitiesSelectedTopics: "Selected topics"
+  ,opportunitiesSelectedTypes: "Selected types"
+  ,opportunity: "Opportunity"
+  ,opportunityRole: "Role"
+  ,opportunityTopic: "Topic"
+  ,opportunityType: "Type"
+  ,passwordResetEmailSent: "Password reset email sent"
+  ,passwordResetError: "Password reset error"
+  ,passwordResetInvalidEmail: "Invalid email for password reset"
+  ,passwordResetTooManyRequests: "Too many password reset requests"
+  ,passwordResetUserNotFound: "User not found for password reset"
+  ,podcastFeatureUpgrade: "Podcast feature upgrade"
+  ,previewEmail: "Preview email"
+  ,referralCodeNotFound: "Referral code not found"
+  ,referralEarningsPreviousMonth: "Referral earnings previous month"
+  ,referralWelcomeGreeting: "Referral welcome greeting"
+  ,referralWelcomeTitle: "Referral welcome title"
+  ,remaining: "remaining"
+  ,rollen: "roles"
+  ,selectActionAbove: "Select action above"
+  ,sessionsThisMonth: "Sessions this month"
+  ,settingsAudioCompression: "Audio compression settings"
+  ,settingsAudioCompressionDesc: "Audio compression settings description"
+  ,settingsAutoStopEnabled: "Auto-stop enabled"
+  ,settingsCompressionEnabled: "Compression enabled"
+  ,settingsQualityBalanced: "Balanced quality"
+  ,settingsQualityFast: "Fast quality"
+  ,settingsQualityHigh: "High quality"
+  ,settingsStopRecordingAfterCapture: "Stop recording after capture"
+  ,settingsStopRecordingDesc: "Stop recording description"
+  ,settingsTranscriptionQuality: "Transcription quality"
+  ,settingsTranscriptionQualityDesc: "Transcription quality description"
+  ,settingsTranscriptionTitle: "Transcription settings"
+  ,subject: "subject"
+  ,thinkingPartnerMethod: "Thinking partner method"
+  ,thinkingPartnerSelectedTopic: "Selected thinking partner topic"
+  ,to: "to"
+  ,tokensThisMonth: "Tokens this month"
+  ,topicGenerationError: "Topic generation error"
+  ,topicsGenerated: "Topics generated"
+  ,transcriptionQuality: "Transcription quality"
+  ,transcriptionQualityBalanced: "Balanced transcription quality"
+  ,transcriptionQualityFast: "Fast transcription quality"
+  ,transcriptionQualityHigh: "High transcription quality"
+  ,transcriptionSettings: "Transcription settings"
+  ,unlimitedTokens: "Unlimited tokens"
+  ,used: "used"
+  ,userDocumentCreated: "User document created"
+  ,userIdEmptyInEnsureUser: "User ID empty in ensure user"
+  ,vergaderdetails: "meeting details"
+  ,vergadering: "meeting"
+  ,viewPricing: "View pricing"
+  ,waarom: "why"
+  ,werk: "work"
 };

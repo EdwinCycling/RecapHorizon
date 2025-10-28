@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ThinkingTopic, ThinkingPartner, ThinkingAnalysisData } from '../../types';
-import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck } from 'react-icons/fi';
+import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck, FiMoreVertical, FiDownload, FiMail } from 'react-icons/fi';
 import { generateThinkingTopics, generateThinkingPartnerAnalysis } from '../services/thinkingPartnerService';
 import { displayToast } from '../utils/clipboard';
 import BlurredLoadingOverlay from './BlurredLoadingOverlay';
@@ -24,6 +24,7 @@ interface ThinkingPartnerState {
   selectedPartner?: ThinkingPartner;
   analysis?: string;
   error?: string;
+  cacheKey?: string; // Track which cache key the current topics belong to
 }
 
 // Function to get thinking partners with translations
@@ -31,56 +32,56 @@ const getThinkingPartners = (t: (key: string) => string): ThinkingPartner[] => [
   {
     id: 'challenge-thinking',
     name: t('challengeThinking'),
-    description: t('challengeThinkingDescription'),
+    description: t('challengeThinkingDesc'),
     promptTemplate: t('promptTemplate.challenge-thinking'),
     category: 'analysis'
   },
   {
     id: 'reframe-lens',
     name: t('reframeLens'),
-    description: t('reframeLensDescription'),
+    description: t('reframeLensDesc'),
     promptTemplate: t('promptTemplate.reframe-lens'),
     category: 'insight'
   },
   {
     id: 'translate-gut-feeling',
     name: t('translateGutFeeling'),
-    description: t('translateGutFeelingDescription'),
+    description: t('translateGutFeelingDesc'),
     promptTemplate: t('promptTemplate.translate-gut-feeling'),
     category: 'insight'
   },
   {
     id: 'structure-thinking',
     name: t('structureThinking'),
-    description: t('structureThinkingDescription'),
+    description: t('structureThinkingDesc'),
     promptTemplate: t('promptTemplate.structure-thinking'),
     category: 'structure'
   },
   {
     id: 'face-decision',
     name: t('faceDecision'),
-    description: t('faceDecisionDescription'),
+    description: t('faceDecisionDesc'),
     promptTemplate: t('promptTemplate.face-decision'),
     category: 'decision'
   },
   {
     id: 'surface-question',
     name: t('surfaceQuestion'),
-    description: t('surfaceQuestionDescription'),
+    description: t('surfaceQuestionDesc'),
     promptTemplate: t('promptTemplate.surface-question'),
     category: 'insight'
   },
   {
     id: 'spot-risks',
     name: t('spotRisks'),
-    description: t('spotRisksDescription'),
+    description: t('spotRisksDesc'),
     promptTemplate: t('promptTemplate.spot-risks'),
     category: 'analysis'
   },
   {
     id: 'reverse-engineer',
     name: t('reverseEngineer'),
-    description: t('reverseEngineerDescription'),
+    description: t('reverseEngineerDesc'),
     promptTemplate: t('promptTemplate.reverse-engineer'),
     category: 'insight'
   }
@@ -103,6 +104,9 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
     error: undefined
   });
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   // Shared topics cache key across tabs (AI Discussion and Thinking Partner)
   const getTopicsCacheKey = useCallback(() => {
     const content = (summary || transcript || '').trim();
@@ -121,14 +125,25 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       return;
     }
 
+    // Check if we already have topics loaded for this content
+    const currentCacheKey = getTopicsCacheKey();
+    const hasTopicsForCurrentContent = state.topics.length > 0 && state.cacheKey === currentCacheKey;
+    
+    if (hasTopicsForCurrentContent) {
+      // We already have the right topics, ensure we're in the right step
+      if (state.step === 'generating') {
+        setState(prev => ({ ...prev, step: 'selectTopic' }));
+      }
+      return;
+    }
+
     const tryLoadFromCache = () => {
       try {
-        const key = getTopicsCacheKey();
-        const cached = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+        const cached = typeof window !== 'undefined' ? window.localStorage.getItem(currentCacheKey) : null;
         if (cached) {
           const topics = JSON.parse(cached) as ThinkingTopic[];
-          if (!cancelled) {
-            setState(prev => ({ ...prev, step: 'selectTopic', topics }));
+          if (!cancelled && topics.length > 0) {
+            setState(prev => ({ ...prev, step: 'selectTopic', topics, cacheKey: currentCacheKey, error: undefined }));
             return true;
           }
         }
@@ -138,7 +153,11 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
 
     if (tryLoadFromCache()) return () => { cancelled = true; };
 
-    generateTopics();
+    // Only generate if we're in the generating step and don't have the right topics
+    if (state.step === 'generating' || !hasTopicsForCurrentContent) {
+      setState(prev => ({ ...prev, step: 'generating', error: undefined }));
+      generateTopics();
+    }
 
     return () => { cancelled = true; };
   }, [transcript, summary, language, getTopicsCacheKey, t]);
@@ -151,16 +170,17 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       const { generateThinkingTopics } = await import('../services/thinkingPartnerService');
       
       const topics = await generateThinkingTopics(transcript, summary, language, userId, userTier);
+      const cacheKey = getTopicsCacheKey();
       
       try {
-        const key = getTopicsCacheKey();
-        window.localStorage.setItem(key, JSON.stringify(topics));
+        window.localStorage.setItem(cacheKey, JSON.stringify(topics));
       } catch {}
 
       setState(prev => ({
         ...prev,
         step: 'selectTopic',
         topics,
+        cacheKey,
         error: undefined
       }));
     } catch (error) {
@@ -240,15 +260,19 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
   };
 
   const handleReset = () => {
-    setState({
-      step: 'generating',
-      topics: [],
+    setState(prev => ({
+      ...prev,
+      step: prev.topics.length > 0 ? 'selectTopic' : 'generating',
       selectedTopic: undefined,
       selectedPartner: undefined,
       analysis: undefined,
       error: undefined
-    });
-    generateTopics();
+    }));
+    
+    // Only regenerate topics if we don't have any cached topics
+    if (state.topics.length === 0) {
+      generateTopics();
+    }
   };
 
   const copyToClipboard = async (text: string) => {
@@ -260,6 +284,71 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       displayToast(t('copyError', 'Kopiëren mislukt'), 'error');
     }
   };
+
+  const downloadAsText = () => {
+    if (!state.analysis) return;
+    
+    const element = document.createElement('a');
+    const file = new Blob([state.analysis], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `denkpartner-analyse-${new Date().getTime()}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    displayToast(t('analysisDownloaded', 'Analyse gedownload als tekstbestand'), 'success');
+  };
+
+  const downloadAsPDF = async () => {
+    if (!state.analysis) return;
+    
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      
+      doc.setFontSize(16);
+      doc.text('Denkpartner Analyse', 20, 20);
+      
+      if (state.selectedPartner && state.selectedTopic) {
+        doc.setFontSize(12);
+        doc.text(`Denkpartner: ${state.selectedPartner.name}`, 20, 30);
+        doc.text(`Onderwerp: ${state.selectedTopic.title}`, 20, 40);
+        doc.text(`Datum: ${new Date().toLocaleDateString('nl-NL')}`, 20, 50);
+      }
+      
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(state.analysis, 170);
+      doc.text(lines, 20, 60);
+      
+      doc.save(`denkpartner-analyse-${new Date().getTime()}.pdf`);
+      displayToast(t('analysisDownloadedPDF', 'Analyse gedownload als PDF'), 'success');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      displayToast(t('pdfGenerationError', 'PDF genereren mislukt'), 'error');
+    }
+  };
+
+  const emailAnalysis = () => {
+    if (!state.analysis) return;
+    
+    const subject = encodeURIComponent('Denkpartner Analyse');
+    const body = encodeURIComponent(`Denkpartner Analyse\n\n${state.analysis}`);
+    window.open(`mailto:?subject=${subject}&body=${body}`);
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const getCategoryColor = (category: ThinkingPartner['category']) => {
     switch (category) {
@@ -428,13 +517,60 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={() => state.analysis && copyToClipboard(state.analysis)}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
-          >
-            <FiCopy size={16} />
-            {t('copyAnalysis', 'Analyse kopiëren')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => state.analysis && copyToClipboard(state.analysis)}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+            >
+              <FiCopy size={16} />
+              {t('copyAnalysis', 'Analyse kopiëren')}
+            </button>
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+              >
+                <FiMoreVertical size={16} />
+              </button>
+              
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg z-10">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        downloadAsText();
+                        setMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <FiDownload size={16} />
+                      {t('downloadAsText', 'Downloaden als tekst')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        downloadAsPDF();
+                        setMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <FiDownload size={16} />
+                      {t('downloadAsPDF', 'Downloaden als PDF')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        emailAnalysis();
+                        setMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <FiMail size={16} />
+                      {t('emailAnalysis', 'E-mailen')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="prose prose-slate dark:prose-invert max-w-none">

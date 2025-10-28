@@ -24,7 +24,7 @@ import { generateDiscussionAnalytics } from '../services/aiDiscussionService';
 
 interface AIDiscussionAnalyticsProps {
   session: AIDiscussionSession;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
 }
 
 const AIDiscussionAnalytics: React.FC<AIDiscussionAnalyticsProps> = ({ session, t }) => {
@@ -292,7 +292,7 @@ const RoleActivityTab: React.FC<{
                   {role.messageCount} {t('aiDiscussion.analytics.messages') || 'berichten'}
                 </p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {Math.round(role.averageLength)} {t('aiDiscussion.analytics.avgChars') || 'gem. karakters'}
+                  {Math.round(role.averageMessageLength)} {t('aiDiscussion.analytics.avgChars') || 'gem. karakters'}
                 </p>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { AIDiscussionSession, AIDiscussionMessage, AIDiscussionRole } from '../.
 import { FiUser, FiClock, FiMessageCircle, FiSend, FiUsers } from 'react-icons/fi';
 
 interface MultiAgentDiscussionInterfaceProps {
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
   session: AIDiscussionSession;
   isActive: boolean;
   newTurnIds?: string[]; // IDs of turns that are new in the current round

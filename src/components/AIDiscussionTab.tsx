@@ -25,7 +25,7 @@ import DiscussionStyleModal from './DiscussionStyleModal';
 import Modal from './Modal';
 
 interface AIDiscussionTabProps {
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
   transcript: string;
   summary?: string;
   onDiscussionComplete: (report: AIDiscussionReport) => void;
@@ -529,7 +529,11 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     step: 'generating',
     topics: [],
     selectedRoles: [],
-    discussionStyles: {},
+    discussionStyles: {
+      roleStyles: {},
+      allowRuntimeAdjustment: true,
+      defaultStyles: {}
+    },
     error: undefined,
     isDiscussionActive: false,
     newTurnIds: [],
@@ -1056,7 +1060,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
           </div>
           <button
             onClick={refreshTopics}
-            disabled={state.step === 'generating'}
+            disabled={false}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiRefreshCw size={16} />
@@ -1373,7 +1377,6 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
 
         <AIDiscussionAnalytics
           t={t}
-          analytics={analytics}
           session={state.session}
         />
       </div>

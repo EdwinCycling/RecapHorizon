@@ -8,7 +8,7 @@ import {
 import { DISCUSSION_STYLE_OPTIONS } from '../services/aiDiscussionService';
 
 interface DiscussionStyleModalProps {
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
   isOpen: boolean;
   onClose: () => void;
   selectedRoles: AIDiscussionRole[];

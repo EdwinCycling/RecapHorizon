@@ -374,6 +374,7 @@ export interface AIDiscussionRole {
   category: 'leiding_strategie' | 'product_markt' | 'technologie' | 'operaties' | 'marketing' | 'externe_stakeholders';
   promptTemplate: string;
   enthusiasmLevel?: number; // Schaal 1-5 (1 = pessimistisch, 5 = super enthousiast)
+  color?: string; // CSS color class for UI styling
 }
 
 export interface AIDiscussionMessage {
@@ -469,6 +470,16 @@ export interface AIDiscussionAnalytics {
   discussionFlow: DiscussionFlowMetrics;
   engagementMetrics: EngagementMetrics;
   generatedAt: Date;
+  // Additional properties for component compatibility
+  totalTurns: number;
+  totalMessages: number;
+  averageResponseLength: number;
+  userInterventions: number;
+  discussionDuration: number; // in milliseconds
+  mostActiveRole: {
+    name: string;
+    messageCount: number;
+  } | null;
 }
 
 export interface RoleActivityMetrics {
@@ -486,6 +497,12 @@ export interface ControversialTopic {
   id: string;
   topic: string;
   disagreementLevel: number; // 0-100 scale
+  controversyLevel: number; // alias for disagreementLevel for component compatibility
+  description: string;
+  differentPerspectives: Array<{
+    roleName: string;
+    viewpoint: string;
+  }>;
   involvedRoles: string[];
   keyPoints: string[];
   votingResults?: VotingResults;
@@ -495,6 +512,8 @@ export interface VotingResults {
   promptId: string;
   question: string;
   totalVotes: number;
+  votesFor: number; // votes in favor
+  votesAgainst: number; // votes against
   results: VotingOptionResult[];
   consensus: boolean; // whether there was clear agreement
   controversyLevel: number; // 0-100 scale

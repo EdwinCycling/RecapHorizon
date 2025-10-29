@@ -14,6 +14,7 @@ interface DiscussionStyleModalProps {
   selectedRoles: AIDiscussionRole[];
   currentStyles: DiscussionStyleConfiguration;
   onStylesUpdate: (newStyles: DiscussionStyleConfiguration) => void;
+  onRoleUpdate?: (roleId: string, updates: Partial<AIDiscussionRole>) => void;
 }
 
 const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
@@ -22,9 +23,11 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
   onClose,
   selectedRoles,
   currentStyles,
-  onStylesUpdate
+  onStylesUpdate,
+  onRoleUpdate
 }) => {
   const [localStyles, setLocalStyles] = useState<DiscussionStyleConfiguration>(currentStyles);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
 
   if (!isOpen) return null;
 
@@ -119,8 +122,9 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
               {selectedRoles.map((role, index) => (
                 <button
                   key={role.id}
+                  onClick={() => setActiveTabIndex(index)}
                   className={`px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
-                    index === 0
+                    index === activeTabIndex
                       ? 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-300 dark:border-cyan-600 text-cyan-700 dark:text-cyan-300'
                       : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
@@ -131,143 +135,179 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
             </nav>
           </div>
           
-          <div className="space-y-8">
-            {selectedRoles.map((role) => (
-              <div key={role.id} className="border border-gray-200 dark:border-slate-700 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="text-cyan-600 dark:text-cyan-400">
-                    <FiMessageSquare size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                      {role.name}
-                    </h3>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                      ({role.description})
-                    </span>
-                  </div>
-                  {role.enthusiasmLevel && (
-                    <div className="ml-auto flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 rounded-full">
-                      <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                        Enthousiasme: {role.enthusiasmLevel}/5
-                      </span>
+          {/* Show only the active role */}
+          {selectedRoles[activeTabIndex] && (
+            <div className="space-y-6">
+              {(() => {
+                const role = selectedRoles[activeTabIndex];
+                
+                return (
+                  <div key={role.id} className="border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="text-cyan-600 dark:text-cyan-400">
+                        <FiMessageSquare size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+                          {role.name}
+                        </h3>
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                          ({role.description})
+                        </span>
+                      </div>
+                      <div className="ml-auto flex items-center gap-3 bg-yellow-100 dark:bg-yellow-900/30 px-3 py-2 rounded-full">
+                        <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                          {t('aiDiscussion.enthusiasmLevel', 'Enthousiasme')}:
+                        </span>
+                        {onRoleUpdate ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="1"
+                              max="5"
+                              value={role.enthusiasmLevel || 3}
+                              onChange={(e) => {
+                                const newLevel = parseInt(e.target.value);
+                                onRoleUpdate(role.id, { enthusiasmLevel: newLevel });
+                              }}
+                              className="w-20 h-2 bg-yellow-200 dark:bg-yellow-600 rounded-lg appearance-none cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${((role.enthusiasmLevel || 3) - 1) * 25}%, #fef3c7 ${((role.enthusiasmLevel || 3) - 1) * 25}%, #fef3c7 100%)`
+                              }}
+                            />
+                            <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200 min-w-[2rem]">
+                              {role.enthusiasmLevel || 3}/5
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                            {role.enthusiasmLevel || 3}/5
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Communication Tone Styles */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                    {t('discussionStyles.communicationTone', 'Communicatiestijl')}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {styleCategories.communication_tone.map((style) => {
-                      const isSelected = localStyles.roleStyles[role.id]?.selectedStyles?.includes(style.id) || false;
-                      return (
-                        <button
-                          key={style.id}
-                          onClick={() => handleStyleToggle(role.id, style.id)}
-                          className={`text-left p-3 rounded-lg border transition-all ${
-                            isSelected
-                              ? 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-300 dark:border-cyan-600'
-                              : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-slate-800 dark:text-slate-200">
-                              {style.nameNL}
-                            </span>
-                            {isSelected && (
-                              <div className="text-cyan-600 dark:text-cyan-400">
-                                <FiCheck size={16} />
+                    {/* Communication Tone Styles */}
+                    <div className="mb-6">
+                      <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                        {t('discussionStyles.communicationTone', 'Communicatiestijl')}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {styleCategories.communication_tone.map((style) => {
+                          const currentRoleStyles = localStyles.roleStyles[role.id] || { roleId: role.id, selectedStyles: [] };
+                          const isSelected = currentRoleStyles.selectedStyles.includes(style.id);
+                          
+                          return (
+                            <button
+                              key={style.id}
+                              onClick={() => handleStyleToggle(role.id, style.id)}
+                              className={`p-3 rounded-lg border text-left transition-all ${
+                                isSelected
+                                  ? 'border-cyan-300 dark:border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30'
+                                  : 'border-gray-200 dark:border-slate-600 hover:border-cyan-200 dark:hover:border-cyan-700 hover:bg-cyan-25 dark:hover:bg-cyan-900/10'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-slate-800 dark:text-slate-200">
+                                  {style.nameNL}
+                                </span>
+                                {isSelected && (
+                                  <div className="text-cyan-600 dark:text-cyan-400">
+                                    <FiCheck size={16} />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {style.descriptionNL}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                                {style.descriptionNL}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                {/* Interaction Pattern Styles */}
-                <div>
-                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                    {t('discussionStyles.interactionPattern', 'Interactiepatroon')}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {styleCategories.interaction_pattern.map((style) => {
-                      const isSelected = localStyles.roleStyles[role.id]?.selectedStyles?.includes(style.id) || false;
-                      return (
-                        <button
-                          key={style.id}
-                          onClick={() => handleStyleToggle(role.id, style.id)}
-                          className={`text-left p-3 rounded-lg border transition-all ${
-                            isSelected
-                              ? 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-300 dark:border-cyan-600'
-                              : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-slate-800 dark:text-slate-200">
-                              {style.nameNL}
-                            </span>
-                            {isSelected && (
-                              <div className="text-cyan-600 dark:text-cyan-400">
-                                <FiCheck size={16} />
+                    {/* Interaction Pattern Styles */}
+                    <div className="mb-6">
+                      <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                        {t('discussionStyles.interactionPattern', 'Interactiepatroon')}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {styleCategories.interaction_pattern.map((style) => {
+                          const currentRoleStyles = localStyles.roleStyles[role.id] || { roleId: role.id, selectedStyles: [] };
+                          const isSelected = currentRoleStyles.selectedStyles.includes(style.id);
+                          
+                          return (
+                            <button
+                              key={style.id}
+                              onClick={() => handleStyleToggle(role.id, style.id)}
+                              className={`p-3 rounded-lg border text-left transition-all ${
+                                isSelected
+                                  ? 'border-cyan-300 dark:border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30'
+                                  : 'border-gray-200 dark:border-slate-600 hover:border-cyan-200 dark:hover:border-cyan-700 hover:bg-cyan-25 dark:hover:bg-cyan-900/10'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-slate-800 dark:text-slate-200">
+                                  {style.nameNL}
+                                </span>
+                                {isSelected && (
+                                  <div className="text-cyan-600 dark:text-cyan-400">
+                                    <FiCheck size={16} />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {style.descriptionNL}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                                {style.descriptionNL}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                {/* Depth Focus Styles */}
-                <div>
-                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                    {t('discussionStyles.depthFocus', 'Diepgang & Focus')}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {styleCategories.depth_focus.map((style) => {
-                      const isSelected = localStyles.roleStyles[role.id]?.selectedStyles?.includes(style.id) || false;
-                      return (
-                        <button
-                          key={style.id}
-                          onClick={() => handleStyleToggle(role.id, style.id)}
-                          className={`text-left p-3 rounded-lg border transition-all ${
-                            isSelected
-                              ? 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-300 dark:border-cyan-600'
-                              : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-slate-800 dark:text-slate-200">
-                              {style.nameNL}
-                            </span>
-                            {isSelected && (
-                              <div className="text-cyan-600 dark:text-cyan-400">
-                                <FiCheck size={16} />
+                    {/* Depth Focus Styles */}
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                        {t('discussionStyles.depthFocus', 'Diepgang & Focus')}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {styleCategories.depth_focus.map((style) => {
+                          const currentRoleStyles = localStyles.roleStyles[role.id] || { roleId: role.id, selectedStyles: [] };
+                          const isSelected = currentRoleStyles.selectedStyles.includes(style.id);
+                          
+                          return (
+                            <button
+                              key={style.id}
+                              onClick={() => handleStyleToggle(role.id, style.id)}
+                              className={`p-3 rounded-lg border text-left transition-all ${
+                                isSelected
+                                  ? 'border-cyan-300 dark:border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30'
+                                  : 'border-gray-200 dark:border-slate-600 hover:border-cyan-200 dark:hover:border-cyan-700 hover:bg-cyan-25 dark:hover:bg-cyan-900/10'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-slate-800 dark:text-slate-200">
+                                  {style.nameNL}
+                                </span>
+                                {isSelected && (
+                                  <div className="text-cyan-600 dark:text-cyan-400">
+                                    <FiCheck size={16} />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {style.descriptionNL}
-                          </p>
-                        </button>
-                      );
-                    })}
+                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                                {style.descriptionNL}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

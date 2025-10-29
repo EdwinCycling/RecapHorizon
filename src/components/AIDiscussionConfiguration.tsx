@@ -29,6 +29,7 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
   const [selectedRoles, setSelectedRoles] = useState<AIDiscussionRole[]>([]);
   const [discussionStyles, setDiscussionStyles] = useState<DiscussionStyleConfiguration>({ roleStyles: {} });
   const [step, setStep] = useState<'goal' | 'roles' | 'styles'>('goal');
+  const [roleEnthusiasmLevels, setRoleEnthusiasmLevels] = useState<{ [roleId: string]: number }>({});
 
   // Group goals by category
   const categories: DiscussionCategory[] = [
@@ -77,12 +78,30 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
     setSelectedRoles(prev => {
       const isSelected = prev.some(r => r.id === role.id);
       if (isSelected) {
+        // Remove role and its enthusiasm level
+        setRoleEnthusiasmLevels(prevLevels => {
+          const newLevels = { ...prevLevels };
+          delete newLevels[role.id];
+          return newLevels;
+        });
         return prev.filter(r => r.id !== role.id);
       } else if (prev.length < 4) {
+        // Add role and initialize enthusiasm level
+        setRoleEnthusiasmLevels(prevLevels => ({
+          ...prevLevels,
+          [role.id]: role.enthusiasmLevel || 3
+        }));
         return [...prev, role];
       }
       return prev;
     });
+  };
+
+  const handleEnthusiasmChange = (roleId: string, level: number) => {
+    setRoleEnthusiasmLevels(prev => ({
+      ...prev,
+      [roleId]: level
+    }));
   };
 
   const handleRolesToStyles = () => {
@@ -142,7 +161,12 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
 
   const handleStartDiscussion = () => {
     if (selectedGoal && selectedRoles.length >= 2 && selectedRoles.length <= 4) {
-      onConfigurationComplete(selectedGoal, selectedRoles, discussionStyles);
+      // Update roles with custom enthusiasm levels
+      const rolesWithEnthusiasm = selectedRoles.map(role => ({
+        ...role,
+        enthusiasmLevel: roleEnthusiasmLevels[role.id] || role.enthusiasmLevel || 3
+      }));
+      onConfigurationComplete(selectedGoal, rolesWithEnthusiasm, discussionStyles);
     }
   };
 
@@ -351,6 +375,34 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                     <p className="text-sm opacity-90">
                       {t(`aiDiscussion.role.${role.id}Desc`) || role.description}
                     </p>
+                    {isSelected && (
+                      <div className="mt-3 pt-3 border-t border-cyan-200 dark:border-cyan-700">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-cyan-800 dark:text-cyan-200">
+                            {t('aiDiscussion.enthusiasmLevel') || 'Enthousiasme niveau'}:
+                          </label>
+                          <span className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+                            {roleEnthusiasmLevels[role.id] || role.enthusiasmLevel || 3}/5
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          value={roleEnthusiasmLevels[role.id] || role.enthusiasmLevel || 3}
+                          onChange={(e) => handleEnthusiasmChange(role.id, parseInt(e.target.value))}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full h-2 bg-cyan-200 dark:bg-cyan-700 rounded-lg appearance-none cursor-pointer slider"
+                          style={{
+                            background: `linear-gradient(to right, #0891b2 0%, #0891b2 ${((roleEnthusiasmLevels[role.id] || role.enthusiasmLevel || 3) - 1) * 25}%, #e2e8f0 ${((roleEnthusiasmLevels[role.id] || role.enthusiasmLevel || 3) - 1) * 25}%, #e2e8f0 100%)`
+                          }}
+                        />
+                        <div className="flex justify-between text-xs text-cyan-600 dark:text-cyan-400 mt-1">
+                          <span>{t('aiDiscussion.enthusiasmLow') || 'Pessimistisch'}</span>
+                          <span>{t('aiDiscussion.enthusiasmHigh') || 'Zeer enthousiast'}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </button>

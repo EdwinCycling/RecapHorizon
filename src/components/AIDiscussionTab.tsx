@@ -29,6 +29,7 @@ interface AIDiscussionTabProps {
   transcript: string;
   summary?: string;
   onDiscussionComplete: (report: AIDiscussionReport) => void;
+  onMoveToTranscript?: (reportContent: string) => void;
   isGenerating?: boolean;
   language: string;
   userId: string;
@@ -48,6 +49,7 @@ interface AIDiscussionState {
   report?: AIDiscussionReport;
   error?: string;
   isDiscussionActive: boolean;
+  isGeneratingReport: boolean;
   newTurnIds: string[]; // Track IDs of turns added in the current round
   isStyleModalOpen: boolean;
   showReportConfirmationModal: boolean;
@@ -457,7 +459,7 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   },
   {
     id: 'dromer',
-    name: 'De Dromer / The Visionary',
+    name: 'De Dromer',
     description: 'Denkt in onbegrensde mogelijkheden en genereert vergezichten. Focust op baanbrekende ideeën, toekomstige trends en disruptieve concepten, zonder rekening te houden met huidige beperkingen.',
     focusArea: 'Onbegrensde mogelijkheden en toekomstvisies',
     category: 'leiding_strategie',
@@ -465,7 +467,7 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   },
   {
     id: 'skeptische_advocaat',
-    name: 'De Skeptische Advocaat van de Duivel / The Skeptical Devil\'s Advocate',
+    name: 'De Skeptische Advocaat',
     description: 'Zoekt actief naar zwakke punten, onuitgesproken aannames en potentiële valkuilen in besproken plannen of ideeën, om ze robuuster te maken.',
     focusArea: 'Kritische analyse en risicobewustzijn',
     category: 'operaties',
@@ -473,7 +475,7 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   },
   {
     id: 'gamification_architect',
-    name: 'De Gamification Architect / The Gamification Architect',
+    name: 'De Gamification Architect',
     description: 'Ontwerpt methoden om betrokkenheid en motivatie te verhogen door spelelementen, beloningsstructuren en interactieve uitdagingen toe te passen.',
     focusArea: 'Betrokkenheid en motivatie door gamification',
     category: 'product_markt',
@@ -481,7 +483,7 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   },
   {
     id: 'ethicus_impact_analist',
-    name: 'De Ethicus & Impact Analist / The Ethicist & Impact Analyst',
+    name: 'De Ethicus & Impact Analist',
     description: 'Evalueert besproken plannen of initiatieven op hun ethische implicaties, maatschappelijke impact, privacy en potentiële onbedoelde gevolgen.',
     focusArea: 'Ethische implicaties en maatschappelijke impact',
     category: 'externe_stakeholders',
@@ -489,7 +491,7 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   },
   {
     id: 'storyteller',
-    name: 'De Storyteller / The Storyteller',
+    name: 'De Storyteller',
     description: 'Vertaalt complexe informatie, strategieën of ideeën naar een boeiend verhaal dat resoneert met verschillende doelgroepen, om begrip en buy-in te creëren.',
     focusArea: 'Verhaalvertelling en communicatie',
     category: 'product_markt',
@@ -519,6 +521,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   transcript,
   summary,
   onDiscussionComplete,
+  onMoveToTranscript,
   isGenerating = false,
   language,
   userId,
@@ -536,6 +539,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     },
     error: undefined,
     isDiscussionActive: false,
+    isGeneratingReport: false,
     newTurnIds: [],
     isStyleModalOpen: false,
     showReportConfirmationModal: false
@@ -878,6 +882,25 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     }
   }, [state.session, userId, userTier, t]);
 
+  // Handle role updates (e.g., enthusiasm level changes)
+  const handleUpdateRole = useCallback((roleId: string, updates: Partial<AIDiscussionRole>) => {
+    setState(prev => {
+      if (!prev.session) return prev;
+
+      const updatedRoles = prev.session.roles.map(role => 
+        role.id === roleId ? { ...role, ...updates } : role
+      );
+
+      return {
+        ...prev,
+        session: {
+          ...prev.session,
+          roles: updatedRoles
+        }
+      };
+    });
+  }, []);
+
   // Auto-advance to vraagronde (ronde 2) na voorstelronde - DISABLED voor gebruikerscontrole
   // const autoContinueRef = useRef(false);
   // useEffect(() => {
@@ -911,7 +934,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       setState(prev => ({ 
         ...prev, 
         showReportConfirmationModal: false,
-        isDiscussionActive: true, 
+        isGeneratingReport: true, 
         error: undefined,
         session: prev.session ? { ...prev.session, status: 'completed' } : prev.session
       }));
@@ -922,7 +945,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
         ...prev, 
         report,
         step: 'report',
-        isDiscussionActive: false,
+        isGeneratingReport: false,
         error: undefined 
       }));
       
@@ -935,7 +958,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       setState(prev => ({ 
         ...prev, 
         error: t('aiDiscussion.reportError') || 'Er is een fout opgetreden bij het genereren van het rapport',
-        isDiscussionActive: false,
+        isGeneratingReport: false,
         showReportConfirmationModal: false
       }));
     }
@@ -1132,6 +1155,12 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
           text={t('aiDiscussion.generating', 'AI experts discussiëren...')}
         />
         
+        {/* Global loader overlay for report generation */}
+        <BlurredLoadingOverlay 
+          isVisible={state.isGeneratingReport}
+          text={t('aiDiscussionReportGenerating', 'Rapport wordt gegenereerd...')}
+        />
+        
         <div className="flex justify-start mb-6">
           <button
             onClick={handleBackToConfiguration}
@@ -1249,12 +1278,12 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
 
         {state.session && (
           <MultiAgentDiscussionInterface
-            t={t}
-            session={state.session}
-            isActive={state.isDiscussionActive}
-            newTurnIds={state.newTurnIds}
-            onUserIntervention={handleUserIntervention}
-          />
+              t={t}
+              session={state.session}
+              isActive={state.isDiscussionActive}
+              newTurnIds={state.newTurnIds}
+              onUserIntervention={handleUserIntervention}
+            />
         )}
 
         {/* Action buttons placed under the discussion window */}
@@ -1297,7 +1326,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
 
               <button
                 onClick={handleGenerateReport}
-                disabled={state.isDiscussionActive || !state.session || state.session.turns.length === 0}
+                disabled={state.isDiscussionActive || state.isGeneratingReport || !state.session || state.session.turns.length === 0}
                 className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
               >
                 <FiFileText size={18} />
@@ -1314,6 +1343,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
           onStylesUpdate={handleStylesUpdate}
           currentStyles={state.discussionStyles}
           selectedRoles={state.selectedRoles}
+          onRoleUpdate={handleUpdateRole}
           t={t}
         />
 
@@ -1401,6 +1431,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
           t={t}
           report={state.report}
           session={state.session!}
+          onMoveToTranscript={onMoveToTranscript}
         />
         
         {/* Style Modal */}

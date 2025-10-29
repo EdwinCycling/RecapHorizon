@@ -2585,6 +2585,14 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   "aiDiscussion.recommendations": "Recommendations",
   "aiDiscussion.fullTranscript": "Full discussion",
   "aiDiscussion.copyTranscript": "Copy transcript",
+  "aiDiscussion.moveToTranscript": "Move to transcript",
+  "aiDiscussion.moveToTranscriptModal.title": "Move report to transcript",
+  "aiDiscussion.moveToTranscriptModal.message": "This report will become the new transcript and replace the current content. It can then be used for further analysis with other options.",
+  "aiDiscussion.moveToTranscriptModal.warning": "Note: The current transcript content will be permanently replaced.",
+  "aiDiscussion.moveToTranscriptModal.confirm": "Yes, replace transcript",
+  "aiDiscussion.moveToTranscriptModal.cancel": "Cancel",
+  "aiDiscussion.transcriptReplaced": "Transcript successfully replaced",
+  "aiDiscussion.transcriptReplaceError": "Error replacing transcript",
   "aiDiscussion.rateLimitWarning": "Please wait... You can try again in a few seconds.",
   "aiDiscussion.topicGenerationError": "An error occurred while generating discussion topics",
   "aiDiscussion.serverOverloadError": "The AI service is currently overloaded. Please try again in a few minutes.",
@@ -3246,4 +3254,20 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,viewPricing: "View pricing"
   ,waarom: "why"
   ,werk: "work"
+  
+  // AI Discussion - Enthusiasm Meter
+  ,"aiDiscussion.enthusiasmLevel": "Enthusiasm Level"
+  ,"aiDiscussion.enthusiasmLow": "Pessimistic"
+  ,"aiDiscussion.enthusiasmHigh": "Very Enthusiastic"
+
+  // AI Discussion Phase Names
+  ,"aiDiscussion.phase.introduction": "Introduction"
+  ,"aiDiscussion.phase.problem_analysis": "Problem Analysis"
+  ,"aiDiscussion.phase.root_cause": "Root Cause Analysis"
+  ,"aiDiscussion.phase.solution_generation": "Solution Generation"
+  ,"aiDiscussion.phase.critical_evaluation": "Critical Evaluation"
+  ,"aiDiscussion.phase.risk_assessment": "Risk Assessment"
+  ,"aiDiscussion.phase.implementation_planning": "Implementation Planning"
+  ,"aiDiscussion.phase.success_metrics": "Success Metrics"
+  ,"aiDiscussion.phase.synthesis": "Synthesis"
 };

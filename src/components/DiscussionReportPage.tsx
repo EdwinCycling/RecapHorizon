@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { AIDiscussionReport, AIDiscussionSession } from '../../types';
-import { FiDownload, FiFileText, FiClock, FiUsers, FiTarget, FiCheck, FiCopy } from 'react-icons/fi';
+import { FiDownload, FiFileText, FiClock, FiUsers, FiTarget, FiCheck, FiCopy, FiArrowRight } from 'react-icons/fi';
 import { displayToast } from '../utils/clipboard';
 
 interface DiscussionReportPageProps {
   t: (key: string, params?: Record<string, unknown>) => string;
   report: AIDiscussionReport;
   session: AIDiscussionSession;
+  onMoveToTranscript?: (reportContent: string) => void;
 }
 
 const DiscussionReportPage: React.FC<DiscussionReportPageProps> = ({
   t,
   report,
-  session
+  session,
+  onMoveToTranscript
 }) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showMoveToTranscriptModal, setShowMoveToTranscriptModal] = useState(false);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('nl-NL', {
@@ -251,6 +254,45 @@ ${report.fullTranscript}
     copyToClipboard(reportText);
   };
 
+  const handleMoveToTranscript = () => {
+    if (!onMoveToTranscript) return;
+    
+    try {
+      const reportText = `
+AI DISCUSSIE RAPPORT
+${session.topic.title}
+
+Gegenereerd op: ${formatDate(report.generatedAt)}
+
+DISCUSSIE DETAILS:
+- Onderwerp: ${session.topic.title}
+- Beschrijving: ${session.topic.description}
+- Doel: ${t(`aiDiscussion.goal.${session.goal.id}`, session.goal.name)}
+- Deelnemers: ${session.roles.map(role => t(`aiDiscussion.role.${role.id}`, role.name)).join(', ')}
+- Aantal beurten: ${session.turns.length}
+
+SAMENVATTING:
+${report.summary}
+
+BELANGRIJKSTE PUNTEN:
+${report.keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
+
+AANBEVELINGEN:
+${report.recommendations.map((rec, index) => `${index + 1}. ${rec}`).join('\n')}
+
+VOLLEDIGE DISCUSSIE:
+${report.fullTranscript}
+      `.trim();
+
+      onMoveToTranscript(reportText);
+      setShowMoveToTranscriptModal(false);
+      displayToast(t('aiDiscussion.transcriptReplaced', 'Transcript succesvol vervangen'), 'success');
+    } catch (error) {
+      console.error('Error moving report to transcript:', error);
+      displayToast(t('aiDiscussion.transcriptReplaceError', 'Fout bij vervangen van transcript'), 'error');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Report Header */}
@@ -287,6 +329,16 @@ ${report.fullTranscript}
               <FiCopy size={16} />
               {t('aiDiscussion.copyReport', 'Rapport kopiëren')}
             </button>
+            
+            {onMoveToTranscript && (
+              <button
+                onClick={() => setShowMoveToTranscriptModal(true)}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <FiArrowRight size={16} />
+                {t('aiDiscussion.moveToTranscript', 'Verplaats naar transcript')}
+              </button>
+            )}
             
             <button
               onClick={generatePDF}
@@ -401,6 +453,43 @@ ${report.fullTranscript}
           </pre>
         </div>
       </div>
+
+      {/* Move to Transcript Modal */}
+      {showMoveToTranscriptModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
+              {t('aiDiscussion.moveToTranscriptModal.title', 'Rapport naar transcript verplaatsen')}
+            </h3>
+            
+            <div className="space-y-3 mb-6">
+              <p className="text-slate-600 dark:text-slate-400">
+                {t('aiDiscussion.moveToTranscriptModal.message', 'Dit rapport wordt het nieuwe transcript en vervangt de huidige inhoud. Het kan daarna gebruikt worden voor verdere analyse met andere opties.')}
+              </p>
+              
+              <p className="text-amber-600 dark:text-amber-400 text-sm font-medium">
+                {t('aiDiscussion.moveToTranscriptModal.warning', 'Let op: De huidige transcript-inhoud wordt permanent vervangen.')}
+              </p>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowMoveToTranscriptModal(false)}
+                className="px-4 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+              >
+                {t('aiDiscussion.moveToTranscriptModal.cancel', 'Annuleren')}
+              </button>
+              
+              <button
+                onClick={handleMoveToTranscript}
+                className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                {t('aiDiscussion.moveToTranscriptModal.confirm', 'Ja, vervang transcript')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

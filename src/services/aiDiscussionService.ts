@@ -122,7 +122,7 @@ export const DISCUSSION_STYLE_OPTIONS: DiscussionStyleOption[] = [
   },
   {
     id: 'big_picture_thinker',
-    nameNL: 'Big Picture Denker / Big Picture Thinker',
+    nameNL: 'Big Picture Denker',
     nameEN: 'Big Picture Thinker',
     descriptionNL: 'Plaatst details in een bredere context, verbindt onderwerpen met hogere doelen en overkoepelende strategieën.',
     descriptionEN: 'Places details in a broader context, connects topics to higher goals and overarching strategies.',
@@ -132,7 +132,7 @@ export const DISCUSSION_STYLE_OPTIONS: DiscussionStyleOption[] = [
   },
   {
     id: 'narrative_example_rich',
-    nameNL: 'Verhalend & Voorbeeld-Rijk / Narrative & Example-Rich',
+    nameNL: 'Verhalend & Voorbeeld-Rijk',
     nameEN: 'Narrative & Example-Rich',
     descriptionNL: 'Legt concepten uit en onderbouwt argumenten met relevante (hypothetische) scenario\'s of voorbeelden, voor meer levendigheid en begrip.',
     descriptionEN: 'Explains concepts and supports arguments with relevant (hypothetical) scenarios or examples, for greater vividness and understanding.',
@@ -726,7 +726,9 @@ ${roleSpecificContext?.relevantControversies.length > 0 ? '- NEEM POSITIE in de 
   const discussionStyleInstructions = generateDiscussionStyleInstructions(role, session);
 
   // Enthousiasme instructies op basis van enthousiasme-level (1-5)
-  const enthusiasmInstructions = role.enthusiasmLevel ? getEnthusiasmInstructions(role.enthusiasmLevel) : '';
+  const enthusiasmData = role.enthusiasmLevel ? getEnthusiasmInstructions(role.enthusiasmLevel) : null;
+  const enthusiasmInstructions = enthusiasmData ? 
+    `\nENTHOUSIASME NIVEAU (${role.enthusiasmLevel}/5): ${enthusiasmData.instructions}` : '';
 
   return `${languageInstructions.systemPrompt}
 

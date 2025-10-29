@@ -4742,6 +4742,35 @@ Provide a detailed analysis that could be used for further AI processing and ana
             setIsLoadingWebPage(false);
         }
     };
+
+    // Helper functie voor het berekenen van string gelijkenis (Levenshtein distance)
+    const calculateSimilarity = (str1: string, str2: string): number => {
+        const len1 = str1.length;
+        const len2 = str2.length;
+        
+        if (len1 === 0) return len2 === 0 ? 1 : 0;
+        if (len2 === 0) return 0;
+        
+        const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(null));
+        
+        for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+        for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+        
+        for (let i = 1; i <= len1; i++) {
+            for (let j = 1; j <= len2; j++) {
+                const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j - 1] + cost
+                );
+            }
+        }
+        
+        const maxLen = Math.max(len1, len2);
+        return 1 - (matrix[len1][len2] / maxLen);
+    };
+
     const handleAnonymizeTranscript = async () => {
         // Controleer of er anonimisatie regels zijn ingesteld
         if (anonymizationRules.length === 0 || anonymizationRules.every(rule => !rule.originalText.trim())) {
@@ -4784,31 +4813,50 @@ Provide a detailed analysis that could be used for further AI processing and ana
                                 replacementCounts[rule.originalText] = matches.length;
                             }
                         } else {
-                            // Intelligente fuzzy tekst vervanging - herken namen en woorden
-                            // Zoek naar patronen die op namen lijken (hoofdletter + kleine letters)
-                            const namePattern = new RegExp(`\\b[A-Z][a-z]+\\b`, 'g');
-                            const potentialNames = tempTranscript.match(namePattern) || [];
+                            // Verbeterde fuzzy tekst vervanging
+                            const originalLower = rule.originalText.toLowerCase();
                             
-                            // Filter op namen die overeenkomen met de regel (case-insensitive)
-                            const matchingNames = potentialNames.filter(name => 
-                                name.toLowerCase().includes(rule.originalText.toLowerCase()) ||
-                                rule.originalText.toLowerCase().includes(name.toLowerCase())
-                            );
+                            // Zoek naar exacte matches eerst (case-insensitive)
+                            const exactRegex = new RegExp(`\\b${rule.originalText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                            const exactMatches = tempTranscript.match(exactRegex) || [];
                             
-                            if (matchingNames.length > 0) {
-                                // Vervang alleen de gevonden namen, niet delen van andere woorden
-                                matchingNames.forEach(name => {
-                                    const nameRegex = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
-                                    tempTranscript = tempTranscript.replace(nameRegex, replacementText);
-                                    totalReplacements += 1;
-                                    
-                                    // Tel vervangingen per regel
-                                    if (replacementCounts[rule.originalText]) {
-                                        replacementCounts[rule.originalText] += 1;
-                                    } else {
-                                        replacementCounts[rule.originalText] = 1;
-                                    }
+                            if (exactMatches.length > 0) {
+                                tempTranscript = tempTranscript.replace(exactRegex, replacementText);
+                                totalReplacements += exactMatches.length;
+                                replacementCounts[rule.originalText] = exactMatches.length;
+                            } else {
+                                // Als geen exacte match, zoek naar gelijkaardige namen
+                                const namePattern = new RegExp(`\\b[A-Z][a-z]{2,}\\b`, 'g');
+                                const potentialNames = tempTranscript.match(namePattern) || [];
+                                
+                                // Filter op namen die sterk overeenkomen (minimaal 70% gelijkenis)
+                                const matchingNames = potentialNames.filter(name => {
+                                    const nameLower = name.toLowerCase();
+                                    const similarity = calculateSimilarity(nameLower, originalLower);
+                                    return similarity >= 0.7 || 
+                                           (nameLower.includes(originalLower) && originalLower.length >= 3) ||
+                                           (originalLower.includes(nameLower) && nameLower.length >= 3);
                                 });
+                                
+                                if (matchingNames.length > 0) {
+                                    // Vervang alleen unieke namen om dubbele vervangingen te voorkomen
+                                    const uniqueNames = [...new Set(matchingNames)];
+                                    uniqueNames.forEach(name => {
+                                        const nameRegex = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+                                        const nameMatches = tempTranscript.match(nameRegex) || [];
+                                        if (nameMatches.length > 0) {
+                                            tempTranscript = tempTranscript.replace(nameRegex, replacementText);
+                                            totalReplacements += nameMatches.length;
+                                            
+                                            // Tel vervangingen per regel
+                                            if (replacementCounts[rule.originalText]) {
+                                                replacementCounts[rule.originalText] += nameMatches.length;
+                                            } else {
+                                                replacementCounts[rule.originalText] = nameMatches.length;
+                                            }
+                                        }
+                                    });
+                                }
                             }
                         }
                     }
@@ -10379,6 +10427,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     onDiscussionComplete={(report) => {
                         // Handle discussion completion
                         console.log('Discussion completed:', report);
+                    }}
+                    onMoveToTranscript={(reportContent) => {
+                        setTranscript(reportContent);
+                        // Reset dropdowns to default values
+                        setMainMode('transcript');
+                        setSelectedAnalysis('');
+                        // Switch to main view to show the new transcript
+                        setActiveView('main');
                     }}
                 />
             );

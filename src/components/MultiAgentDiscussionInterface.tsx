@@ -2,6 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AIDiscussionSession, AIDiscussionMessage, AIDiscussionRole } from '../../types';
 import { FiUser, FiClock, FiMessageCircle, FiSend, FiUsers } from 'react-icons/fi';
 
+// Helper function to get emoji based on enthusiasm level
+const getEnthusiasmEmoji = (level: number): string => {
+  switch (level) {
+    case 1: return '😔'; // Pessimistic
+    case 2: return '😐'; // Neutral/Cautious
+    case 3: return '🙂'; // Moderate/Constructive
+    case 4: return '😊'; // Positive/Enthusiastic
+    case 5: return '🤩'; // Super Enthusiastic
+    default: return '🙂'; // Default
+  }
+};
+
 interface MultiAgentDiscussionInterfaceProps {
   t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
   session: AIDiscussionSession;
@@ -376,7 +388,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
                       </span>
                       {!isUserMessage && (
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200">
-                          {t('aiDiscussion.enthusiasmLevel', 'Enthousiasme')}: {session.roles.find(r => r.id === message.role)?.enthusiasmLevel || 3}/5
+                          {getEnthusiasmEmoji(session.roles.find(r => r.id === message.role)?.enthusiasmLevel || 3)} {t('aiDiscussion.enthusiasmLevel', 'Enthousiasme')}: {session.roles.find(r => r.id === message.role)?.enthusiasmLevel || 3}/5
                         </span>
                       )}
                       <span className={`font-medium text-base ${

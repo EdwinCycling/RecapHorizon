@@ -258,33 +258,31 @@ ${report.fullTranscript}
     if (!onMoveToTranscript) return;
     
     try {
-      const reportText = `
-AI DISCUSSIE RAPPORT
-${session.topic.title}
+      // Create plain text version without formatting for transcript
+      const plainTextContent = [
+        `AI Discussie Rapport: ${session.topic.title}`,
+        `Gegenereerd op: ${formatDate(report.generatedAt)}`,
+        '',
+        `Onderwerp: ${session.topic.title}`,
+        `Beschrijving: ${session.topic.description}`,
+        `Doel: ${t(`aiDiscussion.goal.${session.goal.id}`, session.goal.name)}`,
+        `Deelnemers: ${session.roles.map(role => t(`aiDiscussion.role.${role.id}`, role.name)).join(', ')}`,
+        `Aantal beurten: ${session.turns.length}`,
+        '',
+        'Samenvatting:',
+        report.summary,
+        '',
+        'Belangrijkste punten:',
+        ...report.keyPoints.map((point, index) => `${index + 1}. ${point}`),
+        '',
+        'Aanbevelingen:',
+        ...report.recommendations.map((rec, index) => `${index + 1}. ${rec}`),
+        '',
+        'Volledige discussie:',
+        report.fullTranscript
+      ].join('\n').trim();
 
-Gegenereerd op: ${formatDate(report.generatedAt)}
-
-DISCUSSIE DETAILS:
-- Onderwerp: ${session.topic.title}
-- Beschrijving: ${session.topic.description}
-- Doel: ${t(`aiDiscussion.goal.${session.goal.id}`, session.goal.name)}
-- Deelnemers: ${session.roles.map(role => t(`aiDiscussion.role.${role.id}`, role.name)).join(', ')}
-- Aantal beurten: ${session.turns.length}
-
-SAMENVATTING:
-${report.summary}
-
-BELANGRIJKSTE PUNTEN:
-${report.keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
-
-AANBEVELINGEN:
-${report.recommendations.map((rec, index) => `${index + 1}. ${rec}`).join('\n')}
-
-VOLLEDIGE DISCUSSIE:
-${report.fullTranscript}
-      `.trim();
-
-      onMoveToTranscript(reportText);
+      onMoveToTranscript(plainTextContent);
       setShowMoveToTranscriptModal(false);
       displayToast(t('aiDiscussion.transcriptReplaced', 'Transcript succesvol vervangen'), 'success');
     } catch (error) {

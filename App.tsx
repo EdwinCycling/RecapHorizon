@@ -4979,19 +4979,20 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     if ((type === 'summary' && summary) || (type === 'faq' && faq) || (type === 'learning' && learningDoc) || (type === 'followUp' && followUpQuestions)) return; 
 
     // Import security utilities
-    const { validateAndSanitizeForAI, rateLimiter } = await import('./src/utils/security');
+    const { validateAndSanitizeForAI, validateAndSanitizeAIDiscussion, rateLimiter } = await import('./src/utils/security');
 
     const sessionId = 'analysis_' + (auth.currentUser?.uid || 'anonymous');
     if (!rateLimiter.isAllowed(sessionId, 10, 60000)) {
         const errorMsg = 'Te veel analyseverzoeken. Probeer het over een minuut opnieuw.';
-        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+        setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
         return;
     }
 
-    const validation = validateAndSanitizeForAI(transcript, 500000);
+    // Use less strict validation for AI discussion content
+    const validation = validateAndSanitizeAIDiscussion(transcript, 500000);
     if (!validation.isValid) {
         const errorMsg = `Ongeldige transcript voor analyse: ${validation.error}`;
-        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+        setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
         return;
     }
 
@@ -4999,7 +5000,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
 
     if (!sanitizedTranscript.trim()) {
         const errorMsg = t('transcriptEmpty');
-        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+        setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
         return;
     }
 
@@ -5023,7 +5024,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, sanitizedTranscript.length, t);
     if (!transcriptValidation.allowed) {
         const errorMsg = transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.';
-        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+        setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
@@ -5042,7 +5043,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
         
         if (!tokenValidation.allowed) {
             const errorMsg = tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer tokens.';
-            setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
+            setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
             setTimeout(() => setShowPricingPage(true), 2000);
             return;
         }
@@ -10429,12 +10430,52 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         console.log('Discussion completed:', report);
                     }}
                     onMoveToTranscript={(reportContent) => {
+                        // Set new transcript content
                         setTranscript(reportContent);
-                        // Reset dropdowns to default values
-                        setMainMode('transcript');
-                        setSelectedAnalysis('');
-                        // Switch to main view to show the new transcript
-                        setActiveView('main');
+                        
+                        // Clear all analysis data to start fresh session
+                        setSummary('');
+                        setFaq('');
+                        setLearningDoc('');
+                        setFollowUpQuestions('');
+                        setLearnings('');
+                        setFollowup('');
+                        setKeywordAnalysis(null);
+                        setSentimentAnalysisResult(null);
+                        setBlogData('');
+                        setExecutiveSummaryData(null);
+                        setStorytellingData(null);
+                        setBusinessCaseData(null);
+                        setExplainData(null);
+                        setTeachMeData(null);
+                        setShowMeData(null);
+                        setThinkingPartnerAnalysis('');
+                        setOpportunitiesData(null);
+                        setMckinseyAnalysis(null);
+                        setQuizQuestions(null);
+                        setSocialPostData(null);
+                        setSocialPostXData(null);
+                        
+                        // Clear chat history
+                        setChatHistory([]);
+                        
+                        // Clear mindmap
+                        setMindmapText('');
+                        
+                        // Reset UI state
+                        setMainMode('analysis'); // Set to analysis mode so dropdown is visible
+                        setSelectedAnalysis(''); // Clear analysis selection
+                        setActiveView('main'); // Switch to main view
+                        
+                        // Update recording start time to trigger new session in RecapHorizonPanel
+                        setRecordingStartMs(Date.now());
+                        
+                        // Clear any errors
+                        setError(null);
+                        setQuizError(null);
+                        
+                        // Show success message
+                        displayToast(t('aiDiscussion.transcriptReplaced', 'Transcript succesvol vervangen. Nieuwe sessie gestart.'), 'success');
                     }}
                 />
             );
@@ -10802,8 +10843,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                  onGenerateSocialPost={async (analysisType, count) => {
                      // Use getTranscriptSlice to limit transcript length and prevent Gemini API extended feed limit
                      const transcriptSlice = getTranscriptSlice(transcript, 12000); // Same limit as other social functions
-                     const { validateAndSanitizeForAI } = await import('./src/utils/security');
-                     const validation = validateAndSanitizeForAI(transcriptSlice, 500000);
+                     const { validateAndSanitizeAIDiscussion } = await import('./src/utils/security');
+                     const validation = validateAndSanitizeAIDiscussion(transcriptSlice, 500000);
                      if (!validation.isValid || !validation.sanitized.trim()) {
                          displayToast(t('transcriptEmpty'), 'error');
                          return;

@@ -40,14 +40,14 @@ const SUSPICIOUS_EMAIL_PATTERNS = [
   /\+.*@/,        // Plus addressing (can be legitimate but often used for spam)
 ];
 
-// Common SQL injection patterns
+// Common SQL injection patterns - Updated to be less strict for AI discussion content
 const SQL_INJECTION_PATTERNS = [
-  // More specific SQL injection patterns that are less likely to match legitimate email content
-  /(union\s+select|insert\s+into|delete\s+from|update\s+set|drop\s+table|create\s+table|alter\s+table)/i,
-  /(exec\s*\(|execute\s*\(|sp_executesql)/i,
-  /(\bor\s+1\s*=\s*1\b|\band\s+1\s*=\s*1\b)/i,
-  /(--\s*$|#\s*$)/m, // SQL comments at end of line
-  /(\';\s*drop|\';\s*delete|\';\s*insert)/i // Clear injection attempts
+  // Only match very specific and dangerous SQL injection patterns
+  /(union\s+select\s+.*\s+from|insert\s+into\s+.*\s+values|delete\s+from\s+.*\s+where)/i,
+  /(exec\s*\(\s*['"]\s*drop|execute\s*\(\s*['"]\s*drop|sp_executesql.*drop)/i,
+  /(\bor\s+1\s*=\s*1\s+--|\band\s+1\s*=\s*1\s+--)/i, // Only match with SQL comments
+  /(\';\s*drop\s+table|\';\s*delete\s+from\s+|\';\s*insert\s+into\s+)/i, // Clear injection attempts with semicolon
+  /(\bxp_cmdshell|\bsp_configure|\bsp_addextendedproc)/i // Dangerous stored procedures
 ];
 
 // XSS patterns
@@ -266,6 +266,44 @@ export const validateAndSanitizeForAI = (input: string, maxLength: number = 5000
   
   // For AI prompts, we don't want to HTML encode as it might affect the AI's understanding
   // Instead, we just remove the most dangerous patterns
+  let sanitized = trimmed;
+  
+  // Remove script tags and other dangerous HTML
+  XSS_PATTERNS.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, '[REMOVED_CONTENT]');
+  });
+  
+  return { isValid: true, sanitized };
+};
+
+/**
+ * Special validation for AI discussion content that is less strict
+ * @param input - The input string to validate
+ * @param maxLength - Maximum allowed length (default: 50000)
+ * @returns object with isValid flag and sanitized text
+ */
+export const validateAndSanitizeAIDiscussion = (input: string, maxLength: number = 50000): { isValid: boolean; sanitized: string; error?: string } => {
+  if (!input || typeof input !== 'string') {
+    return { isValid: false, sanitized: '', error: 'Input must be a non-empty string' };
+  }
+  
+  const trimmed = input.trim();
+  
+  // Length validation
+  if (trimmed.length === 0) {
+    return { isValid: false, sanitized: '', error: 'Input cannot be empty' };
+  }
+  
+  if (trimmed.length > maxLength) {
+    return { isValid: false, sanitized: '', error: `Input exceeds maximum length of ${maxLength} characters` };
+  }
+  
+  // Only check for XSS patterns, skip SQL injection for AI discussion content
+  if (containsXSS(trimmed)) {
+    return { isValid: false, sanitized: '', error: 'Input contains potentially dangerous script content' };
+  }
+  
+  // For AI discussion content, we only remove the most dangerous patterns
   let sanitized = trimmed;
   
   // Remove script tags and other dangerous HTML

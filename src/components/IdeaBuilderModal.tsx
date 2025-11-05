@@ -3,6 +3,9 @@ import { TranslationFunction, SubscriptionTier } from '../../types';
 import { AIProviderManager, AIFunction } from '../utils/aiProviderManager';
 import { tokenCounter } from '../tokenCounter';
 import { subscriptionService } from '../subscriptionService';
+import BlurredLoadingOverlay from './BlurredLoadingOverlay';
+import { markdownToPlainText } from '../utils/textUtils';
+import ReportPreviewModal from './ReportPreviewModal';
 
 interface IdeaBuilderModalProps {
   isOpen: boolean;
@@ -25,6 +28,8 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
   const [initialIdea, setInitialIdea] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewText, setPreviewText] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   type LikertKey =
     | 'strongly_agree'
@@ -387,10 +392,11 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
         return;
       }
 
-      onGenerate(fullText);
+      // Open preview modal first; do not send to transcript yet
+      setPreviewText(fullText);
+      setShowPreview(true);
       setIsGenerating(false);
       setPhase('generating_plan');
-      onClose();
     } catch (e: any) {
       console.error('IdeaBuilderModal plan generation error', e);
       const message = e?.message || 'Unexpected error during plan generation';
@@ -610,7 +616,7 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
                 className={`px-4 py-2 rounded-md text-white ${canProceed ? 'bg-amber-500 hover:bg-amber-600' : 'bg-amber-300 cursor-not-allowed'}`}
                 disabled={!canProceed || isGenerating}
               >
-                {isGenerating ? t('ideaBuilderGenerating', 'Generating...') : t('ideaBuilderStartRound1', 'Start Round 1')}
+                {t('ideaBuilderStartRound1', 'Start Round 1')}
               </button>
             )}
 
@@ -620,7 +626,7 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
                 className={`px-4 py-2 rounded-md text-white ${canProceed ? 'bg-amber-500 hover:bg-amber-600' : 'bg-amber-300 cursor-not-allowed'}`}
                 disabled={!canProceed || isGenerating}
               >
-                {isGenerating ? t('ideaBuilderGenerating', 'Generating...') : t('ideaBuilderContinueToRound2', 'Continue to Round 2')}
+                {t('ideaBuilderContinueToRound2', 'Continue to Round 2')}
               </button>
             )}
 
@@ -630,12 +636,32 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
                 className={`px-4 py-2 rounded-md text-white ${canProceed ? 'bg-amber-500 hover:bg-amber-600' : 'bg-amber-300 cursor-not-allowed'}`}
                 disabled={!canProceed || isGenerating}
               >
-                {isGenerating ? t('ideaBuilderGenerating', 'Generating...') : t('ideaBuilderGeneratePlan', 'Generate Plan')}
+                {t('ideaBuilderGeneratePlan', 'Generate Plan')}
               </button>
             )}
           </div>
         </div>
       </div>
+
+      {/* Loader overlay: full-screen blurred popup */}
+      <BlurredLoadingOverlay
+        isVisible={isGenerating}
+        loadingText={t('ideaBuilderGenerating', 'Bezig met genereren...')}
+      />
+
+      {/* Report preview modal shown after plan generation */}
+      <ReportPreviewModal
+        isOpen={!!showPreview && !!previewText}
+        onClose={() => { setShowPreview(false); }}
+        reportText={previewText || ''}
+        t={t}
+        onSendToTranscript={() => {
+          const plain = markdownToPlainText(previewText || '');
+          onGenerate(plain);
+          setShowPreview(false);
+          onClose();
+        }}
+      />
     </div>
   );
 };

@@ -138,10 +138,45 @@ export const nl = {
   followUp: "Follow-up",
   chat: "Chat",
   anonymize: "Anoniem",
-  exportPPT: "Export PPT",
+  exportPPT: "Powerpoint",
   copyContent: "Kopieer inhoud",
   noContent: "Nog geen inhoud gegenereerd.",
   chatWithTranscript: "Chat met Transcript",
+  specials: "RecapHorizon Special prompts",
+  specialsSubtitle: "De prompts zijn in het Engels, het resultaat in uw gekozen output taal",
+  
+  // Admin: Prompts import tijdelijke UI
+  promptsButton: "Prompts",
+  promptsImportTitle: "Prompts Import",
+  promptsPasteJson: "Plak hieronder een JSON-array met prompts. Bij import worden items opgeslagen in de 'prompts' collectie.",
+  promptsTextareaPlaceholder: "[ {\n  \"title\": \"...\",\n  \"prompt_text\": \"...\",\n  \"requires_topic\": true,\n  \"is_active\": true,\n  \"created_at\": \"2025-11-03T21:00:00Z\",\n  \"updated_at\": \"2025-11-03T21:00:00Z\"\n}, { ... } ]",
+  promptsValidate: "Valideren",
+  promptsImport: "Importeren",
+  promptsImporting: "Importeren...",
+  promptsEmptyInput: "Input is leeg",
+  promptsMustBeArray: "JSON moet een array met prompt-objecten zijn",
+  promptsInvalidJson: "Ongeldige JSON",
+  promptsNothingToImport: "Niets te importeren",
+  promptsImportSuccess: "Prompts succesvol geïmporteerd",
+  promptsImportFailed: "Import mislukt",
+  promptsItemsReady: "Gevalideerd: {count} item(s), klaar om te importeren",
+  close: "Sluiten",
+  // Specials tab labels
+  "specials.selectTopicFor": "Selecteer uw topic voor: {title}",
+  "specials.promptLabel": "Prompt",
+  "specials.topicLabel": "Topic",
+  // Specials: nieuwe keys
+  "specials.searchPlaceholder": "Zoek prompts...",
+  "specials.searchHint": "Typ minimaal 2 tekens om te zoeken",
+  "specials.resultsCount": "Resultaten",
+  "specials.loadingError": "Fout bij laden van specials",
+  "specials.noTopicsFound": "Geen onderwerpen gevonden in het transcript",
+  "specials.topicsGenerationError": "Fout bij het genereren van onderwerpen",
+  "specials.resultGenerationError": "Fout bij het genereren van resultaat",
+  "specials.topicRequired": "{onderwerp vereist}",
+  "specials.resultHeading": "Resultaat",
+  "specials.autoGeneratingResult": "Resultaat wordt automatisch gegenereerd...",
+  "specials.generatingResult": "Resultaat genereren...",
   readAnswers: "Lees antwoorden voor",
   mindmap: "Mindmap",
   askAQuestion: "Stel een vraag over de transcriptie...",
@@ -195,6 +230,13 @@ export const nl = {
   noResults: "Nog geen resultaten. Probeer te zoeken.",
   pageLoaded: "Pagina succesvol geladen!",
   selectedPage: "Geselecteerde pagina:",
+  // Generieke navigatie/paginering
+  prev: "Vorige",
+  next: "Volgende",
+  page: "Pagina",
+  of: "van",
+  back: "Terug",
+  generateTopics: "Genereer onderwerpen",
   pageReadyNextPhase: "De paginainhoud is nu klaar voor de volgende fase van verwerking.",
   analyse: "Analyseren",
   step1: "Stap 1",
@@ -241,6 +283,37 @@ export const nl = {
   customerSatisfaction: "Klanttevredenheid",
   scalability: "Schaalbaarheid",
   businessCaseGenerated: "Business case gegenereerd!",
+  businessCaseTypeLabel: "Type Business Case",
+  costSavingsDescription: "Hoe de oplossing processen efficiënter maakt en kosten verlaagt.",
+  revenueGrowthDescription: "Hoe de oplossing nieuwe markten opent of verkoop vergroot.",
+  innovationDescription: "Hoe de oplossing helpt om voorop te blijven in de markt.",
+  riskReductionDescription: "Hoe de oplossing compliance, veiligheid of betrouwbaarheid verhoogt.",
+  customerSatisfactionDescription: "Hoe de oplossing de ervaring van klanten of medewerkers verbetert.",
+  scalabilityDescription: "Hoe de oplossing mee kan groeien met de organisatie.",
+  
+  // Business Case UI
+  businessCaseTargetAudienceLabel: "Doelgroep / Stakeholders",
+  businessCaseTargetAudienceQuestion: "Welke doelgroep of stakeholders wil je overtuigen?",
+  businessCaseTargetAudiencePlaceholder: "",
+  businessCaseTargetAudienceOptions: {
+    boardOfDirectors: "Directie",
+    investors: "Investeerders",
+    teamLeaders: "Teamleiders",
+    colleagues: "Collega's",
+    none: "Geen"
+  },
+  businessCaseLength: "Lengte van de business case",
+  businessCaseLengthOptions: {
+    concise: "Beknopt",
+    extensive: "Uitgebreid",
+    very_extensive: "Zeer uitgebreid"
+  },
+  businessCaseLengthGuidance: {
+    concise: "WEES STRENG: Schrijf een beknopte business case van 300-450 woorden. Niet overschrijden.",
+    extensive: "WEES STRENG: Schrijf een uitgebreide business case van 700-1000 woorden.",
+    very_extensive: "WEES STRENG: Schrijf een zeer uitgebreide business case van 1200-1600 woorden."
+  },
+  businessCaseStrictHint: "Wees streng: AI moet deze lengte volgen.",
   
   // Clipboard messages
   failedToCopyClipboard: "Failed to copy content to clipboard. Please try again.",
@@ -250,7 +323,6 @@ export const nl = {
   generalOverview: "Algemeen overzicht",
   shortParagraph: "Korte paragraaf",
   fetchingExplanation: "Uitleg ophalen...",
-  close: "Sluiten",
   uploadTemplate: "Upload Sjabloon",
   templateUploaded: "Sjabloon: {name}",
   clearTemplate: "Wis sjabloon",
@@ -429,6 +501,7 @@ export const nl = {
   startListening: "Start spraakherkenning",
   stopListening: "Stop spraakherkenning",
   powerpointOptions: "PowerPoint Opties",
+  templateUpload: "Sjabloon upload",
   useCustomTemplate: "Gebruik aangepast sjabloon",
   selectTemplate: "Selecteer sjabloon",
   maxSlides: "Maximum slides",
@@ -438,6 +511,23 @@ export const nl = {
   targetAudience: "Doelgroep",
   mainGoal: "Hoofddoel van de presentatie",
   toneStyle: "Gewenste Toon/Stijl",
+  // Target audience options
+  seniorManagement: "Senior management / EXCO",
+  potentialCustomers: "Potentiële klanten",
+  technicalExperts: "Technische experts",
+  // Main goal options
+  informAndUpdate: "Informeren en updates geven",
+  convinceToDecide: "Overtuigen tot een besluit",
+  trainAndShare: "Trainen en kennis delen",
+  presentProblemAndSolution: "Probleem presenteren en oplossing voorstellen",
+  reportProgress: "Voortgang rapporteren",
+  brainstormAndGenerate: "Brainstormen en ideeën genereren",
+  // Tone/style options
+  formalAndFactual: "Formeel en feitelijk",
+  enthusiasticAndMotivating: "Enthousiast en motiverend",
+  criticalAndAnalytical: "Kritisch en analytisch",
+  conciseAndToThePoint: "Bondig en to-the-point",
+  storytellingOriented: "Storytelling-gericht",
   cancel: "Annuleren",
   setupApiKey: "API Key Instellen",
   howToGetApiKey: "Hoe krijg je een Google Gemini API Key?",
@@ -892,6 +982,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   pricingTrialExpired: "Proefperiode verlopen",
   pricingTrialEndsOn: "Proefperiode eindigt op {{date}} ({{days}} dagen over)",
   pricingShowMeFeature: "Toon Mij / Leer Mij, jouw gerelateerde informatie",
+  pricingIdeaBuilderFeature: "Idee Bouwer, gestructureerde ideegeneratie",
 
   // Upgrade modal translations
   upgradeSubscription: "Upgrade Je Abonnement",
@@ -973,6 +1064,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   webPageFeatureUpgrade: "Web pagina import is beschikbaar vanaf Gold tier. Upgrade je abonnement om direct tekst van webpagina's te importeren.",
   thinkingPartnerFeatureUpgrade: "Denkpartner is beschikbaar vanaf Gold tier. Upgrade je abonnement om gestructureerde denkbegeleiding te gebruiken.",
   showMeFeatureUpgrade: "Show Me is beschikbaar vanaf Gold tier. Upgrade je abonnement voor begeleide onderwerpverkenning.",
+  ideaBuilderFeatureUpgrade: "Idee Bouwer is beschikbaar vanaf Gold tier. Upgrade je abonnement om toegang te krijgen tot begeleide ideegeneratie.",
   defaultFeatureUpgrade: "Deze functionaliteit is beschikbaar vanaf Gold tier. Upgrade je abonnement voor meer mogelijkheden.",
   thinkingPartnerAccessRestricted: "Denkpartner is beschikbaar vanaf Gold tier. Upgrade om deze functionaliteit te gebruiken.",
   
@@ -1358,7 +1450,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   "aiDiscussion.welcomeAction": "Klik op \"Discussie voortzetten\" om de eerste reacties te genereren.",
   "aiDiscussion.participantsPreview": "Deze experts nemen deel aan de discussie:",
   "aiDiscussion.moreParticipants": "En {{count}} andere experts...",
-  "aiDiscussion.generating": "Nieuwe reacties genereren...",
+  "aiDiscussion.generating": "Rapport genereren...",
   "aiDiscussion.progress": "Voortgang",
   "aiDiscussion.turns": "beurten",
   "aiDiscussion.canContinue": "Je kunt de discussie voortzetten of een rapport genereren",
@@ -1419,7 +1511,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   "aiDiscussion.moveToTranscriptModal.warning": "Let op: De huidige transcript-inhoud wordt permanent vervangen.",
   "aiDiscussion.moveToTranscriptModal.confirm": "Ja, vervang transcript",
   "aiDiscussion.moveToTranscriptModal.cancel": "Annuleren",
-  "aiDiscussion.transcriptReplaced": "Transcript succesvol vervangen. Nieuwe sessie gestart.",
+  "aiDiscussion.transcriptReplaced": "Transcript succesvol vervangen",
   "aiDiscussion.transcriptReplaceError": "Fout bij vervangen van transcript",
   "aiDiscussion.userIntervention": "Gebruikersinterventie",
   "aiDiscussion.userInterventionTitle": "Voeg je input toe aan de discussie",
@@ -1684,6 +1776,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   expertHelpStep3: "Na het gesprek kun je de volledige chatgeschiedenis analyseren voor verdere verwerking.",
   expertHelpSubscriptionTitle: "Subscription vereist",
   expertHelpSubscription: "De Vraag de Expert functionaliteit is beschikbaar voor Gold, Diamond en Enterprise abonnementen. Upgrade je account om toegang te krijgen tot deze geavanceerde functie.",
+  specialsFeatureUpgrade: "De Specials functionaliteit is beschikbaar voor Gold, Diamond en Enterprise abonnementen. Upgrade je account om toegang te krijgen tot deze geavanceerde AI-gestuurde prompts.",
   expertHelpTipsTitle: "Tips voor het beste resultaat",
   expertHelpTip1: "Wees specifiek in je vragen voor meer gerichte antwoorden",
   expertHelpTip2: "Kies een expertrol die past bij het type advies dat je nodig hebt",
@@ -1873,8 +1966,6 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   "aiDiscussion.phase.solution_generation": "Oplossingsgeneratie",
   "aiDiscussion.phase.critical_evaluation": "Kritische Evaluatie",
   "aiDiscussion.phase.risk_assessment": "Risicoanalyse",
-  "aiDiscussion.phase.implementation_planning": "Implementatieplanning",
-  "aiDiscussion.phase.success_metrics": "Succesmetrieken",
   "aiDiscussion.phase.synthesis": "Synthese",
   aiDiscussionTurn: "Beurt {current} van {total}",
   aiDiscussionWaitingForResponse: "Wachten op antwoord...",
@@ -3221,9 +3312,15 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   noItems: "(geen items)",
   selectItems: "(selecteer items)",
   itemsSelected: "({count} geselecteerd)",
+  likertStronglyDisagree: "Sterk mee oneens",
+  likertDisagree: "Oneens",
+  likertNeutral: "Neutraal",
+  likertAgree: "Eens",
+  likertStronglyAgree: "Sterk mee eens",
 
   // Analysis mode options
   analysisResults: "Analyse Resultaten",
+  advancedFunctions: "Geavanceerde functies",
   selectAnalysis: "-- Selecteer een analyse --",
   opportunitiesAnalysis: "Kansen & Opportunities",
 
@@ -3379,10 +3476,32 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   "aiDiscussion.phase.problem_analysis": "Probleemanalyse",
   "aiDiscussion.phase.root_cause": "Oorzaakanalyse",
   "aiDiscussion.phase.solution_generation": "Oplossingsgeneratie",
+  "aiDiscussion.phase.solution_evaluation": "Oplossing Evaluatie",
   "aiDiscussion.phase.critical_evaluation": "Kritische Evaluatie",
+  "aiDiscussion.phase.implementation_plan": "Implementatieplan",
   "aiDiscussion.phase.risk_assessment": "Risicoanalyse",
+  "aiDiscussion.phase.stakeholder_analysis": "Stakeholder Analyse",
   "aiDiscussion.phase.implementation_planning": "Implementatieplanning",
   "aiDiscussion.phase.success_metrics": "Succesmetrieken",
-  "aiDiscussion.phase.synthesis": "Synthese"
+  "aiDiscussion.phase.conclusion": "Conclusie",
+  "aiDiscussion.phase.recommendations": "Aanbevelingen"
+
+  // Idea Builder workflow
+  ,ideaBuilderTitle: "Idee Bouwer"
+  ,ideaBuilderInitialIdea: "Beschrijf je idee"
+  ,ideaBuilderInitialIdeaPh: "Schrijf minimaal 30 tekens die je idee en context beschrijven"
+  ,ideaBuilderMinChars: "Minimaal 30 tekens vereist"
+  ,ideaBuilderRound1Title: "Ronde 1: Verhelderende Stellingen"
+  ,ideaBuilderRound2Title: "Ronde 2: Verdiepende Stellingen"
+  ,ideaBuilderInfo: "We valideren en sanitiseren invoer automatisch. Vermijd het opnemen van geheimen of persoonlijke gegevens. Resultaten worden aan je transcript toegevoegd voor analyse."
+  ,ideaBuilderStepLabel: "Stap 1 van 3"
+  ,ideaBuilderStepLabel2: "Stap 2 van 3"
+  ,ideaBuilderStepLabel3: "Stap 3 van 3"
+  ,ideaBuilderStartRound1: "Start Ronde 1"
+  ,ideaBuilderContinueToRound2: "Ga verder naar Ronde 2"
+  ,ideaBuilderGeneratePlan: "Genereer Plan"
+  ,ideaBuilderGenerating: "Genereren..."
+  ,selected: "Geselecteerd"
+  
 
 };

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ThinkingTopic, ThinkingPartner, ThinkingAnalysisData } from '../../types';
+import { ThinkingTopic, ThinkingPartner, ThinkingAnalysisData, TranslationFunction } from '../../types';
 import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck, FiMoreVertical, FiDownload, FiMail } from 'react-icons/fi';
 import { generateThinkingTopics, generateThinkingPartnerAnalysis } from '../services/thinkingPartnerService';
 import { displayToast } from '../utils/clipboard';
 import BlurredLoadingOverlay from './BlurredLoadingOverlay';
 
 interface ThinkingPartnerTabProps {
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
   transcript: string;
   summary?: string;
   onAnalysisComplete: (data: ThinkingAnalysisData) => void;
@@ -28,7 +28,7 @@ interface ThinkingPartnerState {
 }
 
 // Function to get thinking partners with translations
-const getThinkingPartners = (t: (key: string) => string): ThinkingPartner[] => [
+const getThinkingPartners = (t: TranslationFunction): ThinkingPartner[] => [
   {
     id: 'challenge-thinking',
     name: t('challengeThinking'),
@@ -121,7 +121,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
 
     const content = (summary || transcript || '').trim();
     if (!content) {
-      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError', 'Er is onvoldoende inhoud om onderwerpen te genereren') }));
+      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError') || 'Er is onvoldoende inhoud om onderwerpen te genereren' }));
       return;
     }
 
@@ -189,7 +189,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
         ...prev,
         step: 'selectTopic',
         topics: [],
-        error: t('topicGenerationError', 'Fout bij het genereren van onderwerpen')
+        error: t('topicGenerationError') || 'Fout bij het genereren van onderwerpen'
       }));
     }
   };
@@ -248,7 +248,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       setState(prev => ({
         ...prev,
         step: 'selectPartner',
-        error: t('analysisError', 'Fout bij het uitvoeren van analyse')
+        error: t('analysisError') || 'Fout bij het uitvoeren van analyse'
       }));
     }
   };
@@ -479,7 +479,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
 
   const renderCompleteStep = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-start">
         <button
           onClick={() => setState(prev => ({ ...prev, step: 'selectPartner' }))}
           className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
@@ -487,21 +487,6 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
           <FiArrowLeft size={16} />
           {t('backToPartners', 'Terug naar denkpartners')}
         </button>
-        <div className="flex gap-2">
-          <button
-            onClick={handleRegenerate}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
-          >
-            <FiRefreshCw size={16} />
-            {t('regenerateAnalysis', 'Analyse opnieuw genereren')}
-          </button>
-          <button
-            onClick={handleReset}
-            className="px-3 py-2 text-sm bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 rounded-lg hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-colors"
-          >
-            {t('startNewAnalysis', 'Nieuwe analyse starten')}
-          </button>
-        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-6">

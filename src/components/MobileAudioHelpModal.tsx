@@ -1,10 +1,11 @@
 import React from 'react';
 import { XMarkIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface MobileAudioHelpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const MobileAudioHelpModal: React.FC<MobileAudioHelpModalProps> = ({ isOpen, onClose, t }) => {

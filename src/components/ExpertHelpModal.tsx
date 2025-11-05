@@ -1,10 +1,11 @@
 import React from 'react';
 import Modal from './Modal';
+import { TranslationFunction } from '../../types';
 
 interface ExpertHelpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 export default function ExpertHelpModal({ isOpen, onClose, t }: ExpertHelpModalProps) {
@@ -13,7 +14,7 @@ export default function ExpertHelpModal({ isOpen, onClose, t }: ExpertHelpModalP
       isOpen={isOpen}
       onClose={onClose}
       title={t('expertHelpTitle')}
-      className="max-w-2xl"
+      maxWidth="max-w-2xl"
     >
       <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
         <p>{t('expertHelpIntro')}</p>

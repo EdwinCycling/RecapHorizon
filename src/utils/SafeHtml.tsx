@@ -62,4 +62,31 @@ export const SafeUserText: React.FC<{ text: string; className?: string }> = ({ t
   return <span className={className}>{safeText}</span>;
 };
 
+/**
+ * Simple markdown renderer for basic formatting
+ */
+export const renderMarkdown = (text: string) => {
+  if (!text) return text;
+  
+  // Sanitize the input first to prevent XSS
+  const sanitizedText = sanitizeTextInput(text, 10000);
+  
+  // Convert **text** to bold (only after sanitization)
+  const boldText = sanitizedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Convert *text* to italic
+  const italicText = boldText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Convert line breaks to <br> tags
+  const withLineBreaks = italicText.replace(/\n/g, '<br>');
+  
+  // Only allow safe HTML tags
+  const allowedTags = ['strong', 'em', 'br'];
+  const safeHtml = withLineBreaks.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/gi, (match, tagName) => {
+    return allowedTags.includes(tagName.toLowerCase()) ? match : '';
+  });
+  
+  return <span dangerouslySetInnerHTML={{ __html: safeHtml }} />;
+};
+
 export default SafeHtml;

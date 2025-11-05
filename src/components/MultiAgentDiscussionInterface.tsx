@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AIDiscussionSession, AIDiscussionMessage, AIDiscussionRole } from '../../types';
+import { AIDiscussionSession, AIDiscussionMessage, AIDiscussionRole, TranslationFunction } from '../../types';
 import { FiUser, FiClock, FiMessageCircle, FiSend, FiUsers } from 'react-icons/fi';
 
 // Helper function to get emoji based on enthusiasm level
@@ -15,7 +15,7 @@ const getEnthusiasmEmoji = (level: number): string => {
 };
 
 interface MultiAgentDiscussionInterfaceProps {
-  t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
+  t: TranslationFunction;
   session: AIDiscussionSession;
   isActive: boolean;
   newTurnIds?: string[]; // IDs of turns that are new in the current round

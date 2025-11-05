@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 import { getTotalTokenUsage, getUserMonthlyTokens, getUserMonthlySessions } from '../firebase';
 import Modal from './Modal';
 
 interface TokenUsageMeterProps {
   userTier?: SubscriptionTier;
-  t: (key: string) => string;
+  t: TranslationFunction;
   onShowPricing?: () => void;
   user?: { uid: string } | null;
 }

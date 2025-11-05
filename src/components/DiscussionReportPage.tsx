@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { AIDiscussionReport, AIDiscussionSession } from '../../types';
+import { AIDiscussionReport, AIDiscussionSession, TranslationFunction } from '../../types';
 import { FiDownload, FiFileText, FiClock, FiUsers, FiTarget, FiCheck, FiCopy, FiArrowRight } from 'react-icons/fi';
 import { displayToast } from '../utils/clipboard';
 
 interface DiscussionReportPageProps {
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
   report: AIDiscussionReport;
   session: AIDiscussionSession;
   onMoveToTranscript?: (reportContent: string) => void;
@@ -254,35 +254,85 @@ ${report.fullTranscript}
     copyToClipboard(reportText);
   };
 
+  // Helper function to strip markdown and formatting for plain text
+  const stripMarkdown = (text: string): string => {
+    if (!text) return '';
+    let out = text;
+    
+    // First, preserve star ratings by converting them to a safe placeholder
+    out = out.replace(/★+/g, (match) => `STAR_RATING_${match.length}_STARS`);
+    out = out.replace(/⭐+/g, (match) => `STAR_RATING_${match.length}_STARS`);
+    
+    // Normalize newlines and tabs
+    out = out.replace(/\r\n/g, '\n');
+    out = out.replace(/\t/g, '  ');
+    // Remove ATX headings markers (#) and Setext underlines
+    out = out.replace(/^[ \t]*#{1,6}[ \t]*/gm, '');
+    out = out.replace(/^\s*(=|-){3,}\s*$/gm, '');
+    // Bold/italic markers
+    out = out.replace(/(\*\*|__)(.*?)\1/g, '$2');
+    out = out.replace(/(\*|_)(.*?)\1/g, '$2');
+    // Code blocks and inline code
+    out = out.replace(/```[\s\S]*?```/g, '');
+    out = out.replace(/`([^`]+)`/g, '$1');
+    // Links and images
+    out = out.replace(/!\[(.*?)\]\((.*?)\)/g, '$1');
+    out = out.replace(/\[(.*?)\]\((.*?)\)/g, '$1 ($2)');
+    // Blockquotes
+    out = out.replace(/^[ \t]*>+[ \t]?/gm, '');
+    // Normalize list bullets at line-start (convert *, +, - to a single dash)
+    out = out.replace(/^[ \t]*([*+\-])\s+/gm, '- ');
+    // Normalize nested bullet symbols that may slip through (• · ▪ ◦)
+    out = out.replace(/[•·▪◦]/g, '-');
+    // Normalize ordered list markers like "1)" or "1."
+    out = out.replace(/^[ \t]*(\d{1,3})[\.)]\s+/gm, '$1. ');
+    // Remove control/non-printable characters
+    out = out.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+    // Remove lines that are only formatting garbage but preserve star ratings
+    out = out.replace(/^\s*[&*_~`\-]+\s*$/gm, '');
+    out = out.replace(/^\s*&+\s*$/gm, '');
+    
+    // Convert star rating placeholders back to stars
+    out = out.replace(/STAR_RATING_(\d+)_STARS/g, (match, count) => '★'.repeat(parseInt(count)));
+    
+    // Collapse excessive blank lines
+    out = out.replace(/\n{3,}/g, '\n\n');
+    // Trim extra spaces on each line
+    out = out.split('\n').map(l => l.replace(/\s+$/,'')).join('\n');
+    return out.trim();
+  };
+
   const handleMoveToTranscript = () => {
     if (!onMoveToTranscript) return;
     
     try {
-      // Create plain text version without formatting for transcript
-      const plainTextContent = [
-        `AI Discussie Rapport: ${session.topic.title}`,
-        `Gegenereerd op: ${formatDate(report.generatedAt)}`,
-        '',
-        `Onderwerp: ${session.topic.title}`,
-        `Beschrijving: ${session.topic.description}`,
-        `Doel: ${t(`aiDiscussion.goal.${session.goal.id}`, session.goal.name)}`,
-        `Deelnemers: ${session.roles.map(role => t(`aiDiscussion.role.${role.id}`, role.name)).join(', ')}`,
-        `Aantal beurten: ${session.turns.length}`,
-        '',
-        'Samenvatting:',
-        report.summary,
-        '',
-        'Belangrijkste punten:',
-        ...report.keyPoints.map((point, index) => `${index + 1}. ${point}`),
-        '',
-        'Aanbevelingen:',
-        ...report.recommendations.map((rec, index) => `${index + 1}. ${rec}`),
-        '',
-        'Volledige discussie:',
-        report.fullTranscript
-      ].join('\n').trim();
+      const reportText = `
+AI DISCUSSIE RAPPORT
+${session.topic.title}
 
-      onMoveToTranscript(plainTextContent);
+Gegenereerd op: ${formatDate(report.generatedAt)}
+
+DISCUSSIE DETAILS:
+- Onderwerp: ${session.topic.title}
+- Beschrijving: ${session.topic.description}
+- Doel: ${t(`aiDiscussion.goal.${session.goal.id}`, session.goal.name)}
+- Deelnemers: ${session.roles.map(role => t(`aiDiscussion.role.${role.id}`, role.name)).join(', ')}
+- Aantal beurten: ${session.turns.length}
+
+SAMENVATTING:
+${stripMarkdown(report.summary)}
+
+BELANGRIJKSTE PUNTEN:
+${report.keyPoints.map((point, index) => `${index + 1}. ${stripMarkdown(point)}`).join('\n')}
+
+AANBEVELINGEN:
+${report.recommendations.map((rec, index) => `${index + 1}. ${stripMarkdown(rec)}`).join('\n')}
+
+VOLLEDIGE DISCUSSIE:
+${stripMarkdown(report.fullTranscript)}
+      `.trim();
+
+      onMoveToTranscript(reportText);
       setShowMoveToTranscriptModal(false);
       displayToast(t('aiDiscussion.transcriptReplaced', 'Transcript succesvol vervangen'), 'success');
     } catch (error) {
@@ -454,7 +504,7 @@ ${report.fullTranscript}
 
       {/* Move to Transcript Modal */}
       {showMoveToTranscriptModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
               {t('aiDiscussion.moveToTranscriptModal.title', 'Rapport naar transcript verplaatsen')}

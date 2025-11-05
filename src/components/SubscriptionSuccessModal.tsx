@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 
 interface SubscriptionSuccessModalProps {
   isOpen: boolean;
@@ -7,7 +7,7 @@ interface SubscriptionSuccessModalProps {
   tier: SubscriptionTier;
   userEmail: string;
   renewalDate?: Date;
-  t: (key: string, params?: any) => string;
+  t: TranslationFunction;
 }
 
 const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({ 

@@ -102,7 +102,7 @@ timeout = 60
 
 [dev]
   port = 8888
-  targetPort = 3000
+  targetPort = 5173
   publish = "dist"
   autoLaunch = false
 

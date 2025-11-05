@@ -8,8 +8,8 @@ export default defineConfig(({ mode }) => {
     return {
       plugins: [react()],
       server: {
-        port: 5173,
-        strictPort: true, // Gebruik vaste poort; faal als 5173 bezet is
+        port: 3000,
+        strictPort: true, // Use fixed port; fail if 3000 is occupied
         host: true, // Dit zorgt ervoor dat de server toegankelijk is vanaf andere apparaten op je netwerk
         open: false, // Open browser niet automatisch
         cors: true, // Enable CORS for development

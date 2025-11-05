@@ -1,12 +1,12 @@
 import React from 'react';
 import { Clock, Zap } from 'lucide-react';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 
 interface AudioUsageMeterProps {
   userTier: SubscriptionTier;
   monthlyAudioUsage: number;
-  t: (key: string, params?: Record<string, any>) => string;
+  t: TranslationFunction;
   theme: 'light' | 'dark';
   onShowPricing?: () => void;
 }

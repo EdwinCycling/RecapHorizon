@@ -1,3 +1,11 @@
+import type { FieldValue } from 'firebase/firestore';
+
+export type TranslationFunction = (
+  key: string,
+  fallbackOrParams?: string | Record<string, any>,
+  maybeParams?: Record<string, any>
+) => any;
+
 export enum RecordingStatus {
   IDLE = 'IDLE',
   GETTING_PERMISSION = 'GETTING_PERMISSION',
@@ -135,7 +143,8 @@ export interface StorytellingOptions {
 // Business Case interface
 export interface BusinessCaseData {
   businessCaseType: string;
-  useInternetVerification: boolean;
+  targetAudience?: string;
+  length?: 'concise' | 'extensive' | 'very_extensive';
   businessCase: string;
 }
 
@@ -234,6 +243,7 @@ export interface NewsArticle {
 }
 
 export interface ShowMeData {
+  topic: TeachMeTopic;
   tedTalks: TedTalk[];
   newsArticles: NewsArticle[];
 }
@@ -605,6 +615,43 @@ export interface UserDocument {
   lastAudioResetDate: Date;
 }
 
+// Interface for creating users with FieldValue support for timestamps
+export interface UserDocumentCreate {
+  email: string;
+  createdAt: Date | FieldValue;
+  updatedAt: Date | FieldValue;
+  isActive: boolean;
+  isAdmin?: boolean;
+  lastLogin?: Date | FieldValue;
+  subscriptionTier?: SubscriptionTier;
+  currentSubscriptionStatus?: 'active' | 'past_due' | 'cancelled' | 'expired';
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripePriceId?: string;
+  nextBillingDate?: Date | FieldValue;
+  currentSubscriptionStartDate?: Date | FieldValue;
+  scheduledTierChange?: {
+    tier: SubscriptionTier;
+    effectiveDate: Date | FieldValue;
+    action: 'downgrade' | 'cancel';
+  };
+  // Usage tracking fields (existing)
+  dailyAudioCount?: number;
+  dailyUploadCount?: number;
+  lastDailyUsageDate?: string;
+  monthlyInputTokens?: number;
+  monthlyOutputTokens?: number;
+  monthlySessionsCount?: number;
+  tokensMonth?: string;
+  sessionsMonth?: string;
+  // Monthly audio recording limits
+  monthlyAudioMinutes?: number;
+  audioMinutesMonth?: string; // YYYY-MM format for tracking month
+  lastAudioResetDate?: Date | FieldValue;
+  sessionCount?: number;
+  referrerCode?: string;
+}
+
 // McKinsey analysis interfaces
 export enum McKinseyFramework {
   ThreeC = '3C',
@@ -676,4 +723,16 @@ export interface DiscussionStyleConfiguration {
   roleStyles: { [roleId: string]: RoleDiscussionStyles };
   allowRuntimeAdjustment?: boolean;
   defaultStyles?: { [roleCategory: string]: string[] }; // default styles per role category
+}
+
+// Prompts for Specials functionality
+export interface PromptDocument {
+  id: string;
+  title: string;
+  prompt_text: string;
+  requires_topic: boolean;
+  is_active: boolean;
+  created_at: any;
+  updated_at: any;
+  language?: string | null;
 }

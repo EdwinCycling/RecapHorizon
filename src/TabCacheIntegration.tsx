@@ -31,7 +31,7 @@ function App() {
       );
     });
 
-    setCurrentTabContent(summaryContent);
+    setCurrentTabContent(String(summaryContent ?? ''));
     setActiveTab('summary');
   };
 
@@ -47,7 +47,7 @@ function App() {
       );
     });
 
-    setCurrentTabContent(execContent);
+    setCurrentTabContent(String(execContent ?? ''));
     setActiveTab('executiveSummary');
   };
 
@@ -59,7 +59,7 @@ function App() {
         setTimeout(() => resolve("Dit zijn de keywords..."), 1000)
       );
     });
-    setCurrentTabContent(keywordContent);
+    setCurrentTabContent(String(keywordContent ?? ''));
     setActiveTab('keywords');
   };
 

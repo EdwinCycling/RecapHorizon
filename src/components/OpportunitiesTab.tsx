@@ -12,10 +12,10 @@ import {
 } from '../services/opportunitiesService';
 import { displayToast } from '../utils/clipboard';
 import BlurredLoadingOverlay from './BlurredLoadingOverlay';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 
 interface OpportunitiesTabProps {
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
   transcript: string;
   summary?: string;
   onOpportunitiesComplete: (data: OpportunityAnalysisData) => void;
@@ -108,7 +108,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         ...prev,
         step: 'selectTopic',
         topics: [],
-        error: t('opportunityTopicGenerationError', 'Fout bij het genereren van onderwerpen'),
+        error: t('opportunityTopicGenerationError') || 'Fout bij het genereren van onderwerpen',
         isGenerating: false
       }));
     }
@@ -125,7 +125,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         ...prev, 
         step: 'selectTopic', 
         topics: [], 
-        error: t('opportunityTopicGenerationError', 'Er is onvoldoende inhoud om onderwerpen te genereren') 
+        error: t('opportunityTopicGenerationError') || 'Er is onvoldoende inhoud om onderwerpen te genereren' 
       }));
       return;
     }
@@ -180,7 +180,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     if (state.selectedTopics.length === 0) {
       setState(prev => ({ 
         ...prev, 
-        error: t('selectAtLeastOneTopic', 'Selecteer minimaal één onderwerp') 
+        error: t('selectAtLeastOneTopic') || 'Selecteer minimaal één onderwerp' 
       }));
       return;
     }
@@ -215,7 +215,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     if (state.selectedRoles.length === 0) {
       setState(prev => ({ 
         ...prev, 
-        error: t('selectAtLeastOneRole', 'Selecteer minimaal één AI-rol') 
+        error: t('selectAtLeastOneRole') || 'Selecteer minimaal één AI-rol' 
       }));
       return;
     }
@@ -254,7 +254,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     if (state.selectedOpportunityTypes.length === 0) {
       setState(prev => ({ 
         ...prev, 
-        error: t('selectAtLeastOneType', 'Selecteer minimaal één opportunity type') 
+        error: t('selectAtLeastOneType') || 'Selecteer minimaal één opportunity type' 
       }));
       return;
     }
@@ -298,7 +298,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       console.error('Error generating opportunities:', error);
       setState(prev => ({
         ...prev,
-        error: t('opportunityGenerationError', 'Fout bij het genereren van opportunities'),
+        error: t('opportunityGenerationError') || 'Fout bij het genereren van opportunities',
         isGenerating: false
       }));
     }

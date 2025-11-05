@@ -1,10 +1,11 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface CookieModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const CookieModal: React.FC<CookieModalProps> = ({ isOpen, onClose, t }) => {

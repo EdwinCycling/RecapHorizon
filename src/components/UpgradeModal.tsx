@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 
 interface UpgradeModalProps {
@@ -7,7 +7,7 @@ interface UpgradeModalProps {
   message: string;
   onUpgrade: (tier: SubscriptionTier) => void;
   onClose: () => void;
-  t: (key: string, params?: any) => string;
+  t: TranslationFunction;
 }
 
 const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, message, onUpgrade, onClose, t }) => {

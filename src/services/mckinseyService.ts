@@ -115,12 +115,21 @@ export async function generateMckinseyAnalysis(
       false // No streaming for analysis generation
     );
 
+    // Explicit guard: empty or missing content must surface as an error
+    if (!response || typeof response.content !== 'string' || response.content.trim().length === 0) {
+      throw new Error('Error: Empty AI response received for McKinsey analysis');
+    }
+
     // Post-process the analysis to improve formatting and professionalism
     const processedAnalysis = postProcessAnalysis(response.content, framework, language);
     
     return processedAnalysis;
   } catch (error) {
-    throw new Error('Failed to generate McKinsey analysis');
+    // Let a clear error message bubble up
+    if (error instanceof Error && error.message.startsWith('Error:')) {
+      throw error;
+    }
+    throw new Error('Error: Failed to generate McKinsey analysis');
   }
 }
 

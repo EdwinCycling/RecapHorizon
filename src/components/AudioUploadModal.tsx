@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { TranslationFunction } from '../../types';
 
 interface AudioUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAudioImport: (file: File) => Promise<void>;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const AudioUploadModal: React.FC<AudioUploadModalProps> = ({
@@ -17,6 +18,20 @@ const AudioUploadModal: React.FC<AudioUploadModalProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Prevent background scrolling when uploading
+  useEffect(() => {
+    if (isUploading) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on component unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isUploading]);
 
   const acceptedTypes = ['audio/mpeg', 'audio/mp4', 'audio/webm', 'audio/wav', '.mp3', '.mp4', '.webm', '.wav'];
   const maxFileSize = 100 * 1024 * 1024; // 100MB

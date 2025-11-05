@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef, JSX } from 'react';
-import { McKinseyTopic, McKinseyFramework, McKinseyAnalysisData, SubscriptionTier } from '../../types';
+import { McKinseyTopic, McKinseyFramework, McKinseyAnalysisData, SubscriptionTier, TranslationFunction } from '../../types';
 import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck, FiMoreVertical, FiDownload, FiMail, FiTarget, FiUsers, FiTrendingUp } from 'react-icons/fi';
 import { generateMckinseyTopics, generateMckinseyAnalysis } from '../services/mckinseyService';
 import { displayToast } from '../utils/clipboard';
 
 interface McKinseyTabProps {
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
   transcript: string;
   summary?: string;
   onAnalysisComplete: (data: McKinseyAnalysisData) => void;
@@ -28,7 +28,7 @@ interface McKinseyState {
 }
 
 // McKinsey consultant roles
-const getMckinseyRoles = (t: (key: string, params?: Record<string, unknown>) => string) => [
+const getMckinseyRoles = (t: TranslationFunction) => [
   {
     id: 'strategy-consultant',
     name: t('mckinseyRoleStrategyConsultant'),
@@ -133,7 +133,7 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
         ...prev,
         step: 'selectTopic',
         topics: [],
-        error: t('topicGenerationError', 'Fout bij het genereren van onderwerpen')
+        error: t('topicGenerationError') || 'Fout bij het genereren van onderwerpen'
       }));
     }
   }, [language, userId, userTier, sessionId]); // Keep callback stable; exclude `t` to avoid unnecessary re-creations
@@ -144,7 +144,7 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
 
     const content = (summary || transcript || '').trim();
     if (!content) {
-      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError', 'Er is onvoldoende inhoud om onderwerpen te genereren') }));
+      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError') || 'Er is onvoldoende inhoud om onderwerpen te genereren' }));
       return;
     }
 
@@ -154,14 +154,14 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
     const currentCacheKey = `rh_mckinsey_topics:${base}:${h}`;
     
     // First try to load from cache
-    const tryLoadFromCache = () => {
+    const tryLoadFromCache = (): Pick<McKinseyState, 'step' | 'topics' | 'cacheKey' | 'error'> | null => {
       try {
         const cached = typeof window !== 'undefined' ? window.localStorage.getItem(currentCacheKey) : null;
         if (cached) {
           const topics = JSON.parse(cached) as McKinseyTopic[];
           if (!cancelled && topics.length > 0) {
             // Return the new state instead of calling setState directly
-            return { step: 'selectTopic', topics, cacheKey: currentCacheKey, error: undefined };
+            return { step: 'selectTopic' as const, topics, cacheKey: currentCacheKey, error: undefined };
           }
         }
       } catch (error) {
@@ -271,10 +271,13 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
 
       onAnalysisComplete(analysisData);
     } catch (error) {
+      // Show a clear, localized error toast and surface the message in UI
+      const msg = t('emptyResponseReceived', 'Lege response ontvangen');
+      displayToast(msg, 'error');
       setState(prev => ({
         ...prev,
         step: 'selectFramework',
-        error: t('analysisError', 'Fout bij het uitvoeren van analyse')
+        error: t('analysisError') || msg
       }));
     }
   };
@@ -971,19 +974,6 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
           {t('backToFrameworks', 'Terug naar frameworks')}
         </button>
         <div className="flex gap-2">
-          <button
-            onClick={handleRegenerate}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
-          >
-            <FiRefreshCw size={16} />
-            {t('regenerateAnalysis', 'Analyse opnieuw genereren')}
-          </button>
-          <button
-            onClick={handleReset}
-            className="px-3 py-2 text-sm bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 rounded-lg hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-colors"
-          >
-            {t('newAnalysis', 'Nieuwe analyse')}
-          </button>
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -1056,11 +1046,25 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
         <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">
           {t('mckinseyAnalysisResult', 'McKinsey Analyse Resultaat')}
         </h4>
-        <div className="prose dark:prose-invert max-w-none">
-          <div className="text-slate-700 dark:text-slate-300 space-y-4">
-            {formatAnalysisResult(state.analysis)}
+        {(!state.analysis || state.analysis.trim().length === 0) ? (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <p className="text-amber-800 dark:text-amber-200 mb-2">
+              {t('noContent', 'Nog geen inhoud gegenereerd.')}
+            </p>
+            <button
+              onClick={handleRegenerate}
+              className="px-3 py-2 text-sm bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 rounded-lg hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-colors"
+            >
+              {t('regenerateAnalysis', 'Analyse opnieuw genereren')}
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className="prose dark:prose-invert max-w-none">
+            <div className="text-slate-700 dark:text-slate-300 space-y-4">
+              {formatAnalysisResult(state.analysis)}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

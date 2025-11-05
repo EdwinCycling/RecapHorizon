@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import Modal from './Modal';
 import EnableButtonSlider from './EnableButtonSlider';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 
 interface DowngradeConfirmationModalProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface DowngradeConfirmationModalProps {
   currentTier: SubscriptionTier;
   targetTier: SubscriptionTier;
   renewalDate: string;
-  t: (key: string) => string;
+  t: TranslationFunction;
   theme?: 'light' | 'dark';
 }
 

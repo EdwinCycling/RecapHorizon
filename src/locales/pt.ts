@@ -85,10 +85,27 @@ export const pt = {
   followUp: "Seguimento",
   chat: "Chat",
   anonymize: "Anonimizar",
-  exportPPT: "Exportar PPT",
+  exportPPT: "Powerpoint",
   copyContent: "Copiar conteúdo",
   noContent: "Ainda sem conteúdo gerado.",
   chatWithTranscript: "Conversar com Transcrição",
+  specials: "RecapHorizon Special prompts",
+  specialsSubtitle: "Os prompts estão em inglês; o resultado será no idioma de saída escolhido.",
+  "specials.selectTopicFor": "Selecione o seu tópico para: {title}",
+  "specials.promptLabel": "Prompt",
+  "specials.topicLabel": "Tópico",
+  // Especiais: novas chaves
+  "specials.searchPlaceholder": "Pesquisar prompts...",
+  "specials.searchHint": "Digite pelo menos 2 caracteres para pesquisar",
+  "specials.resultsCount": "Resultados",
+  "specials.loadingError": "Erro ao carregar especiais",
+  "specials.noTopicsFound": "Nenhum tópico encontrado na transcrição",
+  "specials.topicsGenerationError": "Erro ao gerar tópicos",
+  "specials.resultGenerationError": "Erro ao gerar o resultado",
+  "specials.topicRequired": "{tópico obrigatório}",
+  "specials.resultHeading": "Resultado",
+  "specials.autoGeneratingResult": "O resultado será gerado automaticamente...",
+  "specials.generatingResult": "Gerando resultado...",
   readAnswers: "Ler respostas em voz alta",
   mindmap: "Mapa mental",
   askAQuestion: "Faça uma pergunta sobre a transcrição...",
@@ -153,6 +170,37 @@ export const pt = {
   customerSatisfaction: "Satisfação do cliente",
   scalability: "Escalabilidade",
   businessCaseGenerated: "Business case gerado!",
+  businessCaseTypeLabel: "Tipo de business case",
+  costSavingsDescription: "Como a solução torna os processos mais eficientes e reduz custos.",
+  revenueGrowthDescription: "Como a solução abre novos mercados ou aumenta as vendas.",
+  innovationDescription: "Como a solução ajuda a estar à frente no mercado.",
+  riskReductionDescription: "Como a solução melhora conformidade, segurança ou confiabilidade.",
+  customerSatisfactionDescription: "Como a solução melhora a experiência de clientes ou colaboradores.",
+  scalabilityDescription: "Como a solução pode crescer com a organização.",
+  
+  // Business Case UI
+  businessCaseTargetAudienceLabel: "Público / Partes interessadas",
+  businessCaseTargetAudienceQuestion: "Qual público ou partes interessadas você deseja convencer?",
+  businessCaseTargetAudiencePlaceholder: "",
+  businessCaseTargetAudienceOptions: {
+    boardOfDirectors: "Conselho de Administração",
+    investors: "Investidores",
+    teamLeaders: "Líderes de equipe",
+    colleagues: "Colegas",
+    none: "Nenhum"
+  },
+  businessCaseLength: "Comprimento do business case",
+  businessCaseLengthOptions: {
+    concise: "Conciso",
+    extensive: "Extenso",
+    very_extensive: "Muito extenso"
+  },
+  businessCaseLengthGuidance: {
+    concise: "SEJA RIGOROSO: Escreva um business case conciso de 300-450 palavras. Não ultrapasse.",
+    extensive: "SEJA RIGOROSO: Escreva um business case extenso de 700-1000 palavras.",
+    very_extensive: "SEJA RIGOROSO: Escreva um business case muito extenso de 1200-1600 palavras."
+  },
+  businessCaseStrictHint: "Seja rigoroso: a IA deve seguir este comprimento.",
   
   // Clipboard messages
   failedToCopyClipboard: "Falha ao copiar conteúdo para a área de transferência. Por favor, tente novamente.",
@@ -758,6 +806,7 @@ RecapHorizon: Além do caos, a essência primeiro.`,
   pricingTrialExpired: "Período de teste expirado",
   pricingTrialEndsOn: "O teste termina em {{date}} ({{days}} dias restantes)",
   pricingShowMeFeature: "Mostre-me / Ensine-me, suas informações relacionadas",
+  pricingIdeaBuilderFeature: "Construtor de Ideias, fluxo de ideação estruturado",
 
   // Upgrade modal translations
   upgradeSubscription: "Atualizar Sua Assinatura",
@@ -858,6 +907,7 @@ RecapHorizon: Além do caos, a essência primeiro.`,
   webExpertFeatureUpgrade: "A opção WebExpert está disponível a partir do nível Gold. Atualize sua assinatura para usar análise de IA avançada para páginas web.",
   multipleUrlsFeatureUpgrade: "A importação de múltiplas URLs está disponível a partir do nível Gold. Atualize sua assinatura para processar múltiplas páginas web de uma vez.",
   webPageFeatureUpgrade: "A importação de páginas web está disponível a partir do nível Gold. Atualize sua assinatura para importar texto diretamente de páginas web.",
+  ideaBuilderFeatureUpgrade: "O Construtor de Ideias está disponível a partir do nível Gold. Atualize sua assinatura para acessar a ideação guiada.",
   defaultFeatureUpgrade: "Esta funcionalidade está disponível a partir do nível Gold. Atualize sua assinatura para mais possibilidades.",
   aiDiscussionFeatureUpgrade: "A Discussão IA está disponível a partir do nível Gold. Atualize sua assinatura para usar discussões multi‑agente.",
   
@@ -876,6 +926,13 @@ RecapHorizon: Além do caos, a essência primeiro.`,
   
   // Loading text
   loading: "Carregando...",
+  // Rótulos genéricos de navegação/paginação
+  prev: "Anterior",
+  next: "Próximo",
+  page: "Página",
+  of: "de",
+  back: "Voltar",
+  generateTopics: "Gerar tópicos",
   
   // Login text
   login: "Entrar",
@@ -2558,9 +2615,30 @@ notionIntegrationSecurityDesc: "Seus dados do Notion permanecem seguros porque s
   noItems: "(nenhum item)",
   selectItems: "(selecionar itens)",
   itemsSelected: "({count} selecionados)",
+  likertStronglyDisagree: "Discordo totalmente",
+  likertDisagree: "Discordo",
+  likertNeutral: "Neutro",
+  likertAgree: "Concordo",
+  likertStronglyAgree: "Concordo totalmente",
+  ideaBuilderTitle: "Gerador de ideias",
+  ideaBuilderInitialIdea: "Descreva a sua ideia",
+  ideaBuilderInitialIdeaPh: "Escreva pelo menos 30 caracteres descrevendo a sua ideia e contexto",
+  ideaBuilderMinChars: "Mínimo de 30 caracteres requerido",
+  ideaBuilderRound1Title: "Ronda 1: Perguntas de esclarecimento",
+  ideaBuilderRound2Title: "Ronda 2: Perguntas de aprofundamento",
+  ideaBuilderInfo: "Validamos e sanitizamos as entradas automaticamente. Evite incluir segredos ou dados pessoais. Os resultados serão adicionados à sua transcrição para análise.",
+  ideaBuilderStepLabel: "Etapa 1 de 3",
+  ideaBuilderStepLabel2: "Etapa  2 de 3",
+  ideaBuilderStepLabel3: "Etapa  3 de 3",
+  ideaBuilderStartRound1: "Iniciar Ronda 1",
+  ideaBuilderContinueToRound2: "Continuar para a Ronda 2",
+  ideaBuilderGeneratePlan: "Gerar Plano",
+  ideaBuilderGenerating: "Gerando...",
+  selected: "Selecionado",
 
   // Analysis mode options
   analysisResults: "Resultados da análise",
+  advancedFunctions: "Funções Avançadas",
   selectAnalysis: "-- Selecionar uma análise --",
   opportunitiesAnalysis: "Oportunidades & Possibilidades",
 

@@ -1,10 +1,11 @@
 import React from 'react';
 import { XMarkIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface EmailImportHelpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const EmailImportHelpModal: React.FC<EmailImportHelpModalProps> = ({ isOpen, onClose, t }) => {

@@ -1,13 +1,14 @@
 import * as React from 'react';
 import packageJson from '../../package.json';
+import { TranslationFunction } from '../../types';
 
 type FooterProps = {
-  t: (key: string) => string,
-  authState: { user: unknown | null; loading: boolean } | null,
-  setShowCookieModal: (v: boolean) => void,
-  setShowStoryModal: (v: boolean) => void,
-  setShowTeamModal: (v: boolean) => void,
-  setShowDisclaimerModal: (v: boolean) => void,
+  t: TranslationFunction;
+  authState: { user: unknown | null; isLoading: boolean } | null;
+  setShowCookieModal: (v: boolean) => void;
+  setShowStoryModal: (v: boolean) => void;
+  setShowTeamModal: (v: boolean) => void;
+  setShowDisclaimerModal: (v: boolean) => void;
 };
 
 const Footer: React.FC<FooterProps> = ({ t, authState, setShowCookieModal, setShowStoryModal, setShowTeamModal, setShowDisclaimerModal }) => (

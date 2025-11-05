@@ -160,10 +160,28 @@ export const en = {
 
   anonymize: "Anonymize",
 
-  exportPPT: "Export PPT",
+  exportPPT: "Powerpoint",
   copyContent: "Copy content",
   noContent: "No content generated yet.",
   chatWithTranscript: "Chat with Transcript",
+  specials: "RecapHorizon Special prompts",
+  specialsSubtitle: "Prompts are in English; the result will be in your chosen output language.",
+  // Specials tab labels
+  "specials.selectTopicFor": "Select your topic for: {title}",
+  "specials.promptLabel": "Prompt",
+  "specials.topicLabel": "Topic",
+  // Specials: new keys
+  "specials.searchPlaceholder": "Search prompts...",
+  "specials.searchHint": "Type at least 2 characters to search",
+  "specials.resultsCount": "Results",
+  "specials.loadingError": "Error loading specials",
+  "specials.noTopicsFound": "No topics found in the transcript",
+  "specials.topicsGenerationError": "Error generating topics",
+  "specials.resultGenerationError": "Error generating result",
+  "specials.topicRequired": "{topic required}",
+  "specials.resultHeading": "Result",
+  "specials.autoGeneratingResult": "Result will be generated automatically...",
+  "specials.generatingResult": "Generating result...",
   readAnswers: "Read answers aloud",
   mindmap: "Mindmap",
   askAQuestion: "Ask a question about the transcript...",
@@ -218,6 +236,13 @@ export const en = {
   noResults: "No results yet. Try a search.",
   pageLoaded: "Page Loaded Successfully!",
   selectedPage: "Selected Page:",
+  // Generic navigation/pagination labels
+  prev: "Prev",
+  next: "Next",
+  page: "Page",
+  of: "of",
+  back: "Back",
+  generateTopics: "Generate topics",
   pageReadyNextPhase: "The page content is now ready for the next phase of processing.",
   analyse: "Analyse",
   step1: "Step 1",
@@ -235,6 +260,23 @@ export const en = {
   exportToPdf: "Export to PDF",
   exportToText: "Export to Text",
   copyForEmail: "Copy for Email",
+  
+  // Admin: Prompts import temporary UI
+  promptsButton: "Prompts",
+  promptsImportTitle: "Prompts Import",
+  promptsPasteJson: "Paste a JSON array of prompts below. On import, items will be stored in the 'prompts' collection.",
+  promptsTextareaPlaceholder: "[ {\n  \"title\": \"...\",\n  \"prompt_text\": \"...\",\n  \"requires_topic\": true,\n  \"is_active\": true,\n  \"created_at\": \"2025-11-03T21:00:00Z\",\n  \"updated_at\": \"2025-11-03T21:00:00Z\"\n}, { ... } ]",
+  promptsValidate: "Validate",
+  promptsImport: "Import",
+  promptsImporting: "Importing...",
+  promptsEmptyInput: "Input is empty",
+  promptsMustBeArray: "JSON must be an array of prompt objects",
+  promptsInvalidJson: "Invalid JSON",
+  promptsNothingToImport: "Nothing to import",
+  promptsImportSuccess: "Imported prompts successfully",
+  promptsImportFailed: "Import failed",
+  promptsItemsReady: "Validated {count} item(s), ready to import",
+  close: "Close",
 
   // Mobile Audio Help
   androidLabel: "🤖 Android:",
@@ -300,6 +342,37 @@ export const en = {
   customerSatisfaction: "Customer satisfaction",
   scalability: "Scalability",
   businessCaseGenerated: "Business case generated!",
+  businessCaseTypeLabel: "Business Case Type",
+  costSavingsDescription: "How the solution makes processes more efficient and reduces costs.",
+  revenueGrowthDescription: "How the solution opens new markets or increases sales.",
+  innovationDescription: "How the solution helps to stay ahead in the market.",
+  riskReductionDescription: "How the solution increases compliance, security or reliability.",
+  customerSatisfactionDescription: "How the solution improves the experience of customers or employees.",
+  scalabilityDescription: "How the solution can grow with the organization.",
+  
+  // Business Case UI
+  businessCaseTargetAudienceLabel: "Target Audience / Stakeholders",
+  businessCaseTargetAudienceQuestion: "Which audience or stakeholders do you want to persuade? (Choose or enter)",
+  businessCaseTargetAudiencePlaceholder: "Or enter your own (e.g., Project Sponsors, Advisory Board)",
+  businessCaseTargetAudienceOptions: {
+    boardOfDirectors: "Board of Directors",
+    investors: "Investors",
+    teamLeaders: "Team Leaders",
+    colleagues: "Colleagues",
+    none: "None"
+  },
+  businessCaseLength: "Business case length",
+  businessCaseLengthOptions: {
+    concise: "Concise",
+    extensive: "Extensive",
+    very_extensive: "Very extensive"
+  },
+  businessCaseLengthGuidance: {
+    concise: "BE STRICT: Write a concise business case of 300-450 words. Do not exceed.",
+    extensive: "BE STRICT: Write an extensive business case of 700-1000 words.",
+    very_extensive: "BE STRICT: Write a very extensive business case of 1200-1600 words."
+  },
+  businessCaseStrictHint: "Be strict: AI must follow this length.",
   
   // Clipboard messages
   failedToCopyClipboard: "Failed to copy content to clipboard. Please try again.",
@@ -309,7 +382,6 @@ export const en = {
   generalOverview: "General overview",
   shortParagraph: "Short paragraph",
   fetchingExplanation: "Fetching explanation...",
-  close: "Close",
   uploadTemplate: "Upload Template",
   templateUploaded: "Template: {name}",
   clearTemplate: "Clear template",
@@ -468,6 +540,7 @@ export const en = {
   startListening: "Start speech recognition",
   stopListening: "Stop speech recognition",
   powerpointOptions: "PowerPoint Options",
+  templateUpload: "Template upload",
   useCustomTemplate: "Use custom template",
   selectTemplate: "Select template",
   maxSlides: "Maximum slides",
@@ -477,6 +550,23 @@ export const en = {
   targetAudience: "Target Audience",
   mainGoal: "Main Goal of Presentation",
   toneStyle: "Desired Tone/Style",
+  // Target audience options
+  seniorManagement: "Senior management",
+  potentialCustomers: "Potential customers",
+  technicalExperts: "Technical experts",
+  // Main goal options
+  informAndUpdate: "Inform and provide updates",
+  convinceToDecide: "Convince to decide",
+  trainAndShare: "Train and share knowledge",
+  presentProblemAndSolution: "Present problem and propose solution",
+  reportProgress: "Report progress",
+  brainstormAndGenerate: "Brainstorm and generate ideas",
+  // Tone/style options
+  formalAndFactual: "Formal and factual",
+  enthusiasticAndMotivating: "Enthusiastic and motivating",
+  criticalAndAnalytical: "Critical and analytical",
+  conciseAndToThePoint: "Concise and to-the-point",
+  storytellingOriented: "Storytelling-oriented",
   cancel: "Cancel",
   setupApiKey: "Setup API Key",
   howToGetApiKey: "How to get a Google Gemini API Key?",
@@ -916,6 +1006,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   pricingTrialExpired: "Trial period expired",
   pricingTrialEndsOn: "Trial ends on {{date}} ({{days}} days left)",
   pricingShowMeFeature: "Show Me / Teach Me, your related information",
+  pricingIdeaBuilderFeature: "Idea Builder, structured ideation workflow",
 
   // Upgrade modal translations
   upgradeSubscription: "Upgrade Your Subscription",
@@ -1000,6 +1091,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   webPageFeatureUpgrade: "Web page import is available from Gold tier. Upgrade your subscription to import text directly from web pages.",
   thinkingPartnerFeatureUpgrade: "Thinking Partner is available from Gold tier. Upgrade your subscription to access structured thinking guidance.",
   showMeFeatureUpgrade: "Show Me is available from Gold tier. Upgrade your subscription to access guided topic exploration.",
+  ideaBuilderFeatureUpgrade: "Idea Builder is available from Gold tier. Upgrade your subscription to access guided ideation.",
   defaultFeatureUpgrade: "This functionality is available from Gold tier. Upgrade your subscription for more possibilities.",
   aiDiscussionFeatureUpgrade: "AI Discussion is available from Gold tier. Upgrade your subscription to use multi‑agent discussions.",
   thinkingPartnerAccessRestricted: "Thinking Partner is available from Gold tier. Please upgrade to access this feature.",
@@ -1373,6 +1465,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   expertHelpStep3: "After the conversation, you can analyze the complete chat history for further processing.",
   expertHelpSubscriptionTitle: "Subscription required",
   expertHelpSubscription: "The Ask the Expert functionality is available for Gold, Diamond, and Enterprise subscriptions. Upgrade your account to access this advanced feature.",
+  specialsFeatureUpgrade: "The Specials functionality is available for Gold, Diamond, and Enterprise subscriptions. Upgrade your account to access these advanced AI-powered prompts.",
   expertHelpTipsTitle: "Tips for best results",
   expertHelpTip1: "Be specific in your questions for more targeted answers",
   expertHelpTip2: "Choose an expert role that fits the type of advice you need",
@@ -2566,7 +2659,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   "aiDiscussion.welcomeAction": "Click \"Continue discussion\" to generate the first responses.",
   "aiDiscussion.participantsPreview": "These experts will participate in the discussion:",
   "aiDiscussion.moreParticipants": "And {{count}} other experts...",
-  "aiDiscussion.generating": "Generating new responses...",
+  "aiDiscussion.generating": "Generating report...",
   "aiDiscussion.progress": "Progress",
   "aiDiscussion.turns": "turns",
   "aiDiscussion.canContinue": "You can continue the discussion or generate a report",
@@ -3017,17 +3110,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,"opportunities.type.reputation-management": "Reputation Management"
   ,"opportunities.type.reputation-managementDesc": "Opportunities to improve public perception, foster positive messaging, and manage criticism"
 
-  // AI Discussion Phase translations
-  ,"aiDiscussion.phase.introduction": "Introduction"
-  ,"aiDiscussion.phase.problem_analysis": "Problem Analysis"
-  ,"aiDiscussion.phase.root_cause": "Root Cause Analysis"
-  ,"aiDiscussion.phase.stakeholder_perspective": "Stakeholder Perspective"
-  ,"aiDiscussion.phase.solution_generation": "Solution Generation"
-  ,"aiDiscussion.phase.critical_evaluation": "Critical Evaluation"
-  ,"aiDiscussion.phase.risk_assessment": "Risk Assessment"
-  ,"aiDiscussion.phase.implementation_planning": "Implementation Planning"
-  ,"aiDiscussion.phase.success_metrics": "Success Metrics"
-  ,"aiDiscussion.phase.synthesis": "Synthesis"
+
 
   // Opportunities errors
   ,opportunitiesTopicGenerationError: "An error occurred while generating topics"
@@ -3132,9 +3215,15 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,noItems: "(no items)"
   ,selectItems: "(select items)"
   ,itemsSelected: "({count} selected)"
+  ,likertStronglyDisagree: "Strongly Disagree"
+  ,likertDisagree: "Disagree"
+  ,likertNeutral: "Neutral"
+  ,likertAgree: "Agree"
+  ,likertStronglyAgree: "Strongly Agree"
 
   // Analysis mode options
   ,analysisResults: "Analysis Results"
+  ,advancedFunctions: "Advanced Functions"
   ,selectAnalysis: "-- Select an analysis --"
   ,opportunitiesAnalysis: "Opportunities & Chances"
 
@@ -3264,10 +3353,28 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,"aiDiscussion.phase.introduction": "Introduction"
   ,"aiDiscussion.phase.problem_analysis": "Problem Analysis"
   ,"aiDiscussion.phase.root_cause": "Root Cause Analysis"
+  ,"aiDiscussion.phase.stakeholder_perspective": "Stakeholder Perspective"
   ,"aiDiscussion.phase.solution_generation": "Solution Generation"
   ,"aiDiscussion.phase.critical_evaluation": "Critical Evaluation"
   ,"aiDiscussion.phase.risk_assessment": "Risk Assessment"
   ,"aiDiscussion.phase.implementation_planning": "Implementation Planning"
   ,"aiDiscussion.phase.success_metrics": "Success Metrics"
   ,"aiDiscussion.phase.synthesis": "Synthesis"
+  
+  // Idea Builder workflow
+  ,ideaBuilderTitle: "Idea Builder"
+  ,ideaBuilderInitialIdea: "Describe your idea"
+  ,ideaBuilderInitialIdeaPh: "Write at least 30 characters describing your idea and context"
+  ,ideaBuilderMinChars: "Minimum 30 characters required"
+  ,ideaBuilderRound1Title: "Round 1: Clarifying Questions"
+  ,ideaBuilderRound2Title: "Round 2: Deepening Questions"
+  ,ideaBuilderInfo: "We validate and sanitize inputs automatically. Avoid including secrets or personal data. Results will be added to your transcript for analysis."
+  ,ideaBuilderStepLabel: "Step 1 of 3"
+  ,ideaBuilderStepLabel2: "Step 2 of 3"
+  ,ideaBuilderStepLabel3: "Step 3 of 3"
+  ,ideaBuilderStartRound1: "Start Round 1"
+  ,ideaBuilderContinueToRound2: "Continue to Round 2"
+  ,ideaBuilderGeneratePlan: "Generate Plan"
+  ,ideaBuilderGenerating: "Generating..."
+  ,selected: "Selected"
 };

@@ -2,11 +2,12 @@ import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import LoginForm from './LoginForm';
 import { Language } from '../locales';
+import { TranslationFunction } from '../../types';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
   handleLogin: (...args: any[]) => void;
   handleCreateAccount: (...args: any[]) => void;
   handlePasswordReset: (email: string) => void;

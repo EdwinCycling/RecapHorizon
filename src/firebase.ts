@@ -143,7 +143,25 @@ export const ensureUserDocument = async (userId: string, userEmail?: string): Pr
 };
 
 // Helper function to get user subscription tier
-export const getUserSubscriptionTier = async (userId: string): Promise<string> => {
+const normalizeSubscriptionTier = (value: string | undefined | null): SubscriptionTier => {
+  if (!value) {
+    return SubscriptionTier.FREE;
+  }
+
+  const lowerValue = value.toLowerCase();
+  if ((Object.values(SubscriptionTier) as string[]).includes(lowerValue)) {
+    return lowerValue as SubscriptionTier;
+  }
+
+  // handle common typos
+  if (lowerValue === 'daimond') {
+    return SubscriptionTier.DIAMOND;
+  }
+
+  return SubscriptionTier.FREE;
+};
+
+export const getUserSubscriptionTier = async (userId: string): Promise<SubscriptionTier> => {
   try {
     if (!userId) throw new Error(t('userIdEmptyInSubscriptionTier', 'userId is leeg in getUserSubscriptionTier!'));
     
@@ -152,28 +170,25 @@ export const getUserSubscriptionTier = async (userId: string): Promise<string> =
     
     const userDoc = await getDoc(doc(db, 'users', userId));
     if (userDoc.exists()) {
-      let tier = userDoc.data()?.subscriptionTier || 'free';
-      
-      // Auto-correct common spelling errors
-      if (tier === 'daimond') {
+      const tierValue = normalizeSubscriptionTier(userDoc.data()?.subscriptionTier as string | undefined);
+
+      if (tierValue === SubscriptionTier.DIAMOND && userDoc.data()?.subscriptionTier === 'daimond') {
         console.warn('Auto-correcting spelling error: "daimond" -> "diamond"');
-        tier = 'diamond';
-        // Optionally update the incorrect value in Firestore
         await updateDoc(doc(db, 'users', userId), {
-          subscriptionTier: 'diamond'
+          subscriptionTier: SubscriptionTier.DIAMOND
         });
       }
-      
-      return tier;
+
+      return tierValue;
     }
-    return 'free';
+    return SubscriptionTier.FREE;
   } catch (error) {
     const { errorHandler } = await import('./utils/errorHandler');
     errorHandler.handleError(error, 'api' as any, {
       userId,
       additionalContext: { action: 'getUserSubscriptionTier' }
     });
-    return 'free';
+    return SubscriptionTier.FREE;
   }
 };
 
@@ -197,23 +212,23 @@ export const refreshUserSubscriptionData = async (userId: string): Promise<void>
   }
 };
 
-export const forceRefreshSubscriptionTier = async (): Promise<string> => {
+export const forceRefreshSubscriptionTier = async (): Promise<SubscriptionTier> => {
   try {
     const user = auth.currentUser;
-    if (!user) return 'free';
+    if (!user) return SubscriptionTier.FREE;
     
     // Force immediate refresh without cache
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     if (userDoc.exists()) {
       const userData = userDoc.data();
-      const tier = userData?.subscriptionTier || 'free';
+      const tier = normalizeSubscriptionTier(userData?.subscriptionTier as string | undefined);
       console.log('Force refreshed subscription tier:', tier);
       return tier;
     }
-    return 'free';
+    return SubscriptionTier.FREE;
   } catch (error) {
     console.error('Error force refreshing subscription tier:', error);
-    return 'free';
+    return SubscriptionTier.FREE;
   }
 };
 
@@ -597,15 +612,15 @@ export const getRemainingAudioMinutes = async (userId: string): Promise<{ remain
     const monthlyUsage = await getUserMonthlyAudioMinutes(userId);
     
     // Define tier limits
-    const tierLimits = {
-      'Free': 60,
-      'Silver': 500,
-      'Gold': 1000,
-      'Enterprise': 2500,
-      'Diamond': 2500
+    const tierLimits: Record<SubscriptionTier, number> = {
+      [SubscriptionTier.FREE]: 60,
+      [SubscriptionTier.SILVER]: 500,
+      [SubscriptionTier.GOLD]: 1000,
+      [SubscriptionTier.ENTERPRISE]: 2500,
+      [SubscriptionTier.DIAMOND]: 2500
     };
     
-    const totalAllowed = tierLimits[userTier as keyof typeof tierLimits] || 60;
+    const totalAllowed = tierLimits[userTier] ?? 60;
     const used = monthlyUsage.minutes;
     const remaining = Math.max(0, totalAllowed - used);
     

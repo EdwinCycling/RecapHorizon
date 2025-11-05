@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import ImageUploadHelpModal from './ImageUploadHelpModal';
 import NotionIntegrationHelpModal from './NotionIntegrationHelpModal';
 import AudioUploadHelpModal from './AudioUploadHelpModal';
+import IdeaBuilderHelpModal from './IdeaBuilderHelpModal';
+import { TranslationFunction } from '../../types';
 
 interface SessionOptionsModalProps {
   isOpen: boolean;
@@ -15,8 +17,9 @@ interface SessionOptionsModalProps {
   onEmailImport: () => void;
   onAskExpert: () => void;
   onNotionImport: () => void;
+  onIdeaBuilder: () => void;
   userSubscription?: string;
-  t: (key: string) => string;
+  t: TranslationFunction;
   // New: when true, show as help-only (no clicks on other items)
   helpMode?: boolean;
 }
@@ -33,6 +36,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
   onEmailImport,
   onAskExpert,
   onNotionImport,
+  onIdeaBuilder,
   userSubscription,
   t,
   helpMode
@@ -40,6 +44,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
   const [isImageHelpOpen, setIsImageHelpOpen] = useState(false);
   const [isNotionHelpOpen, setIsNotionHelpOpen] = useState(false);
   const [isAudioUploadHelpOpen, setIsAudioUploadHelpOpen] = useState(false);
+  const [isIdeaHelpOpen, setIsIdeaHelpOpen] = useState(false);
   const isReadOnly = Boolean(helpMode);
   const isDiamond = (userSubscription || '').toLowerCase() === 'diamond';
   
@@ -107,6 +112,25 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                   </button>
                 </div>
               </div>
+
+              {/* Idea Builder Help Card */}
+              <div className="border-2 border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-white dark:bg-slate-900/30">
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3a7 7 0 00-7 7c0 2.29 1.06 4.33 2.7 5.62A3 3 0 009 18v1a3 3 0 003 3h0a3 3 0 003-3v-1a3 3 0 002.3-2.38A7 7 0 0011 3z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('ideaBuilderTitle', 'Idea Builder')}</h3>
+                </div>
+                <p className="text-slate-700 dark:text-slate-300 text-sm mb-2">{t('ideaBuilderDesc', 'Generate high-quality ideas and outlines based on topic, audience and goals.')}</p>
+                <div className="text-center">
+                  <button
+                    onClick={() => setIsIdeaHelpOpen(true)}
+                    className="text-amber-700 dark:text-amber-300 text-sm underline hover:no-underline"
+                  >
+                    {t('ideaBuilderHelpTitle', 'Idea Builder Help')}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -171,6 +195,46 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
               </p>
             </div>
 
+            {/* Idea Builder Option */}
+            <div 
+              onClick={!isReadOnly ? () => {
+                if (userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) {
+                  onIdeaBuilder();
+                  onClose();
+                }
+              } : undefined}
+              className={`border-2 border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-amber-50 dark:bg-amber-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200 ${
+                userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase()) 
+                  ? '' 
+                  : 'opacity-70'
+              }`}
+            >
+              <div className="text-center mb-2">
+                <div className="mb-2 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3a7 7 0 00-7 7c0 2.29 1.06 4.33 2.7 5.62A3 3 0 009 18v1a3 3 0 003 3h0a3 3 0 003-3v-1a3 3 0 002.3-2.38A7 7 0 0011 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white">{t('ideaBuilderTitle', 'Idea Builder')}</h3>
+                {!(userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) && (
+                  <div className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                    {t('premiumOnly')}
+                  </div>
+                )}
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-2">
+                {t('ideaBuilderDesc', 'Generate high-quality ideas and outlines based on topic, audience and goals.')}
+              </p>
+              <div className="mt-2 text-center">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsIdeaHelpOpen(true); }}
+                  className="text-amber-700 dark:text-amber-300 text-xs underline hover:no-underline"
+                >
+                  {t('ideaBuilderHelpTitle', 'Idea Builder Help')}
+                </button>
+              </div>
+            </div>
+
             {/* Image Upload Option */}
             <div 
               onClick={!isReadOnly ? () => { onUploadImage(); onClose(); } : undefined}
@@ -230,6 +294,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
                 {t('sessionOptionExpertDesc')}
               </p>
             </div>
+
 
             {/* Analyse Notion Option (help-only) */}
             {isDiamond && (
@@ -306,6 +371,12 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
       <NotionIntegrationHelpModal
         isOpen={isNotionHelpOpen}
         onClose={() => setIsNotionHelpOpen(false)}
+      />
+
+      {/* Idea Builder Help Modal */}
+      <IdeaBuilderHelpModal
+        isOpen={isIdeaHelpOpen}
+        onClose={() => setIsIdeaHelpOpen(false)}
         t={t}
       />
     </div>

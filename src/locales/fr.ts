@@ -89,10 +89,27 @@ export const fr = {
 
   anonymize: "Anonymiser",
 
-  exportPPT: "Exporter PPT",
+  exportPPT: "Powerpoint",
   copyContent: "Copier le contenu",
   noContent: "Aucun contenu généré pour le moment.",
   chatWithTranscript: "Chatter avec la transcription",
+  specials: "RecapHorizon Special prompts",
+  specialsSubtitle: "Les prompts sont en anglais ; le résultat sera dans la langue de sortie choisie.",
+  "specials.selectTopicFor": "Sélectionnez votre sujet pour : {title}",
+  "specials.promptLabel": "Prompt",
+  "specials.topicLabel": "Sujet",
+  // Spéciaux : nouvelles clés
+  "specials.searchPlaceholder": "Rechercher des prompts...",
+  "specials.searchHint": "Tapez au moins 2 caractères pour rechercher",
+  "specials.resultsCount": "Résultats",
+  "specials.loadingError": "Erreur lors du chargement des prompts spéciaux",
+  "specials.noTopicsFound": "Aucun sujet trouvé dans la transcription",
+  "specials.topicsGenerationError": "Erreur lors de la génération des sujets",
+  "specials.resultGenerationError": "Erreur lors de la génération du résultat",
+  "specials.topicRequired": "{sujet requis}",
+  "specials.resultHeading": "Résultat",
+  "specials.autoGeneratingResult": "Le résultat sera généré automatiquement...",
+  "specials.generatingResult": "Génération du résultat...",
   readAnswers: "Lire les réponses à haute voix",
   mindmap: "Carte mentale",
   askAQuestion: "Posez une question sur la transcription...",
@@ -162,6 +179,37 @@ export const fr = {
   customerSatisfaction: "Satisfaction client",
   scalability: "Évolutivité",
   businessCaseGenerated: "Business case généré !",
+  businessCaseTypeLabel: "Type de business case",
+  costSavingsDescription: "Comment la solution rend les processus plus efficaces et réduit les coûts.",
+  revenueGrowthDescription: "Comment la solution ouvre de nouveaux marchés ou augmente les ventes.",
+  innovationDescription: "Comment la solution aide à garder une longueur d'avance sur le marché.",
+  riskReductionDescription: "Comment la solution améliore la conformité, la sécurité ou la fiabilité.",
+  customerSatisfactionDescription: "Comment la solution améliore l'expérience des clients ou des collaborateurs.",
+  scalabilityDescription: "Comment la solution peut évoluer avec l'organisation.",
+  
+  // Business Case UI
+  businessCaseTargetAudienceLabel: "Audience / Parties prenantes",
+  businessCaseTargetAudienceQuestion: "Quelle audience ou quels parties prenantes souhaitez-vous convaincre ?",
+  businessCaseTargetAudiencePlaceholder: "",
+  businessCaseTargetAudienceOptions: {
+    boardOfDirectors: "Direction",
+    investors: "Investisseurs",
+    teamLeaders: "Chefs d’équipe",
+    colleagues: "Collègues",
+    none: "Aucun"
+  },
+  businessCaseLength: "Longueur du business case",
+  businessCaseLengthOptions: {
+    concise: "Concis",
+    extensive: "Détaillé",
+    very_extensive: "Très détaillé"
+  },
+  businessCaseLengthGuidance: {
+    concise: "SOYEZ STRICT : Rédigez un business case concis de 300-450 mots. Ne dépassez pas.",
+    extensive: "SOYEZ STRICT : Rédigez un business case détaillé de 700-1000 mots.",
+    very_extensive: "SOYEZ STRICT : Rédigez un business case très détaillé de 1200-1600 mots."
+  },
+  businessCaseStrictHint: "Soyez strict : l’IA doit respecter cette longueur.",
   
   // Clipboard messages
   failedToCopyClipboard: "Échec de la copie dans le presse-papiers. Veuillez réessayer.",
@@ -780,6 +828,7 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   pricingTrialExpired: "Période d'essai expirée",
   pricingTrialEndsOn: "L'essai se termine le {{date}} ({{days}} jours restants)",
   pricingShowMeFeature: "Montrez-moi / Enseignez-moi, vos informations connexes",
+  pricingIdeaBuilderFeature: "Générateur d'idées, flux d'idéation structuré",
 
   // Upgrade modal translations
   upgradeSubscription: "Mettre à Niveau Votre Abonnement",
@@ -880,6 +929,7 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   webExpertFeatureUpgrade: "L'option WebExpert est disponible à partir du niveau Gold. Mettez à niveau votre abonnement pour utiliser l'analyse IA avancée pour les pages web.",
   multipleUrlsFeatureUpgrade: "L'importation de plusieurs URLs est disponible à partir du niveau Gold. Mettez à niveau votre abonnement pour traiter plusieurs pages web à la fois.",
   webPageFeatureUpgrade: "L'import de page web est disponible à partir du niveau Gold. Mettez à niveau votre abonnement pour importer du texte directement depuis les pages web.",
+  ideaBuilderFeatureUpgrade: "Le Générateur d'idées est disponible à partir du niveau Gold. Mettez à niveau votre abonnement pour accéder à l'idéation guidée.",
   defaultFeatureUpgrade: "Cette fonctionnalité est disponible à partir du niveau Gold. Mettez à niveau votre abonnement pour plus de possibilités.",
   aiDiscussionFeatureUpgrade: "La Discussion IA est disponible à partir du niveau Gold. Mettez à niveau votre abonnement pour utiliser des discussions multi‑agents.",
   aiDiscussionUpgradeRequired: "Mise à niveau requise pour la Discussion IA",
@@ -902,6 +952,13 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   
   // Loading text
   loading: "Chargement...",
+  // Libellés génériques de navigation/pagination
+  prev: "Précédent",
+  next: "Suivant",
+  page: "Page",
+  of: "sur",
+  back: "Retour",
+  generateTopics: "Générer des sujets",
   
   // Login text
   login: "Se connecter",
@@ -2533,9 +2590,30 @@ notionIntegrationSecurityDesc: "Vos données Notion restent sécurisées car nou
   noItems: "(aucun élément)",
   selectItems: "(sélectionner des éléments)",
   itemsSelected: "({count} sélectionnés)",
+  likertStronglyDisagree: "Tout à fait en désaccord",
+  likertDisagree: "En désaccord",
+  likertNeutral: "Neutre",
+  likertAgree: "D'accord",
+  likertStronglyAgree: "Tout à fait d'accord",
+  ideaBuilderTitle: "Générateur d'idées",
+  ideaBuilderInitialIdea: "Décrivez votre idée",
+  ideaBuilderInitialIdeaPh: "Écrivez au moins 30 caractères décrivant votre idée et son contexte",
+  ideaBuilderMinChars: "Minimum 30 caractères requis",
+  ideaBuilderRound1Title: "Tour 1 : Questions de clarification",
+  ideaBuilderRound2Title: "Tour 2 : Questions d'approfondissement",
+  ideaBuilderInfo: "Nous validons et assainissons automatiquement les entrées. Évitez d'inclure des secrets ou des données personnelles. Les résultats seront ajoutés à votre transcription pour analyse.",
+  ideaBuilderStepLabel: "Étape 1 sur 3",
+  ideaBuilderStepLabel2: "Étape 2 sur 3",
+  ideaBuilderStepLabel3: "Étape 3 sur 3",
+  ideaBuilderStartRound1: "Démarrer le tour 1",
+  ideaBuilderContinueToRound2: "Continuer vers le tour 2",
+  ideaBuilderGeneratePlan: "Générer le plan",
+  ideaBuilderGenerating: "En cours de génération...",
+  selected: "Sélectionné",
 
   // Analysis mode options
   analysisResults: "Résultats d'analyse",
+  advancedFunctions: "Fonctions Avancées",
   selectAnalysis: "-- Sélectionner une analyse --",
   opportunitiesAnalysis: "Opportunités & Chances",
 

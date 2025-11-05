@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Copy, MoreVertical, Image, ChevronDown } from 'lucide-react';
-import { SocialPostData } from '../../types';
+import { SocialPostData, TranslationFunction } from '../../types';
 import BlurredLoadingOverlay from './BlurredLoadingOverlay';
 
 interface SocialPostCardProps {
   socialPostData: SocialPostData;
   onCopy: (content: string) => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
   onGenerateImage?: (style: string, color: string) => void;
   imageGenerationStyle?: string;
   imageGenerationColor?: string;
@@ -28,8 +28,20 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
   const [selectedStyle, setSelectedStyle] = useState(imageGenerationStyle);
   const [selectedColor, setSelectedColor] = useState(imageGenerationColor);
 
+  const resolveContent = (content?: string): string => {
+    if (content) {
+      return content;
+    }
+
+    if (Array.isArray(socialPostData.post)) {
+      return socialPostData.post.join('\n\n');
+    }
+
+    return socialPostData.post || '';
+  };
+
   const handleCopy = (content?: string) => {
-    onCopy(content || socialPostData.post);
+    onCopy(resolveContent(content));
     setMenuOpen(false);
   };
 

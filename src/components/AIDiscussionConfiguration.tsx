@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { AIDiscussionTopic, AIDiscussionGoal, AIDiscussionRole, DiscussionStyleConfiguration, RoleDiscussionStyles } from '../../types';
+import { AIDiscussionTopic, AIDiscussionGoal, AIDiscussionRole, DiscussionStyleConfiguration, RoleDiscussionStyles, TranslationFunction } from '../../types';
 import { FiTarget, FiUsers, FiCheck, FiInfo, FiTool, FiCheckCircle, FiZap, FiShield, FiMessageSquare, FiSettings } from 'react-icons/fi';
 import { DISCUSSION_STYLE_OPTIONS, DEFAULT_ROLE_STYLES } from '../services/aiDiscussionService';
+import '../styles/slider.css';
 
 interface DiscussionCategory {
   id: string;
@@ -11,7 +12,7 @@ interface DiscussionCategory {
 }
 
 interface AIDiscussionConfigurationProps {
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
   selectedTopic: AIDiscussionTopic;
   goals: AIDiscussionGoal[];
   roles: AIDiscussionRole[];
@@ -98,10 +99,13 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
   };
 
   const handleEnthusiasmChange = (roleId: string, level: number) => {
-    setRoleEnthusiasmLevels(prev => ({
-      ...prev,
-      [roleId]: level
-    }));
+    setRoleEnthusiasmLevels(prev => {
+      const newLevels = {
+        ...prev,
+        [roleId]: level
+      };
+      return newLevels;
+    });
   };
 
   const handleRolesToStyles = () => {
@@ -390,7 +394,14 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                           min="1"
                           max="5"
                           value={roleEnthusiasmLevels[role.id] || role.enthusiasmLevel || 3}
-                          onChange={(e) => handleEnthusiasmChange(role.id, parseInt(e.target.value))}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleEnthusiasmChange(role.id, parseInt(e.target.value));
+                          }}
+                          onInput={(e) => {
+                            e.stopPropagation();
+                            handleEnthusiasmChange(role.id, parseInt((e.target as HTMLInputElement).value));
+                          }}
                           onClick={(e) => e.stopPropagation()}
                           className="w-full h-2 bg-cyan-200 dark:bg-cyan-700 rounded-lg appearance-none cursor-pointer slider"
                           style={{

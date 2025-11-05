@@ -1,9 +1,11 @@
 import React from 'react';
+import { TranslationFunction } from '../../types';
 
 interface AnalysePageProps {
-  t: (key: string) => string;
+  t: TranslationFunction;
   onStartNewSession: () => void;
   onOpenSettings: () => void;
+  children?: React.ReactNode;
 }
 
 const AnalysePage: React.FC<AnalysePageProps> = ({ t, onStartNewSession, onOpenSettings, children }) => (

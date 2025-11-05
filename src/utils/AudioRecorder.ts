@@ -72,16 +72,14 @@ export class AudioRecorder {
   }
 
   // Set callback functions
-  setCallbacks(callbacks: {
-    onDataAvailable?: (chunks: Blob[]) => void;
-    onError?: (error: Error) => void;
-    onStateChange?: (state: 'recording' | 'paused' | 'stopped' | 'error') => void;
-    onStop?: (blob: Blob) => void;
-  }): void {
+  setCallbacks(callbacks: AudioRecorderCallbacks): void {
     this.onDataAvailable = callbacks.onDataAvailable;
     this.onError = callbacks.onError;
     this.onStateChange = callbacks.onStateChange;
     this.onStop = callbacks.onStop;
+    if (callbacks.onLimitReached) {
+      this.onLimitReached = callbacks.onLimitReached;
+    }
   }
 
   // Initialize user limits and tier information
@@ -96,7 +94,7 @@ export class AudioRecorder {
 
     try {
       // Get user's subscription tier
-      this.userTier = await getUserSubscriptionTier(this.userId) as SubscriptionTier;
+      this.userTier = await getUserSubscriptionTier(this.userId);
       this.tierLimits = subscriptionService.getTierLimits(this.userTier);
       
       // Get current monthly usage

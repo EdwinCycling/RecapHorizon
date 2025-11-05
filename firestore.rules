@@ -261,6 +261,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Prompts collection - read-only access for authenticated users (specials functionality)
+    match /prompts/{promptId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Prompts should be managed server-side only
+    }
+
     // Default deny rule for any unmatched paths
     match /{document=**} {
       allow read, write: if false;

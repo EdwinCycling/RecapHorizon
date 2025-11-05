@@ -1,4 +1,4 @@
-import { SubscriptionTier, TierLimits, SessionType } from '../types';
+import { SubscriptionTier, TierLimits, SessionType, TranslationFunction } from '../types';
 
 // Tier limits configuration
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
@@ -99,10 +99,12 @@ export const TIER_FEATURES = {
     webExpert: false,
     multipleUrls: false,
     showMe: false,
+    ideaBuilder: false,
     thinkingPartner: false,
     aiDiscussion: false,
     opportunities: false,
-    mckinsey: false
+    mckinsey: false,
+    specials: false
   },
   [SubscriptionTier.SILVER]: {
     chat: false,
@@ -112,10 +114,12 @@ export const TIER_FEATURES = {
     webExpert: false,
     multipleUrls: false,
     showMe: false,
+    ideaBuilder: false,
     thinkingPartner: false,
     aiDiscussion: false,
     opportunities: true,
-    mckinsey: false
+    mckinsey: false,
+    specials: false
   },
   [SubscriptionTier.GOLD]: {
     chat: true,
@@ -125,10 +129,12 @@ export const TIER_FEATURES = {
     webExpert: true,
     multipleUrls: true,
     showMe: true,
+    ideaBuilder: true,
     thinkingPartner: true,
     aiDiscussion: true,
     opportunities: true,
-    mckinsey: true
+    mckinsey: true,
+    specials: true
   },
   [SubscriptionTier.ENTERPRISE]: {
     chat: true,
@@ -138,10 +144,12 @@ export const TIER_FEATURES = {
     webExpert: true,
     multipleUrls: true,
     showMe: true,
+    ideaBuilder: true,
     thinkingPartner: true,
     aiDiscussion: true,
     opportunities: true,
-    mckinsey: true
+    mckinsey: true,
+    specials: true
   },
   [SubscriptionTier.DIAMOND]: {
     chat: true,
@@ -151,10 +159,12 @@ export const TIER_FEATURES = {
     webExpert: true,
     multipleUrls: true,
     showMe: true,
+    ideaBuilder: true,
     thinkingPartner: true,
     aiDiscussion: true,
     opportunities: true,
-    mckinsey: true
+    mckinsey: true,
+    specials: true
   }
 };
 
@@ -426,7 +436,7 @@ export class SubscriptionService {
   }
 
   // Validate file upload
-  public validateFileUpload(tier: SubscriptionTier, fileType: string, t: (key: string, options?: any) => string): { allowed: boolean; reason?: string } {
+  public validateFileUpload(tier: SubscriptionTier, fileType: string, t: TranslationFunction): { allowed: boolean; reason?: string } {
     if (!this.isFileTypeAllowed(tier, fileType)) {
       const allowedTypes = this.getTierLimits(tier).allowedFileTypes.join(', ');
       return {
@@ -439,7 +449,7 @@ export class SubscriptionService {
   }
 
   // Validate transcript length
-  public validateTranscriptLength(tier: SubscriptionTier, transcriptLength: number, t: (key: string, options?: any) => string): { allowed: boolean; reason?: string } {
+  public validateTranscriptLength(tier: SubscriptionTier, transcriptLength: number, t: TranslationFunction): { allowed: boolean; reason?: string } {
     if (!this.isTranscriptLengthAllowed(tier, transcriptLength)) {
       const limits = this.getTierLimits(tier);
       const maxLength = limits.maxTranscriptLength;
@@ -461,7 +471,7 @@ export class SubscriptionService {
   }
 
   // Get upgrade message for a specific limit
-  public getUpgradeMessage(tier: SubscriptionTier, limitType: 'duration' | 'sessions' | 'fileType' | 'transcriptLength', t: (key: string, options?: any) => string): string {
+  public getUpgradeMessage(tier: SubscriptionTier, limitType: 'duration' | 'sessions' | 'fileType' | 'transcriptLength', t: TranslationFunction): string {
     const currentLimits = this.getTierLimits(tier);
     
     switch (limitType) {
@@ -479,7 +489,7 @@ export class SubscriptionService {
   }
 
   // Get upgrade message for a specific feature
-  public getFeatureUpgradeMessage(feature: keyof typeof TIER_FEATURES[SubscriptionTier], t: (key: string, options?: any) => string): string {
+  public getFeatureUpgradeMessage(feature: keyof typeof TIER_FEATURES[SubscriptionTier], t: TranslationFunction): string {
     switch (feature) {
       case 'chat':
         return t('chatFeatureUpgrade');
@@ -496,6 +506,8 @@ export class SubscriptionService {
         return t('webPageFeatureUpgrade');
       case 'showMe':
         return t('showMeFeatureUpgrade');
+      case 'ideaBuilder':
+        return t('ideaBuilderFeatureUpgrade');
       case 'thinkingPartner':
         return t('thinkingPartnerFeatureUpgrade');
       case 'aiDiscussion':
@@ -504,6 +516,8 @@ export class SubscriptionService {
         return t('opportunitiesFeatureUpgrade');
       case 'mckinsey':
         return t('mckinseyFeatureUpgrade');
+      case 'specials':
+        return t('specialsFeatureUpgrade');
       default:
         return t('defaultFeatureUpgrade');
     }

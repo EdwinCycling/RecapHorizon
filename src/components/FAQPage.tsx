@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TranslationFunction } from '../../types';
 
 interface FAQItem {
   question: string;
@@ -8,7 +9,7 @@ interface FAQItem {
 
 interface FAQPageProps {
   onClose?: () => void;
-  t: (key: string, params?: Record<string, string | number>) => string;
+  t: TranslationFunction;
 }
 
 const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {

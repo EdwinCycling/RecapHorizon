@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { initiateWaitlistSignup } from '../utils/security';
+import { TranslationFunction } from '../../types';
 
 interface WaitlistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
   waitlistEmail: string;
   setWaitlistEmail: (email: string) => void;
   addToWaitlist: (email: string) => void;

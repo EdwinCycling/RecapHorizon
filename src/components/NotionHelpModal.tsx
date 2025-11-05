@@ -1,10 +1,11 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface NotionHelpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const NotionHelpModal: React.FC<NotionHelpModalProps> = ({ isOpen, onClose, t }) => {

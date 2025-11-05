@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ExclamationTriangleIcon, HeartIcon } from '@heroicons/react/24/outline';
 import Modal from './Modal';
 import EnableButtonSlider from './EnableButtonSlider';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 
 interface CancellationConfirmationModalProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface CancellationConfirmationModalProps {
   onConfirm: () => Promise<void>;
   currentTier: SubscriptionTier;
   renewalDate: string;
-  t: (key: string) => string;
+  t: TranslationFunction;
   theme?: 'light' | 'dark';
 }
 

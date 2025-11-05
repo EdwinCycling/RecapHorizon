@@ -10,7 +10,7 @@ import WaitlistModal from './src/components/WaitlistModal.tsx';
 import { EmailConfirmationModal } from './src/components/EmailConfirmationModal';
 import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
-import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, TeachMeTopic, TeachMeMethod, TeachMeData, ShowMeData, TedTalk, NewsArticle, EmailOptions, SocialPostOptions, SocialPostData, ExpertConfiguration, ExpertChatMessage, SessionType } from './types';
+import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, TeachMeTopic, TeachMeMethod, TeachMeData, ShowMeData, TedTalk, NewsArticle, EmailOptions, SocialPostOptions, SocialPostData, ExpertConfiguration, ExpertChatMessage, SessionType, UserDocumentCreate, TranslationFunction, PromptDocument } from './types';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
  import { HiRefresh, HiClipboardCopy, HiDownload, HiMail, HiDotsHorizontal } from 'react-icons/hi';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
@@ -21,6 +21,34 @@ import { getModelForUser } from './src/utils/tierModelService';
 // Mermaid is ESM-only; import dynamically to avoid type issues
 let mermaid: typeof import('mermaid') | undefined;
 import PptxGenJS from 'pptxgenjs';
+// Helper to import and initialize Mermaid once and cache the instance
+const getMermaid = async (appTheme: 'light' | 'dark') => {
+  if (mermaid) {
+    try {
+      (mermaid as any).initialize?.({ startOnLoad: false, securityLevel: 'strict', theme: appTheme === 'dark' ? 'dark' : 'default' });
+    } catch {}
+    return mermaid as any;
+  }
+  const mod: any = await import('mermaid');
+  const m: any = mod.default || mod;
+  try {
+    m.initialize?.({ startOnLoad: false, securityLevel: 'strict', theme: appTheme === 'dark' ? 'dark' : 'default' });
+  } catch {}
+  mermaid = m;
+  return m;
+};
+
+// Render Mermaid mindmap text to SVG using the cached instance
+const renderMindmapSvg = async (mermaidText: string, appTheme: 'light' | 'dark'): Promise<string | null> => {
+  try {
+    const m: any = await getMermaid(appTheme);
+    const { svg } = await m.render('mindmap-svg', mermaidText);
+    return svg;
+  } catch (err) {
+    console.warn('Mermaid render failed', err);
+    return null;
+  }
+};
 import RecapHorizonPanel from './src/components/RecapHorizonPanel.tsx';
 import SocialPostCard from './src/components/SocialPostCard.tsx';
 import LanguageSelector from './src/components/LanguageSelector.tsx';
@@ -47,6 +75,7 @@ import FileUploadModal from './src/components/FileUploadModal.tsx';
 import ImageUploadModal from './src/components/ImageUploadModal.tsx';
 import AudioUploadModal from './src/components/AudioUploadModal.tsx';
 import ImageGenerationModal from './src/components/ImageGenerationModal.tsx';
+import SpecialsTab from './src/components/SpecialsTab.tsx';
 import { SafeUserText } from './src/utils/SafeHtml';
 import { sanitizeTextInput, extractEmailAddresses } from './src/utils/security';
 
@@ -58,6 +87,7 @@ import ThinkingPartnerTab from './src/components/ThinkingPartnerTab.tsx';
 import AIDiscussionTab from './src/components/AIDiscussionTab.tsx';
 import OpportunitiesTab from './src/components/OpportunitiesTab.tsx';
 import McKinseyTab from './src/components/McKinseyTab.tsx';
+
 import TokenUsageMeter from './src/components/TokenUsageMeter.tsx';
 import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.tsx';
 import CustomerPortalModal from './src/components/CustomerPortalModal.tsx';
@@ -188,6 +218,9 @@ const PresentationIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 const BusinessCaseIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2H2a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h20a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-9"/><path d="M12 2v7h7"/><path d="M8 13h8"/><path d="M8 17h6"/><path d="M8 9h4"/></svg>
+);
+const SpecialsIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12,2 15.09,8.26 22,9 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9 8.91,8.26"/></svg>
 );
 
 const QuestionMarkIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -323,6 +356,7 @@ const OpportunitiesIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+
 const LoadingSpinner: React.FC<{ className?: string; text?: string }> = ({ className = "h-8 w-8", text }) => (
     <div className="flex items-center gap-3">
         <svg className={`animate-spin text-cyan-500 ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -425,7 +459,7 @@ const LoadingOverlay: React.FC<{ text: string; progress?: number; cancelText?: s
 };
 
 
-const KeywordExplanationModal: React.FC<{ keyword: string; explanation: string | null; isLoading: boolean; onClose: () => void; t: (key: string, params?: Record<string, unknown>) => string; }> = ({ keyword, explanation, isLoading, onClose, t }) => {
+const KeywordExplanationModal: React.FC<{ keyword: string; explanation: string | null; isLoading: boolean; onClose: () => void; t: TranslationFunction; }> = ({ keyword, explanation, isLoading, onClose, t }) => {
     return (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]" onClick={onClose}>
             <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-lg w-full m-4 p-6" onClick={(e) => e.stopPropagation()}>
@@ -460,7 +494,7 @@ const PowerPointOptionsModal: React.FC<{
         mainGoal: string;
         toneStyle: string;
     }) => void; 
-    t: (key: string, params?: Record<string, unknown>) => string;
+    t: TranslationFunction;
     currentTemplate: File | null;
     onTemplateChange: (file: File | null) => void;
     uiLang: string;
@@ -585,7 +619,7 @@ const PowerPointOptionsModal: React.FC<{
                         <div className="flex justify-center">
                             <LanguageSelector
                                 value={language || ''}
-                                onChange={setLanguage}
+                                onChange={(value: string) => setLanguage(value as 'nl' | 'en')}
                                 placeholder={t('presentationLanguage')}
                                 appLanguage={uiLang}
                                 className="w-full max-w-xs"
@@ -670,7 +704,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'opportunities' | 'mckinsey' | 'email' | 'socialPost' | 'socialPostX';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'opportunities' | 'mckinsey' | 'email' | 'socialPost' | 'socialPostX' | 'main' | 'podcast' | 'specials';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -707,20 +741,45 @@ interface User {
   uid: string;
   email: string;
   isActive: boolean;
-    lastLogin: Date | null;
+  lastLogin: { seconds: number } | null;
   sessionCount: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: { seconds: number };
+  updatedAt: { seconds: number };
   hashedApiKey?: string;
-  apiKeyLastUpdated?: Date;
+  apiKeyLastUpdated?: { seconds: number };
   subscriptionTier?: SubscriptionTier | string;
   currentSubscriptionStatus?: 'active' | 'past_due' | 'cancelled' | 'expired';
+  hasHadPaidSubscription?: boolean;
+  monthlyAudioMinutes?: number;
+  currentSubscriptionStartDate?: { seconds: number };
+  nextBillingDate?: { seconds: number };
+  stripeCustomerId?: string;
+  scheduledTierChange?: {
+    tier: SubscriptionTier;
+    effectiveDate: { seconds: number };
+    action: 'downgrade' | 'cancel';
+  };
+  referralProfile?: {
+    code: string;
+    isActive?: boolean;
+  };
+  audioCompressionEnabled?: boolean;
+  autoStopRecordingEnabled?: boolean;
+  anonymizationRules?: AnonymizationRule[];
+  transcriptionQuality?: 'fast' | 'balanced' | 'accurate';
 }
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
   }
+
+// Helper function to convert Firestore timestamp to Date
+const convertTimestampToDate = (timestamp: { seconds: number } | Date | undefined): Date => {
+  if (!timestamp) return new Date();
+  if (timestamp instanceof Date) return timestamp;
+  return new Date(timestamp.seconds * 1000);
+};
 
 // Utility function for copying text to clipboard
 
@@ -738,6 +797,7 @@ import ReferralInfoPage from './src/components/ReferralInfoPage.tsx';
 import ReferralDashboard from './src/components/ReferralDashboard.tsx';
 import ReferralSignupModal from './src/components/ReferralSignupModal.tsx';
 import ReferralRegistrationModal from './src/components/ReferralRegistrationModal.tsx';
+import IdeaBuilderModal from './src/components/IdeaBuilderModal.tsx';
 import { generateReferralCode, buildReferralJoinUrl, maskEmail } from './src/utils/referral';
 import { validatePayPalMeLink } from './src/utils/paypal';
 
@@ -752,7 +812,7 @@ const HamburgerMenu: React.FC<{
   onShowFAQ: () => void;
   onShowReferralInfo: () => void;
   onShowReferralDashboard: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
   theme: 'light' | 'dark';
   userTier: SubscriptionTier;
   showUsageModal: boolean;
@@ -932,9 +992,12 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 };
 export default function App() {
   const [uiLang, setUiLang] = useState<'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es'>(() => {
+    // Read persisted UI language from localStorage. Prefer 'uiLanguage' but support legacy key 'uiLang'.
     if (typeof window !== 'undefined' && window.localStorage) {
-      const savedLang = window.localStorage.getItem('uiLang') as 'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es' | null;
-      if (savedLang) return savedLang;
+      const savedLangNew = window.localStorage.getItem('uiLanguage') as 'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es' | null;
+      const savedLangLegacy = window.localStorage.getItem('uiLang') as 'nl' | 'en' | 'pt' | 'de' | 'fr' | 'es' | null;
+      if (savedLangNew) return savedLangNew;
+      if (savedLangLegacy) return savedLangLegacy;
     }
     return 'en';
   });
@@ -1070,7 +1133,7 @@ export default function App() {
 
 
   const [audioURL, setAudioURL] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState<string>('');
+  const [transcript, setTranscript] = useState<string>('Dit is een test transcript voor het testen van de knop functionaliteit. We gaan kijken of alle knoppen correct werken na de fix van de infinite re-render loop.');
   
 
   const [summary, setSummary] = useState<string>('');
@@ -1085,20 +1148,24 @@ export default function App() {
   const [activeView, setActiveView] = useState<ViewType>('transcript');
   const [activeTab, setActiveTab] = useState('Transcribe');
   
+  
   // New dropdown navigation state
-  const [mainMode, setMainMode] = useState<'transcript' | 'analysis' | 'actions'>('analysis');
-  const [selectedAnalysis, setSelectedAnalysis] = useState<ViewType>('');
+  const [mainMode, setMainMode] = useState<'transcript' | 'analysis' | 'actions'>('transcript');
+  // Default to no analysis selected so the secondary dropdown shows the placeholder
+  const [selectedAnalysis, setSelectedAnalysis] = useState<ViewType | null>(null);
   const [loadingText, setLoadingText] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
   const [showActionButtons, setShowActionButtons] = useState<boolean>(false);
   const [showImageActionButtons, setShowImageActionButtons] = useState<boolean>(false);
   const actionButtonsRef = useRef<HTMLDivElement>(null);
+
   
   // Close action buttons when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (actionButtonsRef.current && !actionButtonsRef.current.contains(event.target as Node)) {
+      const targetNode = event.target as Node;
+      if (actionButtonsRef.current && !actionButtonsRef.current.contains(targetNode)) {
         setShowActionButtons(false);
         setShowImageActionButtons(false);
       }
@@ -1110,6 +1177,8 @@ export default function App() {
   
   // Chat state
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [showChatMoveToTranscriptModal, setShowChatMoveToTranscriptModal] = useState<boolean>(false);
+  const [showBusinessCaseMoveToTranscriptModal, setShowBusinessCaseMoveToTranscriptModal] = useState<boolean>(false);
   const [chatInput, setChatInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
   const chatInstanceRef = useRef<Chat | null>(null);
@@ -1194,8 +1263,20 @@ export default function App() {
   const [blogData, setBlogData] = useState<string>('');
 
   useEffect(() => {
-    // Defer mermaid import until used to avoid type resolution issues
+    // Initialize Mermaid for current theme so SVG rendering works reliably
+    (async () => { try { await getMermaid(theme); } catch {} })();
   }, [theme]);
+
+  // Re-render mindmap SVG when Mermaid text or theme changes
+  useEffect(() => {
+    if (!mindmapMermaid) { setMindmapSvg(''); return; }
+    let cancelled = false;
+    (async () => {
+      const svg = await renderMindmapSvg(mindmapMermaid, theme);
+      if (!cancelled && svg) setMindmapSvg(svg);
+    })();
+    return () => { cancelled = true; };
+  }, [mindmapMermaid, theme]);
   
   // PPT Template state
   const [pptTemplate, setPptTemplate] = useState<File | null>(null);
@@ -1251,10 +1332,13 @@ export default function App() {
   const expertConfigModal = useModalState();
   const expertChatModal = useModalState();
   const expertHelpModal = useModalState();
+  const ideaBuilderModal = useModalState();
   const subscriptionSuccessModal = useModalState();
   const customerPortalModal = useModalState();
   const anonymizationSavedModal = useModalState();
   const notionIntegrationHelpModal = useModalState();
+
+  // Removed: prompts import feature and related UI/state
   
   // Usage Modal state
   const [showUsageModal, setShowUsageModal] = useState(false);
@@ -1267,6 +1351,17 @@ export default function App() {
 
   // Auth and token management - use authState.user instead of auth.currentUser for consistency
   const user = authState.user;
+  const lastAuthLogRef = useRef<{ uid: string | null; isLoading: boolean } | null>(null);
+  
+  // Debug: Log auth state changes only when it changes
+  useEffect(() => {
+    const current = { uid: user?.uid || null, isLoading: authState.isLoading };
+    const last = lastAuthLogRef.current;
+    if (!last || last.uid !== current.uid || last.isLoading !== current.isLoading) {
+      console.log('Auth state:', { user: current.uid || 'null', isLoading: current.isLoading });
+      lastAuthLogRef.current = current;
+    }
+  }, [user?.uid, authState.isLoading]);
   
   // Session management state
   const [currentSession, setCurrentSession] = useState<UserSession | null>(null);
@@ -1282,7 +1377,7 @@ export default function App() {
       setAuthState({ user: null, isLoading: false });
       // Only show session expired message if it's not a manual logout
       if (!isManualLogout) {
-        displayToast(t('sessionExpired'), 'warning');
+        displayToast(t('sessionExpired'), 'info');
       }
       // Reset the manual logout flag
       setIsManualLogout(false);
@@ -1432,9 +1527,6 @@ export default function App() {
   };
 
   const generateSocialPost = async (analysisType: 'socialPost' | 'socialPostX', content: string, postCount: number = 1) => {
-    console.log('generateSocialPost called', { analysisType, contentType: typeof content, contentLength: typeof content === 'string' ? content.length : 0, postCount });
-    console.log('Content preview:', typeof content === 'string' ? content.substring(0, 100) + '...' : '[content is not a string]');
-    
     setIsGenerating(true);
     try {
       // Get platform-specific settings
@@ -1537,8 +1629,6 @@ Tekst: ${content}`;
           throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
         }
 
-        console.log('Sending single post prompt to AI provider');
-        
         // Use the same AI approach as other analyses - direct Google Gemini with tier-based model
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "analysisGeneration");
@@ -1558,7 +1648,6 @@ Tekst: ${content}`;
         }
         
         const result = response.text.trim();
-        console.log('Single post AI response received:', result.substring(0, 100) + '...');
         posts.push(result);
         
       } else {
@@ -1609,8 +1698,6 @@ Tekst: ${content}`;
           throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
         }
 
-        console.log('Sending multiple posts prompt to AI provider');
-        
         // Use the same AI approach as other analyses - direct Google Gemini with tier-based model
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "analysisGeneration");
@@ -1632,7 +1719,6 @@ Tekst: ${content}`;
         // Parse JSON response
         try {
           const result = response.text.trim();
-          console.log('Multiple posts AI response received:', result.substring(0, 200) + '...');
           
           // Extract JSON from response
           const jsonMatch = result.match(/\{[\s\S]*\}/);
@@ -1668,22 +1754,19 @@ Tekst: ${content}`;
         post: posts.length === 1 ? posts[0] : posts,
         timestamp: stamp,
         platform: platform,
-        imageInstruction: undefined,
+        imageInstructions: undefined,
       };
 
-      console.log('Saving social post data:', { analysisType, postsCount: posts.length });
       
       if (analysisType === 'socialPostX') {
         setSocialPostXData(socialPostResult);
-        console.log('X/BlueSky data saved successfully');
       } else {
         setSocialPostData({
           post: Array.isArray(socialPostResult.post) ? socialPostResult.post.join('\n\n') : socialPostResult.post,
           timestamp: socialPostResult.timestamp,
           platform: socialPostResult.platform,
-          imageInstruction: socialPostResult.imageInstruction,
+          imageInstructions: socialPostResult.imageInstructions,
         });
-        console.log('Social post data saved successfully');
       }
 
     } catch (error: any) {
@@ -1742,7 +1825,6 @@ Tekst: ${content}`;
       console.error('Error generating social post:', error);
     } finally {
       setIsGenerating(false);
-      console.log('generateSocialPost completed');
     }
   };
 
@@ -1907,6 +1989,8 @@ Prompt for AI image generator: ${imagePrompt}`;
   const [executiveSummaryData, setExecutiveSummaryData] = useState<ExecutiveSummaryData | null>(null);
   const [storytellingData, setStorytellingData] = useState<StorytellingData | null>(null);
   const [businessCaseData, setBusinessCaseData] = useState<BusinessCaseData | null>(null);
+  
+  // Additional Specials state (all variables already declared above)
   // Explain state
   const [explainData, setExplainData] = useState<ExplainData | null>(null);
   const [explainOptions, setExplainOptions] = useState<ExplainOptions>({ 
@@ -1923,7 +2007,7 @@ Prompt for AI image generator: ${imagePrompt}`;
   const [teachMeSelectedTopic, setTeachMeSelectedTopic] = useState<TeachMeTopic | null>(null);
   const [teachMeSelectedMethod, setTeachMeSelectedMethod] = useState<TeachMeMethod | null>(null);
   const [teachMeData, setTeachMeData] = useState<TeachMeData | null>(null);
-  const [teachMeStep, setTeachMeStep] = useState<'topics' | 'methods' | 'content'>('topics');
+  const [teachMeStep, setTeachMeStep] = useState<'topics' | 'methods' | 'content' | 'methodSelection' | 'topicSelection' | 'contentDisplay'>('topics');
   const [isGeneratingTeachMe, setIsGeneratingTeachMe] = useState(false);
   
   // ShowMe state
@@ -2075,7 +2159,11 @@ Constraints:
     }
   };
 
-  const handleGenerateBusinessCase = async (businessCaseType?: string, useInternetVerification?: boolean) => {
+  const handleGenerateBusinessCase = async (
+    businessCaseType?: string,
+    targetAudienceArg?: string,
+    businessCaseLengthArg?: 'concise' | 'extensive' | 'very_extensive'
+  ) => {
     // Check if user has access to business case generation
     const effectiveTier = userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
@@ -2095,13 +2183,38 @@ Constraints:
     try {
       // Use parameters if provided, otherwise use state values
       const type = businessCaseType || businessCaseData?.businessCaseType || t('costSavings');
-      const useInternet = useInternetVerification !== undefined ? useInternetVerification : (businessCaseData?.useInternetVerification || false);
+      const targetAudience = (targetAudienceArg || businessCaseData?.targetAudience || '').trim();
+      const lengthChoice: 'concise' | 'extensive' | 'very_extensive' = businessCaseLengthArg || (businessCaseData?.length as any) || 'concise';
       
       // Don't reset other analysis data when generating business case
       setLoadingText(t('generating', { type: 'Business Case' }));
       
-      // Validate token usage for business case generation
-      const businessCasePrompt = `Je bent een ervaren business consultant. Schrijf een overtuigende business case op basis van het transcript. De business case moet de volgende structuur hebben:\n\n- Titel\n- Probleem\n- Oplossing\n- Verwachte Impact (kwantitatief en kwalitatief)\n- Kosten/Baten analyse\n- Conclusie (waarom deze business case waardevol is)\n\nSchrijf helder, zakelijk en overtuigend. Maximaal 600 woorden.\n\nBusiness Case Type: ${type}\nInternet verificatie (grounding): ${useInternet ? 'Ja - vul aan met actuele marktdata en relevante trends van internet' : 'Nee - gebruik alleen de transcript informatie'}\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
+      // Validate and sanitize transcript input before prompting the AI
+      const { validateAndSanitizeForAI, sanitizeTextInput } = await import('./src/utils/security');
+      const rawTranscriptSlice = getTranscriptSlice(transcript, 20000);
+      const transcriptValidationForAI = validateAndSanitizeForAI(rawTranscriptSlice, 20000);
+      if (!transcriptValidationForAI.isValid) {
+        displayToast(`Error: ${transcriptValidationForAI.error || t('inputInvalid', 'Transcript input is invalid')}`, 'error');
+        setLoadingText('');
+        return;
+      }
+      const sanitizedTranscript = transcriptValidationForAI.sanitized;
+
+      // Language configuration for output control
+      const inputLanguage = getGeminiCode(language || 'en');
+      const outputLanguage = getGeminiCode(outputLang || language || 'en');
+
+      // Strict length guidance based on selected length, localized via translation files
+      const strictLengthInstructionMap: Record<'concise' | 'extensive' | 'very_extensive', string> = {
+        concise: t('businessCaseLengthGuidance.concise', 'BE STRICT: Write a concise business case of 300-450 words. Do not exceed.'),
+        extensive: t('businessCaseLengthGuidance.extensive', 'BE STRICT: Write an extensive business case of 700-1000 words.'),
+        very_extensive: t('businessCaseLengthGuidance.very_extensive', 'BE STRICT: Write a very extensive business case of 1200-1600 words.')
+      };
+
+      const safeAudience = sanitizeTextInput(targetAudience || '');
+
+      // Validate token usage for business case generation (estimate using the actual prompt shape)
+      const businessCasePrompt = `Je bent een ervaren business consultant. Schrijf een overtuigende business case op basis van het transcript.\n\nOutput taal: ${outputLanguage} (schrijf de volledige business case in deze taal).\n\nDe business case moet de volgende structuur hebben:\n\n- Titel\n- Probleem\n- Oplossing\n- Verwachte Impact (kwantitatief en kwalitatief)\n- Kosten/Baten analyse\n- Conclusie (waarom deze business case waardevol is)\n\nSchrijf helder, zakelijk en overtuigend.\n\nBusiness Case Type: ${type}\n${safeAudience ? `${t('businessCaseTargetAudienceLabel', 'Target Audience / Stakeholders')}: ${safeAudience}\n` : ''}${t('businessCaseLength', 'Length')}: ${t(`businessCaseLengthOptions.${lengthChoice}` as any, lengthChoice)}\n${strictLengthInstructionMap[lengthChoice]}\n\nTranscript (input taal: ${inputLanguage}):\n${sanitizedTranscript}`;
       const tokenEstimate = tokenManager.estimateTokens(businessCasePrompt, 1.5);
       const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
       
@@ -2115,16 +2228,46 @@ Constraints:
       const ai = new GoogleGenAI({ apiKey: apiKey });
       const modelName = await getModelForUser(authState.user?.uid || "", "businessCase");
       
-      const businessCaseTypeDescriptions = {
-        [t('costSavings')]: t('costSavingsDescription'),
-        [t('revenueGrowth')]: t('revenueGrowthDescription'),
-        [t('innovation')]: t('innovationDescription'),
-        [t('riskReduction')]: t('riskReductionDescription'),
-        [t('customerSatisfaction')]: t('customerSatisfactionDescription'),
-        [t('scalability')]: t('scalabilityDescription')
-      };
+      const businessCaseTypeDefinitions: { id: string; name: string; description: string }[] = [
+        { id: 'costSavings', name: t('costSavings', 'Cost savings'), description: t('costSavingsDescription', 'How the solution makes processes more efficient and reduces costs.') },
+        { id: 'revenueGrowth', name: t('revenueGrowth', 'Revenue growth'), description: t('revenueGrowthDescription', 'How the solution opens new markets or increases sales.') },
+        { id: 'innovation', name: t('innovation', 'Innovation'), description: t('innovationDescription', 'How the solution helps to stay ahead in the market.') },
+        { id: 'riskReduction', name: t('riskReduction', 'Risk reduction'), description: t('riskReductionDescription', 'How the solution increases compliance, security or reliability.') },
+        { id: 'customerSatisfaction', name: t('customerSatisfaction', 'Customer satisfaction'), description: t('customerSatisfactionDescription', 'How the solution improves the experience of customers or employees.') },
+        { id: 'scalability', name: t('scalability', 'Scalability'), description: t('scalabilityDescription', 'How the solution can grow with the organization.') },
+        // New expanded options
+        { id: 'employeeProductivityEngagement', name: t('businessCaseTypes.employeeProductivityEngagement.name', 'Employee Productivity & Engagement'), description: t('businessCaseTypes.employeeProductivityEngagement.description', 'How the solution improves employee productivity and satisfaction.') },
+        { id: 'sustainabilityCsr', name: t('businessCaseTypes.sustainabilityCsr.name', 'Sustainability & CSR'), description: t('businessCaseTypes.sustainabilityCsr.description', 'How the solution contributes to environmental goals, social responsibility, or ESG compliance.') },
+        { id: 'qualityImprovement', name: t('businessCaseTypes.qualityImprovement.name', 'Quality Improvement'), description: t('businessCaseTypes.qualityImprovement.description', 'How the solution enhances the quality of products, services, or processes.') },
+        { id: 'dataInsights', name: t('businessCaseTypes.dataInsights.name', 'Data & Insights'), description: t('businessCaseTypes.dataInsights.description', 'How the solution enables better data collection, analysis, and decision-making.') },
+        { id: 'marketShareIncrease', name: t('businessCaseTypes.marketShareIncrease.name', 'Market Share Increase'), description: t('businessCaseTypes.marketShareIncrease.description', 'How the solution helps to capture a larger portion of the market.') },
+        { id: 'brandReputationImage', name: t('businessCaseTypes.brandReputationImage.name', "Brand Reputation & Image"), description: t('businessCaseTypes.brandReputationImage.description', "How the solution strengthens the brand's image and perception.") },
+        { id: 'complianceRegulation', name: t('businessCaseTypes.complianceRegulation.name', 'Compliance & Regulation'), description: t('businessCaseTypes.complianceRegulation.description', 'How the solution helps to meet legal requirements and industry standards.') },
+        { id: 'flexibilityAgility', name: t('businessCaseTypes.flexibilityAgility.name', 'Flexibility & Agility'), description: t('businessCaseTypes.flexibilityAgility.description', 'How the solution makes the organization more agile to respond quickly to changes.') },
+        { id: 'channelExpansion', name: t('businessCaseTypes.channelExpansion.name', 'Channel Expansion'), description: t('businessCaseTypes.channelExpansion.description', 'How the solution opens new sales or communication channels.') },
+        { id: 'timeSavings', name: t('businessCaseTypes.timeSavings.name', 'Time Savings'), description: t('businessCaseTypes.timeSavings.description', 'How the solution generates significant time savings for specific tasks or teams.') },
+        { id: 'resourceOptimization', name: t('businessCaseTypes.resourceOptimization.name', 'Resource Optimization'), description: t('businessCaseTypes.resourceOptimization.description', 'How the solution makes the use of resources (staff, materials, technology) more efficient.') },
+        { id: 'productDifferentiation', name: t('businessCaseTypes.productDifferentiation.name', 'Product Differentiation'), description: t('businessCaseTypes.productDifferentiation.description', 'How the solution makes a product or service unique compared to competitors.') },
+        { id: 'operationalEfficiency', name: t('businessCaseTypes.operationalEfficiency.name', 'Operational Efficiency'), description: t('businessCaseTypes.operationalEfficiency.description', 'How the solution improves the effectiveness and speed of operational processes.') },
+        { id: 'securityDataProtection', name: t('businessCaseTypes.securityDataProtection.name', 'Security & Data Protection'), description: t('businessCaseTypes.securityDataProtection.description', 'How the solution enhances the security of data and systems.') },
+        { id: 'innovationCulture', name: t('businessCaseTypes.innovationCulture.name', 'Innovation Culture'), description: t('businessCaseTypes.innovationCulture.description', 'How the solution fosters a culture of innovation and experimentation within the organization.') },
+        { id: 'supplierRelationships', name: t('businessCaseTypes.supplierRelationships.name', 'Supplier Relationships'), description: t('businessCaseTypes.supplierRelationships.description', 'How the solution improves collaboration with suppliers or creates procurement advantages.') },
+        { id: 'fasterTimeToMarket', name: t('businessCaseTypes.fasterTimeToMarket.name', 'Faster Time-to-Market'), description: t('businessCaseTypes.fasterTimeToMarket.description', 'How the solution shortens the time required to launch new products or services.') },
+        { id: 'customerSegmentationPrecision', name: t('businessCaseTypes.customerSegmentationPrecision.name', 'Customer Segmentation Precision'), description: t('businessCaseTypes.customerSegmentationPrecision.description', 'How the solution helps to more precisely identify and target customer segments.') },
+        { id: 'strategicAlignment', name: t('businessCaseTypes.strategicAlignment.name', 'Strategic Alignment'), description: t('businessCaseTypes.strategicAlignment.description', 'How the solution contributes to better alignment of projects and initiatives with the business strategy.') },
+      ];
 
-      const sys = `Je bent een ervaren business consultant. Schrijf een overtuigende business case op basis van het transcript. De business case moet de volgende structuur hebben:
+      const businessCaseTypeDescriptions = Object.fromEntries(businessCaseTypeDefinitions.map(d => [d.name, d.description]));
+
+      // Validate provided business case type; fallback to costSavings when unknown
+      const allowedTypes = new Set(Object.keys(businessCaseTypeDescriptions));
+      const safeType = allowedTypes.has(type) ? type : t('costSavings');
+
+      const sys = `Je bent een ervaren business consultant. Schrijf een overtuigende business case op basis van het transcript.
+      
+      Output taal: ${outputLanguage} (schrijf de volledige business case in deze taal).
+      
+      De business case moet de volgende structuur hebben:
       
       - Titel
       - Probleem
@@ -2133,13 +2276,16 @@ Constraints:
       - Kosten/Baten analyse
       - Conclusie (waarom deze business case waardevol is)
       
-      Schrijf helder, zakelijk en overtuigend. Maximaal 600 woorden.`;
+      Schrijf helder, zakelijk en overtuigend.`;
       
       const prompt = `${sys}
-Business Case Type: ${businessCaseTypeDescriptions[type as keyof typeof businessCaseTypeDescriptions] || type}
-Internet verificatie (grounding): ${useInternet ? 'Ja - vul aan met actuele marktdata en relevante trends van internet' : 'Nee - gebruik alleen de transcript informatie'}
-Transcript:
-${getTranscriptSlice(transcript, 20000)}`;
+Business Case Type: ${businessCaseTypeDescriptions[safeType as keyof typeof businessCaseTypeDescriptions] || safeType}
+${safeAudience ? `${t('businessCaseTargetAudienceLabel', 'Target Audience / Stakeholders')}: ${safeAudience}
+` : ''}${t('businessCaseLength', 'Length')}: ${t(`businessCaseLengthOptions.${lengthChoice}` as any, lengthChoice)}
+${strictLengthInstructionMap[lengthChoice]}
+
+Transcript (input taal: ${inputLanguage}):
+${sanitizedTranscript}`;
 
       const res = await ai.models.generateContent({ model: modelName, contents: prompt });
       
@@ -2157,8 +2303,9 @@ ${getTranscriptSlice(transcript, 20000)}`;
       text = text.replace(/```[a-z]*|```/gi, '').trim();
       
       setBusinessCaseData({
-        businessCaseType: type,
-        useInternetVerification: useInternet,
+        businessCaseType: safeType,
+        targetAudience: safeAudience || undefined,
+        length: lengthChoice,
         businessCase: text
       });
       
@@ -2171,6 +2318,14 @@ ${getTranscriptSlice(transcript, 20000)}`;
       setLoadingText('');
     }
   };
+
+
+
+
+
+
+
+
 
   // Toast functie
   const displayToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -2230,7 +2385,6 @@ ${getTranscriptSlice(transcript, 20000)}`;
                          file.type.startsWith('audio/webm') || 
                          file.type.startsWith('video/webm');
       if (!isValidType) {
-        console.log('File type validation failed:', file.type, 'Valid types:', validTypes);
         throw new Error(t('audioUploadInvalidFormat', 'Alleen MP3, MP4, WebM en WAV bestanden zijn toegestaan.'));
       }
 
@@ -2268,7 +2422,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
       setFaq(''); 
       setLearningDoc(''); 
       setFollowUpQuestions('');
-      setBlogData('');
+      setBlogData(null);
       setChatHistory([]);
       setKeywordAnalysis(null);
       setSentimentAnalysisResult(null);
@@ -2337,7 +2491,7 @@ ${getTranscriptSlice(transcript, 20000)}`;
   // Waitlist states
   // Waitlist modal now uses useModalState() hook: waitlistModal
   const [waitlistEmail, setWaitlistEmail] = useState('');
-  const [waitlist, setWaitlist] = useState<Array<{ email: string; timestamp: number }>>([]);
+  const [waitlist, setWaitlist] = useState<Array<{ id: string; email: string; timestamp: number }>>([]);
   const [selectedWaitlistUsers, setSelectedWaitlistUsers] = useState<string[]>([]);
   const [waitlistLoading, setWaitlistLoading] = useState(false);
   const [waitlistFeedback, setWaitlistFeedback] = useState<{
@@ -2371,12 +2525,12 @@ ${getTranscriptSlice(transcript, 20000)}`;
   const [activeSettingsTab, setActiveSettingsTab] = useState<'general' | 'transcription' | 'anonymization' | 'subscription'>('general');
 
   // Transcription settings state
-  const [transcriptionQuality, setTranscriptionQuality] = useState<'high' | 'balanced' | 'fast'>(() => {
+  const [transcriptionQuality, setTranscriptionQuality] = useState<'fast' | 'balanced' | 'accurate'>(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       const saved = localStorage.getItem('transcription_quality');
-      return (saved as 'high' | 'balanced' | 'fast') || 'fast';
+      return (saved as 'fast' | 'balanced' | 'accurate') || 'balanced';
     }
-    return 'fast';
+    return 'balanced';
   });
   
   const [audioCompressionEnabled, setAudioCompressionEnabled] = useState<boolean>(() => {
@@ -2472,12 +2626,12 @@ ${getTranscriptSlice(transcript, 20000)}`;
   // Debug logs for referral UI
   useEffect(() => {
     if (showReferralInfoPage) {
-      console.log('[Referral] Info page opened');
+      // Info page opened
     }
   }, [showReferralInfoPage]);
   useEffect(() => {
     if (showReferralDashboardPage) {
-      console.log('[Referral] Dashboard page opened');
+      // Dashboard page opened
     }
   }, [showReferralDashboardPage]);
 
@@ -2919,7 +3073,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                             // Only show the first warning to avoid spam
                             displayToast(
                               `Let op: ${validation.warnings[0]}`,
-                              'warning'
+                              'info'
                             );
                           }
                         } catch (error) {
@@ -3038,7 +3192,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     setFaq('');
     setLearningDoc('');
     setFollowUpQuestions('');
-    setBlogData('');
+    setBlogData(null);
     setError(null);
     setDuration(0);
     setLanguage(null);
@@ -3066,6 +3220,9 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     setPptTemplate(null);
     setShowPptOptions(false);
     setApiKeyError(null);
+
+    // Trigger RecapHorizonPanel full reset by bumping startStamp
+    setRecordingStartMs(Date.now());
 
 
     if (audioURL) {
@@ -3420,10 +3577,11 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     const effectiveTier = userSubscription;
     // Check subscription limits using total daily sessions across types
     const totalSessionsToday = (dailyAudioCount || 0) + (dailyUploadCount || 0);
+    
     const canStart = subscriptionService.validateSessionStart(
       effectiveTier, 
       totalSessionsToday,
-      authState.user?.createdAt || new Date(),
+      convertTimestampToDate(authState.user?.createdAt),
       authState.user?.currentSubscriptionStatus || 'active',
       authState.user?.hasHadPaidSubscription || false
     );
@@ -3439,7 +3597,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     setFaq('');
     setLearningDoc('');
     setFollowUpQuestions('');
-    setBlogData('');
+    setBlogData(null);
     setChatHistory([]);
     setKeywordAnalysis(null);
     setSentimentAnalysisResult(null);
@@ -3900,7 +4058,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
         const canStart = subscriptionService.validateSessionStart(
           effectiveTier, 
           totalSessionsToday,
-          authState.user?.createdAt || new Date(),
+          convertTimestampToDate(authState.user?.createdAt),
           authState.user?.currentSubscriptionStatus || 'active',
           authState.user?.hasHadPaidSubscription || false
         );
@@ -3975,6 +4133,8 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
             }
 
             setTranscript(text);
+            // Trigger RecapHorizonPanel full reset by bumping startStamp
+            setRecordingStartMs(Date.now());
             
             // Record actual token usage for file processing
             try {
@@ -4067,7 +4227,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
         const canStart = subscriptionService.validateSessionStart(
           effectiveTier, 
           totalSessionsToday,
-          authState.user?.createdAt || new Date(),
+          convertTimestampToDate(authState.user?.createdAt),
           authState.user?.currentSubscriptionStatus || 'active',
           authState.user?.hasHadPaidSubscription || false
         );
@@ -4163,6 +4323,8 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 const imageAnalysisText = `${t('imageAnalyzedLabel')}\n\n${t('fileInfoFilename')} ${file.name}\n${t('fileInfoType')} ${file.type}\n${t('fileInfoSize')} ${(file.size / 1024 / 1024).toFixed(2)} MB\n\n${t('aiAnalysisHeader')}\n\n${analysisResponse.text}`;
                 
                 setTranscript(imageAnalysisText);
+                // Trigger RecapHorizonPanel full reset by bumping startStamp
+                setRecordingStartMs(Date.now());
                 
                 // Reset all analysis data when new transcript is loaded
                 setSummary('');
@@ -4283,7 +4445,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
             const canStart = subscriptionService.validateSessionStart(
               userSubscription, 
               totalSessionsToday,
-              authState.user?.createdAt || new Date(),
+              convertTimestampToDate(authState.user?.createdAt),
               authState.user?.currentSubscriptionStatus || 'active',
               authState.user?.hasHadPaidSubscription || false
             );
@@ -4394,7 +4556,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
         const canStart = subscriptionService.validateSessionStart(
           effectiveTier, 
           totalSessionsToday,
-          authState.user?.createdAt || new Date(),
+          convertTimestampToDate(authState.user?.createdAt),
           authState.user?.currentSubscriptionStatus || 'active',
           authState.user?.hasHadPaidSubscription || false
         );
@@ -4426,6 +4588,9 @@ Provide a detailed analysis that could be used for further AI processing and ana
 
         try {
             setTranscript(sanitizedText);
+        
+        // Trigger RecapHorizonPanel full reset by bumping startStamp
+        setRecordingStartMs(Date.now());
         
         // Extract email addresses from the transcript
         const extractedEmails = extractEmailAddresses(sanitizedText);
@@ -4665,6 +4830,8 @@ Provide a detailed analysis that could be used for further AI processing and ana
 
 
             setTranscript(cleanText);
+            // Trigger RecapHorizonPanel full reset by bumping startStamp
+            setRecordingStartMs(Date.now());
             
             // Record actual token usage for web page processing
             try {
@@ -4830,7 +4997,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                                 const potentialNames = tempTranscript.match(namePattern) || [];
                                 
                                 // Filter op namen die sterk overeenkomen (minimaal 70% gelijkenis)
-                                const matchingNames = potentialNames.filter(name => {
+                                const matchingNames = potentialNames.filter((name: string) => {
                                     const nameLower = name.toLowerCase();
                                     const similarity = calculateSimilarity(nameLower, originalLower);
                                     return similarity >= 0.7 || 
@@ -4877,7 +5044,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 }
     
                 setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
-                setBlogData(''); setChatHistory([]);
+                setBlogData(null); setChatHistory([]);
                 setKeywordAnalysis(null);
                 setSentimentAnalysisResult(null);
                 setMindmapMermaid('');
@@ -4918,7 +5085,7 @@ Provide a comprehensive summary of the given text. Start with a catchy and relev
 Format the response as JSON with two fields:
 {
   "post": "The social media post content",
-  "imageInstruction": "AI instruction for generating accompanying image"
+  "imageInstructions": "AI instruction for generating accompanying image"
 }
 
 For the "post" field:
@@ -4929,7 +5096,7 @@ For the "post" field:
 - Keep the tone professional but engaging
 - Maximum length should be suitable for social media platforms
 
-For the "imageInstruction" field:
+For the "imageInstructions" field:
 - Create a detailed instruction for AI image generation
 - Describe what kind of image would complement the social media post
 - Include style, mood, colors, and visual elements
@@ -4940,7 +5107,7 @@ For the "imageInstruction" field:
 Format the response as JSON with two fields:
 {
   "post": "The social media post content",
-  "imageInstruction": "AI instruction for generating accompanying image"
+  "imageInstructions": "AI instruction for generating accompanying image"
 }
 
 For the "post" field:
@@ -4952,7 +5119,7 @@ For the "post" field:
 - Focus on the key message without decorative elements
 - Use clear, impactful language
 
-For the "imageInstruction" field:
+For the "imageInstructions" field:
 - Create a detailed instruction for AI image generation
 - Describe what kind of image would complement the social media post
 - Include style, mood, colors, and visual elements
@@ -4966,33 +5133,27 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     
     // Additional debug for social media types
     if (type === 'socialPost' || type === 'socialPostX') {
-        console.log('Social media analysis requested:', { type, postCount });
-        console.log('Transcript check:', {
-            exists: !!transcript,
-            length: transcript?.length || 0,
-            isEmpty: !transcript?.trim(),
-            preview: transcript?.substring(0, 50) + '...'
-        });
+        // Social media analysis requested
+        // Transcript validation
     }
     
     setActiveView(type);
     if ((type === 'summary' && summary) || (type === 'faq' && faq) || (type === 'learning' && learningDoc) || (type === 'followUp' && followUpQuestions)) return; 
 
     // Import security utilities
-    const { validateAndSanitizeForAI, validateAndSanitizeAIDiscussion, rateLimiter } = await import('./src/utils/security');
+    const { validateAndSanitizeForAI, rateLimiter } = await import('./src/utils/security');
 
     const sessionId = 'analysis_' + (auth.currentUser?.uid || 'anonymous');
     if (!rateLimiter.isAllowed(sessionId, 10, 60000)) {
         const errorMsg = 'Te veel analyseverzoeken. Probeer het over een minuut opnieuw.';
-        setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
+        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
         return;
     }
 
-    // Use less strict validation for AI discussion content
-    const validation = validateAndSanitizeAIDiscussion(transcript, 500000);
+    const validation = validateAndSanitizeForAI(transcript, 500000);
     if (!validation.isValid) {
         const errorMsg = `Ongeldige transcript voor analyse: ${validation.error}`;
-        setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
+        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
         return;
     }
 
@@ -5000,16 +5161,12 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
 
     if (!sanitizedTranscript.trim()) {
         const errorMsg = t('transcriptEmpty');
-        setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
+        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
         return;
     }
 
     if (type === 'socialPost' || type === 'socialPostX') {
-        console.log('Calling generateSocialPost with sanitized transcript:', {
-            type,
-            sanitizedLength: sanitizedTranscript?.length || 0,
-            postCount
-        });
+        // Calling generateSocialPost with sanitized transcript
         generateSocialPost(type, sanitizedTranscript, postCount);
         return;
     }
@@ -5024,7 +5181,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     const transcriptValidation = subscriptionService.validateTranscriptLength(effectiveTier, sanitizedTranscript.length, t);
     if (!transcriptValidation.allowed) {
         const errorMsg = transcriptValidation.reason || 'Transcript te lang voor je huidige abonnement. Upgrade je abonnement voor langere transcripten.';
-        setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
+        setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
@@ -5043,7 +5200,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
         
         if (!tokenValidation.allowed) {
             const errorMsg = tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer tokens.';
-            setSummary(errorMsg); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
+            setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
             setTimeout(() => setShowPricingPage(true), 2000);
             return;
         }
@@ -5466,14 +5623,14 @@ const handleAnalyzeSentiment = async () => {
         // Force refresh subscription tier to ensure latest data from Firestore
         try {
           await forceRefreshSubscriptionTier();
-          console.log('Subscription tier forcerefresh completed');
+          // Subscription tier forcerefresh completed
         } catch (refreshError) {
           console.warn('Forcerefresh subscription tier failed:', refreshError);
           // Non-blocking: continue with login even if refresh fails
         }
       } else {
         // Automatically create user document in Firestore
-        const newUserData = {
+        const newUserData: UserDocumentCreate = {
           email,
           isActive: true,
           lastLogin: serverTimestamp(),
@@ -5484,8 +5641,21 @@ const handleAnalyzeSentiment = async () => {
 
         try {
           await setDoc(doc(db, 'users', user.uid), newUserData);
+          
+          // Convert to User interface format
+          const now = new Date();
+          const userForState: User = {
+            uid: user.uid,
+            email,
+            isActive: true,
+            lastLogin: { seconds: Math.floor(now.getTime() / 1000) },
+            sessionCount: 0,
+            createdAt: { seconds: Math.floor(now.getTime() / 1000) },
+            updatedAt: { seconds: Math.floor(now.getTime() / 1000) }
+          };
+          
           setAuthState({
-            user: { ...newUserData, uid: user.uid },
+            user: userForState,
             isLoading: false,
           });
           setUserSubscription(SubscriptionTier.FREE);
@@ -5560,7 +5730,7 @@ const handleAnalyzeSentiment = async () => {
           }
         } catch {}
 
-        const newUserData = {
+        const newUserData: UserDocumentCreate = {
           email,
           isActive: true,
           lastLogin: serverTimestamp(),
@@ -5584,8 +5754,21 @@ const handleAnalyzeSentiment = async () => {
           });
         }
 
+        // Convert to User interface format
+        const now = new Date();
+        const userForState: User = {
+          uid: user.uid,
+          email,
+          isActive: true,
+          lastLogin: { seconds: Math.floor(now.getTime() / 1000) },
+          sessionCount: 0,
+          createdAt: { seconds: Math.floor(now.getTime() / 1000) },
+          updatedAt: { seconds: Math.floor(now.getTime() / 1000) },
+          subscriptionTier: SubscriptionTier.FREE
+        };
+        
         setAuthState({
-          user: { ...newUserData, uid: user.uid },
+          user: userForState,
           isLoading: false,
         });
         setUserSubscription(SubscriptionTier.FREE);
@@ -5637,8 +5820,36 @@ const handleAnalyzeSentiment = async () => {
         uid: user.uid,
         updatedAt: serverTimestamp()
       });
+      // Convert userData to User interface format
+      const userForState: User = {
+        uid: user.uid,
+        email: userData.email || email,
+        isActive: userData.isActive || true,
+        lastLogin: userData.lastLogin ? { seconds: Math.floor(userData.lastLogin.getTime() / 1000) } : null,
+        sessionCount: userData.sessionCount || 0,
+        createdAt: userData.createdAt ? { seconds: Math.floor(userData.createdAt.getTime() / 1000) } : { seconds: Math.floor(Date.now() / 1000) },
+        updatedAt: userData.updatedAt ? { seconds: Math.floor(userData.updatedAt.getTime() / 1000) } : { seconds: Math.floor(Date.now() / 1000) },
+        subscriptionTier: userData.subscriptionTier,
+        currentSubscriptionStatus: userData.currentSubscriptionStatus,
+        hasHadPaidSubscription: userData.hasHadPaidSubscription,
+        monthlyAudioMinutes: userData.monthlyAudioMinutes,
+        currentSubscriptionStartDate: userData.currentSubscriptionStartDate ? { seconds: Math.floor(userData.currentSubscriptionStartDate.getTime() / 1000) } : undefined,
+        nextBillingDate: userData.nextBillingDate ? { seconds: Math.floor(userData.nextBillingDate.getTime() / 1000) } : undefined,
+        stripeCustomerId: userData.stripeCustomerId,
+        scheduledTierChange: userData.scheduledTierChange ? {
+          tier: userData.scheduledTierChange.tier,
+          effectiveDate: { seconds: Math.floor(userData.scheduledTierChange.effectiveDate.getTime() / 1000) },
+          action: userData.scheduledTierChange.action
+        } : undefined,
+        referralProfile: userData.referralProfile,
+        audioCompressionEnabled: userData.audioCompressionEnabled,
+        autoStopRecordingEnabled: userData.autoStopRecordingEnabled,
+        anonymizationRules: userData.anonymizationRules,
+        transcriptionQuality: userData.transcriptionQuality
+      };
+      
       setAuthState({
-        user: { ...userData, uid: user.uid },
+        user: userForState,
         isLoading: false,
       });
       const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
@@ -6161,10 +6372,14 @@ const handleAnalyzeSentiment = async () => {
     try {
       const waitlistQuery = query(collection(db, 'waitlist'), orderBy('createdAt', 'desc'));
       const waitlistSnapshot = await getDocs(waitlistQuery);
-      const waitlistData = waitlistSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const waitlistData = waitlistSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          email: data.email || '',
+          timestamp: data.createdAt ? data.createdAt.seconds * 1000 : Date.now()
+        };
+      });
       setWaitlist(waitlistData);
     } catch (error: any) {
       let msg = 'Fout bij laden van wachtlijst.';
@@ -6190,10 +6405,10 @@ const handleAnalyzeSentiment = async () => {
     }
 
     try {
-      for (const userId of selectedWaitlistUsers) {
-        const userData = waitlist.find(w => w.id === userId);
+      for (const userEmail of selectedWaitlistUsers) {
+        const userData = waitlist.find(w => w.email === userEmail);
         if (userData) {
-          // Add to  collection
+          // Add to users collection
           await addDoc(collection(db, 'users'), {
             email: userData.email,
             isActive: true,
@@ -6203,8 +6418,12 @@ const handleAnalyzeSentiment = async () => {
             updatedAt: serverTimestamp()
           });
           
-          // Remove from waitlist
-          await deleteDoc(doc(db, 'waitlist', userId));
+          // Remove from waitlist - need to find the document by email
+          const waitlistQuery = query(collection(db, 'waitlist'), where('email', '==', userEmail));
+          const waitlistSnapshot = await getDocs(waitlistQuery);
+          if (!waitlistSnapshot.empty) {
+            await deleteDoc(waitlistSnapshot.docs[0].ref);
+          }
         }
       }
       
@@ -6265,7 +6484,7 @@ const handleAnalyzeSentiment = async () => {
     }
 
     try {
-      const emails = waitlist.filter(w => userIds.includes(w.id)).map(w => w.email);
+      const emails = waitlist.filter(w => userIds.includes(w.email)).map(w => w.email);
       if (emails.length === 0) {
         displayToast(t('emailNoValidEmails'), 'info');
         return;
@@ -6361,14 +6580,86 @@ const handleAnalyzeSentiment = async () => {
     }
     
     setLoadingText(t('generatingPresentation'));
+    displayToast(t('generatingPresentation'), 'info');
     setError(null);
     setPresentationReport(null);
     const useTemplate = options.useTemplate && options.templateFile !== null;
 
     try {
-        // Validate token usage for presentation generation
-        const presentationPrompt = `Je bent een AI-expert in het creëren van professionele, gestructureerde en visueel aantrekkelijke zakelijke presentaties op basis van een meeting-transcript. Je taak is om de volgende content te genereren en te structureren in een JSON-object dat voldoet aan het verstrekte schema.\n\n**Taal:** ${getGeminiCode(options.language)} - Alle titels en content moeten in deze taal zijn.\n\n**Maximum aantal slides:** ${options.maxSlides} - Houd de presentatie binnen deze limiet.\n\n**Doelgroep:** ${options.targetAudience} - Pas de presentatie aan voor deze specifieke doelgroep.\n\n**Hoofddoel:** ${options.mainGoal} - Structureer de presentatie om dit doel te bereiken.\n\n**Toon/Stijl:** ${options.toneStyle} - Gebruik deze toon en stijl door de hele presentatie.\n\nTranscript:\n---\n${transcript}\n---`;
-        const tokenEstimate = tokenManager.estimateTokens(presentationPrompt, 2.0);
+        // Localize instruction labels according to selected language
+        const lang = options.language;
+        const L = lang === 'nl' ? {
+            structureHeader: '**Structuur van de Presentatie (verwijderde slides: Status & Datum, Aanwezigen):**',
+            titleSlide: '**Titelslide:** Een pakkende hoofdtitel en een informatieve ondertitel.',
+            agenda: '**Inhoudsopgave (Agenda):** Een slide die de structuur van de presentatie schetst.',
+            introduction: '**Inleiding:** Een slide die de uitgangspunten, doelen en context van het project samenvat.',
+            coreSlides: (n: number) => `**Kernslides:** ${n} slides die de belangrijkste discussiepunten, bevindingen en beslissingen uit het transcript behandelen. Gebruik duidelijke, beknopte titels en presenteer de inhoud als duidelijke bullet points (maximaal 5 per slide).`,
+            projectStatus: '**Projectstatus:** Een slide die een overzicht geeft van de algehele status. Waar staan we nu?',
+            learnings: '**Learnings:** Een slide met de belangrijkste leerpunten uit de sessie.',
+            improvements: '**Verbeterpunten:** Een slide met suggesties voor wat er een volgende keer beter kan.',
+            todoList: `**To-Do Lijst:** Een slide met concrete, beknopte actiepunten. Specificeer 'taak', 'eigenaar' (wie) en 'deadline' (wanneer). Zorg dat de data compleet is.`,
+            imageStyle: '**Beeldstijl & Prompts:**\n    *   Genereer een algemene `imageStylePrompt`: een consistente, professionele en speelse visuele stijl.\n    *   Genereer voor *elke* inhoudelijke slide een unieke, creatieve `imagePrompt` in het Engels die abstract, conceptueel of metaforisch past bij de inhoud.',
+            important: '**BELANGRIJK:** Houd alle titels en bullet points relatief kort en bondig. Zorg voor volledige, correcte data voor de to-do lijst. Respecteer de taal en het maximum aantal slides. Pas de inhoud aan op basis van de doelgroep, het hoofddoel en de gewenste toon/stijl.',
+            analyze: 'Analyseer de volgende transcriptie en produceer het JSON-object.'
+        } : {
+            structureHeader: '**Presentation Structure (removed slides: Status & Date, Attendees):**',
+            titleSlide: '**Title slide:** A compelling main title and an informative subtitle.',
+            agenda: '**Agenda:** A slide that outlines the structure of the presentation.',
+            introduction: '**Introduction:** A slide summarizing the assumptions, goals, and context of the project.',
+            coreSlides: (n: number) => `**Core slides:** ${n} slides covering the main discussion points, findings, and decisions from the transcript. Use clear, concise titles and present the content as bullet points (max 5 per slide).`,
+            projectStatus: '**Project status:** A slide providing an overview of the overall status. Where do we stand now?',
+            learnings: '**Key learnings:** A slide with the most important takeaways from the session.',
+            improvements: '**Improvements:** A slide with suggestions for what could be improved next time.',
+            todoList: `**To-Do List:** A slide with concrete, concise action items. Specify 'task', 'owner' (who), and 'deadline' (when). Ensure the data is complete.`,
+            imageStyle: '**Visual Style & Prompts:**\n    *   Generate a general `imageStylePrompt`: a consistent, professional and playful visual style.\n    *   Generate for *each* content slide a unique, creative `imagePrompt` in English that is abstract, conceptual or metaphorical and fits the content.',
+            important: '**IMPORTANT:** Keep all titles and bullet points short and concise. Ensure complete and correct data for the to-do list. Respect the language and the maximum number of slides. Adapt the content based on the audience, main goal, and desired tone/style.',
+            analyze: 'Analyze the following transcript and produce the JSON object.'
+        };
+
+        const languageCode = getGeminiCode(options.language);
+        // Budget voor kernslides: totale limiet minus vaste slides (title, agenda, intro, status, learnings, improvements, todo)
+        // We houden minimaal 1 kernslide aan om altijd inhoud te tonen.
+        const maxCoreSlides = Math.max(1, options.maxSlides - 7);
+        const prompt = `Je bent een AI-expert in het creëren van professionele, gestructureerde en visueel aantrekkelijke zakelijke presentaties op basis van een meeting-transcript. Je taak is om de volgende content te genereren en te structureren in een JSON-object dat voldoet aan het verstrekte schema.
+
+**Taal:** ${languageCode} - Alle titels en content moeten in deze taal zijn.
+
+**Maximum aantal slides:** ${options.maxSlides} - Houd de presentatie binnen deze limiet.
+
+**Doelgroep:** ${options.targetAudience} - Pas de presentatie aan voor deze specifieke doelgroep.
+
+**Hoofddoel:** ${options.mainGoal} - Structureer de presentatie om dit doel te bereiken.
+
+**Toon/Stijl:** ${options.toneStyle} - Gebruik deze toon en stijl door de hele presentatie.
+
+${L.structureHeader}
+
+1.  ${L.titleSlide}
+2.  ${L.agenda}
+3.  ${L.introduction}
+4.  ${L.coreSlides(maxCoreSlides)}
+5.  ${L.projectStatus}
+6.  ${L.learnings}
+7.  ${L.improvements}
+8.  ${L.todoList}
+9.  ${L.imageStyle}
+
+${L.important}
+
+STRICT LIMITS:
+- De totale presentatie mag ${options.maxSlides} slides NIET overschrijden.
+- Het aantal mainContentSlides mag NIET groter zijn dan ${maxCoreSlides}.
+- Pas de inhoud (bullet points, titels) zo aan dat de presentatie binnen het limiet blijft.
+
+${L.analyze}
+
+Transcript:
+---
+${transcript}
+---`;
+
+        // Validate token usage for presentation generation using the final prompt
+        const tokenEstimate = tokenManager.estimateTokens(prompt, 2.0);
         const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
         
         if (!tokenValidation.allowed) {
@@ -6380,40 +6671,6 @@ const handleAnalyzeSentiment = async () => {
         
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "pptExport");
-        const prompt = `Je bent een AI-expert in het creëren van professionele, gestructureerde en visueel aantrekkelijke zakelijke presentaties op basis van een meeting-transcript. Je taak is om de volgende content te genereren en te structureren in een JSON-object dat voldoet aan het verstrekte schema.
-
-**Taal:** ${getGeminiCode(options.language)} - Alle titels en content moeten in deze taal zijn.
-
-**Maximum aantal slides:** ${options.maxSlides} - Houd de presentatie binnen deze limiet.
-
-**Doelgroep:** ${options.targetAudience} - Pas de presentatie aan voor deze specifieke doelgroep.
-
-**Hoofddoel:** ${options.mainGoal} - Structureer de presentatie om dit doel te bereiken.
-
-**Toon/Stijl:** ${options.toneStyle} - Gebruik deze toon en stijl door de hele presentatie.
-
-**Structuur van de Presentatie (verwijderde slides: Status & Datum, Aanwezigen):**
-
-1.  **Titelslide:** Een pakkende hoofdtitel en een informatieve ondertitel.
-2.  **Inhoudsopgave (Agenda):** Een slide die de structuur van de presentatie schetst.
-3.  **Inleiding:** Een slide die de uitgangspunten, doelen en context van het project samenvat.
-4.  **Kernslides:** ${Math.max(2, Math.min(4, options.maxSlides - 6))} slides die de belangrijkste discussiepunten, bevindingen en beslissingen uit het transcript behandelen. Gebruik duidelijke, beknopte titels en presenteer de inhoud als duidelijke bullet points (maximaal 5 per slide).
-5.  **Projectstatus:** Een slide die een overzicht geeft van de algehele status. Waar staan we nu?
-6.  **Learnings:** Een slide met de belangrijkste leerpunten uit de sessie.
-7.  **Verbeterpunten:** Een slide met suggesties voor wat er een volgende keer beter kan.
-8.  **To-Do Lijst:** Een slide met concrete, beknopte actiepunten. Specificeer 'taak', 'eigenaar' (wie) en 'deadline' (wanneer). Zorg dat de data compleet is.
-9.  **Beeldstijl & Prompts:**
-    *   Genereer een algemene \`imageStylePrompt\`: een consistente, professionele en speelse visuele stijl.
-    *   Genereer voor *elke* inhoudelijke slide een unieke, creatieve \`imagePrompt\` in het Engels die abstract, conceptueel of metaforisch past bij de inhoud.
-
-**BELANGRIJK:** Houd alle titels en bullet points relatief kort en bondig. Zorg voor volledige, correcte data voor de to-do lijst. Respecteer de taal en het maximum aantal slides. Pas de inhoud aan op basis van de doelgroep, het hoofddoel en de gewenste toon/stijl.
-
-Analyseer de volgende transcriptie en produceer het JSON-object.
-
-Transcript:
----
-${transcript}
----`;
         
         const slideContentSchema = {
             type: Type.OBJECT,
@@ -6481,17 +6738,19 @@ ${transcript}
         }
         
         setLoadingText(t('finalizingPresentation'));
-        const { fileName, slideCount } = await createAndDownloadPptx(presentationData, options.templateFile || null);
+        const { fileName, slideCount } = await createAndDownloadPptx(presentationData, options.templateFile || null, options.maxSlides);
         setPresentationReport(t('presentationSuccess', { fileName, slideCount }));
+        displayToast(t('presentationSuccess', { fileName, slideCount }), 'success');
 
 
     } catch (err: any) {
         console.error("Fout bij genereren presentatie:", err);
+        displayToast(t('presentationFailed'), 'error');
         setError(`${t("presentationFailed")}: ${err.message || t("unknownError")}`);
     } finally { setLoadingText(''); }
 };
 
-  const createAndDownloadPptx = async (data: PresentationData, templateFile: File | null) => {
+  const createAndDownloadPptx = async (data: PresentationData, templateFile: File | null, maxSlides: number) => {
     const pptx = new PptxGenJS();
     const isCustomTemplate = templateFile !== null;
 
@@ -6520,12 +6779,28 @@ ${transcript}
         
         if (isCustomTemplate) {
             slide.addText(slideData.title, { placeholder: 'title' });
-            const bodyText = isTocSlide ? slideData.points.map(p => `• ${p}`).join('\n\n') : slideData.points.join('\n');
-            slide.addText(bodyText, { placeholder: 'body', bullet: !isTocSlide });
+            const bodyText = slideData.points.join('\n');
+            // Gebruik standaard bullets voor een nette, consistente agenda- en inhoudsweergave
+            slide.addText(bodyText, { placeholder: 'body', bullet: true });
         } else {
             slide.addText(slideData.title, { placeholder: "title" });
             if (isTocSlide) {
-                slide.addText(slideData.points.map(p => `• ${p}`).join('\n\n'), { x: 0.75, y: 1.5, w: '85%', h: 3.5, fontFace: 'Arial', fontSize: 20, color: 'E2E8F0', lineSpacing: 36 });
+                const items = slideData.points || [];
+                const commonOptions: PptxGenJS.TextPropsOptions = {
+                    fontFace: 'Arial',
+                    fontSize: 18,
+                    color: 'E2E8F0',
+                    bullet: { type: 'bullet', indent: 18 },
+                    lineSpacing: 26
+                };
+                // Gebruik twee kolommen wanneer de agenda langer is dan 6 punten
+                if (items.length > 6) {
+                    const mid = Math.ceil(items.length / 2);
+                    slide.addText(items.slice(0, mid).join('\n'), { ...commonOptions, x: 0.75, y: 1.2, w: '40%', h: 4.0 });
+                    slide.addText(items.slice(mid).join('\n'), { ...commonOptions, x: '52%', y: 1.2, w: '40%', h: 4.0 });
+                } else {
+                    slide.addText(items.join('\n'), { ...commonOptions, x: 0.75, y: 1.2, w: '85%', h: 4.0 });
+                }
                 return;
             }
             const textOptions: PptxGenJS.TextPropsOptions = { fontFace: 'Arial', fontSize: 14, color: 'E2E8F0', bullet: { type: 'bullet', indent: 30, style: 'hyphen' }, lineSpacing: 28 };
@@ -6545,15 +6820,34 @@ ${transcript}
         if (data.titleSlide.subtitle) titleSlide.addText(data.titleSlide.subtitle, { w: '100%', h: 0.75, y: 3.5, fontFace: 'Arial', fontSize: 22, color: 'E2E8F0', align: 'center' });
     }
     
-    if (data.agenda?.length > 0) addContentSlide({ title: t('inhoudsopgave', 'Agenda'), points: data.agenda }, true);
-    addContentSlide(data.introduction);
-    data.mainContentSlides?.forEach(s => addContentSlide(s));
-    addContentSlide(data.projectStatus);
-    addContentSlide(data.learnings);
-    addContentSlide(data.improvements);
+    // Respecteer het ingestelde maximum aantal slides: 1 is al gebruikt voor de titel.
+    let remainingSlots = Math.max(0, (maxSlides || 10) - 1);
 
-    const todoItems = data.todoList.items.filter(item => item.task);
-    if(todoItems.length > 0) {
+    // Agenda
+    if (data.agenda?.length > 0 && remainingSlots > 0) {
+        addContentSlide({ title: t('inhoudsopgave', 'Agenda'), points: data.agenda }, true);
+        remainingSlots--;
+    }
+    // Introductie
+    if (remainingSlots > 0) { addContentSlide(data.introduction); remainingSlots--; }
+
+    // Plan vaste secties zodat we niet over het limiet gaan
+    const hasTodo = Array.isArray(data.todoList?.items) && data.todoList.items.filter(i => i?.task).length > 0;
+    const reservedFixed = 3 + (hasTodo ? 1 : 0); // status, learnings, improvements, [todo]
+
+    // Kernslides: maximaal wat past binnen het resterende budget
+    const coreSlides = Array.isArray(data.mainContentSlides) ? data.mainContentSlides : [];
+    const coreCapacity = Math.max(0, remainingSlots - reservedFixed);
+    coreSlides.slice(0, coreCapacity).forEach(s => { if (remainingSlots > 0) { addContentSlide(s); remainingSlots--; } });
+
+    // Vaste secties toevoegen zolang er ruimte is
+    if (remainingSlots > 0) { addContentSlide(data.projectStatus); remainingSlots--; }
+    if (remainingSlots > 0) { addContentSlide(data.learnings); remainingSlots--; }
+    if (remainingSlots > 0) { addContentSlide(data.improvements); remainingSlots--; }
+
+    // To-Do slide (indien ruimte)
+    const todoItems = hasTodo ? data.todoList.items.filter(item => item.task) : [];
+    if (todoItems.length > 0 && remainingSlots > 0) {
         let todoSlide = pptx.addSlide(isCustomTemplate ? {} : { masterName: "MASTER_SLIDE" });
         todoSlide.addText(data.todoList.title, { placeholder: 'title' });
         const tableHeader = [
@@ -6561,9 +6855,9 @@ ${transcript}
             { text: t('eigenaar', 'Owner'), options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
             { text: t('deadline', 'Deadline'), options: { fontFace: 'Helvetica', bold: true, color: 'FFFFFF', fill: { color: '0891B2' } } },
         ];
-        // Op verzoek: kolommen 'Owner' en 'Deadline' leeg laten
         const tableRows = todoItems.map(item => [{ text: item.task }, { text: '' }, { text: '' }]);
         todoSlide.addTable([tableHeader, ...tableRows], { x: '5%', y: 1.1, w: '90%', colW: [5.4, 1.8, 1.8], autoPage: true, rowH: 0.4, fill: { color: '1E293B' }, color: 'E2E8F0', fontSize: 12, valign: 'middle', border: { type: 'solid', pt: 1, color: '0F172A' } });
+        remainingSlots--;
     }
 
     const fileName = `RecapHorizon_Presentation_${new Date().toISOString().split('T')[0]}.pptx`;
@@ -6639,7 +6933,7 @@ ${transcript}
             URL.revokeObjectURL(audioUrl);
             audioContext.close();
             
-            console.log(`🗜️ Audio gecomprimeerd: ${(combinedBlob.size / 1024 / 1024).toFixed(2)}MB → ${(wavBlob.size / 1024 / 1024).toFixed(2)}MB`);
+            // Audio gecomprimeerd
             resolve([wavBlob]);
           } catch (error) {
             URL.revokeObjectURL(audioUrl);
@@ -6740,7 +7034,7 @@ ${transcript}
 
       const segments = splitAudioBuffer(audioBuffer, maxSamplesPerSegment);
       const segmentBlobs = segments.map(seg => audioBufferToWav(seg));
-      console.log(`🔪 Audio gesegmenteerd in ${segmentBlobs.length} delen (max ${(maxBytes/1024/1024).toFixed(1)}MB per deel)`);
+      // Audio gesegmenteerd in delen
       audioContext.close();
       return segmentBlobs;
     } catch (err) {
@@ -6762,18 +7056,15 @@ ${transcript}
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        // Log request details for debugging
-        console.log(`🔎 [${attempt}/${maxRetries}] Fetch ${url}`);
-        console.log(`📊 Request method: ${options.method || 'GET'}`);
-        console.log(`📊 Request headers:`, options.headers);
-        console.log(`📊 Request body type:`, options.body ? options.body.constructor.name : 'none');
+        // Request details for debugging
+        // Fetch attempt and request configuration
         
         // Ensure proper headers for FormData
         const requestOptions = { ...options, signal: controller.signal };
         
         // Don't set Content-Type for FormData - let browser set it with boundary
         if (options.body instanceof FormData) {
-          console.log(`📊 FormData detected - letting browser set Content-Type with boundary`);
+          // FormData detected - letting browser set Content-Type with boundary
           // Remove any manually set Content-Type header for FormData
           if (requestOptions.headers) {
             const headers = new Headers(requestOptions.headers);
@@ -6785,8 +7076,8 @@ ${transcript}
         const response = await fetch(url, requestOptions);
         clearTimeout(timeoutId);
 
-        console.log(`📊 Response status: ${response.status} ${response.statusText}`);
-        console.log(`📊 Response headers:`, Object.fromEntries(response.headers.entries()));
+        // Response status and headers logged
+        // Response headers logged
 
         if (!response.ok) {
           // Try to get response body for better error info
@@ -6800,8 +7091,7 @@ ${transcript}
           throw new Error(`HTTP ${response.status}: ${response.statusText}${errorBody ? ` - ${errorBody}` : ''}`);
         }
         
-        // Log succesvolle verbinding
-        console.log(`✅ [✓] Request successful to ${new URL(url).host}`);
+        // Request successful
         return response;
 
       } catch (error: any) {
@@ -6825,7 +7115,7 @@ ${transcript}
 
         if (attempt < maxRetries && (isConnectionError || isAbort)) {
           const delay = Math.min(1000 * 2 ** (attempt - 1), 10000);
-          console.log(`🔁 Retry ${attempt + 1} after ${delay}ms...`);
+          // Retry attempt after delay
           await new Promise(res => setTimeout(res, delay));
         }
       }
@@ -6836,22 +7126,20 @@ ${transcript}
 
   const handleTranscribe = async () => {
     const timestamp = new Date().toISOString();
-    console.log(`🎯 [${timestamp}] handleTranscribe: Function called`);
-    console.log(`📊 [${timestamp}] handleTranscribe: Audio chunks length:`, audioChunksRef.current.length);
-    console.log(`📊 [${timestamp}] handleTranscribe: Audio URL exists:`, !!audioURL);
+    // Function called - checking audio chunks and URL
     
     if (!audioChunksRef.current.length) {
 
       // Probeer terug te vallen op audioURL als die bestaat
       if (audioURL) {
         try {
-          console.log(`🔗 [${timestamp}] handleTranscribe: Fetching audio from URL:`, audioURL);
+          // Fetching audio from URL
           const fetched = await fetch(audioURL);
           const fetchedBlob = await fetched.blob();
-          console.log(`📦 [${timestamp}] handleTranscribe: Fetched blob size:`, fetchedBlob.size);
+          // Fetched blob processing
           if (fetchedBlob && fetchedBlob.size > 0) {
             audioChunksRef.current = [fetchedBlob];
-            console.log(`✅ [${timestamp}] handleTranscribe: Successfully set audio chunks from URL`);
+            // Successfully set audio chunks from URL
           }
         } catch (error) {
           console.error(`❌ [${timestamp}] handleTranscribe: Error fetching audio from URL:`, error);
@@ -6860,7 +7148,7 @@ ${transcript}
     }
 
     if (!audioChunksRef.current.length) {
-      console.log(`❌ [${timestamp}] handleTranscribe: ERROR - No audio to transcribe`);
+      // ERROR - No audio to transcribe
       setError(t("noAudioToTranscribe"));
       setStatus(RecordingStatus.ERROR);
       return;
@@ -6871,13 +7159,15 @@ ${transcript}
     setError(null);
     setAnonymizationReport(null);
     setTranscript(''); setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions('');
+    // Trigger RecapHorizonPanel full reset by bumping startStamp at the start of a new transcription session
+    setRecordingStartMs(Date.now());
     
     // Audio compressie als ingeschakeld
     if (audioCompressionEnabled) {
       try {
         setLoadingText(t('compressingAudio', 'Audio wordt gecomprimeerd...'));
         audioChunksRef.current = await compressAudioChunks(audioChunksRef.current);
-        console.log('✅ Audio succesvol gecomprimeerd');
+        // Audio succesvol gecomprimeerd
       } catch (error) {
         console.warn('⚠️ Audio compressie gefaald, doorgaan met originele audio:', error);
       }
@@ -6915,10 +7205,7 @@ ${transcript}
         const chunks = audioChunksRef.current;
         const mimeType = (chunks?.[0] as any)?.type || 'audio/webm';
         const audioBlob = new Blob(chunks, { type: mimeType });
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Starting AssemblyAI transcription`);
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Audio blob size:`, audioBlob.size, 'bytes');
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Audio mime type:`, mimeType);
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Number of chunks:`, chunks.length);
+        // Starting AssemblyAI transcription - audio blob processing
         
         cancelTranscriptionRef.current = false;
         setLoadingText(t('uploadingToTranscriptionServer'));
@@ -6931,8 +7218,7 @@ ${transcript}
             : window.location.hostname.includes('localhost') 
               ? 'http://localhost:8888' 
               : window.location.origin;
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Functions base URL (effective):`, effectiveFunctionsBase);
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Environment VITE_FUNCTIONS_BASE_URL:`, envBase);
+        // Functions base URL configuration
         
         // Bepaal maximale uploadgrootte per segment (configureerbaar)
         // Verlaag limiet voor Netlify productie om body size limieten + base64 overhead te vermijden
@@ -6946,23 +7232,23 @@ ${transcript}
         // Als bestand groter is dan limiet → converteer naar WAV (16k mono) en splits in segmenten
         let blobsToTranscribe: Blob[] = [audioBlob];
         if (audioBlob.size > MAX_UPLOAD_BYTES) {
-          console.log(`[${transcribeTimestamp}] handleTranscribe: Audio groter dan ${MAX_STT_UPLOAD_MB}MB (${(audioBlob.size/1024/1024).toFixed(2)}MB), voorbereiden op segmentatie`);
+          // Audio groter dan limiet - voorbereiden op segmentatie
           setLoadingText(`Groot bestand gedetecteerd (${(audioBlob.size/1024/1024).toFixed(1)}MB). Voorbereiden voor upload...`);
           
           try {
             // Forceer compressie naar WAV 16k mono om consistente segmenten te garanderen
             const compressed = await compressAudioChunks([audioBlob]);
             const wavBlob = compressed[0] || audioBlob;
-            console.log(`[${transcribeTimestamp}] handleTranscribe: Gecomprimeerde WAV grootte: ${(wavBlob.size/1024/1024).toFixed(2)}MB`);
+            // Gecomprimeerde WAV grootte verwerkt
             
             // Controleer of compressie voldoende was
             if (wavBlob.size > MAX_UPLOAD_BYTES) {
               setLoadingText(`Splitsen van audio in ${MAX_STT_UPLOAD_MB}MB segmenten (productie-optimalisatie)...`);
               blobsToTranscribe = await splitWavBlobByBytes(wavBlob, MAX_UPLOAD_BYTES - SAFETY_MARGIN_BYTES);
-              console.log(`[${transcribeTimestamp}] handleTranscribe: Audio gesplitst in ${blobsToTranscribe.length} segmenten`);
+              // Audio gesplitst in segmenten
             } else {
               blobsToTranscribe = [wavBlob];
-              console.log(`[${transcribeTimestamp}] handleTranscribe: Compressie voldoende, geen segmentatie nodig`);
+              // Compressie voldoende, geen segmentatie nodig
             }
           } catch (e) {
             console.error(`[${transcribeTimestamp}] handleTranscribe: Segmentatie mislukt:`, e);
@@ -6980,7 +7266,7 @@ ${transcript}
         const pollIntervalMs = Number(import.meta.env.VITE_STT_POLL_INTERVAL_MS || 0) || 3000; // standaard 3s
         let segmentIndex = 0;
         const totalSegments = blobsToTranscribe.length;
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Aantal segmenten: ${totalSegments}`);
+        // Aantal segmenten voor transcriptie
 
         for (const segmentBlob of blobsToTranscribe) {
           segmentIndex++;
@@ -6990,12 +7276,12 @@ ${transcript}
           setLoadingText(`Segment ${segmentIndex}/${totalSegments} uploaden (${segmentSizeMB}MB)...`);
           setTranscriptionProgress(Math.min(0.95, (segmentIndex - 1) / totalSegments));
 
-          console.log(`[${transcribeTimestamp}] handleTranscribe: Segment ${segmentIndex} grootte: ${(segmentBlob.size/1024/1024).toFixed(2)}MB`);
+          // Segment grootte verwerkt
           const formData = new FormData();
           formData.append('audio', segmentBlob, `segment-${segmentIndex}.wav`);
           // Forward selected source language to backend for AssemblyAI
           formData.append('language_code', (language || 'nl'));
-          console.log(`[${transcribeTimestamp}] handleTranscribe: POST naar ${transcribeStartUrl} voor segment ${segmentIndex}`);
+          // POST naar transcribe-start voor segment
 
           const startResponse = await fetchWithTimeoutAndRetry(
             transcribeStartUrl, 
@@ -7003,7 +7289,7 @@ ${transcript}
             120000, // 120 seconden timeout voor upload
             3 // 3 retry pogingen
           );
-          console.log(`[${transcribeTimestamp}] handleTranscribe: Start response (segment ${segmentIndex}) status:`, startResponse.status);
+          // Start response status verwerkt
           if (!startResponse.ok) {
             const errorText = await startResponse.text();
             console.error(`[${transcribeTimestamp}] handleTranscribe: ERROR start segment ${segmentIndex}:`, startResponse.status, errorText);
@@ -7012,7 +7298,7 @@ ${transcript}
 
           const startData = await startResponse.json();
           const transcriptId = startData.transcriptId;
-          console.log(`[${transcribeTimestamp}] handleTranscribe: Transcript ID voor segment ${segmentIndex}: ${transcriptId}`);
+          // Transcript ID voor segment verkregen
 
           // Poll per segment
           let transcriptionComplete = false;
@@ -7023,18 +7309,18 @@ ${transcript}
             globalPollCount++;
             
             const pollTimestamp = new Date().toISOString();
-            console.log(`[${pollTimestamp}] handleTranscribe: Polling (segment ${segmentIndex}) attempt ${pollCount}/${maxPollAttempts}`);
+            // Polling attempt voor segment
             
             try {
               const transcribeStatusUrl = `${effectiveFunctionsBase}/.netlify/functions/transcribe-status?id=${transcriptId}`;
-              console.log(`[${pollTimestamp}] handleTranscribe: Status request (segment ${segmentIndex}) →`, transcribeStatusUrl);
+              // Status request voor segment
               const statusResponse = await fetchWithTimeoutAndRetry(
                 transcribeStatusUrl,
                 {}, // GET request, geen extra options
                 30000, // 30 seconden timeout voor status check
                 3 // 3 retry pogingen
               );
-              console.log(`[${pollTimestamp}] handleTranscribe: Status response (segment ${segmentIndex}) status:`, statusResponse.status);
+              // Status response verwerkt
             
               if (!statusResponse.ok) {
                 const errorText = await statusResponse.text();
@@ -7042,28 +7328,28 @@ ${transcript}
                 throw new Error(`Status check gefaald (segment ${segmentIndex}): ${errorText}`);
               }
               
-              console.log(`[${pollTimestamp}] handleTranscribe: Parsing status response JSON`);
+              // Parsing status response JSON
               const statusData = await statusResponse.json();
-              console.log(`[${pollTimestamp}] handleTranscribe: Status data (segment ${segmentIndex}):`, JSON.stringify(statusData));
-              console.log(`[${pollTimestamp}] handleTranscribe: Transcriptie status (segment ${segmentIndex}, poging ${pollCount}): ${statusData.status}`);
+              // Status data verwerkt
+              // Transcriptie status voor segment
               
               switch (statusData.status) {
                 case 'queued':
-                  console.log(`[${pollTimestamp}] handleTranscribe: Status QUEUED (segment ${segmentIndex}) - in wachtrij`);
+                  // Status QUEUED - in wachtrij
                   setLoadingText(`Segment ${segmentIndex}/${totalSegments} in wachtrij (poging ${pollCount})...`);
                   break;
                 case 'processing':
-                  console.log(`[${pollTimestamp}] handleTranscribe: Status PROCESSING (segment ${segmentIndex}) - bezig`);
+                  // Status PROCESSING - bezig
                   setLoadingText(`Segment ${segmentIndex}/${totalSegments} wordt verwerkt (poging ${pollCount})...`);
                   setTranscriptionProgress(Math.min(0.95, (segmentIndex - 1 + 0.5) / totalSegments));
                   break;
                 case 'completed':
-                  console.log(`[${pollTimestamp}] handleTranscribe: Status COMPLETED (segment ${segmentIndex}) - voltooid`);
+                  // Status COMPLETED - voltooid
                   transcriptionComplete = true;
                   const segmentText = statusData.text || '';
                   transcribedText += (transcribedText ? '\n\n' : '') + segmentText;
                   setTranscriptionProgress(Math.min(1, segmentIndex / totalSegments));
-                  console.log(`[${pollTimestamp}] handleTranscribe: Segment ${segmentIndex} transcript lengte: ${segmentText.length}`);
+                  // Segment transcript lengte verwerkt
                   break;
                 case 'error':
                   console.error(`[${pollTimestamp}] handleTranscribe: Status ERROR (segment ${segmentIndex}) - fout:`, statusData.error);
@@ -7083,17 +7369,19 @@ ${transcript}
           }
         }
 
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Polling voltooid voor alle segmenten (totaal pogingen: ${globalPollCount})`);
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Cancel requested:`, cancelTranscriptionRef.current);
+        // Polling voltooid voor alle segmenten
+        // Cancel status gecontroleerd
         // Set the transcribed text
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Setting transcript with ${transcribedText.length} characters`);
+        // Setting transcript met karakters
         setTranscript(transcribedText);
+        // Trigger RecapHorizonPanel full reset by bumping startStamp
+        setRecordingStartMs(Date.now());
         
         // Record token usage (estimate for AssemblyAI)
         const estimatedInputTokens = Math.ceil((blobsToTranscribe.reduce((acc, b) => acc + b.size, 0)) / 1000); // Rough estimate across segments
         const estimatedOutputTokens = Math.ceil(transcribedText.length / 4); // Rough estimate
         
-        console.log(`[${transcribeTimestamp}] handleTranscribe: Recording token usage - Input: ${estimatedInputTokens}, Output: ${estimatedOutputTokens}`);
+        // Recording token usage
         
         try {
           await tokenManager.recordTokenUsage(user.uid, estimatedInputTokens, estimatedOutputTokens);
@@ -7109,19 +7397,19 @@ ${transcript}
             showDiamondTokenToast(estimatedInputTokens, estimatedOutputTokens, 'diamond', sessionTokens);
           }
           
-          console.log(`[${transcribeTimestamp}] handleTranscribe: Token usage recorded successfully`);
+          // Token usage recorded successfully
         } catch (error) {
           console.error(`[${transcribeTimestamp}] handleTranscribe: Error recording token usage:`, error);
         }
         
-        console.log(`[${transcribeTimestamp}] handleTranscribe: SUCCESS - AssemblyAI transcriptie succesvol voltooid`);
+        // AssemblyAI transcriptie succesvol voltooid
          
          // Reset AI processing states
          setSummary('');
          setFaq('');
          setLearningDoc('');
          setFollowUpQuestions('');
-         setBlogData('');
+         setBlogData(null);
          setChatHistory([]);
          setKeywordAnalysis(null);
          setSentimentAnalysisResult(null);
@@ -7154,10 +7442,10 @@ ${transcript}
         setError(error.message || t('transcriptionError'));
         setStatus(RecordingStatus.ERROR);
     } finally {
-        console.log(`[${transcribeTimestamp}] handleTranscribe: FINALLY - Cleaning up transcription states`);
+        // Cleaning up transcription states
         // Always reset these states
         setTimeout(() => {
-            console.log(`[${transcribeTimestamp}] handleTranscribe: TIMEOUT CLEANUP - Resetting final states`);
+            // Resetting final states
             setLoadingText('');
             setIsSegmentedTranscribing(false);
             setTranscriptionProgress(0);
@@ -7750,9 +8038,11 @@ ${transcript}
                   setExecutiveSummaryData(null);
                   setStorytellingData(null);
                   setBusinessCaseData(null);
-                  setBlogData('');
+                  setBlogData(null);
                   setExplainData(null);
                   setQuizQuestions(null);
+                  // Trigger RecapHorizonPanel full reset by bumping startStamp
+                  setRecordingStartMs(Date.now());
                 }}
                 className="flex-1 px-6 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
               >
@@ -8248,6 +8538,8 @@ IMPORTANT: Return ONLY the JSON array, no additional text or formatting.`;
       }
     };
 
+
+
     const handleGenerateTeachMe = async () => {
       try {
         setIsGeneratingTeachMe(true);
@@ -8481,11 +8773,12 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         
         try {
           const searchResults = JSON.parse(content);
-          setShowMeData({
-            topic,
+          const showMePayload: ShowMeData = {
+            topic: topic,
             tedTalks: searchResults.tedTalks || [],
             newsArticles: searchResults.newsArticles || []
-          });
+          };
+          setShowMeData(showMePayload);
           setShowMeSelectedTopic(topic);
         } catch (parseError) {
           console.error('Failed to parse search results JSON:', parseError);
@@ -8544,12 +8837,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         setMindmapMermaid(cleaned);
         
         try {
-          const mod = await import('mermaid');
-          const m: any = (mod as any).default || mod;
-          const { svg } = await m.render('mindmap-svg', cleaned);
-          setMindmapSvg(svg);
-        } catch (rErr) { 
-          console.warn('Mermaid render failed', rErr); 
+          const svg = await renderMindmapSvg(cleaned, theme);
+          if (svg) setMindmapSvg(svg);
+        } catch (rErr) {
+          console.warn('Mermaid render failed', rErr);
         }
         
         setActiveView('mindmap');
@@ -8589,7 +8880,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                       setKeywordAnalysis([]);
                       setSentimentAnalysisResult(null);
                       setQuizQuestions([]);
-                      setBlogData('');
+                      setBlogData(null);
                     }
                   setLoadingText(t('generating', { type: 'Mindmap' }));
                   
@@ -8624,10 +8915,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                   if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
                   setMindmapMermaid(cleaned);
                   try {
-                    const mod = await import('mermaid');
-                    const m: any = (mod as any).default || mod;
-                    const { svg } = await m.render('mindmap-svg', cleaned);
-                    setMindmapSvg(svg);
+                    const svg = await renderMindmapSvg(cleaned, theme);
+                    if (svg) setMindmapSvg(svg);
                   } catch (rErr) { console.warn('Mermaid render failed', rErr); }
                 } catch (e: unknown) {
                   setError(`${t('generationFailed', { type: 'Mindmap' })}: ${(e as Error).message || t('unknownError')}`);
@@ -8646,9 +8935,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         <div className="relative p-4">
 
           {mindmapSvg ? (
-            <div className="overflow-auto max-h-[70vh]" dangerouslySetInnerHTML={{ __html: mindmapSvg }} />
+            <div className="overflow-auto max-h-[80vh]" dangerouslySetInnerHTML={{ __html: mindmapSvg }} />
           ) : (
-                                <pre className="text-sm whitespace-pre-wrap bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 overflow-auto max-h-[70vh]">{renderMarkdown(mindmapMermaid)}</pre>
+                                <pre className="text-sm whitespace-pre-wrap bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 overflow-auto max-h-[80vh]">{renderMarkdown(mindmapMermaid)}</pre>
           )}
         </div>
       );
@@ -8659,7 +8948,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
     const primaryActions: any[] = [
         { id: 'transcript', type: 'view', icon: TranscriptIcon, label: () => isAnonymized ? t('transcriptAnonymized') : t('transcript') },
         { id: 'anonymize', type: 'action', icon: AnonymizeIcon, label: () => t('anonymize'), onClick: handleAnonymizeTranscript, disabled: () => isProcessing || isAnonymized || !transcript.trim() },
-        { id: 'chat', type: 'view', icon: ChatIcon, label: () => t('chat') },
+        
 
         { id: 'presentation', type: 'action', icon: PresentationIcon, label: () => t('exportPPT'), onClick: () => {
             // Check if user has access to PowerPoint export
@@ -8670,17 +8959,39 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         return;
     }
             setShowPptOptions(true);
-        }, disabled: () => isProcessing || !transcript.trim() },
+        }, disabled: () => isProcessing },
         { id: 'businessCase', type: 'action', icon: BusinessCaseIcon, label: () => t('businessCase'), onClick: () => {
             // Check if user has access to business case generation
+            // Zakelijke Case knop geklikt
+            // Check feature availability for businessCase
             const effectiveTier = userSubscription;
                 if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
         displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
-            setActiveView('businessCase');
-        }, disabled: () => isProcessing || !transcript.trim() },
+            // Switch to analysis mode and open Business Case view
+            setMainMode('analysis');
+            setSelectedAnalysis('businessCase');
+            handleTabClick('businessCase');
+        }, disabled: () => isProcessing },
+        // AI Discussion - alleen zichtbaar voor Gold, Enterprise, Diamond
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'aiDiscussion', type: 'action', icon: AIDiscussionIcon, label: () => t('aiDiscussion'), onClick: () => {
+                // Check if user has access to AI discussion feature
+                // AI Discussie knop geklikt
+                // Check feature availability for aiDiscussion
+                const effectiveTier = userSubscription;
+                if (!subscriptionService.isFeatureAvailable(effectiveTier, 'aiDiscussion')) {
+                    displayToast(t('aiDiscussionAccessRestricted'), 'error');
+                    setTimeout(() => setShowPricingPage(true), 2000);
+                    return;
+                }
+                // Switch to analysis mode and open AI Discussion view
+                setMainMode('analysis');
+                setSelectedAnalysis('aiDiscussion');
+                setActiveView('aiDiscussion');
+            }, disabled: () => isProcessing }] : []),
     ];
     const analysisActions: any[] = [
         { id: 'summary', type: 'view', icon: SummaryIcon, label: () => t('summary') },
@@ -8696,15 +9007,13 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         { id: 'blog', type: 'view', icon: BlogIcon, label: () => t('blog') },
         { id: 'explain', type: 'view', icon: ExplainIcon, label: () => t('explain') },
         { id: 'teachMe', type: 'view', icon: TeachMeIcon, label: () => t('teachMe') },
+        { id: 'specials', type: 'view', icon: SpecialsIcon, label: () => t('specials', 'Specials') },
         // Show me tab - alleen zichtbaar voor Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
             [{ id: 'showMe', type: 'view', icon: TeachMeIcon, label: () => t('showMe') }] : []),
         // Thinking Partner tab - alleen zichtbaar voor Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
             [{ id: 'thinkingPartner', type: 'view', icon: ThinkingPartnerIcon, label: () => t('thinkingPartner') }] : []),
-        // AI Discussion tab - alleen zichtbaar voor Gold, Enterprise, Diamond
-        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
-            [{ id: 'aiDiscussion', type: 'view', icon: AIDiscussionIcon, label: () => t('aiDiscussion') }] : []),
         // Opportunities tab - alleen zichtbaar voor Silver, Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.SILVER || userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
             [{ id: 'opportunities', type: 'view', icon: OpportunitiesIcon, label: () => t('opportunities') }] : []),
@@ -8719,7 +9028,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', opportunities: '', mckinsey: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || '') };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', opportunities: '', mckinsey: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || ''), specials: '', main: '', podcast: '' };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -8735,12 +9044,30 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         if (view === 'blog' && blogData) { setActiveView('blog'); return; }
         if (view === 'mindmap' && mindmapMermaid) { setActiveView('mindmap'); return; }
         if (view === 'quiz' && quizQuestions) { setActiveView('quiz'); return; }
-        if (view === 'businessCase' && businessCaseData?.businessCase) { setActiveView('businessCase'); return; }
+        if (view === 'businessCase') {
+            if (!businessCaseData?.businessCase) {
+                const defaultAudienceOptions = [
+                  t('businessCaseTargetAudienceOptions.boardOfDirectors', 'Board of Directors'),
+                  t('businessCaseTargetAudienceOptions.investors', 'Investors'),
+                  t('businessCaseTargetAudienceOptions.teamLeaders', 'Team Leaders'),
+                  t('businessCaseTargetAudienceOptions.colleagues', 'Colleagues')
+                ];
+                const firstAudience = defaultAudienceOptions[0];
+                setBusinessCaseData({ businessCase: '', businessCaseType: 'Kostenbesparing', targetAudience: firstAudience, length: 'concise' });
+            }
+            setActiveView('businessCase');
+            return;
+        }
+        if (view === 'aiDiscussion') {
+            setActiveView('aiDiscussion');
+            return;
+        }
         if (view === 'explain' && explainData?.explanation) { setActiveView('explain'); return; }
         if (view === 'email' && emailContent) { setActiveView('email'); return; }
         if (view === 'socialPost' && socialPostData?.post) { setActiveView('socialPost'); return; }
         if (view === 'socialPostX' && socialPostXData?.post) { setActiveView('socialPostX'); return; }
         if (view === 'thinkingPartner' && thinkingPartnerAnalysis) { setActiveView('thinkingPartner'); return; }
+
 
         // If content doesn't exist, generate it (except for social posts which need manual generation)
         if (['summary', 'faq', 'learning', 'followUp'].includes(view)) {
@@ -8761,12 +9088,20 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             handleOpenStorytellingQuestions();
         } else if (view === 'blog') {
             setActiveView('blog');
-        } else if (view === 'businessCase') {
+        } else if (view === 'businessCase' as ViewType) {
             // Initialize business case data if not exists
             if (!businessCaseData) {
+                const defaultAudienceOptions = [
+                  t('businessCaseTargetAudienceOptions.boardOfDirectors', 'Board of Directors'),
+                  t('businessCaseTargetAudienceOptions.investors', 'Investors'),
+                  t('businessCaseTargetAudienceOptions.teamLeaders', 'Team Leaders'),
+                  t('businessCaseTargetAudienceOptions.colleagues', 'Colleagues')
+                ];
+                const firstAudience = defaultAudienceOptions[0];
                 setBusinessCaseData({
                     businessCaseType: 'Kostenbesparing',
-                    useInternetVerification: false,
+                    targetAudience: firstAudience,
+                    length: 'concise',
                     businessCase: ''
                 });
             }
@@ -8819,7 +9154,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 return;
             }
             setActiveView('thinkingPartner');
-        } else if (view === 'aiDiscussion') {
+        } else if (view === 'aiDiscussion' as ViewType) {
             // Check if user has access to AI discussion feature
             const effectiveTier = userSubscription;
             if (!subscriptionService.isFeatureAvailable(effectiveTier, 'aiDiscussion')) {
@@ -8864,10 +9199,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
                 setMindmapMermaid(cleaned);
                 try {
-                  const mod = await import('mermaid');
-                  const m: any = (mod as any).default || mod;
-                  const { svg } = await m.render('mindmap-svg', cleaned);
-                  setMindmapSvg(svg);
+                  const svg = await renderMindmapSvg(cleaned, theme);
+                  if (svg) setMindmapSvg(svg);
                 } catch (rErr) { console.warn('Mermaid render failed', rErr); }
               } catch (e: any) {
                 setError(`${t('generationFailed', { type: 'Mindmap' })}: ${e.message || t('unknownError')}`);
@@ -8881,19 +9214,17 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         // Handle transcript mode
         if (mainMode === 'transcript' && activeView === 'transcript') {
             return (
-                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     <div className="absolute top-4 right-2 sm:right-8">
                         <div 
                             ref={actionButtonsRef}
                             className="relative"
-                            onMouseEnter={() => setShowActionButtons(true)}
-                            onMouseLeave={() => setShowActionButtons(false)}
                         >
                             <button 
                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                 aria-label={t('actions')}
                                 onClick={() => setShowActionButtons(!showActionButtons)}
-                                title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                title={t('actions', 'Acties')}
                             >
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <circle cx="12" cy="5" r="2"/>
@@ -8904,8 +9235,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             {showActionButtons && (
                                 <div 
                                     className="absolute top-0 right-2 sm:right-10 flex flex-wrap gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 mr-0 sm:-mr-2 max-w-[calc(100vw-2rem)]"
-                                    onMouseEnter={() => setShowActionButtons(true)}
-                                    onMouseLeave={() => setShowActionButtons(false)}
                                 >
                                     <button onClick={async () => {
                                         try {
@@ -8914,23 +9243,23 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         } catch {
                                             displayToast(t('copyFailed'), 'error');
                                         }
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
                                         <CopyIcon className="w-5 h-5" />
                                     </button>
                                     <button onClick={() => {
                                         const txt = markdownToPlainText(transcript || t('noTranscriptAvailable'));
                                         downloadTextFile(txt, 'transcript.txt');
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')} title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')} title="Downloaden">
                                         ⬇️
                                     </button>
                                     <button onClick={() => {
                                         const content = transcript || t('noTranscriptAvailable');
                                         const { subject, body } = generateEmailContent(t('transcript'), content);
                                         copyToClipboardForEmail(subject, body);
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyForEmail')} title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyForEmail')} title="Kopiëren voor e-mail">
                                         ✉️
                                     </button>
-                                    <button onClick={handleExportTranscriptPdf} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('downloadPdf', 'Download PDF')} title={window.innerWidth > 768 ? t('downloadPdf', 'Download PDF') : undefined}>
+                                    <button onClick={handleExportTranscriptPdf} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('downloadPdf', 'Download PDF')} title={t('downloadPdf', 'Download PDF')}>
                                         📄
                                     </button>
                                 </div>
@@ -9013,7 +9342,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 </div>
             );
             return (
-                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                     <div className="absolute top-4 right-2 sm:right-8">
                         <div 
                             ref={actionButtonsRef}
@@ -9025,7 +9354,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                 aria-label={t('actions')}
                                 onClick={() => setShowActionButtons(!showActionButtons)}
-                                title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                title={t('actions', 'Acties')}
                             >
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <circle cx="12" cy="5" r="2"/>
@@ -9039,7 +9368,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     onMouseEnter={() => setShowActionButtons(true)}
                                     onMouseLeave={() => setShowActionButtons(false)}
                                 >
-                                    <button onClick={() => handleGenerateExecutiveSummary()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                    <button onClick={() => handleGenerateExecutiveSummary()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={t('regenerate', 'Opnieuw genereren')}>
                                         🔄
                                     </button>
                                     <button onClick={async () => {
@@ -9062,7 +9391,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         } catch {
                                             displayToast(t('copyFailed'), 'error');
                                         }
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
                                         <CopyIcon className="w-5 h-5" />
                                     </button>
                                     <button onClick={() => {
@@ -9080,7 +9409,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             return parts.join('\n');
                                         })();
                                         downloadTextFile(txt, 'executive-summary.txt');
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')} title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('download')} title="Downloaden">
                                         ⬇️
                                     </button>
                                     <button onClick={() => {
@@ -9099,14 +9428,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         })();
                                         const { subject, body } = generateEmailContent(t('executiveSummary'), content);
                                         copyToClipboardForEmail(subject, body);
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyForEmail')} title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyForEmail')} title="Kopiëren voor e-mail">
                                         ✉️
                                     </button>
                                 </div>
                             )}
                         </div>
                     </div>
-                    <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                    <div className="overflow-y-auto max-h-[calc(80vh-120px)]">
                         {block(t('objective', 'Objective'), executiveSummaryData.objective)}
                         {block(t('situation', 'Situation'), executiveSummaryData.situation)}
                         {block(t('complication', 'Complication'), executiveSummaryData.complication)}
@@ -9117,9 +9446,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 </div>
             );
         }
-        if (activeView === 'storytelling') {
+        if ((activeView as ViewType) === 'storytelling') {
             return (
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     {/* Inline options */}
                     <div className="mb-4 p-3 rounded border border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40">
                         <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-3">{t('storytellingOptional')}</div>
@@ -9195,7 +9524,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
                     {/* Output */}
                     {storytellingData ? (
-                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                             <div className="absolute top-4 right-2 sm:right-8">
                                 <div 
                                     ref={actionButtonsRef}
@@ -9207,7 +9536,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                         aria-label={t('actions')}
                                         onClick={() => setShowActionButtons(!showActionButtons)}
-                                        title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                        title={t('actions', 'Acties')}
                                     >
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                             <circle cx="12" cy="5" r="2"/>
@@ -9221,7 +9550,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             onMouseEnter={() => setShowActionButtons(true)}
                                             onMouseLeave={() => setShowActionButtons(false)}
                                         >
-                                            <button onClick={() => handleGenerateStorytelling(storyOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                            <button onClick={() => handleGenerateStorytelling(storyOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={t('regenerate', 'Opnieuw genereren')}>
                                                 🔄
                                             </button>
                                             <button onClick={async () => {
@@ -9231,23 +9560,23 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 } catch {
                                                     displayToast(t('copyFailed'), 'error');
                                                 }
-                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => downloadTextFile(markdownToPlainText(storytellingData.story), 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                            <button onClick={() => downloadTextFile(markdownToPlainText(storytellingData.story), 'storytelling.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title="Downloaden">
                                                 ⬇️
                                             </button>
                                             <button onClick={() => {
                                                 const { subject, body } = generateEmailContent(t('storytelling'), storytellingData.story);
                                                 copyToClipboardForEmail(subject, body);
-                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title="Kopiëren voor e-mail">
                                                 ✉️
                                             </button>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                            <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                            <div className="overflow-y-auto max-h-[calc(80vh-120px)]">
                                 <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{t('storytelling')}</h4>
                                 <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{storytellingData.story}</p>
                             </div>
@@ -9260,7 +9589,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         }
         if (activeView === 'quiz') {
             return (
-                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                     <div className="flex flex-wrap gap-3 items-end mb-4">
                         <div>
                             <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('numberOfQuestions')}</label>
@@ -9407,7 +9736,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         if (activeView === 'blog') {
             const L = blogLabels[uiLang] || blogLabels.en;
             return (
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     {/* Inline Blog Options (optional) */}
                     <div className="mb-4 p-3 rounded border border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40">
                         <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-3">{td('storytellingOptional')}</div>
@@ -9446,7 +9775,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     {loadingText && !blogData ? (
                         <BlurredLoadingOverlay loadingText={`${loadingText}...`} />
                     ) : blogData ? (
-                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                             <div className="absolute top-4 right-8">
                                 <div 
                                     ref={actionButtonsRef}
@@ -9458,7 +9787,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                         aria-label={t('actions')}
                                         onClick={() => setShowActionButtons(!showActionButtons)}
-                                        title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                        title={t('actions', 'Acties')}
                                     >
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                             <circle cx="12" cy="5" r="2"/>
@@ -9472,7 +9801,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             onMouseEnter={() => setShowActionButtons(true)}
                                             onMouseLeave={() => setShowActionButtons(false)}
                                         >
-                                            <button onClick={handleGenerateBlog} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                            <button onClick={handleGenerateBlog} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={t('regenerate', 'Opnieuw genereren')}>
                                                 🔄
                                             </button>
                                             <button onClick={async () => {
@@ -9482,23 +9811,23 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 } catch {
                                                     displayToast(t('copyFailed'), 'error');
                                                 }
-                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => downloadTextFile(markdownToPlainText(blogData), 'blog.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                            <button onClick={() => downloadTextFile(markdownToPlainText(blogData), 'blog.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title="Downloaden">
                                                 ⬇️
                                             </button>
                                             <button onClick={() => {
                                                 const { subject, body } = generateEmailContent(t('blog'), blogData);
                                                 copyToClipboardForEmail(subject, body);
-                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title="Kopiëren voor e-mail">
                                                 ✉️
                                             </button>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                            <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                            <div className="overflow-y-auto max-h-[calc(80vh-120px)]">
                                 <div className="prose prose-slate dark:prose-invert max-w-none">
                                     {renderMarkdown(blogData)}
                                 </div>
@@ -9518,7 +9847,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             if (sentimentAnalysisResult) {
                 const fullContent = `${t('sentimentSummary')}\n${sentimentAnalysisResult.summary}\n\n${t('sentimentConclusion')}\n${sentimentAnalysisResult.conclusion}`;
                 return (
-                    <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                    <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                         <div className="absolute top-4 right-8">
                             <div 
                                 ref={actionButtonsRef}
@@ -9530,7 +9859,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                     aria-label={t('actions')}
                                     onClick={() => setShowActionButtons(!showActionButtons)}
-                                    title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                    title={t('actions', 'Acties')}
                                 >
                                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                         <circle cx="12" cy="5" r="2"/>
@@ -9544,26 +9873,26 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         onMouseEnter={() => setShowActionButtons(true)}
                                         onMouseLeave={() => setShowActionButtons(false)}
                                     >
-                                        <button onClick={() => handleAnalyzeSentiment()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                        <button onClick={() => handleAnalyzeSentiment()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={t('regenerate', 'Opnieuw genereren')}>
                                             🔄
                                         </button>
-                                        <button onClick={() => copyToClipboard(markdownToPlainText(fullContent))} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                        <button onClick={() => copyToClipboard(markdownToPlainText(fullContent))} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
                                             <CopyIcon className="w-5 h-5" />
                                         </button>
-                                        <button onClick={() => downloadTextFile(markdownToPlainText(fullContent), `sentiment.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                        <button onClick={() => downloadTextFile(markdownToPlainText(fullContent), `sentiment.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title="Downloaden">
                                             ⬇️
                                         </button>
                                         <button onClick={() => {
                                             const { subject, body } = generateEmailContent(t('sentiment'), fullContent);
                                             copyToClipboardForEmail(subject, body);
-                                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                        }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title="Kopiëren voor e-mail">
                                             ✉️
                                         </button>
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <div className="overflow-y-auto max-h-[calc(70vh-120px)] space-y-6">
+                        <div className="overflow-y-auto max-h-[calc(80vh-120px)] space-y-6">
                             <div>
                                 <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{t('sentimentSummary')}</h4>
                                 <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{renderMarkdown(sentimentAnalysisResult.summary)}</p>
@@ -9581,7 +9910,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
         if (activeView === 'keyword') {
             return (
-                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                     <div className="absolute top-4 right-8">
                         <div 
                             ref={actionButtonsRef}
@@ -9593,7 +9922,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                 aria-label={t('actions')}
                                 onClick={() => setShowActionButtons(!showActionButtons)}
-                                title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                title={t('actions', 'Acties')}
                             >
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <circle cx="12" cy="5" r="2"/>
@@ -9607,7 +9936,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     onMouseEnter={() => setShowActionButtons(true)}
                                     onMouseLeave={() => setShowActionButtons(false)}
                                 >
-                                    <button onClick={() => handleGenerateKeywordAnalysis()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                    <button onClick={() => handleGenerateKeywordAnalysis()} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={t('regenerate', 'Opnieuw genereren')}>
                                         🔄
                                     </button>
                                     <button onClick={() => {
@@ -9622,7 +9951,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             return parts.join('\n');
                                         })();
                                         copyToClipboard(markdownToPlainText(txt));
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
                                         <CopyIcon className="w-5 h-5" />
                                     </button>
                                     <button onClick={() => {
@@ -9637,7 +9966,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             return parts.join('\n');
                                         })();
                                         downloadTextFile(txt, 'keyword-analysis.txt');
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title="Downloaden">
                                         ⬇️
                                     </button>
                                     <button onClick={() => {
@@ -9653,7 +9982,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         })();
                                         const { subject, body } = generateEmailContent(t('keywordAnalysis'), content);
                                         copyToClipboardForEmail(subject, body);
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title="Kopiëren voor e-mail">
                                         ✉️
                                     </button>
                                 </div>
@@ -9663,7 +9992,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     {loadingText && !keywordAnalysis && <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>}
                     {keywordAnalysis && keywordAnalysis.length === 0 && !loadingText && <p>{t('noContent')}</p>}
                     {keywordAnalysis && keywordAnalysis.length > 0 && (
-                        <div className="overflow-y-auto max-h-[calc(70vh-120px)] space-y-6">
+                        <div className="overflow-y-auto max-h-[calc(80vh-120px)] space-y-6">
                             {keywordAnalysis.map((topic, index) => (
                                 <div key={`keyword-topic-${index}-${topic.topic || 'untitled'}`} className="p-4 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 rounded-xl">
                                     <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{topic.topic}</h4>
@@ -9688,7 +10017,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
         if (activeView === 'storytelling') {
             return (
-                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                     <div className="absolute top-4 right-4 flex gap-2">
                         <button onClick={() => {
                             const txt = (() => {
@@ -9730,7 +10059,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     </div>
                     {loadingText && !storytellingData && <div className="flex items-center justify-center p-8 text-slate-600 dark:text-slate-300"><LoadingSpinner className="w-6 h-6 mr-3" /> {loadingText}...</div>}
                     {storytellingData && (
-                        <div className="overflow-y-auto max-h-[calc(70vh-120px)] space-y-6">
+                        <div className="overflow-y-auto max-h-[calc(80vh-120px)] space-y-6">
                             <div>
                                 <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400 mb-2">{t('storytelling')}</h4>
                                 <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{renderMarkdown(storytellingData.story)}</p>
@@ -9747,7 +10076,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             }
             
             return (
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     <div className="mb-6">
                         <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400 mb-4">Business Case Generator</h3>
                         
@@ -9755,38 +10084,119 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             {/* Business Case Type */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Business Case Type
+                                    {t('businessCaseTypeLabel', 'Business Case Type')}
                                 </label>
-                                <select 
-                                    value={businessCaseData?.businessCaseType || 'Kostenbesparing'} 
-                                    onChange={(e) => setBusinessCaseData(prev => ({ ...prev, businessCaseType: e.target.value } as BusinessCaseData))}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                                >
-                                    <option value="Kostenbesparing">Kostenbesparing – hoe de oplossing processen efficiënter maakt en kosten verlaagt.</option>
-                                    <option value="Omzetgroei">Omzetgroei – hoe de oplossing nieuwe markten opent of verkoop vergroot.</option>
-                                    <option value="Innovatie">Innovatie / Concurrentievoordeel – hoe de oplossing helpt om voorop te blijven in de markt.</option>
-                                    <option value="Risicovermindering">Risicovermindering – hoe de oplossing compliance, veiligheid of betrouwbaarheid verhoogt.</option>
-                                    <option value="Klanttevredenheid">Klanttevredenheid & Retentie – hoe de oplossing de ervaring van klanten of medewerkers verbetert.</option>
-                                    <option value="Schaalbaarheid">Schaalbaarheid & Toekomstbestendigheid – hoe de oplossing mee kan groeien met de organisatie.</option>
-                                </select>
+                                {(() => {
+                                  // Build translated list of business case types (names + descriptions)
+                                  const types: { id: string; name: string; description: string }[] = [
+                                    { id: 'costSavings', name: t('costSavings', 'Cost savings'), description: t('costSavingsDescription', 'How the solution makes processes more efficient and reduces costs.') },
+                                    { id: 'revenueGrowth', name: t('revenueGrowth', 'Revenue growth'), description: t('revenueGrowthDescription', 'How the solution opens new markets or increases sales.') },
+                                    { id: 'innovation', name: t('innovation', 'Innovation / Competitive advantage'), description: t('innovationDescription', 'How the solution helps to stay ahead in the market.') },
+                                    { id: 'riskReduction', name: t('riskReduction', 'Risk reduction'), description: t('riskReductionDescription', 'How the solution increases compliance, security or reliability.') },
+                                    { id: 'customerSatisfaction', name: t('customerSatisfaction', 'Customer satisfaction & Retention'), description: t('customerSatisfactionDescription', 'How the solution improves the experience of customers or employees.') },
+                                    { id: 'scalability', name: t('scalability', 'Scalability & Future-proofing'), description: t('scalabilityDescription', 'How the solution can grow with the organization.') },
+                                    // New expanded options
+                                    { id: 'employeeProductivityEngagement', name: t('businessCaseTypes.employeeProductivityEngagement.name', 'Employee Productivity & Engagement'), description: t('businessCaseTypes.employeeProductivityEngagement.description', 'How the solution improves employee productivity and satisfaction.') },
+                                    { id: 'sustainabilityCsr', name: t('businessCaseTypes.sustainabilityCsr.name', 'Sustainability & CSR'), description: t('businessCaseTypes.sustainabilityCsr.description', 'How the solution contributes to environmental goals, social responsibility, or ESG compliance.') },
+                                    { id: 'qualityImprovement', name: t('businessCaseTypes.qualityImprovement.name', 'Quality Improvement'), description: t('businessCaseTypes.qualityImprovement.description', 'How the solution enhances the quality of products, services, or processes.') },
+                                    { id: 'dataInsights', name: t('businessCaseTypes.dataInsights.name', 'Data & Insights'), description: t('businessCaseTypes.dataInsights.description', 'How the solution enables better data collection, analysis, and decision-making.') },
+                                    { id: 'marketShareIncrease', name: t('businessCaseTypes.marketShareIncrease.name', 'Market Share Increase'), description: t('businessCaseTypes.marketShareIncrease.description', 'How the solution helps to capture a larger portion of the market.') },
+                                    { id: 'brandReputationImage', name: t('businessCaseTypes.brandReputationImage.name', 'Brand Reputation & Image'), description: t('businessCaseTypes.brandReputationImage.description', "How the solution strengthens the brand's image and perception.") },
+                                    { id: 'complianceRegulation', name: t('businessCaseTypes.complianceRegulation.name', 'Compliance & Regulation'), description: t('businessCaseTypes.complianceRegulation.description', 'How the solution helps to meet legal requirements and industry standards.') },
+                                    { id: 'flexibilityAgility', name: t('businessCaseTypes.flexibilityAgility.name', 'Flexibility & Agility'), description: t('businessCaseTypes.flexibilityAgility.description', 'How the solution makes the organization more agile to respond quickly to changes.') },
+                                    { id: 'channelExpansion', name: t('businessCaseTypes.channelExpansion.name', 'Channel Expansion'), description: t('businessCaseTypes.channelExpansion.description', 'How the solution opens new sales or communication channels.') },
+                                    { id: 'timeSavings', name: t('businessCaseTypes.timeSavings.name', 'Time Savings'), description: t('businessCaseTypes.timeSavings.description', 'How the solution generates significant time savings for specific tasks or teams.') },
+                                    { id: 'resourceOptimization', name: t('businessCaseTypes.resourceOptimization.name', 'Resource Optimization'), description: t('businessCaseTypes.resourceOptimization.description', 'How the solution makes the use of resources (staff, materials, technology) more efficient.') },
+                                    { id: 'productDifferentiation', name: t('businessCaseTypes.productDifferentiation.name', 'Product Differentiation'), description: t('businessCaseTypes.productDifferentiation.description', 'How the solution makes a product or service unique compared to competitors.') },
+                                    { id: 'operationalEfficiency', name: t('businessCaseTypes.operationalEfficiency.name', 'Operational Efficiency'), description: t('businessCaseTypes.operationalEfficiency.description', 'How the solution improves the effectiveness and speed of operational processes.') },
+                                    { id: 'securityDataProtection', name: t('businessCaseTypes.securityDataProtection.name', 'Security & Data Protection'), description: t('businessCaseTypes.securityDataProtection.description', 'How the solution enhances the security of data and systems.') },
+                                    { id: 'innovationCulture', name: t('businessCaseTypes.innovationCulture.name', 'Innovation Culture'), description: t('businessCaseTypes.innovationCulture.description', 'How the solution fosters a culture of innovation and experimentation within the organization.') },
+                                    { id: 'supplierRelationships', name: t('businessCaseTypes.supplierRelationships.name', 'Supplier Relationships'), description: t('businessCaseTypes.supplierRelationships.description', 'How the solution improves collaboration with suppliers or creates procurement advantages.') },
+                                    { id: 'fasterTimeToMarket', name: t('businessCaseTypes.fasterTimeToMarket.name', 'Faster Time-to-Market'), description: t('businessCaseTypes.fasterTimeToMarket.description', 'How the solution shortens the time required to launch new products or services.') },
+                                    { id: 'customerSegmentationPrecision', name: t('businessCaseTypes.customerSegmentationPrecision.name', 'Customer Segmentation Precision'), description: t('businessCaseTypes.customerSegmentationPrecision.description', 'How the solution helps to more precisely identify and target customer segments.') },
+                                    { id: 'strategicAlignment', name: t('businessCaseTypes.strategicAlignment.name', 'Strategic Alignment'), description: t('businessCaseTypes.strategicAlignment.description', 'How the solution contributes to better alignment of projects and initiatives with the business strategy.') },
+                                  ];
+
+                                  const selectedName = businessCaseData?.businessCaseType || types[0].name;
+
+                                  return (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                      {types.map(type => (
+                                        <button
+                                          key={type.id}
+                                          type="button"
+                                          onClick={() => setBusinessCaseData(prev => ({ ...prev, businessCaseType: type.name } as BusinessCaseData))}
+                                          className={`text-left p-3 border rounded-md transition-colors ${selectedName === type.name ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20' : 'border-gray-300 dark:border-slate-600 hover:border-cyan-500'}`}
+                                          title={type.description}
+                                        >
+                                          <div className="font-medium text-slate-800 dark:text-slate-100">{type.name}</div>
+                                          <div className="text-xs text-slate-600 dark:text-slate-300 mt-1">{type.description}</div>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
                             </div>
 
-                            {/* Internet Verification */}
+                            {/* Target Audience / Stakeholders */}
                             <div>
-                                <label className="flex items-center gap-3">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={businessCaseData?.useInternetVerification || false} 
-                                        onChange={(e) => setBusinessCaseData(prev => ({ ...prev, useInternetVerification: e.target.checked } as BusinessCaseData))}
-                                        className="rounded border-gray-300 text-cyan-500 focus:ring-cyan-500"
-                                    />
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                                        Internet verificatie (grounding) - Ja
-                                    </span>
-                                </label>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                    Vul aan met actuele marktdata en relevante trends van internet
-                                </p>
+                                {(() => {
+                                  const opts = [
+                                    t('businessCaseTargetAudienceOptions.boardOfDirectors', 'Board of Directors'),
+                                    t('businessCaseTargetAudienceOptions.investors', 'Investors'),
+                                    t('businessCaseTargetAudienceOptions.teamLeaders', 'Team Leaders'),
+                                    t('businessCaseTargetAudienceOptions.departmentHeads', 'Department Heads')
+                                  ];
+                                  return (
+                                    <>
+                                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        {t('businessCaseTargetAudienceQuestion', 'Which audience or stakeholders do you want to persuade?')}
+                                      </label>
+                                      <select
+                                        value={businessCaseData?.targetAudience ?? ''}
+                                        onChange={(e) => setBusinessCaseData(prev => ({ ...prev, targetAudience: e.target.value } as BusinessCaseData))}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                                      >
+                                        {/* Empty option (no general audience) */}
+                                        <option value="">{t('businessCaseTargetAudienceOptions.none', 'None')}</option>
+                                        {[
+                                          t('businessCaseTargetAudienceOptions.boardOfDirectors', 'Board of Directors'),
+                                          t('businessCaseTargetAudienceOptions.investors', 'Investors'),
+                                          t('businessCaseTargetAudienceOptions.teamLeaders', 'Team Leaders'),
+                                          t('businessCaseTargetAudienceOptions.colleagues', "Colleagues")
+                                        ].map(o => (<option key={o} value={o}>{o}</option>))}
+                                      </select>
+                                    </>
+                                  );
+                                })()}
+                            </div>
+
+                            {/* Business Case Length */}
+                            <div>
+                                {(() => {
+                                  const L = {
+                                    concise: t('businessCaseLengthOptions.concise', 'Concise'),
+                                    extensive: t('businessCaseLengthOptions.extensive', 'Extensive'),
+                                    very_extensive: t('businessCaseLengthOptions.very_extensive', 'Very extensive')
+                                  };
+                                  return (
+                                    <>
+                                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        {t('businessCaseLength', 'Business case length')}
+                                      </label>
+                                      <select
+                                        value={businessCaseData?.length || 'concise'}
+                                        onChange={(e) => setBusinessCaseData(prev => ({ ...prev, length: (e.target.value as any) }) as BusinessCaseData)}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                                      >
+                                        <option value="concise">{L.concise}</option>
+                                        <option value="extensive">{L.extensive}</option>
+                                        <option value="very_extensive">{L.very_extensive}</option>
+                                      </select>
+                                      {/* Removed strict hint from UI; still enforced in AI prompt */}
+                                    </>
+                                  );
+                                })()}
                             </div>
 
                             {/* Generate Button */}
@@ -9795,7 +10205,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     onClick={() => handleGenerateBusinessCase()}
                                     className="w-full px-4 py-2 text-sm bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
                                 >
-                                    Genereren
+                                    {t('generate', 'Generate')}
                                 </button>
                             </div>
                         </div>
@@ -9825,11 +10235,23 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                                         ✉️
                                     </button>
+                                    {/* Move Business Case to transcript (plain text) */}
+                                    <button
+                                        onClick={() => setShowBusinessCaseMoveToTranscriptModal(true)}
+                                        className="p-2 text-white bg-green-600 hover:bg-green-700 rounded-full transition-colors text-sm px-3"
+                                        aria-label={t('aiDiscussion.moveToTranscript', 'Verplaats naar transcript')}
+                                        title={t('aiDiscussion.moveToTranscript', 'Verplaats naar transcript')}
+                                    >
+                                        {t('aiDiscussion.moveToTranscript', 'Verplaats naar transcript')}
+                                    </button>
                                 </div>
                             </div>
                             <div className="mb-4 text-sm text-slate-600 dark:text-slate-400">
                                 <p><strong>Type:</strong> {businessCaseData.businessCaseType}</p>
-                                <p><strong>Internet verificatie:</strong> {businessCaseData.useInternetVerification ? 'Ja' : 'Nee'}</p>
+                                {businessCaseData.targetAudience && (
+                                  <p><strong>{t('businessCaseTargetAudienceLabel', 'Target Audience / Stakeholders')}:</strong> {businessCaseData.targetAudience}</p>
+                                )}
+                                <p><strong>{t('businessCaseLength', 'Length')}:</strong> {businessCaseData.length === 'concise' ? t('businessCaseLengthOptions.concise', 'Concise') : businessCaseData.length === 'extensive' ? t('businessCaseLengthOptions.extensive', 'Extensive') : t('businessCaseLengthOptions.very_extensive', 'Very extensive')}</p>
                             </div>
                             <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{renderMarkdown(businessCaseData.businessCase)}</p>
                         </div>
@@ -9844,9 +10266,81 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             );
         }
 
+        if (activeView === 'specials') {
+            if (import.meta && (import.meta as any).env && (import.meta as any).env.DEV) {
+                console.debug('🎯 [App] render Specials tab', {
+                    userId: user?.uid,
+                    transcriptLen: transcript?.length || 0,
+                    summaryLen: summary?.length || 0
+                });
+            }
+            return (
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
+                    <SpecialsTab
+                        transcript={transcript}
+                        summary={summary}
+                        language={outputLang}
+                        appLanguage={uiLang}
+                        userId={user?.uid || null}
+                        userTier={userSubscription}
+                        t={t}
+                        onEmailContent={(content: string) => {
+                            setEmailContent(content);
+                            setActiveView('email');
+                        }}
+                        onMoveToTranscript={async (content: string) => {
+                            setTranscript(content);
+                            // Trigger RecapHorizonPanel full reset by bumping startStamp
+                            setRecordingStartMs(Date.now());
+                            // Reset dropdowns to default values
+                            setMainMode('transcript');
+                            setSelectedAnalysis(null);
+                            // Clear all RecapHorizon panel content for new session
+                            setSummary('');
+                            setFaq('');
+                            setLearningDoc('');
+                            setFollowUpQuestions('');
+                            setKeywordAnalysis(null);
+                            setSentimentAnalysisResult(null);
+                            setChatHistory([]);
+                            setMindmapMermaid('');
+                            setExecutiveSummaryData(null);
+                            setStorytellingData(null);
+                            setBusinessCaseData(null);
+                            setBlogData(null);
+                            setExplainData(null);
+                            setTeachMeData(null);
+                            setThinkingPartnerAnalysis('');
+                            setSelectedThinkingPartnerTopic('');
+                            setSelectedThinkingPartner(null);
+                            setOpportunitiesData(null);
+                            setMckinseyAnalysis(null);
+                            setSelectedMckinseyTopic('');
+                            setSelectedMckinseyRole('');
+                            setSelectedMckinseyFramework('');
+                            setSocialPostData(null);
+                            setSocialPostXData(null);
+                            setQuizQuestions([]);
+                            // Increment session counter for new session
+                            if (authState.user?.uid) {
+                                try {
+                                    await incrementUserMonthlySessions(authState.user.uid);
+                                } catch (error) {
+                                    console.error('Failed to increment session counter:', error);
+                                }
+                            }
+                            // Switch to transcript view to show the new transcript
+                            setActiveView('transcript');
+                        }}
+                        isGenerating={loadingText !== ''}
+                    />
+                </div>
+            );
+        }
+
         if (activeView === 'email') {
             return (
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     <EmailCompositionTab
                         transcript={transcript}
                         summary={summary}
@@ -9854,7 +10348,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         userId={user.uid}
                         userTier={userSubscription}
                         onPreviewEmail={(emailData: EmailData) => {
-                            console.log('Preview email:', emailData);
+                            // Preview email functionality
                             // You can implement email preview functionality here
                         }}
                         onOpenMailto={(emailData: EmailData) => {
@@ -9868,7 +10362,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         }
         if (activeView === 'explain') {
             return (
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     {/* Inline Explain Options */}
                     <div className="mb-4 p-3 rounded border border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40">
                         <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-3">{t('explainOptional')}</div>
@@ -9913,7 +10407,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     {loadingText && !explainData?.explanation ? (
                         <BlurredLoadingOverlay loadingText={`${loadingText}...`} />
                     ) : explainData?.explanation ? (
-                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                             <div className="absolute top-4 right-8">
                                 <div 
                                     ref={actionButtonsRef}
@@ -9925,7 +10419,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                         aria-label={t('actions')}
                                         onClick={() => setShowActionButtons(!showActionButtons)}
-                                        title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                        title={t('actions', 'Acties')}
                                     >
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                             <circle cx="12" cy="5" r="2"/>
@@ -9939,26 +10433,26 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                             onMouseEnter={() => setShowActionButtons(true)}
                                             onMouseLeave={() => setShowActionButtons(false)}
                                         >
-                                            <button onClick={() => handleGenerateExplain(explainOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                            <button onClick={() => handleGenerateExplain(explainOptions)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={t('regenerate', 'Opnieuw genereren')}>
                                                 🔄
                                             </button>
-                                            <button onClick={() => copyToClipboard(markdownToPlainText(explainData.explanation))} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                            <button onClick={() => copyToClipboard(markdownToPlainText(explainData.explanation))} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => downloadTextFile(markdownToPlainText(explainData.explanation), 'explain.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                            <button onClick={() => downloadTextFile(markdownToPlainText(explainData.explanation), 'explain.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title="Downloaden">
                                                 ⬇️
                                             </button>
                                             <button onClick={() => {
                                                 const { subject, body } = generateEmailContent(t('explain'), explainData.explanation);
                                                 copyToClipboardForEmail(subject, body);
-                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title="Kopiëren voor e-mail">
                                                 ✉️
                                             </button>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                            <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                            <div className="overflow-y-auto max-h-[calc(80vh-120px)]">
                                 <div className="prose prose-slate dark:prose-invert max-w-none">
                                     {renderMarkdown(explainData.explanation)}
                                 </div>
@@ -9973,7 +10467,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
         if (activeView === 'teachMe') {
             return (
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     {/* Loading State */}
                     {isGeneratingTeachMe && (
                         <BlurredLoadingOverlay text={loadingText || t('teachMeGenerating')} />
@@ -10068,7 +10562,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                         aria-label={t('actions')}
                                         onClick={() => setShowActionButtons(!showActionButtons)}
-                                        title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                        title={t('actions', 'Acties')}
                                     >
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                             <circle cx="12" cy="5" r="2"/>
@@ -10086,7 +10580,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 onClick={() => setTeachMeStep('topicSelection')} 
                                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" 
                                                 aria-label={t('teachMeNewTopic')} 
-                                                title={window.innerWidth > 768 ? t('teachMeNewTopic') : undefined}
+                                                title={t('teachMeNewTopic')}
                                             >
                                                 🔄
                                             </button>
@@ -10094,7 +10588,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 onClick={() => copyToClipboard(markdownToPlainText(teachMeData.content))} 
                                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" 
                                                 aria-label={t('copyContent')} 
-                                                title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}
+                                                title={t('copyContent', 'Kopiëren')}
                                             >
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
@@ -10102,7 +10596,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 onClick={() => downloadTextFile(markdownToPlainText(teachMeData.content), `teach-me-${teachMeData.topic.title.toLowerCase().replace(/\s+/g, '-')}.txt`)} 
                                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" 
                                                 aria-label="Download" 
-                                                title={window.innerWidth > 768 ? 'Downloaden' : undefined}
+                                                title="Downloaden"
                                             >
                                                 ⬇️
                                             </button>
@@ -10113,7 +10607,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 }} 
                                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" 
                                                 aria-label="Copy for Email" 
-                                                title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}
+                                                title="Kopiëren voor e-mail"
                                             >
                                                 ✉️
                                             </button>
@@ -10169,7 +10663,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
         if (activeView === 'showMe') {
             return (
-                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     {/* Loading State */}
                     {(isGeneratingShowMe || isSearchingShowMeContent) && (
                         <BlurredLoadingOverlay text={loadingText || t('showMeGenerating')} />
@@ -10224,7 +10718,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                                         aria-label={t('actions')}
                                         onClick={() => setShowActionButtons(!showActionButtons)}
-                                        title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                                        title={t('actions', 'Acties')}
                                     >
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                             <circle cx="12" cy="5" r="2"/>
@@ -10245,7 +10739,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 }} 
                                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" 
                                                 aria-label={t('showMeNewTopic')} 
-                                                title={window.innerWidth > 768 ? t('showMeNewTopic') : undefined}
+                                                title={t('showMeNewTopic')}
                                             >
                                                 🔄
                                             </button>
@@ -10256,7 +10750,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 }} 
                                                 className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" 
                                                 aria-label={t('copyContent')} 
-                                                title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}
+                                                title={t('copyContent', 'Kopiëren')}
                                             >
                                                 <CopyIcon className="w-5 h-5" />
                                             </button>
@@ -10427,55 +10921,52 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     sessionId={sessionId}
                     onDiscussionComplete={(report) => {
                         // Handle discussion completion
-                        console.log('Discussion completed:', report);
+                        // Discussion completed
                     }}
-                    onMoveToTranscript={(reportContent) => {
-                        // Set new transcript content
+                    onMoveToTranscript={async (reportContent) => {
                         setTranscript(reportContent);
-                        
-                        // Clear all analysis data to start fresh session
+                        // Trigger RecapHorizonPanel full reset by bumping startStamp
+                        setRecordingStartMs(Date.now());
+                        // Reset dropdowns to default values
+                        setMainMode('transcript');
+                        setSelectedAnalysis(null);
+                        // Clear all RecapHorizon panel content for new session
                         setSummary('');
                         setFaq('');
                         setLearningDoc('');
                         setFollowUpQuestions('');
-                        setLearnings('');
-                        setFollowup('');
                         setKeywordAnalysis(null);
                         setSentimentAnalysisResult(null);
-                        setBlogData('');
+                        setChatHistory([]);
+                        setMindmapMermaid('');
                         setExecutiveSummaryData(null);
                         setStorytellingData(null);
                         setBusinessCaseData(null);
+                        setBlogData(null);
                         setExplainData(null);
                         setTeachMeData(null);
-                        setShowMeData(null);
                         setThinkingPartnerAnalysis('');
+                        setSelectedThinkingPartnerTopic('');
+                        setSelectedThinkingPartner(null);
                         setOpportunitiesData(null);
                         setMckinseyAnalysis(null);
-                        setQuizQuestions(null);
+                        setSelectedMckinseyTopic('');
+                        setSelectedMckinseyRole('');
+                        setSelectedMckinseyFramework('');
                         setSocialPostData(null);
                         setSocialPostXData(null);
-                        
-                        // Clear chat history
-                        setChatHistory([]);
-                        
-                        // Clear mindmap
-                        setMindmapText('');
-                        
-                        // Reset UI state
-                        setMainMode('analysis'); // Set to analysis mode so dropdown is visible
-                        setSelectedAnalysis(''); // Clear analysis selection
-                        setActiveView('main'); // Switch to main view
-                        
-                        // Update recording start time to trigger new session in RecapHorizonPanel
-                        setRecordingStartMs(Date.now());
-                        
-                        // Clear any errors
-                        setError(null);
-                        setQuizError(null);
-                        
-                        // Show success message
-                        displayToast(t('aiDiscussion.transcriptReplaced', 'Transcript succesvol vervangen. Nieuwe sessie gestart.'), 'success');
+                        setQuizQuestions([]);
+                        // Increment session counter for new session
+                        if (authState.user?.uid) {
+                            try {
+                                await incrementUserMonthlySessions(authState.user.uid);
+                                // Session counter incremented successfully
+                            } catch (error) {
+                                console.error('Failed to increment session counter:', error);
+                            }
+                        }
+                        // Switch to transcript view to show the new transcript
+                        setActiveView('transcript');
                     }}
                 />
             );
@@ -10494,7 +10985,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     sessionId={sessionId}
                     onOpportunitiesComplete={(data) => {
                         // Handle opportunity completion
-                        console.log('Opportunity completed:', data);
+                        // Opportunity completed
                         setOpportunitiesData(data);
                     }}
                 />
@@ -10693,7 +11184,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
         const content = analysisContent[activeView];
         return (
-            <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[70vh] transition-colors">
+            <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
                 <div className="absolute top-4 right-2 sm:right-8">
                     <div 
                         ref={actionButtonsRef}
@@ -10705,7 +11196,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
                             aria-label={t('actions')}
                             onClick={() => setShowActionButtons(!showActionButtons)}
-                            title={window.innerWidth > 768 ? t('actions', 'Acties') : undefined}
+                            title={t('actions', 'Acties')}
                         >
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <circle cx="12" cy="5" r="2"/>
@@ -10722,36 +11213,50 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 {activeView !== 'transcript' && (
                                     <button onClick={() => {
                                         // Regenerate content based on activeView
-                                        if (['summary', 'faq', 'learning', 'followUp'].includes(activeView)) {
-                                            handleGenerateAnalysis(activeView);
-                                        } else if (activeView === 'exec') {
-                                            handleGenerateExecutiveSummary();
-                                        } else if (activeView === 'keyword') {
-                                            handleGenerateKeywordAnalysis();
-                                        } else if (activeView === 'sentiment') {
-                                            handleAnalyzeSentiment();
-                                        } else if (activeView === 'blog') {
-                                            handleGenerateBlog();
-                                        } else if (activeView === 'businessCase') {
-                                            handleGenerateBusinessCase();
-                                        } else if (activeView === 'quiz') {
-                                            handleGenerateQuiz();
-                                        } else if (activeView === 'mindmap') {
-                                            handleGenerateMindmap();
-                                        } else if (activeView === 'storytelling') {
-                                            handleGenerateStorytelling();
+                                        const currentView = activeView as ViewType;
+                                        switch (currentView) {
+                                            case 'summary':
+                                            case 'faq':
+                                            case 'learning':
+                                            case 'followUp':
+                                                handleGenerateAnalysis(currentView);
+                                                break;
+                                            case 'exec':
+                                                handleGenerateExecutiveSummary();
+                                                break;
+                                            case 'keyword':
+                                                handleGenerateKeywordAnalysis();
+                                                break;
+                                            case 'sentiment':
+                                                handleAnalyzeSentiment();
+                                                break;
+                                            case 'blog':
+                                                handleGenerateBlog();
+                                                break;
+                                            case 'businessCase':
+                                                handleGenerateBusinessCase();
+                                                break;
+                                            case 'quiz':
+                                                handleGenerateQuiz();
+                                                break;
+                                            case 'mindmap':
+                                                handleGenerateMindmap();
+                                                break;
+                                            case 'storytelling':
+                                                handleGenerateStorytelling();
+                                                break;
                                         }
-                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={window.innerWidth > 768 ? t('regenerate', 'Opnieuw genereren') : undefined}>
+                                    }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={t('regenerate', 'Opnieuw genereren')}>
                                         🔄
                                     </button>
                                 )}
                                 <button onClick={async () => {
                                     await copyToClipboard(content);
                                     displayToast(t('contentCopied', 'Content copied to clipboard!'));
-                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={window.innerWidth > 768 ? t('copyContent', 'Kopiëren') : undefined}>
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
                                     <CopyIcon className="w-5 h-5" />
                                 </button>
-                                <button onClick={() => downloadTextFile(markdownToPlainText(content), `${activeView}.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title={window.innerWidth > 768 ? 'Downloaden' : undefined}>
+                                <button onClick={() => downloadTextFile(markdownToPlainText(content), `${activeView}.txt`)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title="Downloaden">
                                     ⬇️
                                 </button>
                                 <button onClick={() => {
@@ -10760,14 +11265,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     const fnName = found ? found.label() : activeView;
                                     const { subject, body } = generateEmailContent(fnName, content || '');
                                     copyToClipboardForEmail(subject, body);
-                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title={window.innerWidth > 768 ? 'Kopiëren voor e-mail' : undefined}>
+                                }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title="Kopiëren voor e-mail">
                                     ✉️
                                 </button>
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+                <div className="overflow-y-auto max-h-[calc(80vh-120px)]">
                     {activeView === 'transcript' && emailAddresses && emailAddresses.length > 0 && (
                         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                             <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3">📧 Gevonden e-mailadressen:</h3>
@@ -10829,7 +11334,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                  selectedThinkingPartnerTopic={selectedThinkingPartnerTopic}
                  selectedThinkingPartner={selectedThinkingPartner}
                  opportunitiesData={opportunitiesData}
-                 mckinseyAnalysis={mckinseyAnalysis}
+                 mckinseyAnalysis={mckinseyAnalysis?.analysis}
                  selectedMckinseyTopic={selectedMckinseyTopic}
                  selectedMckinseyRole={selectedMckinseyRole}
                  selectedMckinseyFramework={selectedMckinseyFramework}
@@ -10843,13 +11348,13 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                  onGenerateSocialPost={async (analysisType, count) => {
                      // Use getTranscriptSlice to limit transcript length and prevent Gemini API extended feed limit
                      const transcriptSlice = getTranscriptSlice(transcript, 12000); // Same limit as other social functions
-                     const { validateAndSanitizeAIDiscussion } = await import('./src/utils/security');
-                     const validation = validateAndSanitizeAIDiscussion(transcriptSlice, 500000);
+                     const { validateAndSanitizeForAI } = await import('./src/utils/security');
+                     const validation = validateAndSanitizeForAI(transcriptSlice, 500000);
                      if (!validation.isValid || !validation.sanitized.trim()) {
                          displayToast(t('transcriptEmpty'), 'error');
                          return;
                      }
-                     console.log('onGenerateSocialPost called', { analysisType, count, sanitizedLength: validation.sanitized.length });
+                     // Social post generation called
                      await generateSocialPost(analysisType, validation.sanitized, count);
                  }}
                  isGeneratingSocialPost={isGenerating}
@@ -10912,7 +11417,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             if (newMode === 'transcript') {
                                 setActiveView('transcript');
                             } else if (newMode === 'analysis') {
-                                setActiveView(selectedAnalysis);
+                                // Only set active view if an analysis has been selected
+                                if (selectedAnalysis) {
+                                    setActiveView(selectedAnalysis);
+                                }
                                 // Scroll to top when switching to analysis mode
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                             } else if (newMode === 'actions') {
@@ -10923,7 +11431,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     >
                         <option value="transcript">Transcript</option>
                         <option value="analysis">{t('analysisResults')}</option>
-                        <option value="actions">Acties & Export</option>
+                        <option value="actions">{t('advancedFunctions')}</option>
                     </select>
                 </div>
                 
@@ -10934,7 +11442,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             {t('chooseAnalysisLabel')}
                         </label>
                         <select
-                            value={selectedAnalysis}
+                            value={selectedAnalysis || ''}
                             onChange={(e) => {
                                 const newAnalysis = e.target.value as ViewType;
                                 setSelectedAnalysis(newAnalysis);
@@ -10972,9 +11480,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
                                 <option value="mckinsey">{t('mckinsey')}</option>
                             )}
-                            {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) && (
-                                <option value="aiDiscussion">{t('aiDiscussion')}</option>
-                            )}
+
                             {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) && (
                                 <option value="email">{t('email')}</option>
                             )}
@@ -11005,16 +11511,36 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             {/* Chat and Business Case buttons */}
                             <button
                                 onClick={() => {
-                                    setActiveView('chat');
-                                    setMainMode('transcript'); // Switch back to transcript mode for chat
-                                }}
-                                disabled={isProcessing || !transcript.trim()}
+                    // Chat knop geklikt
+                    // Switch to analysis mode and open Chat view
+                    setMainMode('analysis');
+                    setSelectedAnalysis('chat');
+                    setActiveView('chat');
+                }}
+                                disabled={isProcessing}
                                 className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChatIcon className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {t('chat')}
+                                    {t('chatWithTranscript')}
                                 </span>
+                            </button>
+                            {/* Specials button */}
+                            <button
+                              onClick={() => {
+                                setMainMode('analysis');
+                                setSelectedAnalysis('specials');
+                                setActiveView('specials');
+                                handleTabClick('specials');
+                              }}
+                              disabled={isProcessing}
+                              className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={t('specials')}
+                            >
+                              <SparklesIcon className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {t('specials')}
+                              </span>
                             </button>
                         </div>
                     </div>
@@ -11026,6 +11552,13 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         </div>
     );
   };
+
+
+
+
+
+
+
   const renderChatView = () => (
     <div className="flex flex-col h-[50vh] bg-white dark:bg-slate-800 rounded-b-lg transition-colors">
         <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-slate-700">
@@ -11038,6 +11571,16 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 >
                     {isTTSEnabled ? <SpeakerIcon className="w-5 h-5" /> : <SpeakerOffIcon className="w-5 h-5" />}
                     <span>{t('readAnswers')}</span>
+                </button>
+            )}
+            {/* Move chat conversation to transcript (plain text) */}
+            {chatHistory.length > 0 && (
+                <button
+                    onClick={() => setShowChatMoveToTranscriptModal(true)}
+                    className="ml-2 px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    title={t('aiDiscussion.moveToTranscript', 'Verplaats naar transcript')}
+                >
+                    {t('aiDiscussion.moveToTranscript', 'Verplaats naar transcript')}
                 </button>
             )}
         </div>
@@ -11196,7 +11739,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             onShowPricing={() => setShowPricingPage(true)}
             onShowFAQ={() => setShowFAQPage(true)}
             onShowReferralInfo={() => { 
-              console.log('[Referral] Info clicked'); 
+              // Referral info clicked
               setShowInfoPage(false); 
               setShowReferralDashboardPage(false); 
               setShowReferralInfoPage(true); 
@@ -11211,7 +11754,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
               }, 0);
             }}
             onShowReferralDashboard={() => { 
-              console.log('[Referral] Dashboard clicked'); 
+              // Dashboard clicked
               setShowInfoPage(false); 
               setShowReferralInfoPage(false); 
               setShowReferralDashboardPage(true); 
@@ -11270,7 +11813,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                           setFaq('');
                           setLearningDoc('');
                           setFollowUpQuestions('');
-                          setBlogData('');
+                          setBlogData(null);
                           setChatHistory([]);
                           setKeywordAnalysis(null);
                           setSentimentAnalysisResult(null);
@@ -11283,7 +11826,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                           setTeachMeData(null);
                           setActiveView('transcript');
                           setMainMode('analysis');
-                          setSelectedAnalysis('');
+                          setSelectedAnalysis(null);
                           setStatus(RecordingStatus.IDLE);
                           setError(null);
                           setAnonymizationReport(null);
@@ -11311,19 +11854,21 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         onClick={() => setShowInfoPage(false)} 
                         className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
                       >
-                        <span>📊</span>
                         <span>{t('analyse')}</span>
                       </button>
+                      {/* Removed: Prompts import button */}
                     </>
                   ) : (
-                    /* If user has no transcript, show "Start session" */
-                    <button 
-                      onClick={() => setShowInfoPage(false)} 
-                      className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[120px]"
-                    >
-                      <span>🎯</span>
-                      <span>{t('startOrUpload')}</span>
-                    </button>
+                    <>
+                      {/* If user has no transcript, show "Start session" */}
+                      <button 
+                        onClick={() => setShowInfoPage(false)} 
+                        className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[120px]"
+                      >
+                        <span>{t('startOrUpload')}</span>
+                      </button>
+                      {/* Removed: Prompts import button */}
+                    </>
                   )}
                 </>
               )}
@@ -11337,10 +11882,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                       onClick={() => setStatus(RecordingStatus.FINISHED)} 
                       className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-md transition-all text-white bg-cyan-500 hover:bg-cyan-600 h-10 min-w-0 sm:min-w-[100px]"
                     >
-                      <span>📊</span>
                       <span>{t('analyse')}</span>
                     </button>
                   )}
+                  {/* Removed: Prompts import button */}
                 </>
               )}
               {/* Analyse Page - Logged in */}
@@ -11354,7 +11899,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                       setFaq('');
                       setLearningDoc('');
                       setFollowUpQuestions('');
-                      setBlogData('');
+                      setBlogData(null);
                       setChatHistory([]);
                       setKeywordAnalysis(null);
                       setSentimentAnalysisResult(null);
@@ -11367,7 +11912,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                       setTeachMeData(null);
                       setActiveView('transcript');
                       setMainMode('analysis');
-                      setSelectedAnalysis('');
+                      setSelectedAnalysis(null);
                       setStatus(RecordingStatus.IDLE);
                       setError(null);
                       setAnonymizationReport(null);
@@ -11447,13 +11992,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       <AudioLimitModal 
         isOpen={showAudioLimitModal} 
         onClose={() => setShowAudioLimitModal(false)} 
-        userTier={userSubscription}
-        t={t}
-        theme={theme}
-        onShowPricing={() => {
+        currentTier={userSubscription}
+        minutesUsed={0} // TODO: Get actual minutes used
+        monthlyLimit={100} // TODO: Get actual monthly limit based on tier
+        onUpgrade={(tier: SubscriptionTier) => {
+          setUserSubscription(tier);
           setShowAudioLimitModal(false);
-          setShowPricingPage(true);
         }}
+        t={t}
       />
 
 
@@ -12362,9 +12908,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         <input
                           type="radio"
                           name="transcriptionQuality"
-                          value="high"
-                          checked={transcriptionQuality === 'high'}
-                          onChange={(e) => setTranscriptionQuality(e.target.value as 'high' | 'balanced' | 'fast')}
+                          value="accurate"
+                          checked={transcriptionQuality === 'accurate'}
+                          onChange={(e) => setTranscriptionQuality(e.target.value as 'fast' | 'balanced' | 'accurate')}
                           className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 focus:ring-cyan-500 focus:ring-2"
                         />
                         <span className="text-sm text-slate-700 dark:text-slate-300">{t('settingsQualityHigh')}</span>
@@ -12375,7 +12921,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                           name="transcriptionQuality"
                           value="balanced"
                           checked={transcriptionQuality === 'balanced'}
-                          onChange={(e) => setTranscriptionQuality(e.target.value as 'high' | 'balanced' | 'fast')}
+                          onChange={(e) => setTranscriptionQuality(e.target.value as 'fast' | 'balanced' | 'accurate')}
                           className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 focus:ring-cyan-500 focus:ring-2"
                         />
                         <span className="text-sm text-slate-700 dark:text-slate-300">{t('settingsQualityBalanced')}</span>
@@ -12386,7 +12932,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                           name="transcriptionQuality"
                           value="fast"
                           checked={transcriptionQuality === 'fast'}
-                          onChange={(e) => setTranscriptionQuality(e.target.value as 'high' | 'balanced' | 'fast')}
+                          onChange={(e) => setTranscriptionQuality(e.target.value as 'fast' | 'balanced' | 'accurate')}
                           className="w-4 h-4 text-cyan-500 bg-gray-100 border-gray-300 focus:ring-cyan-500 focus:ring-2"
                         />
                         <span className="text-sm text-slate-700 dark:text-slate-300">{t('settingsQualityFast')}</span>
@@ -13035,7 +13581,32 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     {/* Web page help link */}
                                     <div className="mt-3 text-center">
                                         <button onClick={() => setShowWebPageHelp(true)} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
-                                            🌐 {t('webPageHelpTitle')}
+                                            {t('webPageHelpTitle')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Idea Builder Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-amber-300 dark:hover:border-amber-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-8 h-8 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3a7 7 0 00-7 7c0 2.29 1.06 4.33 2.7 5.62A3 3 0 009 18v1a3 3 0 003 3h0a3 3 0 003-3v-1a3 3 0 002.3-2.38A7 7 0 0011 3z" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('ideaBuilderTitle', 'Idea Builder')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('ideaBuilderDesc', 'Generate high-quality ideas and outlines based on topic, audience and goals.')}</p>
+                                    </div>
+                                    <button onClick={() => ideaBuilderModal.open()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-700 text-white hover:from-amber-600 hover:to-orange-700 dark:hover:from-amber-700 dark:hover:to-orange-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3a7 7 0 00-7 7c0 2.29 1.06 4.33 2.7 5.62A3 3 0 009 18v1a3 3 0 003 3h0a3 3 0 003-3v-1a3 3 0 002.3-2.38A7 7 0 0011 3z" />
+                                        </svg>
+                                        <span>{t('ideaBuilderTitle', 'Idea Builder')}</span>
+                                    </button>
+                                    {/* Idea Builder help link */}
+                                    <div className="mt-3 text-center">
+                                        <button onClick={() => { setSessionOptionsHelpMode(true); sessionOptionsModal.open(); }} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                            {t('ideaBuilderHelpTitle', 'Idea Builder Help')}
                                         </button>
                                     </div>
                                 </div>
@@ -13247,11 +13818,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         title={t('upgradeModalTitle')}
       >
         <UpgradeModal
+          isOpen={upgradeModal.isOpen}
+          onClose={upgradeModal.close}
           onUpgrade={(tier: SubscriptionTier) => {
             setUserSubscription(tier);
             upgradeModal.close();
           }}
           message={error || ''}
+          t={t}
         />
       </Modal>
     )}
@@ -13268,6 +13842,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       onEmailImport={() => emailUploadModal.open()}
       onNotionImport={() => notionImportModal.open()}
       onAskExpert={() => expertConfigModal.open()}
+      onIdeaBuilder={() => ideaBuilderModal.open()}
       userSubscription={SubscriptionTier[userSubscription] as unknown as string}
       helpMode={sessionOptionsHelpMode}
       t={t}
@@ -13495,10 +14070,33 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         onAuthorizedAndLoaded={(text) => {
           const sanitizedText = sanitizeTextInput(text);
           setTranscript(sanitizedText);
+          // Trigger RecapHorizonPanel full reset by bumping startStamp
+          setRecordingStartMs(Date.now());
           setStatus(RecordingStatus.FINISHED);
           setActiveView('transcript');
           displayToast(t('webPageStandardSuccess') || 'Successfully processed web page', 'success');
           notionImportModal.close();
+        }}
+      />
+    )}
+
+    {/* Idea Builder Modal */}
+    {ideaBuilderModal.isOpen && (
+      <IdeaBuilderModal
+        isOpen={ideaBuilderModal.isOpen}
+        onClose={ideaBuilderModal.close}
+        t={t}
+        userId={authState.user?.uid || ''}
+        userTier={userSubscription}
+        onGenerate={(text) => {
+          const sanitizedText = sanitizeTextInput(text);
+          setTranscript(sanitizedText);
+          // Trigger RecapHorizonPanel full reset by bumping startStamp
+          setRecordingStartMs(Date.now());
+          setStatus(RecordingStatus.FINISHED);
+          setActiveView('transcript');
+          displayToast(t('ideaBuilderSuccess', 'Ideas generated successfully'), 'success');
+          ideaBuilderModal.close();
         }}
       />
     )}
@@ -13508,9 +14106,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       <NotionIntegrationHelpModal
         isOpen={notionIntegrationHelpModal.isOpen}
         onClose={notionIntegrationHelpModal.close}
-        t={t}
       />
     )}
+
+    {/* Removed: Prompts Import Modal */}
 
     {/* Expert Configuration Modal */}
     {expertConfigModal.isOpen && (
@@ -13525,7 +14124,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       />
      )}
 
-     {/* Expert Chat Modal */}
+    {/* Expert Chat Modal */}
      {expertChatModal.isOpen && expertConfiguration && (
        <ExpertChatModal
          isOpen={expertChatModal.isOpen}
@@ -13539,6 +14138,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
            
            // Set the transcript and switch to analysis view
            setTranscript(transcript);
+           // Trigger RecapHorizonPanel full reset by bumping startStamp
+           setRecordingStartMs(Date.now());
            setStatus(RecordingStatus.FINISHED); // Set to FINISHED to show analysis view
            setActiveView('transcript'); // Show the transcript view so users can see raw text and choose analysis
            expertChatModal.close();
@@ -13553,8 +14154,167 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
          updateTokensAndRefresh={updateTokensAndRefresh}
          userId={user.uid}
          userTier={userSubscription}
-       />
-     )}
+      />
+    )}
+
+    {/* Move Chat Conversation to Transcript Modal */}
+    {showChatMoveToTranscriptModal && (
+      <Modal
+        isOpen={showChatMoveToTranscriptModal}
+        onClose={() => setShowChatMoveToTranscriptModal(false)}
+        title={t('aiDiscussion.moveToTranscriptModal.title', 'Rapport naar transcript verplaatsen')}
+      >
+        <div className="space-y-4">
+          <p className="text-slate-600 dark:text-slate-400">
+            {t('aiDiscussion.moveToTranscriptModal.message', 'Dit rapport wordt het nieuwe transcript en vervangt de huidige inhoud. Het kan daarna gebruikt worden voor verdere analyse met andere opties.')}
+          </p>
+          <p className="text-amber-600 dark:text-amber-400 text-sm font-medium">
+            {t('aiDiscussion.moveToTranscriptModal.warning', 'Let op: De huidige transcript-inhoud wordt permanent vervangen.')}
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              onClick={() => setShowChatMoveToTranscriptModal(false)}
+              className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            >
+              {t('aiDiscussion.moveToTranscriptModal.cancel', 'Annuleren')}
+            </button>
+              <button
+              onClick={async () => {
+                try {
+                  const plain = chatHistory
+                    .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${markdownToPlainText(msg.text || '')}`)
+                    .join('\n\n');
+                  setTranscript(plain);
+                  setMainMode('transcript');
+                  setSelectedAnalysis(null);
+                  // Clear RecapHorizon content for new session
+                  setSummary('');
+                  setFaq('');
+                  setLearningDoc('');
+                  setFollowUpQuestions('');
+                  setKeywordAnalysis(null);
+                  setSentimentAnalysisResult(null);
+                  setChatHistory([]);
+                  setMindmapMermaid('');
+                  setExecutiveSummaryData(null);
+                  setStorytellingData(null);
+                  setBusinessCaseData(null);
+                  setBlogData(null);
+                  setExplainData(null);
+                  setTeachMeData(null);
+                  setThinkingPartnerAnalysis('');
+                  setSelectedThinkingPartnerTopic('');
+                  setSelectedThinkingPartner(null);
+                  setOpportunitiesData(null);
+                  setMckinseyAnalysis(null);
+                  setSelectedMckinseyTopic('');
+                  setSelectedMckinseyRole('');
+                  setSelectedMckinseyFramework('');
+                  setSocialPostData(null);
+                  setSocialPostXData(null);
+                  setQuizQuestions([]);
+                  // Trigger RecapHorizonPanel full reset by bumping startStamp
+                  setRecordingStartMs(Date.now());
+                  if (authState.user?.uid) {
+                    try {
+                      await incrementUserMonthlySessions(authState.user.uid);
+                    } catch (error) {
+                      console.error('Failed to increment session counter:', error);
+                    }
+                  }
+                  setActiveView('transcript');
+                  setShowChatMoveToTranscriptModal(false);
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+            >
+              {t('aiDiscussion.moveToTranscriptModal.confirm', 'Ja, vervang transcript')}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
+
+    {/* Move Business Case to Transcript Modal */}
+    {showBusinessCaseMoveToTranscriptModal && (
+      <Modal
+        isOpen={showBusinessCaseMoveToTranscriptModal}
+        onClose={() => setShowBusinessCaseMoveToTranscriptModal(false)}
+        title={t('aiDiscussion.moveToTranscriptModal.title', 'Rapport naar transcript verplaatsen')}
+      >
+        <div className="space-y-4">
+          <p className="text-slate-600 dark:text-slate-400">
+            {t('aiDiscussion.moveToTranscriptModal.message', 'Dit rapport wordt het nieuwe transcript en vervangt de huidige inhoud. Het kan daarna gebruikt worden voor verdere analyse met andere opties.')}
+          </p>
+          <p className="text-amber-600 dark:text-amber-400 text-sm font-medium">
+            {t('aiDiscussion.moveToTranscriptModal.warning', 'Let op: De huidige transcript-inhoud wordt permanent vervangen.')}
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              onClick={() => setShowBusinessCaseMoveToTranscriptModal(false)}
+              className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            >
+              {t('aiDiscussion.moveToTranscriptModal.cancel', 'Annuleren')}
+            </button>
+              <button
+              onClick={async () => {
+                try {
+                  const txt = `Business Case\n\n${businessCaseData?.businessCase || ''}`;
+                  const plain = markdownToPlainText(txt);
+                  setTranscript(plain);
+                  setMainMode('transcript');
+                  setSelectedAnalysis(null);
+                  // Clear RecapHorizon content for new session
+                  setSummary('');
+                  setFaq('');
+                  setLearningDoc('');
+                  setFollowUpQuestions('');
+                  setKeywordAnalysis(null);
+                  setSentimentAnalysisResult(null);
+                  setChatHistory([]);
+                  setMindmapMermaid('');
+                  setExecutiveSummaryData(null);
+                  setStorytellingData(null);
+                  setBusinessCaseData(null);
+                  setBlogData(null);
+                  setExplainData(null);
+                  setTeachMeData(null);
+                  setThinkingPartnerAnalysis('');
+                  setSelectedThinkingPartnerTopic('');
+                  setSelectedThinkingPartner(null);
+                  setOpportunitiesData(null);
+                  setMckinseyAnalysis(null);
+                  setSelectedMckinseyTopic('');
+                  setSelectedMckinseyRole('');
+                  setSelectedMckinseyFramework('');
+                  setSocialPostData(null);
+                  setSocialPostXData(null);
+                  setQuizQuestions([]);
+                  // Trigger RecapHorizonPanel full reset by bumping startStamp
+                  setRecordingStartMs(Date.now());
+                  if (authState.user?.uid) {
+                    try {
+                      await incrementUserMonthlySessions(authState.user.uid);
+                    } catch (error) {
+                      console.error('Failed to increment session counter:', error);
+                    }
+                  }
+                  setActiveView('transcript');
+                  setShowBusinessCaseMoveToTranscriptModal(false);
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+            >
+              {t('aiDiscussion.moveToTranscriptModal.confirm', 'Ja, vervang transcript')}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
 
      {/* Expert Help Modal */}
      {expertHelpModal.isOpen && (
@@ -13617,7 +14377,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
            setShowQuotaExceededModal(false);
            setShowPricingPage(true);
          }}
-         t={t}
        />
      )}
      
@@ -13627,6 +14386,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
          sessionId={sessionId}
          onExtendSession={handleExtendSession}
          onLogout={handleSessionExpired}
+         t={t}
        />
      )}
 
@@ -13646,9 +14406,11 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
          }}
          onLanguageChange={(lang) => {
            setUiLang(lang as Language);
+           // Persist using the canonical key and update legacy key for compatibility
            localStorage.setItem('uiLanguage', lang);
+           localStorage.setItem('uiLang', lang);
          }}
-       />
+      />
      )}
 
      {/* Email Confirmation Modal */}
@@ -13660,10 +14422,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
            setPendingConfirmationEmail('');
            setConfirmationContext('waitlist');
          }}
-         onConfirm={handleEmailConfirmed}
+         onConfirmed={handleEmailConfirmed}
          email={pendingConfirmationEmail}
          context={confirmationContext}
-         t={t}
        />
      )}
 

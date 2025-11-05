@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Copy, Check } from 'lucide-react';
+import { TranslationFunction } from '../../types';
 
 interface ImageGenerationModalProps {
   isOpen: boolean;
@@ -8,7 +9,7 @@ interface ImageGenerationModalProps {
   imageInstructions?: string;
   onCopyInstructions: () => void;
   instructionsCopied: boolean;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({

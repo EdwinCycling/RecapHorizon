@@ -1,10 +1,11 @@
 import React from 'react';
 import { XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface ImageUploadHelpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const ImageUploadHelpModal: React.FC<ImageUploadHelpModalProps> = ({ isOpen, onClose, t }) => {

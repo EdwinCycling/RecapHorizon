@@ -1,14 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  AIDiscussionTopic, 
-  AIDiscussionGoal, 
-  AIDiscussionRole, 
-  AIDiscussionSession,
-  AIDiscussionReport,
-  AIDiscussionMessage,
-  SubscriptionTier,
-  DiscussionStyleConfiguration
-} from '../../types';
+import { AIDiscussionTopic, AIDiscussionGoal, AIDiscussionRole, AIDiscussionSession, AIDiscussionReport, AIDiscussionMessage, SubscriptionTier, DiscussionStyleConfiguration, TranslationFunction } from '../../types';
 import { FiUsers, FiArrowLeft, FiRefreshCw, FiFileText, FiPlay, FiPause, FiTarget, FiTool, FiCheckCircle, FiZap, FiShield, FiSettings } from 'react-icons/fi';
 import { generateDiscussionTopics, startDiscussion, continueDiscussion, handleUserIntervention as handleUserInterventionService, generateDiscussionReport, generateDiscussionAnalytics } from '../services/aiDiscussionService';
 import { displayToast } from '../utils/clipboard';
@@ -25,7 +16,7 @@ import DiscussionStyleModal from './DiscussionStyleModal';
 import Modal from './Modal';
 
 interface AIDiscussionTabProps {
-  t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
+  t: TranslationFunction;
   transcript: string;
   summary?: string;
   onDiscussionComplete: (report: AIDiscussionReport) => void;
@@ -500,16 +491,21 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
 ];
 
 // Helper function to get display name for discussion phases
-const getPhaseDisplayName = (phase: string, t: (key: string, params?: Record<string, unknown>) => string): string => {
+const getPhaseDisplayName = (phase: string, t: TranslationFunction): string => {
   const phaseNames: Record<string, string> = {
     introduction: t('aiDiscussion.phase.introduction') || 'Introductie',
     problem_analysis: t('aiDiscussion.phase.problem_analysis') || 'Probleemanalyse',
     root_cause: t('aiDiscussion.phase.root_cause') || 'Oorzaakanalyse',
     solution_generation: t('aiDiscussion.phase.solution_generation') || 'Oplossingsgeneratie',
+    solution_evaluation: t('aiDiscussion.phase.solution_evaluation') || 'Oplossing Evaluatie',
     critical_evaluation: t('aiDiscussion.phase.critical_evaluation') || 'Kritische Evaluatie',
+    implementation_plan: t('aiDiscussion.phase.implementation_plan') || 'Implementatieplan',
     risk_assessment: t('aiDiscussion.phase.risk_assessment') || 'Risicoanalyse',
+    stakeholder_analysis: t('aiDiscussion.phase.stakeholder_analysis') || 'Stakeholder Analyse',
     implementation_planning: t('aiDiscussion.phase.implementation_planning') || 'Implementatieplanning',
     success_metrics: t('aiDiscussion.phase.success_metrics') || 'Succesmetrieken',
+    conclusion: t('aiDiscussion.phase.conclusion') || 'Conclusie',
+    recommendations: t('aiDiscussion.phase.recommendations') || 'Aanbevelingen',
     synthesis: t('aiDiscussion.phase.synthesis') || 'Synthese'
   };
   
@@ -1315,19 +1311,17 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
 
               <button
                 onClick={handleOpenStyleModal}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
+                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200 font-medium text-base"
                 title={t('aiDiscussion.adjustStyles') || 'Discussiestijlen aanpassen'}
               >
-                <div className="w-4 h-4">
-                  <FiSettings />
-                </div>
+                <FiSettings size={18} />
                 {t('aiDiscussion.adjustStyles') || 'Stijlen Aanpassen'}
               </button>
 
               <button
                 onClick={handleGenerateReport}
                 disabled={state.isDiscussionActive || state.isGeneratingReport || !state.session || state.session.turns.length === 0}
-                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
+                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-base"
               >
                 <FiFileText size={18} />
                 <span className="truncate">{t('aiDiscussion.generateReport') || 'Einde discussie / Rapport genereren'}</span>

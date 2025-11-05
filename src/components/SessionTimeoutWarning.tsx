@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { sessionManager } from '../utils/security';
+import { TranslationFunction } from '../../types';
 
 interface SessionTimeoutWarningProps {
   sessionId: string;
   onExtendSession: () => void;
   onLogout: () => void;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
 }
 
 const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SubscriptionTier, TierLimits, UserSubscription } from '../../types';
+import { SubscriptionTier, TierLimits, UserSubscription, TranslationFunction } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 import { stripeService } from '../services/stripeService';
 import { getUserStripeData, db } from '../firebase';
@@ -16,13 +16,14 @@ interface PricingPageProps {
   userSubscription?: UserSubscription;
   onUpgrade: (tier: SubscriptionTier) => void;
   onClose?: () => void;
-  t: (key: string, params?: any) => string;
+  t: TranslationFunction;
   userId: string;
   userEmail: string;
   isLoggedIn: boolean;
+  showComingSoonModal?: () => void;
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription, onUpgrade, onClose, t, userId, userEmail, isLoggedIn }) => {
+const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription, onUpgrade, onClose, t, userId, userEmail, isLoggedIn, showComingSoonModal }) => {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [nextBillingDate, setNextBillingDate] = useState<Date | null>(null);
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
@@ -270,7 +271,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
     }
 
     // If selecting Free while paid, show cancellation confirmation modal
-    if (tier === SubscriptionTier.FREE && currentTier !== SubscriptionTier.FREE) {
+    if (tier === SubscriptionTier.FREE) {
       setTargetTier(tier);
       setShowCancellationModal(true);
       return;
@@ -285,7 +286,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
       [SubscriptionTier.DIAMOND]: 4,
     };
 
-    const isDowngrade = tierOrder[tier] < tierOrder[currentTier] && tier !== SubscriptionTier.FREE;
+    const isDowngrade = tierOrder[tier] < tierOrder[currentTier];
     
     if (isDowngrade) {
       setTargetTier(tier);
@@ -633,6 +634,14 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                         <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
                         <span className="text-sm text-gray-700 dark:text-gray-300">
                           {t('pricingEmailUpload')}
+                        </span>
+                      </div>
+                    )}
+                    {(tier.tier === SubscriptionTier.GOLD || tier.tier === SubscriptionTier.ENTERPRISE) && (
+                      <div className="flex items-center">
+                        <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {t('pricingIdeaBuilderFeature', 'Idea Builder, structured ideation workflow')}
                         </span>
                       </div>
                     )}

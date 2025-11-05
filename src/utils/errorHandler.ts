@@ -1,6 +1,6 @@
 // Centralized Error Handling with Security-First Approach
 
-type TranslationFunction = (key: string, params?: Record<string, any>) => string;
+import { TranslationFunction } from '../../types';
 
 export interface ErrorLogEntry {
   timestamp: number;

@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { FiX, FiSettings, FiMessageSquare, FiCheck } from 'react-icons/fi';
-import { 
-  AIDiscussionRole, 
-  DiscussionStyleConfiguration, 
-  DiscussionStyleOption 
-} from '../../types';
+import { AIDiscussionRole, DiscussionStyleConfiguration, DiscussionStyleOption, TranslationFunction } from '../../types';
 import { DISCUSSION_STYLE_OPTIONS } from '../services/aiDiscussionService';
 
 interface DiscussionStyleModalProps {
-  t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
+  t: TranslationFunction;
   isOpen: boolean;
   onClose: () => void;
   selectedRoles: AIDiscussionRole[];
@@ -88,7 +84,7 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
   const styleCategories = getStylesByCategory();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
@@ -161,20 +157,20 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                         </span>
                         {onRoleUpdate ? (
                           <div className="flex items-center gap-2">
-                            <input
-                              type="range"
-                              min="1"
-                              max="5"
-                              value={role.enthusiasmLevel || 3}
-                              onChange={(e) => {
-                                const newLevel = parseInt(e.target.value);
-                                onRoleUpdate(role.id, { enthusiasmLevel: newLevel });
-                              }}
-                              className="w-20 h-2 bg-yellow-200 dark:bg-yellow-600 rounded-lg appearance-none cursor-pointer"
-                              style={{
-                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${((role.enthusiasmLevel || 3) - 1) * 25}%, #fef3c7 ${((role.enthusiasmLevel || 3) - 1) * 25}%, #fef3c7 100%)`
-                              }}
-                            />
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((level) => (
+                                <button
+                                  key={level}
+                                  onClick={() => onRoleUpdate(role.id, { enthusiasmLevel: level })}
+                                  className={`w-6 h-6 rounded-full border-2 transition-all duration-200 cursor-pointer hover:scale-110 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 ${
+                                    level <= (role.enthusiasmLevel || 3)
+                                      ? 'bg-yellow-400 border-yellow-500 shadow-sm hover:bg-yellow-500'
+                                      : 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-600 hover:bg-yellow-200 dark:hover:bg-yellow-800/50'
+                                  }`}
+                                  title={`Enthousiasme niveau ${level}`}
+                                />
+                              ))}
+                            </div>
                             <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200 min-w-[2rem]">
                               {role.enthusiasmLevel || 3}/5
                             </span>

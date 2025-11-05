@@ -2,7 +2,7 @@ import SocialPostXCard from './SocialPostXCard';
 import SocialPostCard from './SocialPostCard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
-import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData, SocialPostData, TeachMeData } from '../../types';
+import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData, SocialPostData, TeachMeData, TranslationFunction } from '../../types';
 import { OpportunityAnalysisData } from './OpportunitiesTab';
 import { getBcp47Code } from '../languages';
 import EmailCompositionTab, { EmailData } from './EmailCompositionTab';
@@ -30,7 +30,7 @@ interface RecapItem {
 
 interface RecapHorizonPanelProps {
 	// Localized label provider
-	t: (key: string, params?: Record<string, unknown>) => string;
+	t: TranslationFunction;
 
 	// Content inputs (already computed by the main app)
 	transcript: string;
@@ -78,6 +78,9 @@ socialPostXData?: SocialPostData | null;
 	imageGenerationColor?: string;
 	isGeneratingImage?: boolean;
 
+	// Quiz functionality
+	onGenerateQuiz?: ({ numQuestions, numOptions }: { numQuestions: number; numOptions: number }) => Promise<void>;
+
 	// Notifications
 	onNotify?: (message: string, type?: 'success' | 'error' | 'info') => void;
 
@@ -96,7 +99,7 @@ const ChevronIcon: React.FC<{ className?: string; direction: 'up' | 'down' }>
 		</svg>
 	);
 
-const ArrowButton: React.FC<{ disabled?: boolean; onClick: () => void; direction: 'up' | 'down'; t: (key: string) => string }>
+const ArrowButton: React.FC<{ disabled?: boolean; onClick: () => void; direction: 'up' | 'down'; t: TranslationFunction }>
 	= ({ disabled, onClick, direction, t }) => (
 		<button
 			onClick={onClick}
@@ -150,14 +153,12 @@ export const RecapHorizonPanel: React.FC<RecapHorizonPanelProps> = ({
 	imageGenerationStyle,
 	imageGenerationColor,
 	isGeneratingImage,
+	onGenerateQuiz,
 	onNotify,
 	startStamp,
 }) => {
 	const [isOpen, setIsOpen] = useState<boolean>(true);
-	const [quizMenuOpen, setQuizMenuOpen] = useState<boolean>(false);
-	const [thinkingPartnerMenuOpen, setThinkingPartnerMenuOpen] = useState<boolean>(false);
-	const [teachMeMenuOpen, setTeachMeMenuOpen] = useState<boolean>(false);
-	const [opportunitiesMenuOpen, setOpportunitiesMenuOpen] = useState<boolean>(false);
+  // Removed per-item ellipsis menus for consistency; using up/down arrows across all items
 	const [persistentItems, setPersistentItems] = useState<RecapItem[]>([]);
 	const [resultsCache, setResultsCache] = useState<{ [key in RecapItemType]?: string }>({});
 
@@ -211,9 +212,11 @@ useEffect(() => {
 		if (Array.isArray(chatHistory) && chatHistory.length > 0) availableContent.add('chat');
 		if (!!mindmapText && mindmapText.trim().length > 0) availableContent.add('mindmap');
 		if (!!executiveSummaryData) availableContent.add('exec');
-		if (!!quizQuestions && quizQuestions.length > 0) availableContent.add('quiz');
+    if (!!quizQuestions && quizQuestions.length > 0) availableContent.add('quiz');
 		if (!!storytellingData) availableContent.add('storytelling');
-		if (!!businessCaseData) availableContent.add('businessCase');
+    if (!!businessCaseData && typeof businessCaseData.businessCase === 'string' && businessCaseData.businessCase.trim().length > 0) {
+      availableContent.add('businessCase');
+    }
 		if (!!blogData && blogData.trim().length > 0) availableContent.add('blog');
 		if (!!explainData && explainData.explanation && explainData.explanation.trim().length > 0) availableContent.add('explain');
 		if (!!teachMeData && teachMeData.content && teachMeData.content.trim().length > 0) availableContent.add('teachMe');
@@ -509,19 +512,9 @@ const moveItem = (index: number, direction: 'up' | 'down') => setPersistentItems
 		}
 	}, [t, summary, keywordAnalysis, sentiment, faq, learnings, followup, chatHistory, mindmapText, executiveSummaryData, storytellingData, businessCaseData, blogData, explainData, teachMeData, thinkingPartnerAnalysis, selectedThinkingPartnerTopic, selectedThinkingPartner, opportunitiesData, socialPostData, socialPostXData, quizQuestions, quizIncludeAnswers, mckinseyAnalysis, selectedMckinseyTopic, selectedMckinseyRole, selectedMckinseyFramework]);
 
-	const enabledItems = persistentItems.filter(i => i.enabled);
+const enabledItems = persistentItems.filter(i => i.enabled);
 
-	const getCachedOrGenerate = useCallback(async <T,>(type: RecapItemType, generator: () => Promise<T>): Promise<T> => {
-		if (resultsCache[type]) {
-			return resultsCache[type];
-		}
-
-		const result = await generator();
-		setResultsCache(prev => ({ ...prev, [type]: result }));
-		return result;
-	}, [resultsCache]);
-
-	const getOrCacheResult = (type: RecapItemType) => {
+const getOrCacheResult = (type: RecapItemType) => {
 		if (resultsCache[type]) return resultsCache[type]!;
 		const section = composeSectionText(type);
 		setResultsCache(prev => ({ ...prev, [type]: section.text }));
@@ -848,69 +841,10 @@ To send via email:
 											/>
 											<span className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.title}</span>
 										</div>
-										{['quiz', 'thinkingPartner', 'teachMe', 'opportunities'].includes(item.type) ? (
-											<div className="relative flex items-center gap-1">
-												<button 
-													onClick={() => {
-														if (item.type === 'quiz') setQuizMenuOpen(prev => !prev);
-														else if (item.type === 'thinkingPartner') setThinkingPartnerMenuOpen(prev => !prev);
-														else if (item.type === 'teachMe') setTeachMeMenuOpen(prev => !prev);
-														else if (item.type === 'opportunities') setOpportunitiesMenuOpen(prev => !prev);
-													}} 
-													className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
-												>
-													<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-												</button>
-												{((item.type === 'quiz' && quizMenuOpen) || 
-												  (item.type === 'thinkingPartner' && thinkingPartnerMenuOpen) ||
-												  (item.type === 'teachMe' && teachMeMenuOpen) ||
-												  (item.type === 'opportunities' && opportunitiesMenuOpen)) && (
-													<div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg z-10">
-														<button 
-															onClick={() => { 
-																handleExportText(); 
-																setQuizMenuOpen(false);
-																setThinkingPartnerMenuOpen(false);
-																setTeachMeMenuOpen(false);
-																setOpportunitiesMenuOpen(false);
-															}} 
-															className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
-														>
-															{t('exportToText')}
-														</button>
-														<button 
-															onClick={() => { 
-																handleExportPdf(); 
-																setQuizMenuOpen(false);
-																setThinkingPartnerMenuOpen(false);
-																setTeachMeMenuOpen(false);
-																setOpportunitiesMenuOpen(false);
-															}} 
-															className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
-														>
-															{t('exportToPdf')}
-														</button>
-														<button 
-															onClick={() => { 
-																handleMailComposed(); 
-																setQuizMenuOpen(false);
-																setThinkingPartnerMenuOpen(false);
-																setTeachMeMenuOpen(false);
-																setOpportunitiesMenuOpen(false);
-															}} 
-															className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
-														>
-															{t('copyForEmail')}
-														</button>
-													</div>
-												)}
-											</div>
-										) : (
-											<div className="flex items-center gap-1">
-												<ArrowButton direction="up" onClick={() => moveItem(index, 'up')} disabled={index === 0} t={t} />
-												<ArrowButton direction="down" onClick={() => moveItem(index, 'down')} disabled={index === persistentItems.length - 1} t={t} />
-											</div>
-										)}
+                    <div className="flex items-center gap-1">
+                      <ArrowButton direction="up" onClick={() => moveItem(index, 'up')} disabled={index === 0} t={t} />
+                      <ArrowButton direction="down" onClick={() => moveItem(index, 'down')} disabled={index === persistentItems.length - 1} t={t} />
+                    </div>
 									</li>
 								))}
 							</ul>

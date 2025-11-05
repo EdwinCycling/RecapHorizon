@@ -1,7 +1,7 @@
 import React from 'react';
 import Modal from './Modal';
 import { useTranslation } from '../hooks/useTranslation';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 import { stripeService } from '../services/stripeService';
 
 interface CustomerPortalModalProps {
@@ -9,7 +9,7 @@ interface CustomerPortalModalProps {
   onClose: () => void;
   customerId?: string;
   userTier: SubscriptionTier;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({

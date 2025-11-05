@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  AIDiscussionSession, 
-  AIDiscussionAnalytics as AnalyticsType,
-  RoleActivityMetrics,
-  ControversialTopic,
-  VotingResults
-} from '../../types';
+import { AIDiscussionSession, AIDiscussionAnalytics as AnalyticsType, RoleActivityMetrics, ControversialTopic, VotingResults, TranslationFunction } from '../../types';
 import { 
   FiBarChart2, 
   FiUsers, 
@@ -24,7 +18,7 @@ import { generateDiscussionAnalytics } from '../services/aiDiscussionService';
 
 interface AIDiscussionAnalyticsProps {
   session: AIDiscussionSession;
-  t: (key: string, fallbackOrParams?: string | Record<string, any>, maybeParams?: Record<string, any>) => any;
+  t: TranslationFunction;
 }
 
 const AIDiscussionAnalytics: React.FC<AIDiscussionAnalyticsProps> = ({ session, t }) => {
@@ -143,7 +137,7 @@ const AIDiscussionAnalytics: React.FC<AIDiscussionAnalyticsProps> = ({ session, 
 const OverviewTab: React.FC<{
   analytics: AnalyticsType;
   session: AIDiscussionSession;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
 }> = ({ analytics, session, t }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -262,7 +256,7 @@ const OverviewTab: React.FC<{
 const RoleActivityTab: React.FC<{
   analytics: AnalyticsType;
   session: AIDiscussionSession;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
 }> = ({ analytics, session, t }) => {
   return (
     <div className="space-y-6">
@@ -339,7 +333,7 @@ const RoleActivityTab: React.FC<{
 // Controversial Topics Tab Component
 const ControversialTopicsTab: React.FC<{
   analytics: AnalyticsType;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
 }> = ({ analytics, t }) => {
   if (!analytics.controversialTopics || analytics.controversialTopics.length === 0) {
     return (
@@ -405,7 +399,7 @@ const ControversialTopicsTab: React.FC<{
 // Voting Results Tab Component
 const VotingResultsTab: React.FC<{
   analytics: AnalyticsType;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: TranslationFunction;
 }> = ({ analytics, t }) => {
   if (!analytics.votingResults || analytics.votingResults.length === 0) {
     return (

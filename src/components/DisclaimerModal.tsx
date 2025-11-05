@@ -1,10 +1,11 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface DisclaimerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ isOpen, onClose, t }) => {

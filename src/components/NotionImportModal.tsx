@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface NotionImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   // Called when the Notion page has been successfully loaded and converted to text
   onAuthorizedAndLoaded: (text: string) => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 interface NotionPageItem { id: string; title: string; icon?: string | null; last_edited_time?: string }

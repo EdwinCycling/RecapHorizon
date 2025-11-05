@@ -1,12 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { XMarkIcon, EnvelopeIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface EmailUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEmailImport: (file: File) => Promise<string | null>;
   onAnalyze: (text: string) => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
   userSubscription: string | undefined;
 }
 
@@ -24,6 +25,20 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [analysisState, setAnalysisState] = useState<AnalysisState>('idle');
   const [error, setError] = useState<string | null>(null);
+
+  // Prevent background scrolling when analyzing
+  useEffect(() => {
+    if (analysisState === 'analyzing') {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on component unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [analysisState]);
 
   if (!isOpen) return null;
 
@@ -129,8 +144,8 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-lg w-full relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800" type="button" aria-label={t('close')}>
+      <div className="bg-white dark:bg-slate-900 rounded-lg p-8 max-w-lg w-full relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200" type="button" aria-label={t('close')}>
           <XMarkIcon className="h-6 w-6" />
         </button>
 
@@ -139,7 +154,7 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
             onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
             onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-12 text-center ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
+            className={`border-2 border-dashed rounded-lg p-12 text-center ${isDragOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-slate-600'}`}>
             <input
               type="file"
               ref={fileInputRef}
@@ -155,9 +170,9 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
               You can drag and drop an .eml or .msg file, drag emails directly from Outlook, or choose a file using the Select File button.
             </span>
             <div className="flex flex-col items-center">
-              <CloudArrowUpIcon className="h-12 w-12 text-gray-400" />
-              <label htmlFor="email-file-input" className="mt-4 text-gray-500 cursor-pointer">{t('emailImportDragDropText')}</label>
-              <div className="text-xs text-gray-500 dark:text-gray-500 mb-4">
+              <CloudArrowUpIcon className="h-12 w-12 text-gray-400 dark:text-slate-400" />
+              <label htmlFor="email-file-input" className="mt-4 text-gray-500 dark:text-slate-400 cursor-pointer">{t('emailImportDragDropText')}</label>
+              <div className="text-xs text-gray-500 dark:text-slate-400 mb-4">
                 {t('emailImportSupportedFormats')}
               </div>
               <button onClick={handleFileSelect} className="mt-6 bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600" type="button" aria-describedby="email-file-input-description">
@@ -176,7 +191,7 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
               </svg>
             </div>
             <p className="text-lg font-medium">{t('analyzingEmail')}</p>
-            <p className="text-gray-500">{t('processingMsgFile')}</p>
+            <p className="text-gray-500 dark:text-slate-400">{t('processingMsgFile')}</p>
           </div>
         )}
 
@@ -195,7 +210,7 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
 
         {/* Footer actions */}
         <div className="mt-6 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50" type="button">
+          <button onClick={onClose} className="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800" type="button">
             {t('close')}
           </button>
         </div>

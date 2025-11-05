@@ -1,9 +1,10 @@
 import React from 'react';
 import { CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface CustomerPortalReturnScreenProps {
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const CustomerPortalReturnScreen: React.FC<CustomerPortalReturnScreenProps> = ({

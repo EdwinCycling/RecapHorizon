@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubscriptionTier } from '../../types';
+import { SubscriptionTier, TranslationFunction } from '../../types';
 import { Clock, AlertTriangle } from 'lucide-react';
 
 interface AudioLimitModalProps {
@@ -9,7 +9,7 @@ interface AudioLimitModalProps {
   monthlyLimit: number;
   onUpgrade: (tier: SubscriptionTier) => void;
   onClose: () => void;
-  t: (key: string, params?: any) => string;
+  t: TranslationFunction;
 }
 
 const AudioLimitModal: React.FC<AudioLimitModalProps> = ({

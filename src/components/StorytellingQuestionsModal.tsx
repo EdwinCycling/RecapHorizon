@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { StorytellingOptions } from '../../types';
+import { StorytellingOptions, TranslationFunction } from '../../types';
 
 interface StorytellingQuestionsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onGenerate: (options: StorytellingOptions) => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 

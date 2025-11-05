@@ -1,9 +1,10 @@
 import { translations, type Language } from '../locales';
 import { setErrorHandlerTranslation } from '../utils/errorHandler';
+import { TranslationFunction } from '../../types';
 
 export const useTranslation = (uiLang: Language = 'en') => {
   // Translation function that supports optional fallback string as second argument
-  const t = (
+  const t: TranslationFunction = (
     key: string,
     fallbackOrParams?: string | Record<string, any>,
     maybeParams?: Record<string, any>

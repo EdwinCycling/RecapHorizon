@@ -1,10 +1,11 @@
 import React from 'react';
 import Modal from './Modal';
+import { TranslationFunction } from '../../types';
 
 interface ReactivationSuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string, params?: any) => string;
+  t: TranslationFunction;
   effectiveDate?: string | Date | { seconds?: number } | null;
   stripeCustomerId?: string;
 }

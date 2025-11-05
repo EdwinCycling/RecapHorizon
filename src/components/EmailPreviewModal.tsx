@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { XMarkIcon, EnvelopeIcon, ClipboardIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { copyToClipboard, displayToast } from '../utils/clipboard';
+import { TranslationFunction } from '../../types';
 
 interface EmailPreviewModalProps {
   isOpen: boolean;
@@ -8,7 +9,7 @@ interface EmailPreviewModalProps {
   emailSubject: string;
   emailAddresses: Array<{ address: string; type: 'to' | 'cc' | 'bcc' | 'na' }>;
   emailContent: string;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
@@ -143,7 +144,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
 interface CopyButtonProps {
   text: string;
   label: string;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const CopyButton: React.FC<CopyButtonProps> = ({ text, label, t }) => {
@@ -183,7 +184,7 @@ interface MailtoButtonProps {
   subject: string;
   body: string;
   label: string;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const MailtoButton: React.FC<MailtoButtonProps> = ({ 

@@ -1,10 +1,11 @@
 import React from 'react';
 import { XMarkIcon, MusicalNoteIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface AudioUploadHelpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
 }
 
 const AudioUploadHelpModal: React.FC<AudioUploadHelpModalProps> = ({ isOpen, onClose, t }) => {

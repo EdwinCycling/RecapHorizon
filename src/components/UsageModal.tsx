@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
-import { SubscriptionTier } from '../utils/aiProviderManager';
+import { SubscriptionTier } from '../../types';
 import { subscriptionService } from '../subscriptionService';
 import { getUserMonthlyTokens, getUserMonthlySessions, getUserMonthlyAudioMinutes } from '../firebase';
 import Modal from './Modal';
 import AudioUsageMeter from './AudioUsageMeter';
+import { TranslationFunction } from '../../types';
 
 interface UsageModalProps {
   isOpen: boolean;
   onClose: () => void;
   userTier: SubscriptionTier;
-  t: (key: string) => string;
+  t: TranslationFunction;
   theme: 'light' | 'dark';
   onShowPricing: () => void;
   // Extra: live elapsed minutes of the current recording to show real-time updates

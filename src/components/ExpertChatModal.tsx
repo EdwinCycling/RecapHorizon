@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExpertConfiguration, ExpertChatMessage, SubscriptionTier } from '../../types';
+import { ExpertConfiguration, ExpertChatMessage, SubscriptionTier, TranslationFunction } from '../../types';
 import { tokenCounter } from '../tokenCounter';
 import { SafeHtml } from '../utils/SafeHtml';
 import { AIProviderManager, AIFunction } from '../utils/aiProviderManager';
@@ -10,7 +10,7 @@ interface ExpertChatModalProps {
   configuration: ExpertConfiguration;
   onAnalyze: (chatHistory: ExpertChatMessage[], chatTranscript?: string) => void;
   onCancel: () => void;
-  t: (key: string) => string;
+  t: TranslationFunction;
   apiKey: string;
   transcript?: string;
   updateTokensAndRefresh?: (promptTokens: number, responseTokens: number) => Promise<void>;
@@ -113,7 +113,7 @@ const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
       timestamp: new Date()
     };
 
-    const newMessages = [...messages, userMessage, {
+    const newMessages: ExpertChatMessage[] = [...messages, userMessage, {
       id: (Date.now() + 1).toString(),
       role: 'expert',
       content: '',

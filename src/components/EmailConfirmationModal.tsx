@@ -6,7 +6,7 @@ interface EmailConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   email: string;
-  onConfirmed: (email: string) => void;
+  onConfirmed: (email: string, context: 'waitlist' | 'referral') => Promise<void>;
   context: 'waitlist' | 'referral';
 }
 
@@ -73,7 +73,7 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
       if (result.success) {
         // Clear sensitive data before callback
         setConfirmationCode('');
-        onConfirmed(result.email!);
+        await onConfirmed(result.email!, context);
         onClose();
       } else {
         // Enhanced error handling with security considerations

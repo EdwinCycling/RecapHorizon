@@ -144,6 +144,7 @@ export const nl = {
   chatWithTranscript: "Chat met Transcript",
   specials: "RecapHorizon Special prompts",
   specialsSubtitle: "De prompts zijn in het Engels, het resultaat in uw gekozen output taal",
+  ideaBuilderReportPreview: "Idee Bouwer plan",
   
   // Admin: Prompts import tijdelijke UI
   promptsButton: "Prompts",
@@ -3484,24 +3485,102 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   "aiDiscussion.phase.implementation_planning": "Implementatieplanning",
   "aiDiscussion.phase.success_metrics": "Succesmetrieken",
   "aiDiscussion.phase.conclusion": "Conclusie",
-  "aiDiscussion.phase.recommendations": "Aanbevelingen"
+  "aiDiscussion.phase.recommendations": "Aanbevelingen",
 
   // Idea Builder workflow
-  ,ideaBuilderTitle: "Idee Bouwer"
-  ,ideaBuilderInitialIdea: "Beschrijf je idee"
-  ,ideaBuilderInitialIdeaPh: "Schrijf minimaal 30 tekens die je idee en context beschrijven"
-  ,ideaBuilderMinChars: "Minimaal 30 tekens vereist"
-  ,ideaBuilderRound1Title: "Ronde 1: Verhelderende Stellingen"
-  ,ideaBuilderRound2Title: "Ronde 2: Verdiepende Stellingen"
-  ,ideaBuilderInfo: "We valideren en sanitiseren invoer automatisch. Vermijd het opnemen van geheimen of persoonlijke gegevens. Resultaten worden aan je transcript toegevoegd voor analyse."
-  ,ideaBuilderStepLabel: "Stap 1 van 3"
-  ,ideaBuilderStepLabel2: "Stap 2 van 3"
-  ,ideaBuilderStepLabel3: "Stap 3 van 3"
-  ,ideaBuilderStartRound1: "Start Ronde 1"
-  ,ideaBuilderContinueToRound2: "Ga verder naar Ronde 2"
-  ,ideaBuilderGeneratePlan: "Genereer Plan"
-  ,ideaBuilderGenerating: "Genereren..."
-  ,selected: "Geselecteerd"
+  ideaBuilderTitle: "Idee Bouwer",
+  ideaBuilderDesc: "Genereer hoogwaardige ideeën en structuren op basis van onderwerp, doelgroep en doelstellingen.",
+  ideaBuilderInitialIdea: "Beschrijf je idee",
+  ideaBuilderInitialIdeaPh: "Schrijf minimaal 30 tekens die je idee en context beschrijven",
+  ideaBuilderMinChars: "Minimaal 30 tekens vereist",
+  ideaBuilderRound1Title: "Ronde 1: Verhelderende Stellingen",
+  ideaBuilderRound2Title: "Ronde 2: Verdiepende Stellingen",
+  ideaBuilderRound3Title: "Ronde 3: Prioritering (MoSCoW)",
+  ideaBuilderStepLabel: "Stap 1 van 4",
+  ideaBuilderStepLabel2: "Stap 2 van 4",
+  ideaBuilderStepLabel3: "Stap 3 van 4",
+  ideaBuilderStepLabel4: "Stap 4 van 4",
+  ideaBuilderStartRound1: "Start Ronde 1",
+  ideaBuilderContinueToRound2: "Ga verder naar Ronde 2",
+  ideaBuilderContinueToRound3: "Verder naar Ronde 3",
+  ideaBuilderGeneratePlan: "Genereer Plan",
+  ideaBuilderGenerating: "Genereren...",
+  selected: "Geselecteerd",
   
+  // Idea Builder Round 3 focus and MoSCoW labels
+  ideaBuilderFocusType: "Focus voor Ronde 3",
+  ideaBuilderFocusTypeFunctional: "Functionele onderdelen",
+  ideaBuilderFocusTypeWildIdeas: "Wilde ideeën",
+  ideaBuilderFocusTypeServices: "Diensten",
+  ideaBuilderFocusTypeCombined: "Gecombineerde opties",
+  ideaBuilderFocusTypeHint: "Deze keuze stuurt de 5 items die in Ronde 3 worden gegenereerd.",
+  moscowNA: "N.v.t.",
+  moscowNice: "Leuk om te hebben",
+  moscowCould: "Zou kunnen",
+  moscowShould: "Zou moeten",
+  moscowMust: "Moet",
+
+  // Idea Builder Help Text
+  ideaBuilderHelpTitle: "Idea Builder Uitleg",
+  ideaBuilderHelpWhatIsTitle: "Wat is Idea Builder?",
+  ideaBuilderHelpWhatIsDesc: "Met Idea Builder kun je snel ideeën, concepten en outlines genereren op basis van een onderwerp.",
+  ideaBuilderHelpHow: "Hoe werkt het?",
+  ideaBuilderHelpStep1: "1. Voer een idee in",
+  ideaBuilderHelpStep2: "2. RecapHorizon zal je meenemen met 15 stellingen om je idee uit te bouwen",
+  ideaBuilderHelpStep3: "3. Genereer rapport",
+  ideaBuilderHelpStep4: "4. Gebruik het rapport als transcript in onze analyse sectie voor verdere studie",
+  ideaBuilderHelpNote: "Het gegenereerde rapport kun je direct gebruiken in je analyse als transcript.",
+  ideaBuilderHelpClose: "Sluiten",
+
+  // Summary Questions Modal
+  summaryFormat: "Formaat",
+  summaryTargetAudience: "Doelgroep",
+  summaryToneStyle: "Toon",
+  summaryLength: "Lengte",
+  summaryOptional: "Alle velden zijn optioneel",
+  summaryQuestionsTitle: "Samenvattingsopties",
+  summaryQuestionsSubtitle: "Kies je voorkeuren voor de samenvatting",
+  summaryFormatQuestion: "Welk type samenvatting wil je genereren?",
+  summaryTargetAudienceQuestion: "Voor wie is deze samenvatting bedoeld?",
+  summaryToneStyleQuestion: "Welke toon en stijl moet de samenvatting hebben?",
+  summaryLengthQuestion: "Hoe uitgebreid moet de samenvatting zijn?",
+  "summaryFormatOptions.executiveSummary": "Managementsamenvatting",
+  "summaryFormatOptions.toThePointSummary": "Kernachtige samenvatting",
+  "summaryFormatOptions.narrativeSummary": "Verhalende samenvatting",
+  "summaryFormatOptions.decisionMakingSummary": "Besluitvormingssamenvatting",
+  "summaryFormatOptions.problemSolutionSummary": "Probleem–oplossing samenvatting",
+  "summaryFormatOptions.detailedSummaryWithQuotes": "Gedetailleerde samenvatting met citaten",
+  "summaryFormatOptions.highLevelOverview": "Hoog-over overzicht",
+  "summaryTargetAudienceOptions.internalTeam": "Intern team",
+  "summaryTargetAudienceOptions.management": "Management",
+  "summaryTargetAudienceOptions.customers": "Klanten",
+  "summaryTargetAudienceOptions.investors": "Investeerders",
+  "summaryTargetAudienceOptions.newEmployees": "Nieuwe medewerkers",
+  "summaryTargetAudienceOptions.generalPublic": "Algemeen publiek",
+  "summaryTargetAudienceOptions.academics": "Academici",
+  "summaryTargetAudienceOptions.competitors": "Concurrenten",
+  "summaryTargetAudienceOptions.localCommunity": "Lokale gemeenschap",
+  "summaryTargetAudienceOptions.alumni": "Alumni",
+  "summaryTargetAudienceOptions.internationalStakeholders": "Internationale stakeholders",
+  "summaryTargetAudienceOptions.specificInterestGroups": "Specifieke belangengroepen",
+  "summaryTargetAudienceOptions.children8": "Kinderen van 8 jaar",
+  "summaryTargetAudienceOptions.highSchool15": "Middelbare scholieren 15 jaar",
+  "summaryToneStyleOptions.formal": "Formeel",
+  "summaryToneStyleOptions.informal": "Informeel",
+  "summaryToneStyleOptions.inspiring": "Inspirerend",
+  "summaryToneStyleOptions.critical": "Kritisch",
+  "summaryToneStyleOptions.humorous": "Humoristisch",
+  "summaryToneStyleOptions.neutral": "Neutraal",
+  "summaryToneStyleOptions.professional": "Professioneel",
+  "summaryToneStyleOptions.conversational": "Gesprekstoon",
+  "summaryToneStyleOptions.authoritative": "Autoritatief",
+  "summaryToneStyleOptions.friendly": "Vriendelijk",
+  "summaryToneStyleOptions.technical": "Technisch",
+  "summaryToneStyleOptions.simple": "Eenvoudig",
+  "summaryLengthOptions.concise": "Bondig",
+  "summaryLengthOptions.standard": "Standaard",
+  "summaryLengthOptions.extensive": "Uitgebreid",
+  "summaryLengthOptions.fullTimeline": "Volledige tijdlijn",
+
 
 };

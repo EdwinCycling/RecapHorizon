@@ -140,6 +140,15 @@ export interface StorytellingOptions {
   length: string;
 }
 
+// Summary options interface
+export interface SummaryOptions {
+  format: string;
+  targetAudience: string;
+  toneStyle: string;
+  length: string;
+  mainGoal: string;
+}
+
 // Business Case interface
 export interface BusinessCaseData {
   businessCaseType: string;

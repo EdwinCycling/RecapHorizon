@@ -10,7 +10,7 @@ import WaitlistModal from './src/components/WaitlistModal.tsx';
 import { EmailConfirmationModal } from './src/components/EmailConfirmationModal';
 import LoginModal from './src/components/LoginModal';
 import { copyToClipboard, displayToast } from './src/utils/clipboard'; 
-import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, TeachMeTopic, TeachMeMethod, TeachMeData, ShowMeData, TedTalk, NewsArticle, EmailOptions, SocialPostOptions, SocialPostData, ExpertConfiguration, ExpertChatMessage, SessionType, UserDocumentCreate, TranslationFunction, PromptDocument } from './types';
+import { RecordingStatus, type SpeechRecognition, SubscriptionTier, StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, ChatRole, BusinessCaseData, StorytellingOptions, ExplainData, ExplainOptions, TeachMeTopic, TeachMeMethod, TeachMeData, ShowMeData, TedTalk, NewsArticle, EmailOptions, SocialPostOptions, SocialPostData, ExpertConfiguration, ExpertChatMessage, SessionType, UserDocumentCreate, TranslationFunction, PromptDocument, SummaryOptions } from './types';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
  import { HiRefresh, HiClipboardCopy, HiDownload, HiMail, HiDotsHorizontal } from 'react-icons/hi';
 import { GoogleGenAI, Chat, Type } from "@google/genai";
@@ -71,6 +71,7 @@ import EmailImportHelpModal from './src/components/EmailImportHelpModal.tsx';
 import EmailUploadModal from './src/components/EmailUploadModal.tsx';
 import NotionImportModal from './src/components/NotionImportModal.tsx';
 import NotionIntegrationHelpModal from './src/components/NotionIntegrationHelpModal.tsx';
+import IdeaBuilderSimpleHelp from './src/components/IdeaBuilderSimpleHelp.tsx';
 import FileUploadModal from './src/components/FileUploadModal.tsx';
 import ImageUploadModal from './src/components/ImageUploadModal.tsx';
 import AudioUploadModal from './src/components/AudioUploadModal.tsx';
@@ -791,6 +792,7 @@ import { subscriptionService } from './src/subscriptionService';
 import { tokenCounter } from './src/tokenCounter';
 import { tokenManager } from './src/utils/tokenManager';
 import UpgradeModal from './src/components/UpgradeModal.tsx';
+import SummaryQuestionsModal from './src/components/SummaryQuestionsModal.tsx';
 import PricingPage from './src/components/PricingPage.tsx';
 import FAQPage from './src/components/FAQPage.tsx';
 import ReferralInfoPage from './src/components/ReferralInfoPage.tsx';
@@ -1281,6 +1283,15 @@ export default function App() {
   // PPT Template state
   const [pptTemplate, setPptTemplate] = useState<File | null>(null);
   const [showPptOptions, setShowPptOptions] = useState(false);
+  
+  // Summary options state
+  const [summaryOptions, setSummaryOptions] = useState<SummaryOptions>({
+    format: 'paragraph',
+    targetAudience: 'general',
+    toneStyle: 'neutral',
+    length: 'medium',
+    mainGoal: ''
+  });
 
   
   // API Key state
@@ -1337,6 +1348,7 @@ export default function App() {
   const customerPortalModal = useModalState();
   const anonymizationSavedModal = useModalState();
   const notionIntegrationHelpModal = useModalState();
+  const summaryQuestionsModal = useModalState();
 
   // Removed: prompts import feature and related UI/state
   
@@ -1418,6 +1430,9 @@ export default function App() {
   
   // Customer portal return state
   const [showCustomerPortalReturn, setShowCustomerPortalReturn] = useState<boolean>(false);
+  
+  // Idea Builder help modal state
+  const [isIdeaBuilderHelpOpen, setIsIdeaBuilderHelpOpen] = useState<boolean>(false);
   
   // Load saved language preferences from localStorage on initial load
   useEffect(() => {
@@ -2563,7 +2578,6 @@ ${sanitizedTranscript}`;
   const [showQuotaExceededModal, setShowQuotaExceededModal] = useState(false);
   const [quotaExceededError, setQuotaExceededError] = useState<string>('');
   const [showPricingPage, setShowPricingPage] = useState(false);
-  const [sessionOptionsHelpMode, setSessionOptionsHelpMode] = useState(false);
 
   // Referral UI state and URL code capture
   const [showReferralInfoPage, setShowReferralInfoPage] = useState(false);
@@ -5069,10 +5083,52 @@ Provide a detailed analysis that could be used for further AI processing and ana
     const outputLanguage = getGeminiCode(outputLang);
     
     switch (type) {
-        case 'summary':
-            return `You are a professional summarizer. Summarize the following **${inputLanguage}** transcript in **${outputLanguage}**.
+        case 'summary': {
+            const targetAudience = summaryOptions.targetAudience || 'general';
+            const tone = summaryOptions.toneStyle || 'neutral';
+            const lengthPref = summaryOptions.length || 'standard';
+            const formatPref = summaryOptions.format || '';
 
-Provide a comprehensive summary of the given text. Start with a catchy and relevant title in ${outputLanguage}, followed by a new line. Cover all key points and main ideas in a concise format. End with quotes, action points, and decisions if any are present.`;
+            const lengthInstructions = (
+              lengthPref === 'concise' ? 'Keep it concise: 120–200 words or 8–12 bullets.' :
+              lengthPref === 'extensive' ? 'Provide an extensive summary: 600–900 words, cover all relevant sections.' :
+              lengthPref === 'fullTimeline' ? 'Include a chronological timeline of key moments. Use timestamps if available; otherwise, use approximate timing.' :
+              'Aim for a standard length: ~300–500 words or 10–15 bullets.'
+            );
+
+            const formatInstructions = (
+              formatPref === 'executiveSummary' ?
+                'Structure as an executive summary with clear sections: Situation, Key insights, Decisions & Actions, Risks, Next steps.' :
+              formatPref === 'toThePointSummary' ?
+                'Return only bullet points with no fluff. Use 6–12 bullets. Each bullet must be ≤ 20 words.' :
+              formatPref === 'narrativeSummary' ?
+                'Write a chronological narrative that tells the story with smooth transitions. Use short quotes when helpful. Prefer paragraphs, bullets only for final actions.' :
+              formatPref === 'decisionMakingSummary' ?
+                'Focus on choices and rationale. Use headings: Options, Criteria, Pros/Cons, Recommendation, Rationale, Risks, Next steps.' :
+              formatPref === 'problemSolutionSummary' ?
+                'Organize by Problems → Evidence → Root causes → Proposed solutions → Expected impact → Open questions.' :
+              formatPref === 'detailedSummaryWithQuotes' ?
+                'Include 3–7 short verbatim quotes. Attribute speakers by name if available; otherwise use “participant”. Keep each quote ≤ 25 words, with standard double quotes.' :
+              formatPref === 'highLevelOverview' ?
+                'Provide a high-level overview: identify 3–5 overarching themes. For each theme, include 2–3 key bullets. Conclude with 3 strategic recommendations.' :
+              'Produce a well-structured summary using paragraphs and bullets where helpful.'
+            );
+
+            return `You are a professional summarizer. Your task is to read a **${inputLanguage}** transcript and produce the summary in **${outputLanguage}**.
+
+Target audience: ${targetAudience}
+Tone: ${tone}
+Length guidance: ${lengthInstructions}
+Format guidance: ${formatInstructions}
+
+Requirements:
+- Start with a short, informative title in ${outputLanguage} followed by a newline.
+- Cover the main points and essential context accurately.
+- Highlight decisions, action points, and any outcomes when present.
+- Keep language clear and direct for the specified audience.
+- Do not invent facts beyond the transcript.
+`;
+        }
         case 'faq':
             return `From the **${inputLanguage}** transcript below, create 10 FAQ items (question + answer) in **${outputLanguage}**. Rank importance 1–5 stars, allow half-stars (★½). Put the stars before each question. Keep questions short, answers concise and factual. Order from most to least important.`;
         case 'learning':
@@ -5128,6 +5184,15 @@ For the "imageInstructions" field:
     }
 };
 
+const handleResetAnalysis = (type: ViewType) => {
+    // Clear existing content for regeneration
+    if (type === 'summary') setSummary('');
+    else if (type === 'faq') setFaq('');
+    else if (type === 'learning') setLearningDoc('');
+    else if (type === 'followUp') setFollowUpQuestions('');
+    setActiveView(type);
+};
+
 const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => {
   
     
@@ -5138,7 +5203,6 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     }
     
     setActiveView(type);
-    if ((type === 'summary' && summary) || (type === 'faq' && faq) || (type === 'learning' && learningDoc) || (type === 'followUp' && followUpQuestions)) return; 
 
     // Import security utilities
     const { validateAndSanitizeForAI, rateLimiter } = await import('./src/utils/security');
@@ -5250,6 +5314,11 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     } finally {
         setLoadingText('');
     }
+};
+
+const handleGenerateSummaryWithOptions = async () => {
+    summaryQuestionsModal.close();
+    await handleGenerateAnalysis('summary');
 };
 
 const handleKeywordClick = async (keyword: string) => {
@@ -9070,8 +9139,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
 
         // If content doesn't exist, generate it (except for social posts which need manual generation)
-        if (['summary', 'faq', 'learning', 'followUp'].includes(view)) {
-          
+        if (view === 'summary') {
+            // Navigate to summary view with inline options (do not auto-open modal)
+            setActiveView('summary');
+        } else if (['faq', 'learning', 'followUp'].includes(view)) {
             handleGenerateAnalysis(view, 1);
         } else if (view === 'socialPost' || view === 'socialPostX') {
             // Just switch to the view without auto-generating content
@@ -10465,6 +10536,140 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             );
         }
 
+        if (activeView === 'summary') {
+            return (
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
+                    {/* Inline Summary Options */}
+                    <div className="mb-4 p-3 rounded border border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40">
+                        <div className="text-xs text-cyan-700 dark:text-cyan-300 mb-3">{t('summaryOptional')}</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('summaryFormat')}</label>
+                                <select value={summaryOptions.format} onChange={(e) => setSummaryOptions(s => ({ ...s, format: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
+                                    <option value="">-</option>
+                                    <option value="executiveSummary">{t('summaryFormatOptions.executiveSummary')}</option>
+                                    <option value="toThePointSummary">{t('summaryFormatOptions.toThePointSummary')}</option>
+                                    <option value="narrativeSummary">{t('summaryFormatOptions.narrativeSummary')}</option>
+                                    <option value="decisionMakingSummary">{t('summaryFormatOptions.decisionMakingSummary')}</option>
+                                    <option value="problemSolutionSummary">{t('summaryFormatOptions.problemSolutionSummary')}</option>
+                                    <option value="detailedSummaryWithQuotes">{t('summaryFormatOptions.detailedSummaryWithQuotes')}</option>
+                                    <option value="highLevelOverview">{t('summaryFormatOptions.highLevelOverview')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('summaryTargetAudience')}</label>
+                                <select value={summaryOptions.targetAudience} onChange={(e) => setSummaryOptions(s => ({ ...s, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
+                                    <option value="">-</option>
+                                    <option value="internalTeam">{t('summaryTargetAudienceOptions.internalTeam')}</option>
+                                    <option value="management">{t('summaryTargetAudienceOptions.management')}</option>
+                                    <option value="customers">{t('summaryTargetAudienceOptions.customers')}</option>
+                                    <option value="investors">{t('summaryTargetAudienceOptions.investors')}</option>
+                                    <option value="newEmployees">{t('summaryTargetAudienceOptions.newEmployees')}</option>
+                                    <option value="generalPublic">{t('summaryTargetAudienceOptions.generalPublic')}</option>
+                                    <option value="academics">{t('summaryTargetAudienceOptions.academics')}</option>
+                                    <option value="competitors">{t('summaryTargetAudienceOptions.competitors')}</option>
+                                    <option value="localCommunity">{t('summaryTargetAudienceOptions.localCommunity')}</option>
+                                    <option value="alumni">{t('summaryTargetAudienceOptions.alumni')}</option>
+                                    <option value="internationalStakeholders">{t('summaryTargetAudienceOptions.internationalStakeholders')}</option>
+                                    <option value="specificInterestGroups">{t('summaryTargetAudienceOptions.specificInterestGroups')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('summaryToneStyle')}</label>
+                                <select value={summaryOptions.toneStyle} onChange={(e) => setSummaryOptions(s => ({ ...s, toneStyle: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
+                                    <option value="">-</option>
+                                    <option value="formal">{t('summaryToneStyleOptions.formal')}</option>
+                                    <option value="informal">{t('summaryToneStyleOptions.informal')}</option>
+                                    <option value="inspiring">{t('summaryToneStyleOptions.inspiring')}</option>
+                                    <option value="critical">{t('summaryToneStyleOptions.critical')}</option>
+                                    <option value="humorous">{t('summaryToneStyleOptions.humorous')}</option>
+                                    <option value="neutral">{t('summaryToneStyleOptions.neutral')}</option>
+                                    <option value="professional">{t('summaryToneStyleOptions.professional')}</option>
+                                    <option value="conversational">{t('summaryToneStyleOptions.conversational')}</option>
+                                    <option value="authoritative">{t('summaryToneStyleOptions.authoritative')}</option>
+                                    <option value="friendly">{t('summaryToneStyleOptions.friendly')}</option>
+                                    <option value="technical">{t('summaryToneStyleOptions.technical')}</option>
+                                    <option value="simple">{t('summaryToneStyleOptions.simple')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('summaryLength')}</label>
+                                <select value={summaryOptions.length} onChange={(e) => setSummaryOptions(s => ({ ...s, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
+                                    <option value="">-</option>
+                                    <option value="concise">{t('summaryLengthOptions.concise')}</option>
+                                    <option value="standard">{t('summaryLengthOptions.standard')}</option>
+                                    <option value="extensive">{t('summaryLengthOptions.extensive')}</option>
+                                    <option value="fullTimeline">{t('summaryLengthOptions.fullTimeline')}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mt-2">
+                            <button onClick={() => handleGenerateAnalysis('summary')} disabled={!transcript.trim()} className="px-3 py-2 rounded bg-cyan-600 text-white text-sm hover:bg-cyan-700 disabled:opacity-50">{t('generate', 'Genereren')}</button>
+                        </div>
+                    </div>
+
+                    {/* Output */}
+                    {loadingText && !summary ? (
+                        <BlurredLoadingOverlay loadingText={`${loadingText}...`} />
+                    ) : summary ? (
+                        <div className="relative p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] transition-colors">
+                            <div className="absolute top-4 right-8">
+                                <div 
+                                    ref={actionButtonsRef}
+                                    className="relative"
+                                    onMouseEnter={() => setShowActionButtons(true)}
+                                    onMouseLeave={() => setShowActionButtons(false)}
+                                >
+                                    <button 
+                                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors cursor-pointer"
+                                        aria-label={t('actions')}
+                                        onClick={() => setShowActionButtons(!showActionButtons)}
+                                        title={t('actions', 'Acties')}
+                                    >
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="5" r="2"/>
+                                            <circle cx="12" cy="12" r="2"/>
+                                            <circle cx="12" cy="19" r="2"/>
+                                        </svg>
+                                    </button>
+                                    {showActionButtons && (
+                                        <div 
+                                            className="absolute top-0 right-10 flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-lg border border-gray-200 dark:border-slate-600 -mr-2"
+                                            onMouseEnter={() => setShowActionButtons(true)}
+                                            onMouseLeave={() => setShowActionButtons(false)}
+                                        >
+                                            <button onClick={() => handleResetAnalysis('summary')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('regenerate', 'Regenerate')} title={t('regenerate', 'Opnieuw genereren')}>
+                                                🔄
+                                            </button>
+                                            <button onClick={() => copyToClipboard(markdownToPlainText(summary))} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')} title={t('copyContent', 'Kopiëren')}>
+                                                <CopyIcon className="w-5 h-5" />
+                                            </button>
+                                            <button onClick={() => downloadTextFile(markdownToPlainText(summary), 'summary.txt')} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download" title="Downloaden">
+                                                ⬇️
+                                            </button>
+                                            <button onClick={() => {
+                                                const { subject, body } = generateEmailContent(t('summary'), summary);
+                                                copyToClipboardForEmail(subject, body);
+                                            }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email" title="Kopiëren voor e-mail">
+                                                ✉️
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="overflow-y-auto max-h-[calc(80vh-120px)]">
+                                <div className="prose prose-slate dark:prose-invert max-w-none">
+                                    {renderMarkdown(summary)}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-slate-500 dark:text-slate-400">{t('noContent')}</div>
+                    )}
+                </div>
+            );
+        }
+
         if (activeView === 'teachMe') {
             return (
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
@@ -11216,10 +11421,16 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         const currentView = activeView as ViewType;
                                         switch (currentView) {
                                             case 'summary':
+                                                handleResetAnalysis('summary');
+                                                break;
                                             case 'faq':
+                                                handleResetAnalysis('faq');
+                                                break;
                                             case 'learning':
+                                                handleResetAnalysis('learning');
+                                                break;
                                             case 'followUp':
-                                                handleGenerateAnalysis(currentView);
+                                                handleResetAnalysis('followUp');
                                                 break;
                                             case 'exec':
                                                 handleGenerateExecutiveSummary();
@@ -11456,7 +11667,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         >
                             <option value="">{t('selectAnalysis')}</option>
                             <option value="summary">{t('summary')}</option>
-                            <option value="exec">{t('executiveSummary')}</option>
                             <option value="keyword">{t('keywordAnalysis')}</option>
                             <option value="sentiment">{t('sentiment')}</option>
                             <option value="faq">{t('faq')}</option>
@@ -13456,13 +13666,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         <div className="space-y-4">
                             <div className="flex items-center justify-center gap-2 mb-4">
                                 <span className="text-lg font-medium text-slate-700 dark:text-slate-300">{t('chooseHowToStart')}</span>
-                                <button 
-                                  onClick={() => { setSessionOptionsHelpMode(true); sessionOptionsModal.open(); }}
-                                  className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
-                                  title="Meer informatie over sessie opties"
-                                >
-                                  <QuestionMarkIcon className="w-4 h-4" />
-                                </button>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2 auto-rows-fr">
@@ -13605,7 +13808,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     </button>
                                     {/* Idea Builder help link */}
                                     <div className="mt-3 text-center">
-                                        <button onClick={() => { setSessionOptionsHelpMode(true); sessionOptionsModal.open(); }} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                        <button onClick={() => setIsIdeaBuilderHelpOpen(true)} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
                                             {t('ideaBuilderHelpTitle', 'Idea Builder Help')}
                                         </button>
                                     </div>
@@ -13832,7 +14035,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
     {/* Session Options Modal */}
     <SessionOptionsModal
       isOpen={sessionOptionsModal.isOpen}
-      onClose={() => { setSessionOptionsHelpMode(false); sessionOptionsModal.close(); }}
+      onClose={() => sessionOptionsModal.close()}
       onStartRecording={startRecording}
       onUploadFile={() => handleSessionOptionUpload()}
       onPasteText={() => pasteModal.open()}
@@ -13844,7 +14047,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       onAskExpert={() => expertConfigModal.open()}
       onIdeaBuilder={() => ideaBuilderModal.open()}
       userSubscription={SubscriptionTier[userSubscription] as unknown as string}
-      helpMode={sessionOptionsHelpMode}
       t={t}
     />
     {/* Storytelling Questions Modal removed in favor of inline panel */}
@@ -14106,6 +14308,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       <NotionIntegrationHelpModal
         isOpen={notionIntegrationHelpModal.isOpen}
         onClose={notionIntegrationHelpModal.close}
+      />
+    )}
+
+    {/* Idea Builder Simple Help Modal */}
+    {isIdeaBuilderHelpOpen && (
+      <IdeaBuilderSimpleHelp
+        isOpen={isIdeaBuilderHelpOpen}
+        onClose={() => setIsIdeaBuilderHelpOpen(false)}
       />
     )}
 
@@ -14428,6 +14638,19 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
        />
      )}
 
+     {/* Summary Questions Modal */}
+     {summaryQuestionsModal.isOpen && (
+       <SummaryQuestionsModal
+         isOpen={summaryQuestionsModal.isOpen}
+         onClose={() => { summaryQuestionsModal.close(); setActiveView('summary'); }}
+         onGenerate={(options) => {
+           setSummaryOptions(options);
+           summaryQuestionsModal.close();
+           handleGenerateAnalysis('summary');
+         }}
+         t={t}
+       />
+     )}
 
    </main>
   </div>

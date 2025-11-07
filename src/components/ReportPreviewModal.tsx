@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { XMarkIcon, ArrowDownTrayIcon, DocumentTextIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { TranslationFunction } from '../../types';
-import { markdownToPlainText } from '../utils/textUtils';
+import { markdownToPlainText, markdownToSanitizedHtml } from '../utils/textUtils';
 
 interface ReportPreviewModalProps {
   isOpen: boolean;
@@ -21,6 +21,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const plainText = useMemo(() => markdownToPlainText(reportText || ''), [reportText]);
+  const sanitizedHtml = useMemo(() => markdownToSanitizedHtml(reportText || ''), [reportText]);
 
   const handleDownloadTxt = useCallback(() => {
     if (!plainText) return;
@@ -100,12 +101,12 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
-      <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-5xl w-full m-4 max-h-[90vh] overflow-hidden">
+      <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-5xl w-full m-4 max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-slate-700 dark:to-slate-600">
           <div className="flex items-center gap-3">
             <DocumentTextIcon className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-            <h3 className="text-xl font-medium text-amber-700 dark:text-amber-300 tracking-tight">{t('ideaBuilderReportPreview', 'Rapport Voorbeeld')}</h3>
+            <h3 className="text-xl font-medium text-amber-700 dark:text-amber-300 tracking-tight">{t('ideaBuilderReportPreview', 'Report Preview')}</h3>
           </div>
           <button 
             onClick={onClose}
@@ -116,13 +117,14 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="flex-1 min-h-0 p-6 overflow-y-auto">
           <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg p-6 shadow-sm">
             <div className="prose prose-slate dark:prose-invert max-w-none">
-              {/* We render plain text without markdown markers, preserving structure */}
-              <pre className="text-slate-800 dark:text-slate-100 whitespace-pre-wrap font-sans text-base leading-relaxed">
-                {plainText || t('noContent', 'Geen inhoud')}
-              </pre>
+              {/* Render sanitized HTML derived from markdown */}
+              <div
+                className="text-slate-800 dark:text-slate-100"
+                dangerouslySetInnerHTML={{ __html: sanitizedHtml || `<p>${t('noContent', 'No content')}</p>` }}
+              />
             </div>
           </div>
         </div>
@@ -135,7 +137,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
             >
               <ArrowDownTrayIcon className="w-4 h-4" />
-              {t('downloadTxt', 'Download TXT')}
+              {t('exportToText', 'Download TXT')}
             </button>
             <button
               onClick={handleExportPdf}
@@ -143,7 +145,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
               className={`flex items-center gap-2 px-4 py-2 text-white rounded-md transition-colors ${isExportingPdf ? 'bg-amber-300 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700'}`}
             >
               <DocumentTextIcon className="w-4 h-4" />
-              {isExportingPdf ? t('exportingPdf', 'PDF genereren...') : t('makePdf', 'Maak PDF')}
+              {isExportingPdf ? t('generating', 'Generating {type}...', { type: 'PDF' }) : t('exportToPdf', 'Make PDF')}
             </button>
           </div>
           <div className="flex gap-3">
@@ -151,14 +153,14 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-md"
             >
-              {t('cancel', 'Annuleren')}
+              {t('cancel', 'Cancel')}
             </button>
             <button
               onClick={onSendToTranscript}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
             >
               <PaperAirplaneIcon className="w-4 h-4" />
-              {t('sendToTranscript', 'Naar transcript')}
+              {t('aiDiscussion.moveToTranscript', 'Move to transcript')}
             </button>
           </div>
         </div>

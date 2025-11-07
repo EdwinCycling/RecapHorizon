@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ImageUploadHelpModal from './ImageUploadHelpModal';
 import NotionIntegrationHelpModal from './NotionIntegrationHelpModal';
 import AudioUploadHelpModal from './AudioUploadHelpModal';
-import IdeaBuilderHelpModal from './IdeaBuilderHelpModal';
+import IdeaBuilderSimpleHelp from './IdeaBuilderSimpleHelp';
 import { TranslationFunction } from '../../types';
 
 interface SessionOptionsModalProps {
@@ -20,8 +20,6 @@ interface SessionOptionsModalProps {
   onIdeaBuilder: () => void;
   userSubscription?: string;
   t: TranslationFunction;
-  // New: when true, show as help-only (no clicks on other items)
-  helpMode?: boolean;
 }
 
 const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
@@ -38,14 +36,12 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
   onNotionImport,
   onIdeaBuilder,
   userSubscription,
-  t,
-  helpMode
+  t
 }) => {
   const [isImageHelpOpen, setIsImageHelpOpen] = useState(false);
   const [isNotionHelpOpen, setIsNotionHelpOpen] = useState(false);
   const [isAudioUploadHelpOpen, setIsAudioUploadHelpOpen] = useState(false);
   const [isIdeaHelpOpen, setIsIdeaHelpOpen] = useState(false);
-  const isReadOnly = Boolean(helpMode);
   const isDiamond = (userSubscription || '').toLowerCase() === 'diamond';
   
   if (!isOpen) return null;
@@ -70,76 +66,14 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             {t('sessionOptionsSubtitle')}
           </p>
 
-          {/* Help-only Info Cards (shown when opened via the question mark) */}
-          {isReadOnly && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {/* Audio Upload Help Card */}
-              <div className="border-2 border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-amber-50 dark:bg-amber-900/20">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">🎵</span>
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('audioUploadHelpTitle')}</h3>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 text-sm mb-2">{t('audioUploadHelpDescription')}</p>
-                <div className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-line mb-3">
-                  {t('sessionOptionAudioUploadFormats')}
-                </div>
-                <div className="text-center">
-                  <button
-                    onClick={() => setIsAudioUploadHelpOpen(true)}
-                    className="text-amber-700 dark:text-amber-300 text-sm underline hover:no-underline"
-                  >
-                    {t('audioUploadHelpTitle')}
-                  </button>
-                </div>
-              </div>
 
-              {/* Notion Upload Help Card */}
-              <div className="border-2 border-slate-300 dark:border-slate-600 rounded-xl p-4 bg-white dark:bg-slate-900/30">
-                <div className="flex items-center gap-3 mb-2">
-                  <svg width="28" height="28" viewBox="0 0 100 100" aria-hidden="true" className="text-black dark:text-white">
-                    <rect x="10" y="10" width="80" height="80" rx="10" fill="currentColor" />
-                    <path d="M35 70V30h6l18 26V30h6v40h-6L41 44v26h-6z" fill="#ffffff"/>
-                  </svg>
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('notionOption') || 'Notion'}</h3>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 text-sm mb-2">{t('notionOptionDesc') || 'Analyseer jouw Notion pagina(s).'}</p>
-                <div className="text-center">
-                  <button
-                    onClick={() => setIsNotionHelpOpen(true)}
-                    className="text-slate-700 dark:text-slate-300 text-sm underline hover:no-underline"
-                  >
-                    {t('notionIntegrationInstall')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Idea Builder Help Card */}
-              <div className="border-2 border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-white dark:bg-slate-900/30">
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3a7 7 0 00-7 7c0 2.29 1.06 4.33 2.7 5.62A3 3 0 009 18v1a3 3 0 003 3h0a3 3 0 003-3v-1a3 3 0 002.3-2.38A7 7 0 0011 3z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('ideaBuilderTitle', 'Idea Builder')}</h3>
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 text-sm mb-2">{t('ideaBuilderDesc', 'Generate high-quality ideas and outlines based on topic, audience and goals.')}</p>
-                <div className="text-center">
-                  <button
-                    onClick={() => setIsIdeaHelpOpen(true)}
-                    className="text-amber-700 dark:text-amber-300 text-sm underline hover:no-underline"
-                  >
-                    {t('ideaBuilderHelpTitle', 'Idea Builder Help')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Options Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 mb-6">
             {/* Audio Recording Option */}
             <div 
-              onClick={!isReadOnly ? () => { onStartRecording(); onClose(); } : undefined}
-              className={`border-2 border-blue-200 dark:border-blue-700 rounded-xl p-4 bg-blue-50 dark:bg-blue-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              onClick={() => { onStartRecording(); onClose(); }}
+              className="border-2 border-blue-200 dark:border-blue-700 rounded-xl p-4 bg-blue-50 dark:bg-blue-900/20 cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🎤</div>
@@ -152,8 +86,8 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* File Upload Option */}
             <div 
-              onClick={!isReadOnly ? () => { onUploadFile(); onClose(); } : undefined}
-              className={`border-2 border-green-200 dark:border-green-700 rounded-xl p-4 bg-green-50 dark:bg-green-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              onClick={() => { onUploadFile(); onClose(); }}
+              className="border-2 border-green-200 dark:border-green-700 rounded-xl p-4 bg-green-50 dark:bg-green-900/20 cursor-pointer hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">📄</div>
@@ -169,8 +103,8 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Paste Text Option */}
             <div 
-              onClick={!isReadOnly ? () => { onPasteText(); onClose(); } : undefined}
-              className={`border-2 border-purple-200 dark:border-purple-700 rounded-xl p-4 bg-purple-50 dark:bg-purple-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              onClick={() => { onPasteText(); onClose(); }}
+              className="border-2 border-purple-200 dark:border-purple-700 rounded-xl p-4 bg-purple-50 dark:bg-purple-900/20 cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">📋</div>
@@ -183,8 +117,8 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Web Page Option */}
             <div 
-              onClick={!isReadOnly ? () => { onWebPage(); onClose(); } : undefined}
-              className={`border-2 border-orange-200 dark:border-orange-700 rounded-xl p-4 bg-orange-50 dark:bg-orange-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              onClick={() => { onWebPage(); onClose(); }}
+              className="border-2 border-orange-200 dark:border-orange-700 rounded-xl p-4 bg-orange-50 dark:bg-orange-900/20 cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">🌐</div>
@@ -197,13 +131,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Idea Builder Option */}
             <div 
-              onClick={!isReadOnly ? () => {
+              onClick={() => {
                 if (userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) {
                   onIdeaBuilder();
                   onClose();
                 }
-              } : undefined}
-              className={`border-2 border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-amber-50 dark:bg-amber-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200 ${
+              }}
+              className={`border-2 border-amber-200 dark:border-amber-700 rounded-xl p-4 bg-amber-50 dark:bg-amber-900/20 cursor-pointer hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200 ${
                 userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase()) 
                   ? '' 
                   : 'opacity-70'
@@ -237,8 +171,8 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Image Upload Option */}
             <div 
-              onClick={!isReadOnly ? () => { onUploadImage(); onClose(); } : undefined}
-              className={`border-2 border-pink-200 dark:border-pink-700 rounded-xl p-4 bg-pink-50 dark:bg-pink-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-pink-300 dark:hover:border-pink-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200`}
+              onClick={() => { onUploadImage(); onClose(); }}
+              className="border-2 border-pink-200 dark:border-pink-700 rounded-xl p-4 bg-pink-50 dark:bg-pink-900/20 cursor-pointer hover:border-pink-300 dark:hover:border-pink-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">📸</div>
@@ -256,7 +190,8 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Email Import Option */}
             <div 
-              className="border-2 border-purple-200 dark:border-purple-700 rounded-xl p-4 bg-purple-50 dark:bg-purple-900/20"
+              onClick={() => { onEmailImport(); onClose(); }}
+              className="border-2 border-purple-200 dark:border-purple-700 rounded-xl p-4 bg-purple-50 dark:bg-purple-900/20 cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <div className="text-center mb-2">
                 <div className="text-4xl mb-2">📧</div>
@@ -269,13 +204,13 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
 
             {/* Ask the Expert Option */}
             <div 
-              onClick={!isReadOnly ? () => {
+              onClick={() => {
                 if (userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase())) {
                   onAskExpert();
                   onClose();
                 }
-              } : undefined}
-              className={`border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-4 bg-yellow-50 dark:bg-yellow-900/20 ${!isReadOnly ? 'cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-600 hover:shadow-lg transform hover:scale-105' : ''} transition-all duration-200 ${
+              }}
+              className={`border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-4 bg-yellow-50 dark:bg-yellow-900/20 cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200 ${
                 userSubscription && ['gold', 'diamond', 'enterprise'].includes(userSubscription.toLowerCase()) 
                   ? '' 
                   : 'opacity-70'
@@ -296,37 +231,7 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
             </div>
 
 
-            {/* Analyse Notion Option (help-only) */}
-            {isDiamond && (
-              <div 
-                className="border-2 border-slate-300 dark:border-slate-600 rounded-xl p-4 bg-white dark:bg-slate-900/30"
-              >
-                <div className="text-center mb-2">
-                  <div className="mb-2 flex items-center justify-center">
-                    {/* Notion logo (inline SVG) */}
-                    <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true" className="drop-shadow-sm">
-                      <rect x="10" y="10" width="80" height="80" rx="10" fill="#111111" />
-                      <path d="M35 70V30h6l18 26V30h6v40h-6L41 44v26h-6z" fill="#ffffff"/>
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">{t('notionOption') || 'Analyse Notion'}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                    {t('notionOptionDesc') || 'Analyseer jouw Notion pagina(s).'}
-                  </p>
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsNotionHelpOpen(true);
-                      }}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm underline"
-                    >
-                      {t('notionIntegrationInstall')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+
           </div>
 
           {/* Info Box */}
@@ -373,11 +278,10 @@ const SessionOptionsModal: React.FC<SessionOptionsModalProps> = ({
         onClose={() => setIsNotionHelpOpen(false)}
       />
 
-      {/* Idea Builder Help Modal */}
-      <IdeaBuilderHelpModal
+      {/* Idea Builder Simple Help */}
+      <IdeaBuilderSimpleHelp
         isOpen={isIdeaHelpOpen}
         onClose={() => setIsIdeaHelpOpen(false)}
-        t={t}
       />
     </div>
   );

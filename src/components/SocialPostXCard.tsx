@@ -101,7 +101,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
   return (
     <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
       <div className="flex justify-between items-start">
-        <h3 className="text-lg font-bold text-cyan-500 dark:text-cyan-400 mb-2">X / BlueSky Post</h3>
+        <h3 className="text-lg font-bold text-cyan-600 dark:text-cyan-400 mb-2">X / BlueSky Post</h3>
         <div className="flex items-center gap-2">
           {/* Dropdown for post count selection and generate button - Always show when onGenerate exists */}
           {onGenerate && (
@@ -109,7 +109,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
               <div className="relative">
                 <button 
                   onClick={() => setDropdownOpen(!dropdownOpen)} 
-                  className="flex items-center gap-1 px-3 py-1 text-sm bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded border border-slate-300 dark:border-slate-600"
+                  className="flex items-center gap-1 px-3 py-1 text-sm bg-cyan-100 dark:bg-cyan-900 hover:bg-cyan-200 dark:hover:bg-cyan-800 text-cyan-700 dark:text-cyan-300 rounded border border-cyan-300 dark:border-cyan-600 transition-colors"
                   disabled={isGenerating}
                   title="Selecteer aantal berichten"
                 >
@@ -136,7 +136,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
               <button
                 onClick={handleGenerate}
                 disabled={isGenerating}
-                className="px-3 py-1 text-sm bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-400 text-white rounded transition-colors"
+                className="px-3 py-1 text-sm bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 disabled:from-slate-400 disabled:to-slate-500 text-white rounded transition-all shadow-md hover:shadow-lg"
                 title="Genereer nieuwe berichten"
               >
 {t('generate') || 'Generate'}
@@ -178,7 +178,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                 )}
                 <button
                   onClick={() => handleCopy(numberedPost)}
-                  className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 rounded ml-auto"
+                  className="flex items-center gap-1 px-2 py-1 text-xs bg-cyan-100 dark:bg-cyan-900 hover:bg-cyan-200 dark:hover:bg-cyan-800 text-cyan-700 dark:text-cyan-300 rounded ml-auto transition-colors"
                 >
                   <Copy className="w-3 h-3" />
                   {t('socialPostCopyIndividual') || 'Copy'}
@@ -208,7 +208,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
               </label>
               <button
                 onClick={() => setStyleDropdownOpen(!styleDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md hover:bg-gray-100 dark:hover:bg-slate-600"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white dark:bg-slate-600 border border-gray-300 dark:border-slate-500 rounded-md hover:bg-gray-50 dark:hover:bg-slate-500"
               >
                 <span className="text-gray-700 dark:text-gray-200">
                   {getStyleOptions().find(opt => opt.value === selectedStyle)?.label}
@@ -216,7 +216,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
               {styleDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-md shadow-lg">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-500 rounded-md shadow-lg">
                   {getStyleOptions().map((option) => (
                     <button
                       key={option.value}
@@ -240,7 +240,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
               </label>
               <button
                 onClick={() => setColorDropdownOpen(!colorDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md hover:bg-gray-100 dark:hover:bg-slate-600"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white dark:bg-slate-600 border border-gray-300 dark:border-slate-500 rounded-md hover:bg-gray-50 dark:hover:bg-slate-500"
               >
                 <span className="text-gray-700 dark:text-gray-200">
                   {getColorOptions().find(opt => opt.value === selectedColor)?.label}
@@ -248,7 +248,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
               {colorDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-md shadow-lg">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-500 rounded-md shadow-lg">
                   {getColorOptions().map((option) => (
                     <button
                       key={option.value}

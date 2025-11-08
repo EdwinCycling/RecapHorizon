@@ -10149,43 +10149,43 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             return (
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg min-h-[300px] max-h-[80vh] overflow-y-auto">
                     <div className="mb-6">
-                        <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400 mb-4">Business Case Generator</h3>
+                        <h3 className="text-xl font-bold text-cyan-500 dark:text-cyan-400 mb-4">{t('businessCaseGeneratorFeature')}</h3>
                         
                         <div className="space-y-6">
                             {/* Business Case Type */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    {t('businessCaseTypeLabel', 'Business Case Type')}
+                                    {t('businessCaseTypeLabel')}
                                 </label>
                                 {(() => {
                                   // Build translated list of business case types (names + descriptions)
                                   const types: { id: string; name: string; description: string }[] = [
-                                    { id: 'costSavings', name: t('costSavings', 'Cost savings'), description: t('costSavingsDescription', 'How the solution makes processes more efficient and reduces costs.') },
-                                    { id: 'revenueGrowth', name: t('revenueGrowth', 'Revenue growth'), description: t('revenueGrowthDescription', 'How the solution opens new markets or increases sales.') },
-                                    { id: 'innovation', name: t('innovation', 'Innovation / Competitive advantage'), description: t('innovationDescription', 'How the solution helps to stay ahead in the market.') },
-                                    { id: 'riskReduction', name: t('riskReduction', 'Risk reduction'), description: t('riskReductionDescription', 'How the solution increases compliance, security or reliability.') },
-                                    { id: 'customerSatisfaction', name: t('customerSatisfaction', 'Customer satisfaction & Retention'), description: t('customerSatisfactionDescription', 'How the solution improves the experience of customers or employees.') },
-                                    { id: 'scalability', name: t('scalability', 'Scalability & Future-proofing'), description: t('scalabilityDescription', 'How the solution can grow with the organization.') },
+                                    { id: 'costSavings', name: t('costSavings'), description: t('costSavingsDescription') },
+                                    { id: 'revenueGrowth', name: t('revenueGrowth'), description: t('revenueGrowthDescription') },
+                                    { id: 'innovation', name: t('innovation'), description: t('innovationDescription') },
+                                    { id: 'riskReduction', name: t('riskReduction'), description: t('riskReductionDescription') },
+                                    { id: 'customerSatisfaction', name: t('customerSatisfaction'), description: t('customerSatisfactionDescription') },
+                                    { id: 'scalability', name: t('scalability'), description: t('scalabilityDescription') },
                                     // New expanded options
-                                    { id: 'employeeProductivityEngagement', name: t('businessCaseTypes.employeeProductivityEngagement.name', 'Employee Productivity & Engagement'), description: t('businessCaseTypes.employeeProductivityEngagement.description', 'How the solution improves employee productivity and satisfaction.') },
-                                    { id: 'sustainabilityCsr', name: t('businessCaseTypes.sustainabilityCsr.name', 'Sustainability & CSR'), description: t('businessCaseTypes.sustainabilityCsr.description', 'How the solution contributes to environmental goals, social responsibility, or ESG compliance.') },
-                                    { id: 'qualityImprovement', name: t('businessCaseTypes.qualityImprovement.name', 'Quality Improvement'), description: t('businessCaseTypes.qualityImprovement.description', 'How the solution enhances the quality of products, services, or processes.') },
-                                    { id: 'dataInsights', name: t('businessCaseTypes.dataInsights.name', 'Data & Insights'), description: t('businessCaseTypes.dataInsights.description', 'How the solution enables better data collection, analysis, and decision-making.') },
-                                    { id: 'marketShareIncrease', name: t('businessCaseTypes.marketShareIncrease.name', 'Market Share Increase'), description: t('businessCaseTypes.marketShareIncrease.description', 'How the solution helps to capture a larger portion of the market.') },
-                                    { id: 'brandReputationImage', name: t('businessCaseTypes.brandReputationImage.name', 'Brand Reputation & Image'), description: t('businessCaseTypes.brandReputationImage.description', "How the solution strengthens the brand's image and perception.") },
-                                    { id: 'complianceRegulation', name: t('businessCaseTypes.complianceRegulation.name', 'Compliance & Regulation'), description: t('businessCaseTypes.complianceRegulation.description', 'How the solution helps to meet legal requirements and industry standards.') },
-                                    { id: 'flexibilityAgility', name: t('businessCaseTypes.flexibilityAgility.name', 'Flexibility & Agility'), description: t('businessCaseTypes.flexibilityAgility.description', 'How the solution makes the organization more agile to respond quickly to changes.') },
-                                    { id: 'channelExpansion', name: t('businessCaseTypes.channelExpansion.name', 'Channel Expansion'), description: t('businessCaseTypes.channelExpansion.description', 'How the solution opens new sales or communication channels.') },
-                                    { id: 'timeSavings', name: t('businessCaseTypes.timeSavings.name', 'Time Savings'), description: t('businessCaseTypes.timeSavings.description', 'How the solution generates significant time savings for specific tasks or teams.') },
-                                    { id: 'resourceOptimization', name: t('businessCaseTypes.resourceOptimization.name', 'Resource Optimization'), description: t('businessCaseTypes.resourceOptimization.description', 'How the solution makes the use of resources (staff, materials, technology) more efficient.') },
-                                    { id: 'productDifferentiation', name: t('businessCaseTypes.productDifferentiation.name', 'Product Differentiation'), description: t('businessCaseTypes.productDifferentiation.description', 'How the solution makes a product or service unique compared to competitors.') },
-                                    { id: 'operationalEfficiency', name: t('businessCaseTypes.operationalEfficiency.name', 'Operational Efficiency'), description: t('businessCaseTypes.operationalEfficiency.description', 'How the solution improves the effectiveness and speed of operational processes.') },
-                                    { id: 'securityDataProtection', name: t('businessCaseTypes.securityDataProtection.name', 'Security & Data Protection'), description: t('businessCaseTypes.securityDataProtection.description', 'How the solution enhances the security of data and systems.') },
-                                    { id: 'innovationCulture', name: t('businessCaseTypes.innovationCulture.name', 'Innovation Culture'), description: t('businessCaseTypes.innovationCulture.description', 'How the solution fosters a culture of innovation and experimentation within the organization.') },
-                                    { id: 'supplierRelationships', name: t('businessCaseTypes.supplierRelationships.name', 'Supplier Relationships'), description: t('businessCaseTypes.supplierRelationships.description', 'How the solution improves collaboration with suppliers or creates procurement advantages.') },
-                                    { id: 'fasterTimeToMarket', name: t('businessCaseTypes.fasterTimeToMarket.name', 'Faster Time-to-Market'), description: t('businessCaseTypes.fasterTimeToMarket.description', 'How the solution shortens the time required to launch new products or services.') },
-                                    { id: 'customerSegmentationPrecision', name: t('businessCaseTypes.customerSegmentationPrecision.name', 'Customer Segmentation Precision'), description: t('businessCaseTypes.customerSegmentationPrecision.description', 'How the solution helps to more precisely identify and target customer segments.') },
-                                    { id: 'strategicAlignment', name: t('businessCaseTypes.strategicAlignment.name', 'Strategic Alignment'), description: t('businessCaseTypes.strategicAlignment.description', 'How the solution contributes to better alignment of projects and initiatives with the business strategy.') },
+                                    { id: 'employeeProductivityEngagement', name: t('businessCaseTypes.employeeProductivityEngagement.name'), description: t('businessCaseTypes.employeeProductivityEngagement.description') },
+                                    { id: 'sustainabilityCsr', name: t('businessCaseTypes.sustainabilityCsr.name'), description: t('businessCaseTypes.sustainabilityCsr.description') },
+                                    { id: 'qualityImprovement', name: t('businessCaseTypes.qualityImprovement.name'), description: t('businessCaseTypes.qualityImprovement.description') },
+                                    { id: 'dataInsights', name: t('businessCaseTypes.dataInsights.name'), description: t('businessCaseTypes.dataInsights.description') },
+                                    { id: 'marketShareIncrease', name: t('businessCaseTypes.marketShareIncrease.name'), description: t('businessCaseTypes.marketShareIncrease.description') },
+                                    { id: 'brandReputationImage', name: t('businessCaseTypes.brandReputationImage.name'), description: t('businessCaseTypes.brandReputationImage.description') },
+                                    { id: 'complianceRegulation', name: t('businessCaseTypes.complianceRegulation.name'), description: t('businessCaseTypes.complianceRegulation.description') },
+                                    { id: 'flexibilityAgility', name: t('businessCaseTypes.flexibilityAgility.name'), description: t('businessCaseTypes.flexibilityAgility.description') },
+                                    { id: 'channelExpansion', name: t('businessCaseTypes.channelExpansion.name'), description: t('businessCaseTypes.channelExpansion.description') },
+                                    { id: 'timeSavings', name: t('businessCaseTypes.timeSavings.name'), description: t('businessCaseTypes.timeSavings.description') },
+                                    { id: 'resourceOptimization', name: t('businessCaseTypes.resourceOptimization.name'), description: t('businessCaseTypes.resourceOptimization.description') },
+                                    { id: 'productDifferentiation', name: t('businessCaseTypes.productDifferentiation.name'), description: t('businessCaseTypes.productDifferentiation.description') },
+                                    { id: 'operationalEfficiency', name: t('businessCaseTypes.operationalEfficiency.name'), description: t('businessCaseTypes.operationalEfficiency.description') },
+                                    { id: 'securityDataProtection', name: t('businessCaseTypes.securityDataProtection.name'), description: t('businessCaseTypes.securityDataProtection.description') },
+                                    { id: 'innovationCulture', name: t('businessCaseTypes.innovationCulture.name'), description: t('businessCaseTypes.innovationCulture.description') },
+                                    { id: 'supplierRelationships', name: t('businessCaseTypes.supplierRelationships.name'), description: t('businessCaseTypes.supplierRelationships.description') },
+                                    { id: 'fasterTimeToMarket', name: t('businessCaseTypes.fasterTimeToMarket.name'), description: t('businessCaseTypes.fasterTimeToMarket.description') },
+                                    { id: 'customerSegmentationPrecision', name: t('businessCaseTypes.customerSegmentationPrecision.name'), description: t('businessCaseTypes.customerSegmentationPrecision.description') },
+                                    { id: 'strategicAlignment', name: t('businessCaseTypes.strategicAlignment.name'), description: t('businessCaseTypes.strategicAlignment.description') },
                                   ];
 
                                   const selectedName = businessCaseData?.businessCaseType || types[0].name;
@@ -10221,7 +10221,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                   return (
                                     <>
                                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        {t('businessCaseTargetAudienceQuestion', 'Which audience or stakeholders do you want to persuade?')}
+                                        {t('businessCaseTargetAudienceQuestion')}
                                       </label>
                                       <select
                                         value={businessCaseData?.targetAudience ?? ''}
@@ -10229,12 +10229,12 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                                       >
                                         {/* Empty option (no general audience) */}
-                                        <option value="">{t('businessCaseTargetAudienceOptions.none', 'None')}</option>
+                                        <option value="">{t('businessCaseTargetAudienceOptions.none')}</option>
                                         {[
-                                          t('businessCaseTargetAudienceOptions.boardOfDirectors', 'Board of Directors'),
-                                          t('businessCaseTargetAudienceOptions.investors', 'Investors'),
-                                          t('businessCaseTargetAudienceOptions.teamLeaders', 'Team Leaders'),
-                                          t('businessCaseTargetAudienceOptions.colleagues', "Colleagues")
+                                          t('businessCaseTargetAudienceOptions.boardOfDirectors'),
+                                          t('businessCaseTargetAudienceOptions.investors'),
+                                          t('businessCaseTargetAudienceOptions.teamLeaders'),
+                                          t('businessCaseTargetAudienceOptions.colleagues')
                                         ].map(o => (<option key={o} value={o}>{o}</option>))}
                                       </select>
                                     </>
@@ -10246,14 +10246,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             <div>
                                 {(() => {
                                   const L = {
-                                    concise: t('businessCaseLengthOptions.concise', 'Concise'),
-                                    extensive: t('businessCaseLengthOptions.extensive', 'Extensive'),
-                                    very_extensive: t('businessCaseLengthOptions.very_extensive', 'Very extensive')
+                                    concise: t('businessCaseLengthOptions.concise'),
+                                    extensive: t('businessCaseLengthOptions.extensive'),
+                                    very_extensive: t('businessCaseLengthOptions.very_extensive')
                                   };
                                   return (
                                     <>
                                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        {t('businessCaseLength', 'Business case length')}
+                                        {t('businessCaseLength')}
                                       </label>
                                       <select
                                         value={businessCaseData?.length || 'concise'}
@@ -10276,7 +10276,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     onClick={() => handleGenerateBusinessCase()}
                                     className="w-full px-4 py-2 text-sm bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
                                 >
-                                    {t('generate', 'Generate')}
+                                    {t('generate')}
                                 </button>
                             </div>
                         </div>
@@ -10286,22 +10286,22 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     {businessCaseData && (
                         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-600">
                             <div className="flex justify-between items-center mb-4">
-                                <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400">Gegenereerde Business Case</h4>
+                                <h4 className="font-bold text-lg text-cyan-600 dark:text-cyan-400">{t('businessCaseGeneratedTitle')}</h4>
                                 <div className="flex gap-2">
                                     <button onClick={() => {
-                                        const txt = `## Business Case\n\n${businessCaseData.businessCase}`;
+                                        const txt = `## ${t('businessCaseTitle')}\n\n${businessCaseData.businessCase}`;
                                         copyToClipboard(markdownToPlainText(txt));
                                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label={t('copyContent')}>
                                         <CopyIcon className="w-5 h-5" />
                                     </button>
                                     <button onClick={() => {
-                                        const txt = `## Business Case\n\n${businessCaseData.businessCase}`;
+                                        const txt = `## ${t('businessCaseTitle')}\n\n${businessCaseData.businessCase}`;
                                         downloadTextFile(txt, 'business-case.txt');
                                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Download">
                                         ⬇️
                                     </button>
                                     <button onClick={() => {
-                                        const { subject, body } = generateEmailContent('Business Case', `## Business Case\n\n${businessCaseData.businessCase}`);
+                                        const { subject, body } = generateEmailContent(t('businessCaseTitle'), `## ${t('businessCaseTitle')}\n\n${businessCaseData.businessCase}`);
                                         copyToClipboardForEmail(subject, body);
                                     }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 bg-gray-100 dark:bg-slate-700 rounded-full transition-colors" aria-label="Copy for Email">
                                         ✉️
@@ -10320,9 +10320,9 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             <div className="mb-4 text-sm text-slate-600 dark:text-slate-400">
                                 <p><strong>Type:</strong> {businessCaseData.businessCaseType}</p>
                                 {businessCaseData.targetAudience && (
-                                  <p><strong>{t('businessCaseTargetAudienceLabel', 'Target Audience / Stakeholders')}:</strong> {businessCaseData.targetAudience}</p>
+                                  <p><strong>{t('businessCaseTargetAudienceLabel')}:</strong> {businessCaseData.targetAudience}</p>
                                 )}
-                                <p><strong>{t('businessCaseLength', 'Length')}:</strong> {businessCaseData.length === 'concise' ? t('businessCaseLengthOptions.concise', 'Concise') : businessCaseData.length === 'extensive' ? t('businessCaseLengthOptions.extensive', 'Extensive') : t('businessCaseLengthOptions.very_extensive', 'Very extensive')}</p>
+                                <p><strong>{t('businessCaseLength')}:</strong> {businessCaseData.length === 'concise' ? t('businessCaseLengthOptions.concise') : businessCaseData.length === 'extensive' ? t('businessCaseLengthOptions.extensive') : t('businessCaseLengthOptions.very_extensive')}</p>
                             </div>
                             <p className="text-slate-700 dark:text-slate-200 whitespace-pre-wrap font-sans text-base leading-relaxed">{renderMarkdown(businessCaseData.businessCase)}</p>
                         </div>
@@ -10443,6 +10443,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 <select value={explainOptions.complexityLevel} onChange={(e) => setExplainOptions(s => ({ ...s, complexityLevel: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="Beginner (basisconcepten)">{t('explainComplexityBeginner')}</option>
                                     <option value="Algemeen publiek (duidelijke taal)">{t('explainComplexityGeneral')}</option>
+                                    <option value="Middelbare school, 15-jarige">{t('explainComplexityHighSchool')}</option>
                                     <option value="Teamleden (specifieke context)">{t('explainComplexityTeam')}</option>
                                     <option value="Expert (technisch/diepgaand)">{t('explainComplexityExpert')}</option>
                                     <option value="Kind van 5 (extreem eenvoudig)">{t('explainComplexityChild')}</option>

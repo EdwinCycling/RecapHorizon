@@ -315,6 +315,86 @@ export const nl = {
     very_extensive: "WEES STRENG: Schrijf een zeer uitgebreide business case van 1200-1600 woorden."
   },
   businessCaseStrictHint: "Wees streng: AI moet deze lengte volgen.",
+
+  // Business Case Types - uitgebreide lijst
+  businessCaseTypes: {
+    employeeProductivityEngagement: {
+      name: "Werknemersproductiviteit & Betrokkenheid",
+      description: "Hoe de oplossing de productiviteit en betrokkenheid van werknemers verbetert."
+    },
+    sustainabilityCsr: {
+      name: "Duurzaamheid & CSR",
+      description: "Hoe de oplossing bijdraagt aan duurzaamheidsdoelen en maatschappelijk verantwoord ondernemen."
+    },
+    qualityImprovement: {
+      name: "Kwaliteitsverbetering",
+      description: "Hoe de oplossing de kwaliteit van producten of diensten verbetert."
+    },
+    dataInsights: {
+      name: "Data-inzichten",
+      description: "Hoe de oplossing betere inzichten biedt uit data voor besluitvorming."
+    },
+    marketShareIncrease: {
+      name: "Marktaandeel Vergroten",
+      description: "Hoe de oplossing helpt om marktaandeel te winnen."
+    },
+    brandReputationImage: {
+      name: "Merkreputatie & Image",
+      description: "Hoe de oplossing het merkimago en de reputatie verbetert."
+    },
+    complianceRegulation: {
+      name: "Compliance & Regulering",
+      description: "Hoe de oplossing helpt om aan wet- en regelgeving te voldoen."
+    },
+    flexibilityAgility: {
+      name: "Flexibiliteit & Wendbaarheid",
+      description: "Hoe de oplossing de organisatie flexibeler en wendbaarder maakt."
+    },
+    channelExpansion: {
+      name: "Kanaaluitbreiding",
+      description: "Hoe de oplossing nieuwe verkoop- of distributiekanalen mogelijk maakt."
+    },
+    timeSavings: {
+      name: "Tijdsbesparing",
+      description: "Hoe de oplossing tijd bespaart voor werknemers of klanten."
+    },
+    resourceOptimization: {
+      name: "Optimalisatie van Middelen",
+      description: "Hoe de oplossing het gebruik van middelen optimaliseert."
+    },
+    productDifferentiation: {
+      name: "Productdifferentiatie",
+      description: "Hoe de oplossing helpt om producten of diensten te onderscheiden van concurrenten."
+    },
+    operationalEfficiency: {
+      name: "Operationele Efficiëntie",
+      description: "Hoe de oplossing operationele processen efficiënter maakt."
+    },
+    securityDataProtection: {
+      name: "Beveiliging & Gegevensbescherming",
+      description: "Hoe de oplossing de beveiliging en bescherming van gegevens verbetert."
+    },
+    innovationCulture: {
+      name: "Innovatiecultuur",
+      description: "Hoe de oplossing een cultuur van innovatie stimuleert."
+    },
+    supplierRelationships: {
+      name: "Leveranciersrelaties",
+      description: "Hoe de oplossing de samenwerking met leveranciers verbetert."
+    },
+    customerSegmentationPrecision: {
+      name: "Precisie Klantsegmentatie",
+      description: "Hoe de oplossing helpt om klanten beter te segmenteren en te targeten."
+    },
+    strategicAlignment: {
+      name: "Strategische Uitlijning",
+      description: "Hoe de oplossing aansluit bij de strategische doelen van de organisatie."
+    },
+    fasterTimeToMarket: {
+      name: "Snellere Time-to-Market",
+      description: "Hoe de oplossing helpt om sneller producten of diensten op de markt te brengen."
+    }
+  },
   
   // Clipboard messages
   failedToCopyClipboard: "Failed to copy content to clipboard. Please try again.",
@@ -1204,6 +1284,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   explainComplexityExpert: "Expert (technisch/diepgaand)",
   explainComplexityChild: "Kind van 5 (extreem eenvoudig)",
   explainComplexityChildEn: "5-Year-Old (extremely simple)",
+  explainComplexityHighSchool: "Middelbare school, 15-jarige",
   explainFocusArea: "Focus van de Uitleg",
   explainFocusDecisions: "Hoofdbesluiten",
   explainFocusConcepts: "Complexe concepten",

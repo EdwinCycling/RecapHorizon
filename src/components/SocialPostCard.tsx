@@ -109,13 +109,13 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
   const getPlatformColor = () => {
     switch (socialPostData.platform) {
       case 'LinkedIn':
-        return 'text-blue-600 dark:text-blue-400';
+        return 'text-blue-700 dark:text-blue-400';
       case 'Facebook':
-        return 'text-blue-700 dark:text-blue-500';
+        return 'text-blue-600 dark:text-blue-400';
       case 'Instagram':
         return 'text-pink-600 dark:text-pink-400';
       default:
-        return 'text-cyan-500 dark:text-cyan-400';
+        return 'text-cyan-600 dark:text-cyan-400';
     }
   };
 
@@ -160,7 +160,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
                 )}
                 <button
                   onClick={() => handleCopy(numberedPost)}
-                  className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 rounded ml-auto"
+                  className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 rounded ml-auto transition-colors"
                 >
                   <Copy className="w-3 h-3" />
                   {t('socialPostCopyIndividual') || 'Copy'}
@@ -190,7 +190,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
               </label>
               <button
                 onClick={() => setStyleDropdownOpen(!styleDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md hover:bg-gray-100 dark:hover:bg-slate-600"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white dark:bg-slate-600 border border-gray-300 dark:border-slate-500 rounded-md hover:bg-gray-50 dark:hover:bg-slate-500"
               >
                 <span className="text-gray-700 dark:text-gray-200">
                   {getStyleOptions().find(opt => opt.value === selectedStyle)?.label}
@@ -198,7 +198,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
               {styleDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-md shadow-lg">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-500 rounded-md shadow-lg">
                   {getStyleOptions().map((option) => (
                     <button
                       key={option.value}
@@ -222,7 +222,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
               </label>
               <button
                 onClick={() => setColorDropdownOpen(!colorDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-md hover:bg-gray-100 dark:hover:bg-slate-600"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white dark:bg-slate-600 border border-gray-300 dark:border-slate-500 rounded-md hover:bg-gray-50 dark:hover:bg-slate-500"
               >
                 <span className="text-gray-700 dark:text-gray-200">
                   {getColorOptions().find(opt => opt.value === selectedColor)?.label}
@@ -230,7 +230,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
               {colorDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-md shadow-lg">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-500 rounded-md shadow-lg">
                   {getColorOptions().map((option) => (
                     <button
                       key={option.value}
@@ -252,7 +252,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
           <button
             onClick={handleGenerateImage}
             disabled={isGeneratingImage}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-md text-sm font-medium transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-purple-400 disabled:to-blue-400 text-white rounded-md text-sm font-medium transition-all shadow-md hover:shadow-lg"
           >
             <Image className="w-4 h-4" />
 {t('generateImage') || 'Generate Image'}
@@ -260,20 +260,20 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
 
           {/* Image Instructions Display */}
           {socialPostData.imageInstructions && (
-            <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-700">
+            <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-md border border-blue-200 dark:border-blue-600">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
                   {t('aiImageInstruction') || 'AI Image Instruction'}
                 </span>
                 <button
                   onClick={() => onCopy(socialPostData.imageInstructions || '')}
-                  className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 dark:bg-purple-800 hover:bg-purple-200 dark:hover:bg-purple-700 text-purple-700 dark:text-purple-300 rounded"
+                  className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-800 hover:bg-blue-200 dark:hover:bg-blue-700 text-blue-700 dark:text-blue-300 rounded transition-colors"
                 >
                   <Copy className="w-3 h-3" />
                   {t('copyImageInstruction') || 'Copy'}
                 </button>
               </div>
-              <pre className="whitespace-pre-wrap text-xs text-purple-600 dark:text-purple-200 font-mono">
+              <pre className="whitespace-pre-wrap text-xs text-blue-800 dark:text-blue-200 font-mono">
                 {socialPostData.imageInstructions}
               </pre>
             </div>

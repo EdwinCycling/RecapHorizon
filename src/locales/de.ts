@@ -222,6 +222,146 @@ export const de = {
   },
   businessCaseStrictHint: "Seien Sie streng: Die KI muss diese Länge einhalten.",
   
+  // Business Case Types - vollständige Liste
+  businessCaseTypes: {
+    employeeProductivityEngagement: {
+      name: "Mitarbeiterproduktivität & Engagement",
+      description: "Wie die Lösung die Produktivität und das Engagement der Mitarbeiter verbessert."
+    },
+    sustainabilityCsr: {
+      name: "Nachhaltigkeit & CSR",
+      description: "Wie die Lösung zu Nachhaltigkeitszielen und Corporate Social Responsibility beiträgt."
+    },
+    qualityImprovement: {
+      name: "Qualitätsverbesserung",
+      description: "Wie die Lösung die Qualität von Produkten oder Dienstleistungen verbessert."
+    },
+    dataInsights: {
+      name: "Daten-Einblicke",
+      description: "Wie die Lösung bessere Einblicke aus Daten für Entscheidungsfindung bietet."
+    },
+    marketShareIncrease: {
+      name: "Marktanteilserhöhung",
+      description: "Wie die Lösung hilft, Marktanteile zu gewinnen."
+    },
+    brandReputationImage: {
+      name: "Markenreputation & Image",
+      description: "Wie die Lösung das Markenimage und den Ruf verbessert."
+    },
+    complianceRegulation: {
+      name: "Compliance & Regulierung",
+      description: "Wie die Lösung hilft, regulatorische und Compliance-Anforderungen zu erfüllen."
+    },
+    operationalEfficiency: {
+      name: "Betriebseffizienz",
+      description: "Wie die Lösung die Gesamtbetriebseffizienz verbessert."
+    },
+    customerExperience: {
+      name: "Kundenerlebnis",
+      description: "Wie die Lösung Kundenerlebnis und -zufriedenheit verbessert."
+    },
+    competitiveAdvantage: {
+      name: "Wettbewerbsvorteil",
+      description: "Wie die Lösung Wettbewerbsvorteile schafft oder stärkt."
+    },
+    technologyModernization: {
+      name: "Technologie-Modernisierung",
+      description: "Wie die Lösung Technologie-Systeme modernisiert und aktualisiert."
+    },
+    workforceDevelopment: {
+      name: "Belegschaftsentwicklung",
+      description: "Wie die Lösung Fähigkeitsentwicklung und berufliches Wachstum unterstützt."
+    },
+    supplyChainOptimization: {
+      name: "Lieferketten-Optimierung",
+      description: "Wie die Lösung Effizienz und Zuverlässigkeit der Lieferkette verbessert."
+    },
+    digitalTransformation: {
+      name: "Digitale Transformation",
+      description: "Wie die Lösung digitale Transformationsinitiativen unterstützt."
+    },
+    securityRiskManagement: {
+      name: "Sicherheit & Risikomanagement",
+      description: "Wie die Lösung Sicherheit und Risikomanagement verbessert."
+    },
+    marketExpansion: {
+      name: "Marktexpansion",
+      description: "Wie die Lösung Expansion in neue Märkte unterstützt."
+    },
+    stakeholderEngagement: {
+      name: "Stakeholder-Engagement",
+      description: "Wie die Lösung Engagement mit wichtigen Stakeholdern verbessert."
+    },
+    financialPerformance: {
+      name: "Finanzielle Performance",
+      description: "Wie die Lösung Gesamt-Finanzkennzahlen verbessert."
+    },
+    innovationAcceleration: {
+      name: "Innovations-Beschleunigung",
+      description: "Wie die Lösung Innovationsinitiativen beschleunigt und unterstützt."
+    },
+    businessContinuity: {
+      name: "Geschäftskontinuität",
+      description: "Wie die Lösung die Widerstandsfähigkeit und Geschäftskontinuität verbessert."
+    },
+    qualityImprovement: {
+      name: "Qualitätsverbesserung",
+      description: "Wie die Lösung die Qualität von Produkten, Dienstleistungen oder Prozessen verbessert."
+    },
+    dataInsights: {
+      name: "Daten & Erkenntnisse",
+      description: "Wie die Lösung bessere Daten und Erkenntnisse für die Entscheidungsfindung liefert."
+    },
+    marketShareIncrease: {
+      name: "Marktanteilssteigerung",
+      description: "Wie die Lösung hilft, den Marktanteil und die Wettbewerbsposition zu erhöhen."
+    },
+    flexibilityAgility: {
+      name: "Flexibilität & Agilität",
+      description: "Wie die Lösung die organisatorische Flexibilität und Agilität verbessert."
+    },
+    channelExpansion: {
+      name: "Kanalerweiterung",
+      description: "Wie die Lösung die Expansion zu neuen Vertriebs- oder Distributionskanälen unterstützt."
+    },
+    timeSavings: {
+      name: "Zeitersparnis",
+      description: "Wie die Lösung die Zeit reduziert, die für die Ausführung von Aufgaben oder Prozessen benötigt wird."
+    },
+    resourceOptimization: {
+      name: "Ressourcenoptimierung",
+      description: "Wie die Lösung die Nutzung von Ressourcen (Personal, Budget, Ausrüstung) optimiert."
+    },
+    productDifferentiation: {
+      name: "Produktdifferenzierung",
+      description: "Wie die Lösung hilft, Produkte oder Dienstleistungen auf dem Markt zu differenzieren."
+    },
+    securityDataProtection: {
+      name: "Sicherheit & Datenschutz",
+      description: "Wie die Lösung die Sicherheit und den Schutz sensibler Daten verbessert."
+    },
+    innovationCulture: {
+      name: "Innovationskultur",
+      description: "Wie die Lösung eine Innovationskultur fördert und unterstützt."
+    },
+    supplierRelationships: {
+      name: "Lieferantenbeziehungen",
+      description: "Wie die Lösung die Beziehungen zu Lieferanten und das Lieferkettenmanagement verbessert."
+    },
+    fasterTimeToMarket: {
+      name: "Schnellere Markteinführung",
+      description: "Wie die Lösung die Zeit bis zur Markteinführung neuer Produkte oder Dienstleistungen reduziert."
+    },
+    customerSegmentationPrecision: {
+      name: "Präzise Kundensegmentierung",
+      description: "Wie die Lösung die Genauigkeit der Kundensegmentierung und -ausrichtung verbessert."
+    },
+    strategicAlignment: {
+      name: "Strategische Ausrichtung",
+      description: "Wie die Lösung die Ausrichtung mit organisatorischen Zielen und Strategie unterstützt."
+    }
+  },
+  
   // Clipboard messages
   failedToCopyClipboard: "Fehler beim Kopieren in die Zwischenablage. Bitte versuchen Sie es erneut.",
   
@@ -1176,6 +1316,7 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   explainComplexityExpert: "Experte (technisch/tiefgehend)",
   explainComplexityChild: "5-Jähriger (extrem einfach)",
   explainComplexityChildEn: "5-Year-Old (extremely simple)",
+  explainComplexityHighSchool: "Gymnasium, 15-jährig",
   explainFocusArea: "Fokus der Erklärung",
   explainFocusDecisions: "Hauptentscheidungen",
   explainFocusConcepts: "Komplexe Konzepte",

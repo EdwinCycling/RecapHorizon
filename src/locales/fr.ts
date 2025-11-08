@@ -373,7 +373,147 @@ export const fr = {
     extensive: "SOYEZ STRICT : Rédigez un business case détaillé de 700-1000 mots.",
     very_extensive: "SOYEZ STRICT : Rédigez un business case très détaillé de 1200-1600 mots."
   },
-  businessCaseStrictHint: "Soyez strict : l’IA doit respecter cette longueur.",
+  businessCaseStrictHint: "Soyez strict : l'IA doit respecter cette longueur.",
+  
+  // Business Case Types - liste complète
+  businessCaseTypes: {
+    employeeProductivityEngagement: {
+      name: "Productivité des employés & Engagement",
+      description: "Comment la solution améliore la productivité et l'engagement des employés."
+    },
+    sustainabilityCsr: {
+      name: "Durabilité & RSE",
+      description: "Comment la solution contribue aux objectifs de durabilité et à la responsabilité sociale d'entreprise."
+    },
+    qualityImprovement: {
+      name: "Amélioration de la qualité",
+      description: "Comment la solution améliore la qualité des produits ou services."
+    },
+    dataInsights: {
+      name: "Insights de données",
+      description: "Comment la solution fournit de meilleures insights à partir des données pour la prise de décision."
+    },
+    marketShareIncrease: {
+      name: "Augmentation de part de marché",
+      description: "Comment la solution aide à gagner des parts de marché."
+    },
+    brandReputationImage: {
+      name: "Réputation de marque & Image",
+      description: "Comment la solution améliore l'image de marque et la réputation."
+    },
+    complianceRegulation: {
+      name: "Conformité & Réglementation",
+      description: "Comment la solution aide à respecter les exigences réglementaires et de conformité."
+    },
+    operationalEfficiency: {
+      name: "Efficacité opérationnelle",
+      description: "Comment la solution améliore l'efficacité globale des opérations."
+    },
+    customerExperience: {
+      name: "Expérience client",
+      description: "Comment la solution améliore l'expérience et la satisfaction client."
+    },
+    competitiveAdvantage: {
+      name: "Avantage concurrentiel",
+      description: "Comment la solution crée ou renforce l'avantage concurrentiel."
+    },
+    technologyModernization: {
+      name: "Modernisation technologique",
+      description: "Comment la solution modernise et met à jour les systèmes technologiques."
+    },
+    workforceDevelopment: {
+      name: "Développement du personnel",
+      description: "Comment la solution soutient le développement des compétences et la croissance professionnelle."
+    },
+    supplyChainOptimization: {
+      name: "Optimisation de la chaîne d'approvisionnement",
+      description: "Comment la solution améliore l'efficacité et la fiabilité de la chaîne d'approvisionnement."
+    },
+    digitalTransformation: {
+      name: "Transformation digitale",
+      description: "Comment la solution soutient les initiatives de transformation digitale."
+    },
+    securityRiskManagement: {
+      name: "Sécurité & Gestion des risques",
+      description: "Comment la solution améliore la sécurité et la gestion des risques."
+    },
+    marketExpansion: {
+      name: "Expansion du marché",
+      description: "Comment la solution soutient l'expansion sur de nouveaux marchés."
+    },
+    stakeholderEngagement: {
+      name: "Engagement des parties prenantes",
+      description: "Comment la solution améliore l'engagement avec les parties prenantes clés."
+    },
+    financialPerformance: {
+      name: "Performance financière",
+      description: "Comment la solution améliore les métriques financières globales."
+    },
+    innovationAcceleration: {
+      name: "Accélération de l'innovation",
+      description: "Comment la solution accélère et soutient les initiatives d'innovation."
+    },
+    businessContinuity: {
+      name: "Continuité d'activité",
+      description: "Comment la solution améliore la résilience et la continuité d'activité."
+    },
+    qualityImprovement: {
+      name: "Amélioration de la qualité",
+      description: "Comment la solution améliore la qualité des produits, services ou processus."
+    },
+    dataInsights: {
+      name: "Données & Insights",
+      description: "Comment la solution fournit de meilleures données et insights pour la prise de décision."
+    },
+    marketShareIncrease: {
+      name: "Augmentation de part de marché",
+      description: "Comment la solution aide à augmenter la part de marché et la position concurrentielle."
+    },
+    flexibilityAgility: {
+      name: "Flexibilité & Agilité",
+      description: "Comment la solution améliore la flexibilité et l'agilité organisationnelle."
+    },
+    channelExpansion: {
+      name: "Expansion des canaux",
+      description: "Comment la solution soutient l'expansion vers de nouveaux canaux de vente ou de distribution."
+    },
+    timeSavings: {
+      name: "Économies de temps",
+      description: "Comment la solution réduit le temps nécessaire pour accomplir des tâches ou des processus."
+    },
+    resourceOptimization: {
+      name: "Optimisation des ressources",
+      description: "Comment la solution optimise l'utilisation des ressources (personnel, budget, matériel)."
+    },
+    productDifferentiation: {
+      name: "Différenciation produit",
+      description: "Comment la solution aide à différencier les produits ou services sur le marché."
+    },
+    securityDataProtection: {
+      name: "Sécurité & Protection des données",
+      description: "Comment la solution améliore la sécurité et la protection des données sensibles."
+    },
+    innovationCulture: {
+      name: "Culture d'innovation",
+      description: "Comment la solution soutient et encourage une culture d'innovation."
+    },
+    supplierRelationships: {
+      name: "Relations fournisseurs",
+      description: "Comment la solution améliore les relations avec les fournisseurs et la gestion de la chaîne d'approvisionnement."
+    },
+    fasterTimeToMarket: {
+      name: "Réduction du time-to-market",
+      description: "Comment la solution réduit le délai de mise sur le marché de nouveaux produits ou services."
+    },
+    customerSegmentationPrecision: {
+      name: "Précision de segmentation client",
+      description: "Comment la solution améliore la précision de la segmentation et du ciblage client."
+    },
+    strategicAlignment: {
+      name: "Alignement stratégique",
+      description: "Comment la solution soutient l'alignement avec les objectifs et la stratégie organisationnelle."
+    }
+  },
   
   // Clipboard messages
   failedToCopyClipboard: "Échec de la copie dans le presse-papiers. Veuillez réessayer.",
@@ -1227,6 +1367,7 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   explainComplexityExpert: "Expert (technique/profond)",
   explainComplexityChild: "Enfant de 5 ans (extrêmement simple)",
   explainComplexityChildEn: "5-Year-Old (extremely simple)",
+  explainComplexityHighSchool: "Lycée, 15 ans",
   explainFocusArea: "Focus de l'Explication",
   explainFocusDecisions: "Décisions principales",
   explainFocusConcepts: "Concepts complexes",
@@ -1324,9 +1465,8 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   expertHelpAvailabilityText: "Cette fonctionnalité est uniquement disponible pour les utilisateurs des niveaux Gold, Diamond et Enterprise.",
   expertHelpSubscriptionTitle: "Abonnement requis :",
   expertHelpSubscriptionText: "Cette fonctionnalité est uniquement disponible pour les utilisateurs des niveaux Gold, Diamond et Enterprise.",
-  expertHelpTipsTitle: "Conseils pour une utilisation optimale :",
   expertHelpTip1: "Soyez spécifique dans vos questions pour des réponses plus précises",
-  expertHelpTip2: "Utilisez des questions de suivi pour approfondir des aspects spécifiques",
+  expertHelpTip2: "Utilisez des questions de suivel pour approfondir des aspects spécifiques",
   expertHelpTip3: "Sélectionnez la configuration d'expert correcte pour votre domaine",
   expertHelpClose: "Compris",
 
@@ -2949,10 +3089,6 @@ notionIntegrationHelpTitle: "Installer l'intégration Notion",
   emailComposition: "Composition d'e-mail",
   emailTemplates: "Modèles d'e-mail",
   errorValidatingReferralCode: "Erreur lors de la validation du code de parrainage",
-  expertHelpAvailability: "Disponibilité de l'aide expert",
-  expertHelpAvailabilityText: "L'aide expert est disponible 24/7",
-  expertHelpHowItWorks: "Comment fonctionne l'aide expert",
-  expertHelpTips: "Conseils pour l'aide expert",
   faqEmailUpload: "FAQ Téléchargement d'e-mail",
   faqEmailUploadAnswer: "Réponse FAQ Téléchargement d'e-mail",
   generatingTopicsDesc: "Description de la génération de sujets",
@@ -2977,7 +3113,6 @@ notionIntegrationHelpTitle: "Installer l'intégration Notion",
   passwordResetInvalidEmail: "E-mail invalide pour la réinitialisation de mot de passe",
   passwordResetTooManyRequests: "Trop de demandes de réinitialisation de mot de passe",
   passwordResetUserNotFound: "Utilisateur non trouvé pour la réinitialisation de mot de passe",
-  podcastFeatureUpgrade: "Mise à niveau de la fonctionnalité podcast",
   previewEmail: "Aperçu de l'e-mail",
   referralCodeNotFound: "Code de parrainage non trouvé",
   referralEarningsPreviousMonth: "Gains de parrainage du mois précédent",

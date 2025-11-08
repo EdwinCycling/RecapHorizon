@@ -374,6 +374,570 @@ export const en = {
     very_extensive: "BE STRICT: Write a very extensive business case of 1200-1600 words."
   },
   businessCaseStrictHint: "Be strict: AI must follow this length.",
+
+  // Business Case Types
+  businessCaseTypes: {
+    employeeProductivityEngagement: {
+      name: "Employee Productivity & Engagement",
+      description: "Improve employee efficiency, satisfaction, and retention through tools, processes, or HR initiatives."
+    },
+    sustainabilityCsr: {
+      name: "Sustainability & CSR",
+      description: "Reduce environmental impact, improve corporate social responsibility, and meet sustainability goals."
+    },
+    marketExpansion: {
+      name: "Market Expansion",
+      description: "Enter new geographic markets, demographic segments, or distribution channels to increase reach."
+    },
+    brandReputation: {
+      name: "Brand & Reputation",
+      description: "Strengthen brand position, market perception, and corporate reputation among stakeholders."
+    },
+    dataAnalytics: {
+      name: "Data Analytics",
+      description: "Improve decision-making capabilities through better analytics tools, business intelligence, and data management."
+    },
+    mobileDigital: {
+      name: "Mobile & Digital",
+      description: "Develop mobile apps, digital experiences, or omnichannel capabilities to improve customer engagement."
+    },
+    cloudMigration: {
+      name: "Cloud Migration",
+      description: "Migrate infrastructure, applications, or services to cloud solutions for improved scalability and cost reduction."
+    },
+    cybersecurity: {
+      name: "Cybersecurity",
+      description: "Strengthen security defenses, protect against cyber threats, and improve overall security posture."
+    },
+    automation: {
+      name: "Automation",
+      description: "Automate manual processes, repetitive workflows, or administrative tasks to improve efficiency."
+    },
+    collaboration: {
+      name: "Collaboration",
+      description: "Improve team collaboration tools and processes for better communication and coordination."
+    },
+    knowledgeManagement: {
+      name: "Knowledge Management",
+      description: "Capture, organize, and share institutional knowledge to improve decision-making and productivity."
+    },
+    qualityAssurance: {
+      name: "Quality Assurance",
+      description: "Improve quality control processes, reduce defects, and enhance product/service consistency."
+    },
+    regulatoryCompliance: {
+      name: "Regulatory Compliance",
+      description: "Ensure compliance with regulatory requirements, industry standards, and legal obligations."
+    },
+    disasterRecovery: {
+      name: "Disaster Recovery",
+      description: "Improve disaster preparedness, recovery, and business continuity to minimize downtime."
+    },
+    performanceOptimization: {
+      name: "Performance Optimization",
+      description: "Optimize system performance, response times, and overall operational efficiency."
+    },
+    userExperience: {
+      name: "User Experience",
+      description: "Improve usability, interface design, and overall user satisfaction for products/services."
+    },
+    vendorManagement: {
+      name: "Vendor Management",
+      description: "Optimize supplier relationships, procurement processes, and supply chain management."
+    },
+    financialPlanning: {
+      name: "Financial Planning",
+      description: "Improve financial planning processes, budgeting, and analysis for better financial management."
+    },
+    inventoryManagement: {
+      name: "Inventory Management",
+      description: "Optimize inventory levels, reduce storage costs, and improve supply chain management."
+    },
+    supplyChain: {
+      name: "Supply Chain",
+      description: "Improve supply chain efficiency, reduce lead times, and optimize logistics."
+    },
+    predictiveMaintenance: {
+      name: "Predictive Maintenance",
+      description: "Implement predictive maintenance capabilities to reduce unplanned downtime."
+    },
+    energyEfficiency: {
+      name: "Energy Efficiency",
+      description: "Reduce energy consumption, utility costs, and carbon footprint through efficiency improvements."
+    },
+    wasteReduction: {
+      name: "Waste Reduction",
+      description: "Minimize material waste, improve recycling processes, and reduce disposal costs."
+    },
+    remoteWorkCapabilities: {
+      name: "Remote Work Capabilities",
+      description: "Improve remote work infrastructure and tools to support distributed team productivity."
+    },
+    trainingDevelopment: {
+      name: "Training & Development",
+      description: "Improve employee training programs, skill development, and professional development initiatives."
+    },
+    customerSupport: {
+      name: "Customer Support",
+      description: "Improve customer support capabilities, response times, and overall customer satisfaction."
+    },
+    salesEnablement: {
+      name: "Sales Enablement",
+      description: "Strengthen sales tools, processes, and resources to improve sales performance and productivity."
+    },
+    marketingEffectiveness: {
+      name: "Marketing Effectiveness",
+      description: "Improve marketing strategies, campaigns, and marketing ROI for better reach and engagement."
+    },
+    competitiveIntelligence: {
+      name: "Competitive Intelligence",
+      description: "Improve competitive intelligence capabilities, market analysis, and strategic positioning."
+    },
+    businessIntelligence: {
+      name: "Business Intelligence",
+      description: "Improve business intelligence capabilities, dashboards, and reporting features."
+    },
+    workflowOptimization: {
+      name: "Workflow Optimization",
+      description: "Optimize business workflows, operational processes, and procedures for better efficiency."
+    },
+    documentManagement: {
+      name: "Document Management",
+      description: "Improve document management systems, version control, and approval processes."
+    },
+    projectManagement: {
+      name: "Project Management",
+      description: "Improve project management tools and processes for better planning and execution."
+    },
+    businessProcessManagement: {
+      name: "Business Process Management",
+      description: "Optimize business processes, eliminate inefficiencies, and improve overall operational efficiency."
+    },
+    strategicPlanning: {
+      name: "Strategic Planning",
+      description: "Improve strategic planning processes, analysis, and executive-level decision-making."
+    },
+    innovationManagement: {
+      name: "Innovation Management",
+      description: "Improve innovation management capabilities, idea development processes, and innovation culture."
+    },
+    changeManagement: {
+      name: "Change Management",
+      description: "Improve change management capabilities, transition processes, and organizational support during changes."
+    },
+    stakeholderEngagement: {
+      name: "Stakeholder Engagement",
+      description: "Improve stakeholder engagement, communication, and management for stronger relationships."
+    },
+    governance: {
+      name: "Governance",
+      description: "Strengthen corporate governance processes, leadership structure, and decision-making."
+    },
+    riskManagement: {
+      name: "Risk Management",
+      description: "Improve risk management capabilities, risk assessment, and mitigation strategies."
+    },
+    auditCompliance: {
+      name: "Audit & Compliance",
+      description: "Improve audit processes, regulatory compliance, and audit readiness."
+    },
+    performanceManagement: {
+      name: "Performance Management",
+      description: "Improve performance management systems, metrics, and evaluation processes."
+    },
+    talentAcquisition: {
+      name: "Talent Acquisition",
+      description: "Improve recruitment processes, talent acquisition, and retention strategies."
+    },
+    successionPlanning: {
+      name: "Succession Planning",
+      description: "Improve succession planning processes, leadership development, and future leader preparation."
+    },
+    cultureDevelopment: {
+      name: "Culture Development",
+      description: "Improve organizational culture, corporate values, and employee engagement initiatives."
+    },
+    employeeWellbeing: {
+      name: "Employee Wellbeing",
+      description: "Improve employee wellbeing programs, health, and work-life balance."
+    },
+    internalCommunication: {
+      name: "Internal Communication",
+      description: "Improve internal communication strategies, communication channels, and organizational transparency."
+    },
+    externalCommunication: {
+      name: "External Communication",
+      description: "Improve external communication capabilities, public relations, and brand management."
+    },
+    publicRelations: {
+      name: "Public Relations",
+      description: "Improve public relations strategies, media management, and public perception."
+    },
+    crisisManagement: {
+      name: "Crisis Management",
+      description: "Improve crisis management capabilities, emergency preparedness, and communication during crises."
+    },
+    reputationManagement: {
+      name: "Reputation Management",
+      description: "Improve reputation management strategies, brand monitoring, and trust building."
+    },
+    thoughtLeadership: {
+      name: "Thought Leadership",
+      description: "Improve thought leadership capabilities, expert content, and industry positioning."
+    },
+    contentStrategy: {
+      name: "Content Strategy",
+      description: "Improve content strategies, content marketing, and valuable content creation."
+    },
+    socialMedia: {
+      name: "Social Media",
+      description: "Improve social media strategies, platform engagement, and digital presence."
+    },
+    digitalMarketing: {
+      name: "Digital Marketing",
+      description: "Improve digital marketing strategies, online campaigns, and omnichannel marketing efforts."
+    },
+    emailMarketing: {
+      name: "Email Marketing",
+      description: "Improve email marketing campaigns, automation, and email engagement strategies."
+    },
+    seoOptimization: {
+      name: "SEO Optimization",
+      description: "Improve search engine optimization capabilities, organic visibility, and website traffic."
+    },
+    customerRetention: {
+      name: "Customer Retention",
+      description: "Improve customer retention strategies, loyalty programs, and churn reduction."
+    },
+    customerExperience: {
+      name: "Customer Experience",
+      description: "Improve overall customer experience, satisfaction, and loyalty through improvements across all touchpoints."
+    },
+    voiceOfCustomer: {
+      name: "Voice of Customer",
+      description: "Improve voice of customer programs, feedback collection, and feedback-based improvement processes."
+    },
+    customerJourneyMapping: {
+      name: "Customer Journey Mapping",
+      description: "Improve customer journey mapping, touchpoint analysis, and experience optimization."
+    },
+    personalization: {
+      name: "Personalization",
+      description: "Improve personalization capabilities, targeted marketing, and personalized customer experiences."
+    },
+    subscriptionManagement: {
+      name: "Subscription Management",
+      description: "Improve subscription management processes, recurring billing, and subscription revenue models."
+    },
+    pricingOptimization: {
+      name: "Pricing Optimization",
+      description: "Improve pricing strategies, pricing models, and revenue optimization analysis."
+    },
+    contractManagement: {
+      name: "Contract Management",
+      description: "Improve contract management processes, contract tracking, and agreement compliance."
+    },
+    procurement: {
+      name: "Procurement",
+      description: "Improve procurement processes, supplier management, and purchasing strategies."
+    },
+    supplierDiversity: {
+      name: "Supplier Diversity",
+      description: "Improve supplier diversity programs, inclusive purchasing initiatives, and diverse supply chains."
+    },
+    logistics: {
+      name: "Logistics",
+      description: "Improve logistics operations, transportation optimization, and supply chain management."
+    },
+    warehouseManagement: {
+      name: "Warehouse Management",
+      description: "Improve warehouse management processes, inventory optimization, and warehouse operations."
+    },
+    transportation: {
+      name: "Transportation",
+      description: "Improve transportation strategies, route optimization, and fleet management."
+    },
+    fleetManagement: {
+      name: "Fleet Management",
+      description: "Improve fleet management capabilities, vehicle maintenance, and route optimization."
+    },
+    assetManagement: {
+      name: "Asset Management",
+      description: "Improve asset management processes, asset tracking, and asset utilization optimization."
+    },
+    resourcePlanning: {
+      name: "Resource Planning",
+      description: "Improve resource planning and allocation, capacity management, and utilization optimization."
+    },
+    capacityPlanning: {
+      name: "Capacity Planning",
+      description: "Improve capacity planning, demand analysis, and scaling strategies."
+    },
+    demandForecasting: {
+      name: "Demand Forecasting",
+      description: "Improve demand forecasting capabilities, trend analysis, and data-driven planning."
+    },
+    productionPlanning: {
+      name: "Production Planning",
+      description: "Improve production planning processes, scheduling, and manufacturing operations optimization."
+    },
+    qualityControl: {
+      name: "Quality Control",
+      description: "Improve quality control processes, quality testing, and quality assurance standards."
+    },
+    safetyManagement: {
+      name: "Safety Management",
+      description: "Improve safety management programs, safety protocols, and safety culture."
+    },
+    environmentalManagement: {
+      name: "Environmental Management",
+      description: "Improve environmental management programs, environmental compliance, and sustainability initiatives."
+    },
+    complianceManagement: {
+      name: "Compliance Management",
+      description: "Improve compliance management systems, regulatory tracking, and audit processes."
+    },
+    policyManagement: {
+      name: "Policy Management",
+      description: "Improve policy management processes, policy development, and policy compliance."
+    },
+    procedureOptimization: {
+      name: "Procedure Optimization",
+      description: "Improve business procedures, process documentation, and procedure standardization."
+    },
+    standardization: {
+      name: "Standardization",
+      description: "Improve standardization efforts, best practices, and process consistency."
+    },
+    continuousImprovement: {
+      name: "Continuous Improvement",
+      description: "Improve continuous improvement capabilities, process improvement methodologies, and optimization initiatives."
+    },
+    leanManagement: {
+      name: "Lean Management",
+      description: "Implement lean management principles, eliminate waste, and improve operational efficiency."
+    },
+    sixSigma: {
+      name: "Six Sigma",
+      description: "Implement Six Sigma methodologies, reduce variability, and improve process quality."
+    },
+    totalQualityManagement: {
+      name: "Total Quality Management",
+      description: "Improve total quality management systems, customer-focused approaches, and continuous improvement."
+    },
+    benchmarking: {
+      name: "Benchmarking",
+      description: "Improve benchmarking capabilities, comparative analysis, and best practice implementation."
+    },
+    bestPractices: {
+      name: "Best Practices",
+      description: "Improve best practice implementation, knowledge sharing, and cross-industry standardization."
+    },
+    knowledgeSharing: {
+      name: "Knowledge Sharing",
+      description: "Improve knowledge sharing initiatives, collaboration, and institutional knowledge transfer."
+    },
+    crossFunctionalCollaboration: {
+      name: "Cross-functional Collaboration",
+      description: "Improve cross-department collaboration, cross-functional teams, and teamwork processes."
+    },
+    communicationSkills: {
+      name: "Communication Skills",
+      description: "Improve communication capabilities, presentation skills, and interpersonal skills among employees."
+    },
+    leadershipDevelopment: {
+      name: "Leadership Development",
+      description: "Improve leadership development programs, leadership training, and future leader preparation."
+    },
+    teamBuilding: {
+      name: "Team Building",
+      description: "Improve team building activities, team dynamics, and team cohesion."
+    },
+    conflictResolution: {
+      name: "Conflict Resolution",
+      description: "Improve conflict resolution capabilities, mediation, and workplace dispute management."
+    },
+    negotiationSkills: {
+      name: "Negotiation Skills",
+      description: "Improve negotiation capabilities, negotiation techniques, and business negotiation outcomes."
+    },
+    decisionMaking: {
+      name: "Decision Making",
+      description: "Improve decision-making processes, analysis, and data-driven decision-making frameworks."
+    },
+    problemSolving: {
+      name: "Problem Solving",
+      description: "Improve problem-solving capabilities, critical thinking, and systematic approaches to resolving challenges."
+    },
+    creativityInnovation: {
+      name: "Creativity & Innovation",
+      description: "Improve creativity capabilities, innovative thinking, and idea generation within the organization."
+    },
+    adaptability: {
+      name: "Adaptability",
+      description: "Improve adaptability capabilities, flexibility, and responsiveness to change within the organization."
+    },
+    resilience: {
+      name: "Resilience",
+      description: "Improve organizational resilience, recovery capabilities, and ability to bounce back from setbacks."
+    },
+    agility: {
+      name: "Agility",
+      description: "Improve organizational agility, rapid response capabilities, and ability to adapt to changing conditions."
+    },
+    digitalLiteracy: {
+      name: "Digital Literacy",
+      description: "Improve digital literacy capabilities, technology skills, and digital competencies among employees."
+    },
+    technicalTraining: {
+      name: "Technical Training",
+      description: "Improve technical training programs, technical skill development, and specialized competencies."
+    },
+    professionalDevelopment: {
+      name: "Professional Development",
+      description: "Improve professional development opportunities, career planning, and professional advancement."
+    },
+    mentoring: {
+      name: "Mentoring",
+      description: "Improve mentoring programs, mentoring relationships, and knowledge transfer."
+    },
+    coaching: {
+      name: "Coaching",
+      description: "Improve coaching capabilities, coaching programs, and coaching skill development."
+    },
+    feedbackSystems: {
+      name: "Feedback Systems",
+      description: "Improve feedback systems, evaluation processes, and continuous feedback mechanisms."
+    },
+    recognitionPrograms: {
+      name: "Recognition Programs",
+      description: "Improve employee recognition programs, appreciation initiatives, and reward systems."
+    },
+    performanceReviews: {
+      name: "Performance Reviews",
+      description: "Improve performance review processes, performance evaluations, and assessment systems."
+    },
+    goalSetting: {
+      name: "Goal Setting",
+      description: "Improve goal setting processes, objective alignment, and progress tracking."
+    },
+    successionReadiness: {
+      name: "Succession Readiness",
+      description: "Improve succession readiness, leadership development, and future leader preparation."
+    },
+    talentManagement: {
+      name: "Talent Management",
+      description: "Improve talent management strategies, talent development processes, and key employee retention."
+    },
+    workforcePlanning: {
+      name: "Workforce Planning",
+      description: "Improve workforce planning, staffing needs analysis, and personnel allocation strategies."
+    },
+    organizationalDesign: {
+      name: "Organizational Design",
+      description: "Improve organizational design, organizational structure, and decision-making processes."
+    },
+    culturalTransformation: {
+      name: "Cultural Transformation",
+      description: "Improve cultural transformation initiatives, organizational culture changes, and values development."
+    },
+    employeeEngagement: {
+      name: "Employee Engagement",
+      description: "Improve employee engagement, job satisfaction, and motivation levels."
+    },
+    retentionStrategies: {
+      name: "Retention Strategies",
+      description: "Improve employee retention strategies, turnover reduction, and employee loyalty."
+    },
+    recruitmentOptimization: {
+      name: "Recruitment Optimization",
+      description: "Improve recruitment processes, talent acquisition, and hiring experience."
+    },
+    onboardingExcellence: {
+      name: "Onboarding Excellence",
+      description: "Improve onboarding processes, new employee experiences, and time-to-productivity."
+    },
+    offboarding: {
+      name: "Offboarding",
+      description: "Improve offboarding processes, exit transitions, and knowledge management during departures."
+    },
+    exitInterviews: {
+      name: "Exit Interviews",
+      description: "Improve exit interview processes, feedback collection, and departure reason analysis."
+    },
+    alumniRelations: {
+      name: "Alumni Relations",
+      description: "Improve alumni relations programs, former employee networks, and return opportunities."
+    },
+    qualityImprovement: {
+      name: "Quality Improvement",
+      description: "Improve quality improvement processes, quality control, and excellence standards."
+    },
+    dataInsights: {
+      name: "Data Insights",
+      description: "Improve data analysis capabilities, business insights, and data-driven decision making."
+    },
+    marketShareIncrease: {
+      name: "Market Share Increase",
+      description: "Improve strategies to increase market share, market expansion, and market penetration."
+    },
+    brandReputationImage: {
+      name: "Brand Reputation & Image",
+      description: "Improve brand reputation, corporate image, and market perception."
+    },
+    complianceRegulation: {
+      name: "Compliance & Regulation",
+      description: "Improve regulatory compliance, adherence to regulations, and compliance standards."
+    },
+    flexibilityAgility: {
+      name: "Flexibility & Agility",
+      description: "Improve organizational flexibility, adaptability, and business agility."
+    },
+    channelExpansion: {
+      name: "Channel Expansion",
+      description: "Improve distribution channel expansion, channel strategies, and partner development."
+    },
+    timeSavings: {
+      name: "Time Savings",
+      description: "Improve time savings processes, time efficiency, and cycle time reduction."
+    },
+    resourceOptimization: {
+      name: "Resource Optimization",
+      description: "Improve resource optimization, efficient resource allocation, and resource management."
+    },
+    productDifferentiation: {
+      name: "Product Differentiation",
+      description: "Improve product differentiation, competitive advantages, and unique market positioning."
+    },
+    operationalEfficiency: {
+      name: "Operational Efficiency",
+      description: "Improve operational efficiency, process optimization, and operational excellence."
+    },
+    securityDataProtection: {
+      name: "Security & Data Protection",
+      description: "Improve data security, information protection, and cybersecurity measures."
+    },
+    innovationCulture: {
+      name: "Innovation Culture",
+      description: "Improve innovation culture, innovative thinking, and creative idea development."
+    },
+    supplierRelationships: {
+      name: "Supplier Relationships",
+      description: "Improve supplier relationships, vendor management, and partner collaboration."
+    },
+    fasterTimeToMarket: {
+      name: "Faster Time to Market",
+      description: "Improve time to market, product acceleration, and commercialization speed."
+    },
+    customerSegmentationPrecision: {
+      name: "Customer Segmentation",
+      description: "Improve customer segmentation, customer analysis, and segmentation strategies."
+    },
+    strategicAlignment: {
+      name: "Strategic Alignment",
+      description: "Improve strategic alignment, organizational coherence, and alignment with business objectives."
+    }
+  },
   
   // Clipboard messages
   failedToCopyClipboard: "Failed to copy content to clipboard. Please try again.",
@@ -1206,6 +1770,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   explainComplexityExpert: "Expert (technical/deep)",
   explainComplexityChild: "5-Year-Old (extremely simple)",
   explainComplexityChildEn: "5-Year-Old (extremely simple)",
+  explainComplexityHighSchool: "High school, 15-year-old",
   explainFocusArea: "Focus of Explanation",
   explainFocusDecisions: "Main decisions",
   explainFocusConcepts: "Complex concepts",

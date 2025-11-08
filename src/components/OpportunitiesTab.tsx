@@ -159,19 +159,24 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       const isSelected = prev.selectedTopics.some(t => t.id === topic.id);
       
       if (isSelected) {
-        // Deselect the topic
         return {
           ...prev,
-          selectedTopics: [],
-          error: undefined
+          selectedTopics: []
         };
       } else {
-        // Select only this topic (replace any existing selection)
-        return {
+        // Select only one topic and automatically continue to roles
+        const newState = {
           ...prev,
           selectedTopics: [topic],
-          error: undefined
+          step: 'selectRole'
         };
+        
+        // Scroll to top of the page
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+        
+        return newState;
       }
     });
   };
@@ -201,12 +206,20 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           error: undefined
         };
       } else {
-        // Select only this role (replace any existing selection)
-        return {
+        // Select only this role (replace any existing selection) and automatically continue to types
+        const newState = {
           ...prev,
           selectedRoles: [role],
+          step: 'selectType',
           error: undefined
         };
+        
+        // Scroll to top of the page
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+        
+        return newState;
       }
     });
   };
@@ -235,9 +248,9 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           error: undefined
         };
       } else {
-        // Select the type only if we haven't reached the limit of 2
-        if (prev.selectedOpportunityTypes.length >= 2) {
-          return prev; // Don't allow more than 2 selections
+        // Select the type only if we haven't reached the limit of 3
+        if (prev.selectedOpportunityTypes.length >= 3) {
+          return prev; // Don't allow more than 3 selections
         }
         
         const newSelectedTypes = [...prev.selectedOpportunityTypes, type];
@@ -559,17 +572,12 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       </div>
 
       {state.topics.length > 0 && (
-        <div className="flex justify-between items-center pt-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {state.selectedTopics.length > 0 ? t('opportunitiesTopicSelected', '1 onderwerp geselecteerd') : t('opportunitiesSelectOneTopic', 'Selecteer 1 onderwerp')}
+        <div className="pt-4">
+          <p className="text-sm text-slate-600 dark:text-slate-400 text-center">
+            {state.selectedTopics.length > 0 
+              ? t('opportunitiesTopicSelected', '1 onderwerp geselecteerd - automatisch doorgaan naar AI-rollen') 
+              : t('opportunitiesSelectOneTopic', 'Selecteer 1 onderwerp om door te gaan')}
           </p>
-          <button
-            onClick={handleContinueToRoles}
-            disabled={state.selectedTopics.length === 0}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {t('continueToRoles', 'Verder naar AI-rollen')}
-          </button>
         </div>
       )}
     </div>
@@ -644,17 +652,12 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         })}
       </div>
 
-      <div className="flex justify-between items-center pt-4">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          {state.selectedRoles.length > 0 ? t('opportunitiesRoleSelected', '1 rol geselecteerd') : t('opportunitiesSelectOneRole', 'Selecteer 1 rol')}
+      <div className="pt-4">
+        <p className="text-sm text-slate-600 dark:text-slate-400 text-center">
+          {state.selectedRoles.length > 0 
+            ? t('opportunitiesRoleSelected', '1 rol geselecteerd - automatisch doorgaan naar opportunity types') 
+            : t('opportunitiesSelectOneRole', 'Selecteer 1 rol om door te gaan')}
         </p>
-        <button
-          onClick={handleContinueToTypes}
-          disabled={state.selectedRoles.length === 0}
-          className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-        >
-          {t('continueToTypes', 'Verder naar opportunity types')}
-        </button>
       </div>
     </div>
   );

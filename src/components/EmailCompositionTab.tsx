@@ -552,8 +552,8 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
       {/* Email Address Selection */}
       {extractedEmails.length > 0 && (
         <div className="bg-blue-50 dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-slate-700 p-4">
-          <h3 className="text-lg font-medium text-blue-900 dark:text-slate-200 mb-4 flex items-center">
-            <div className="mr-2"><FiMail size={20} /></div>
+          <h3 className="text-lg font-medium text-blue-800 dark:text-slate-200 mb-4 flex items-center">
+            <div className="mr-2 text-blue-600"><FiMail size={20} /></div>
             {t('emailComposition.emailSelection', 'Email Adres Selectie')}
           </h3>
           <p className="text-sm text-blue-700 dark:text-slate-300 mb-4">
@@ -564,7 +564,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
               <div key={index} className="flex items-center justify-between p-4 bg-white dark:bg-slate-700 rounded-lg border border-blue-200 dark:border-slate-600 shadow-sm">
                 <div className="flex items-center flex-1">
                   <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                  <span className="text-sm font-medium text-blue-800 dark:text-slate-200 font-mono">{extractedEmail.email}</span>
+                  <span className="text-sm font-medium text-gray-800 dark:text-slate-200 font-mono">{extractedEmail.email}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <label className="flex items-center">
@@ -576,7 +576,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
                       onChange={(e) => handleExtractedEmailTypeChange(index, e.target.value as 'to' | 'cc' | 'bcc' | 'none')}
                       className="mr-1 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-blue-700 dark:text-slate-300">{t('emailTo', 'To')}</span>
+                    <span className="text-sm text-gray-700 dark:text-slate-300">{t('emailTo', 'To')}</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -587,7 +587,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
                       onChange={(e) => handleExtractedEmailTypeChange(index, e.target.value as 'to' | 'cc' | 'bcc' | 'none')}
                       className="mr-1 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-blue-700 dark:text-slate-300">{t('emailCC', 'CC')}</span>
+                    <span className="text-sm text-gray-700 dark:text-slate-300">{t('emailCC', 'CC')}</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -598,7 +598,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
                       onChange={(e) => handleExtractedEmailTypeChange(index, e.target.value as 'to' | 'cc' | 'bcc' | 'none')}
                       className="mr-1 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-blue-700 dark:text-slate-300">{t('emailBCC', 'BCC')}</span>
+                    <span className="text-sm text-gray-700 dark:text-slate-300">{t('emailBCC', 'BCC')}</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -609,7 +609,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
                       onChange={(e) => handleExtractedEmailTypeChange(index, e.target.value as 'to' | 'cc' | 'bcc' | 'none')}
                       className="mr-1 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-blue-700 dark:text-slate-300">{t('emailNA', 'N/A')}</span>
+                    <span className="text-sm text-gray-700 dark:text-slate-300">{t('emailNA', 'N/A')}</span>
                   </label>
                 </div>
               </div>
@@ -646,7 +646,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
               { key: 'humorous', label: t('tone.humorous', 'Humoristisch') },
               { key: 'neutral', label: t('tone.neutral', 'Neutraal') },
             ] as {key: string; label: string}[]).map(opt => (
-              <label key={opt.key} className="flex items-center p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer">
+              <label key={opt.key} className="flex items-center p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer bg-gray-50 dark:bg-slate-700">
                 <input
                   type="radio"
                   name="email-tone"
@@ -664,7 +664,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
         {/* Narrative toggle */}
         <div className="mb-6">
           <h4 className="text-md font-medium text-gray-800 dark:text-slate-200 mb-2">{t('narrativeStyle', 'Verhalende stijl')}</h4>
-          <label className="flex items-center text-gray-800 dark:text-slate-200 cursor-pointer">
+          <label className="flex items-center text-gray-800 dark:text-slate-200 cursor-pointer bg-gray-50 dark:bg-slate-700 p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600">
             <input
               type="checkbox"
               checked={emailData.narrative}
@@ -706,7 +706,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
               { key: 'call_me', label: t('replyIntent.call_me', 'Bel me hierover'), directive: t('replyIntent.call_me.desc', 'Vraag om telefonisch contact en geef je beschikbaarheid aan.') },
               { key: 'no_action_required', label: t('replyIntent.no_action_required', 'Geen actie vereist'), directive: t('replyIntent.no_action_required.desc', 'Informeer dat er geen verdere actie nodig is.') },
             ] as { key: string; label: string; directive: string }[]).map(opt => (
-              <label key={opt.key} className="flex items-start p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer">
+              <label key={opt.key} className="flex items-start p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer bg-gray-50 dark:bg-slate-700">
                 <input
                   type="radio"
                   name="reply-intent"
@@ -734,7 +734,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
               { key: 'medium', label: t('detail.medium', 'Gemiddeld'), desc: t('detail.mediumDesc', '2-4 alinea’s, kernachtig') },
               { key: 'extensive', label: t('detail.extensive', 'Uitgebreid'), desc: t('detail.extensiveDesc', 'Volledige recap met details') },
             ] as {key: EmailData['detailLevel']; label: string; desc: string}[]).map(opt => (
-              <label key={opt.key} className="flex items-start p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer">
+              <label key={opt.key} className="flex items-start p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer bg-gray-50 dark:bg-slate-700">
                 <input
                   type="radio"
                   name="detail-level"
@@ -758,7 +758,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
             {t('emailIncludeOptions', 'Wat wil je opnemen in de e-mail?')}
           </h4>
           <div className="space-y-3">
-            <label className="flex items-center cursor-pointer text-gray-800 dark:text-slate-200">
+            <label className="flex items-center cursor-pointer text-gray-800 dark:text-slate-200 bg-gray-50 dark:bg-slate-700 p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600">
               <input
                 type="checkbox"
                 checked={emailData.includeSummary}
@@ -767,7 +767,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
               />
               <span className="text-sm text-gray-800 dark:text-slate-200">{t('includeSummary', 'Samenvatting toevoegen')}</span>
             </label>
-            <label className="flex items-center cursor-pointer text-gray-800 dark:text-slate-200">
+            <label className="flex items-center cursor-pointer text-gray-800 dark:text-slate-200 bg-gray-50 dark:bg-slate-700 p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600">
               <input
                 type="checkbox"
                 checked={emailData.includeConclusion}
@@ -776,7 +776,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
               />
               <span className="text-sm text-gray-800 dark:text-slate-200">{t('includeConclusions', 'Conclusies toevoegen')}</span>
             </label>
-            <label className="flex items-center cursor-pointer text-gray-800 dark:text-slate-200">
+            <label className="flex items-center cursor-pointer text-gray-800 dark:text-slate-200 bg-gray-50 dark:bg-slate-700 p-3 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600">
               <input
                 type="checkbox"
                 checked={emailData.includeActionPoints}
@@ -806,8 +806,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
 
       {/* Email Content */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
-        {/* Only plain text supported */}
-        <div className="mb-2 text-sm text-gray-600 dark:text-slate-400">{t('plainTextOnly', 'Alleen platte tekst wordt ondersteund.')}</div>
+        {/* Email content will be displayed here */}
       </div>
 
       {/* Bottom Actions */}

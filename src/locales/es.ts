@@ -368,6 +368,570 @@ export const es = {
     very_extensive: "SEA ESTRICTO: Escriba un caso de negocio muy extenso de 1200-1600 palabras."
   },
   businessCaseStrictHint: "Sea estricto: la IA debe seguir esta longitud.",
+
+  // Business Case Types
+  businessCaseTypes: {
+    employeeProductivityEngagement: {
+      name: "Productividad y Compromiso de Empleados",
+      description: "Mejorar la eficiencia, satisfacción y retención del personal mediante herramientas, procesos o iniciativas de recursos humanos."
+    },
+    sustainabilityCsr: {
+      name: "Sostenibilidad y RSC",
+      description: "Reducir el impacto ambiental, mejorar la responsabilidad social corporativa y cumplir con objetivos de sostenibilidad."
+    },
+    marketExpansion: {
+      name: "Expansión de Mercado",
+      description: "Entrar en nuevos mercados geográficos, segmentos demográficos o canales de distribución para aumentar el alcance."
+    },
+    brandReputation: {
+      name: "Marca y Reputación",
+      description: "Fortalecer la posición de marca, la percepción del mercado y la reputación corporativa entre las partes interesadas."
+    },
+    dataAnalytics: {
+      name: "Análisis de Datos",
+      description: "Mejorar las capacidades de toma de decisiones mediante mejores herramientas de análisis, inteligencia empresarial y gestión de datos."
+    },
+    mobileDigital: {
+      name: "Móvil y Digital",
+      description: "Desarrollar aplicaciones móviles, experiencias digitales o capacidades omnicanal para mejorar la participación del cliente."
+    },
+    cloudMigration: {
+      name: "Migración a la Nube",
+      description: "Migrar infraestructura, aplicaciones o servicios a soluciones en la nube para mejorar la escalabilidad y reducir costos."
+    },
+    cybersecurity: {
+      name: "Ciberseguridad",
+      description: "Fortalecer las defensas de seguridad, proteger contra amenazas cibernéticas y mejorar la postura de seguridad general."
+    },
+    automation: {
+      name: "Automatización",
+      description: "Automatizar procesos manuales, flujos de trabajo repetitivos o tareas administrativas para mejorar la eficiencia."
+    },
+    collaboration: {
+      name: "Colaboración",
+      description: "Mejorar las herramientas y procesos de colaboración del equipo para una mejor comunicación y coordinación."
+    },
+    knowledgeManagement: {
+      name: "Gestión del Conocimiento",
+      description: "Capturar, organizar y compartir conocimiento institucional para mejorar la toma de decisiones y la productividad."
+    },
+    qualityAssurance: {
+      name: "Garantía de Calidad",
+      description: "Mejorar los procesos de control de calidad, reducir defectos y mejorar la consistencia de los productos/servicios."
+    },
+    regulatoryCompliance: {
+      name: "Cumplimiento Regulatorio",
+      description: "Asegurar el cumplimiento de requisitos regulatorios, estándares de la industria y obligaciones legales."
+    },
+    disasterRecovery: {
+      name: "Recuperación ante Desastres",
+      description: "Mejorar la preparación para desastres, la recuperación y la continuidad del negocio para minimizar el tiempo de inactividad."
+    },
+    performanceOptimization: {
+      name: "Optimización del Rendimiento",
+      description: "Optimizar el rendimiento del sistema, la velocidad de respuesta y la eficiencia general de las operaciones."
+    },
+    userExperience: {
+      name: "Experiencia de Usuario",
+      description: "Mejorar la usabilidad, el diseño de interfaces y la satisfacción general del usuario para productos/servicios."
+    },
+    vendorManagement: {
+      name: "Gestión de Proveedores",
+      description: "Optimizar las relaciones con proveedores, procesos de adquisición y gestión de la cadena de suministro."
+    },
+    financialPlanning: {
+      name: "Planificación Financiera",
+      description: "Mejorar los procesos de planificación financiera, presupuestación y análisis para una mejor gestión financiera."
+    },
+    inventoryManagement: {
+      name: "Gestión de Inventario",
+      description: "Optimizar los niveles de inventario, reducir costos de almacenamiento y mejorar la gestión de la cadena de suministro."
+    },
+    supplyChain: {
+      name: "Cadena de Suministro",
+      description: "Mejorar la eficiencia de la cadena de suministro, reducir plazos de entrega y optimizar la logística."
+    },
+    predictiveMaintenance: {
+      name: "Mantenimiento Predictivo",
+      description: "Implementar capacidades de mantenimiento predictivo para reducir el tiempo de inactividad no planificado."
+    },
+    energyEfficiency: {
+      name: "Eficiencia Energética",
+      description: "Reducir el consumo de energía, costos de servicios públicos y huella de carbono mediante mejoras en eficiencia."
+    },
+    wasteReduction: {
+      name: "Reducción de Desperdicio",
+      description: "Minimizar el desperdicio de materiales, mejorar los procesos de reciclaje y reducir los costos de eliminación."
+    },
+    remoteWorkCapabilities: {
+      name: "Capacidades de Trabajo Remoto",
+      description: "Mejorar la infraestructura y herramientas de trabajo remoto para apoyar la productividad del equipo distribuido."
+    },
+    trainingDevelopment: {
+      name: "Capacitación y Desarrollo",
+      description: "Mejorar los programas de capacitación de empleados, desarrollo de habilidades e iniciativas de desarrollo profesional."
+    },
+    customerSupport: {
+      name: "Soporte al Cliente",
+      description: "Mejorar las capacidades de soporte al cliente, tiempos de respuesta y satisfacción general del cliente."
+    },
+    salesEnablement: {
+      name: "Habilitación de Ventas",
+      description: "Fortalecer las herramientas, procesos y recursos de ventas para mejorar el rendimiento y productividad de ventas."
+    },
+    marketingEffectiveness: {
+      name: "Efectividad de Marketing",
+      description: "Mejorar las estrategias de marketing, campañas y ROI de marketing para un mejor alcance y participación."
+    },
+    competitiveIntelligence: {
+      name: "Inteligencia Competitiva",
+      description: "Mejorar las capacidades de inteligencia competitiva, análisis del mercado y posicionamiento estratégico."
+    },
+    businessIntelligence: {
+      name: "Inteligencia Empresarial",
+      description: "Mejorar las capacidades de inteligencia empresarial, paneles de control y capacidades de generación de informes."
+    },
+    workflowOptimization: {
+      name: "Optimización de Flujo de Trabajo",
+      description: "Optimizar los flujos de trabajo empresariales, procesos operativos y procedimientos para mejorar la eficiencia."
+    },
+    documentManagement: {
+      name: "Gestión de Documentos",
+      description: "Mejorar los sistemas de gestión de documentos, control de versiones y procesos de aprobación."
+    },
+    projectManagement: {
+      name: "Gestión de Proyectos",
+      description: "Mejorar las herramientas y procesos de gestión de proyectos para una mejor planificación y ejecución."
+    },
+    businessProcessManagement: {
+      name: "Gestión de Procesos Empresariales",
+      description: "Optimizar los procesos empresariales, eliminar ineficiencias y mejorar la eficiencia operacional general."
+    },
+    strategicPlanning: {
+      name: "Planificación Estratégica",
+      description: "Mejorar los procesos de planificación estratégica, análisis y toma de decisiones a nivel ejecutivo."
+    },
+    innovationManagement: {
+      name: "Gestión de la Innovación",
+      description: "Mejorar las capacidades de gestión de la innovación, procesos de desarrollo de ideas y cultura de innovación."
+    },
+    changeManagement: {
+      name: "Gestión del Cambio",
+      description: "Mejorar las capacidades de gestión del cambio, procesos de transición y apoyo a la organización durante los cambios."
+    },
+    stakeholderEngagement: {
+      name: "Participación de Partes Interesadas",
+      description: "Mejorar el compromiso, comunicación y gestión de partes interesadas para relaciones más fuertes."
+    },
+    governance: {
+      name: "Gobernanza",
+      description: "Fortalecer los procesos de gobernanza corporativa, estructura de liderazgo y toma de decisiones."
+    },
+    riskManagement: {
+      name: "Gestión de Riesgos",
+      description: "Mejorar las capacidades de gestión de riesgos, evaluación de riesgos y estrategias de mitigación."
+    },
+    auditCompliance: {
+      name: "Auditoría y Cumplimiento",
+      description: "Mejorar los procesos de auditoría, cumplimiento normativo y preparación para auditorías."
+    },
+    performanceManagement: {
+      name: "Gestión del Rendimiento",
+      description: "Mejorar los sistemas de gestión del rendimiento, métricas y procesos de evaluación."
+    },
+    talentAcquisition: {
+      name: "Adquisición de Talento",
+      description: "Mejorar los procesos de reclutamiento, adquisición de talento y estrategias de retención."
+    },
+    successionPlanning: {
+      name: "Planificación de Sucesión",
+      description: "Mejorar los procesos de planificación de sucesión, desarrollo de liderazgo y preparación de futuros líderes."
+    },
+    cultureDevelopment: {
+      name: "Desarrollo de Cultura",
+      description: "Mejorar la cultura organizacional, valores empresariales y iniciativas de compromiso de empleados."
+    },
+    employeeWellbeing: {
+      name: "Bienestar de Empleados",
+      description: "Mejorar los programas de bienestar de empleados, salud y equilibrio trabajo-vida personal."
+    },
+    internalCommunication: {
+      name: "Comunicación Interna",
+      description: "Mejorar las estrategias de comunicación interna, canales de comunicación y transparencia organizacional."
+    },
+    externalCommunication: {
+      name: "Comunicación Externa",
+      description: "Mejorar las capacidades de comunicación externa, relaciones públicas y gestión de marca."
+    },
+    publicRelations: {
+      name: "Relaciones Públicas",
+      description: "Mejorar las estrategias de relaciones públicas, gestión de medios y percepción pública."
+    },
+    crisisManagement: {
+      name: "Gestión de Crisis",
+      description: "Mejorar las capacidades de gestión de crisis, preparación para emergencias y comunicación durante crisis."
+    },
+    reputationManagement: {
+      name: "Gestión de Reputación",
+      description: "Mejorar las estrategias de gestión de reputación, monitoreo de marca y construcción de confianza."
+    },
+    thoughtLeadership: {
+      name: "Liderazgo de Opinión",
+      description: "Mejorar las capacidades de liderazgo de opinión, contenido de expertos y posicionamiento de la industria."
+    },
+    contentStrategy: {
+      name: "Estrategia de Contenido",
+      description: "Mejorar las estrategias de contenido, marketing de contenidos y creación de contenido de valor."
+    },
+    socialMedia: {
+      name: "Redes Sociales",
+      description: "Mejorar las estrategias de redes sociales, participación en plataformas sociales y presencia digital."
+    },
+    digitalMarketing: {
+      name: "Marketing Digital",
+      description: "Mejorar las estrategias de marketing digital, campañas en línea y esfuerzos de marketing omnicanal."
+    },
+    emailMarketing: {
+      name: "Marketing por Email",
+      description: "Mejorar las campañas de marketing por email, automatización y estrategias de participación por email."
+    },
+    seoOptimization: {
+      name: "Optimización SEO",
+      description: "Mejorar las capacidades de optimización de motores de búsqueda, visibilidad orgánica y tráfico del sitio web."
+    },
+    customerRetention: {
+      name: "Retención de Clientes",
+      description: "Mejorar las estrategias de retención de clientes, programas de lealtad y reducción de cancelaciones."
+    },
+    customerExperience: {
+      name: "Experiencia del Cliente",
+      description: "Mejorar la experiencia general del cliente, satisfacción y lealtad a través de mejoras en todos los puntos de contacto."
+    },
+    voiceOfCustomer: {
+      name: "Voz del Cliente",
+      description: "Mejorar los programas de voz del cliente, recopilación de comentarios y procesos de mejora basados en comentarios."
+    },
+    customerJourneyMapping: {
+      name: "Mapeo del Viaje del Cliente",
+      description: "Mejorar el mapeo del viaje del cliente, análisis de puntos de contacto y optimización de experiencias."
+    },
+    personalization: {
+      name: "Personalización",
+      description: "Mejorar las capacidades de personalización, marketing dirigido y experiencias personalizadas del cliente."
+    },
+    subscriptionManagement: {
+      name: "Gestión de Suscripciones",
+      description: "Mejorar los procesos de gestión de suscripciones, facturación recurrente y modelos de ingresos por suscripción."
+    },
+    pricingOptimization: {
+      name: "Optimización de Precios",
+      description: "Mejorar las estrategias de precios, modelos de precios y análisis de optimización de ingresos."
+    },
+    contractManagement: {
+      name: "Gestión de Contratos",
+      description: "Mejorar los procesos de gestión de contratos, seguimiento de contratos y cumplimiento de acuerdos."
+    },
+    procurement: {
+      name: "Adquisiciones",
+      description: "Mejorar los procesos de adquisiciones, gestión de proveedores y estrategias de compra."
+    },
+    supplierDiversity: {
+      name: "Diversidad de Proveedores",
+      description: "Mejorar los programas de diversidad de proveedores, iniciativas de compras inclusivas y cadenas de suministro diversas."
+    },
+    logistics: {
+      name: "Logística",
+      description: "Mejorar las operaciones logísticas, optimización de transporte y gestión de la cadena de suministro."
+    },
+    warehouseManagement: {
+      name: "Gestión de Almacenes",
+      description: "Mejorar los procesos de gestión de almacenes, optimización de inventarios y operaciones de almacén."
+    },
+    transportation: {
+      name: "Transporte",
+      description: "Mejorar las estrategias de transporte, optimización de rutas y gestión de flotas."
+    },
+    fleetManagement: {
+      name: "Gestión de Flotas",
+      description: "Mejorar las capacidades de gestión de flotas, mantenimiento de vehículos y optimización de rutas."
+    },
+    assetManagement: {
+      name: "Gestión de Activos",
+      description: "Mejorar los procesos de gestión de activos, seguimiento de activos y optimización de utilización de activos."
+    },
+    resourcePlanning: {
+      name: "Planificación de Recursos",
+      description: "Mejorar la planificación y asignación de recursos, gestión de capacidad y optimización de utilización."
+    },
+    capacityPlanning: {
+      name: "Planificación de Capacidad",
+      description: "Mejorar la planificación de capacidad, análisis de demanda y estrategias de escalado."
+    },
+    demandForecasting: {
+      name: "Pronóstico de Demanda",
+      description: "Mejorar las capacidades de pronóstico de demanda, análisis de tendencias y planificación basada en datos."
+    },
+    productionPlanning: {
+      name: "Planificación de Producción",
+      description: "Mejorar los procesos de planificación de producción, programación y optimización de operaciones de fabricación."
+    },
+    qualityControl: {
+      name: "Control de Calidad",
+      description: "Mejorar los procesos de control de calidad, pruebas de calidad y estándares de aseguramiento de calidad."
+    },
+    safetyManagement: {
+      name: "Gestión de Seguridad",
+      description: "Mejorar los programas de gestión de seguridad, protocolos de seguridad y cultura de seguridad."
+    },
+    environmentalManagement: {
+      name: "Gestión Ambiental",
+      description: "Mejorar los programas de gestión ambiental, cumplimiento ambiental e iniciativas de sostenibilidad."
+    },
+    complianceManagement: {
+      name: "Gestión de Cumplimiento",
+      description: "Mejorar los sistemas de gestión de cumplimiento, seguimiento regulatorio y procesos de auditoría."
+    },
+    policyManagement: {
+      name: "Gestión de Políticas",
+      description: "Mejorar los procesos de gestión de políticas, desarrollo de políticas y cumplimiento de políticas."
+    },
+    procedureOptimization: {
+      name: "Optimización de Procedimientos",
+      description: "Mejorar los procedimientos empresariales, documentación de procesos y estandarización de procedimientos."
+    },
+    standardization: {
+      name: "Estandarización",
+      description: "Mejorar los esfuerzos de estandarización, mejores prácticas y consistencia en los procesos."
+    },
+    continuousImprovement: {
+      name: "Mejora Continua",
+      description: "Mejorar las capacidades de mejora continua, metodologías de mejora de procesos e iniciativas de optimización."
+    },
+    leanManagement: {
+      name: "Gestión Lean",
+      description: "Implementar principios de gestión lean, eliminar desperdicio y mejorar la eficiencia operacional."
+    },
+    sixSigma: {
+      name: "Six Sigma",
+      description: "Implementar metodologías Six Sigma, reducir variabilidad y mejorar la calidad de los procesos."
+    },
+    totalQualityManagement: {
+      name: "Gestión Total de la Calidad",
+      description: "Mejorar los sistemas de gestión total de la calidad, enfoques centrados en el cliente y mejora continua."
+    },
+    benchmarking: {
+      name: "Benchmarking",
+      description: "Mejorar las capacidades de benchmarking, análisis comparativo e implementación de mejores prácticas."
+    },
+    bestPractices: {
+      name: "Mejores Prácticas",
+      description: "Mejorar la implementación de mejores prácticas, compartir conocimientos y estandarización entre la industria."
+    },
+    knowledgeSharing: {
+      name: "Compartir Conocimiento",
+      description: "Mejorar las iniciativas de intercambio de conocimientos, colaboración y transferencia de conocimientos institucionales."
+    },
+    crossFunctionalCollaboration: {
+      name: "Colaboración Interfuncional",
+      description: "Mejorar la colaboración entre departamentos, equipos multifuncionales y procesos de trabajo en equipo."
+    },
+    communicationSkills: {
+      name: "Habilidades de Comunicación",
+      description: "Mejorar las capacidades de comunicación, presentación y habilidades interpersonales entre empleados."
+    },
+    leadershipDevelopment: {
+      name: "Desarrollo de Liderazgo",
+      description: "Mejorar los programas de desarrollo de liderazgo, capacitación en liderazgo y preparación de futuros líderes."
+    },
+    teamBuilding: {
+      name: "Construcción de Equipos",
+      description: "Mejorar las actividades de construcción de equipos, dinámica de equipos y cohesión del equipo."
+    },
+    conflictResolution: {
+      name: "Resolución de Conflictos",
+      description: "Mejorar las capacidades de resolución de conflictos, mediación y gestión de disputas en el lugar de trabajo."
+    },
+    negotiationSkills: {
+      name: "Habilidades de Negociación",
+      description: "Mejorar las capacidades de negociación, técnicas de negociación y resultados de negociaciones comerciales."
+    },
+    decisionMaking: {
+      name: "Toma de Decisiones",
+      description: "Mejorar los procesos de toma de decisiones, análisis y marcos de toma de decisiones basados en datos."
+    },
+    problemSolving: {
+      name: "Resolución de Problemas",
+      description: "Mejorar las capacidades de resolución de problemas, pensamiento crítico y enfoques sistemáticos para resolver desafíos."
+    },
+    creativityInnovation: {
+      name: "Creatividad e Innovación",
+      description: "Mejorar las capacidades de creatividad, pensamiento innovador y generación de ideas dentro de la organización."
+    },
+    adaptability: {
+      name: "Adaptabilidad",
+      description: "Mejorar las capacidades de adaptabilidad, flexibilidad y capacidad de respuesta al cambio dentro de la organización."
+    },
+    resilience: {
+      name: "Resiliencia",
+      description: "Mejorar la resiliencia organizacional, capacidad de recuperación y capacidad de recuperación de contratiempos."
+    },
+    agility: {
+      name: "Agilidad",
+      description: "Mejorar la agilidad organizacional, capacidad de respuesta rápida y capacidad de adaptación a condiciones cambiantes."
+    },
+    digitalLiteracy: {
+      name: "Alfabetización Digital",
+      description: "Mejorar las capacidades de alfabetización digital, habilidades tecnológicas y competencias digitales entre empleados."
+    },
+    technicalTraining: {
+      name: "Capacitación Técnica",
+      description: "Mejorar los programas de capacitación técnica, desarrollo de habilidades técnicas y competencias especializadas."
+    },
+    professionalDevelopment: {
+      name: "Desarrollo Profesional",
+      description: "Mejorar las oportunidades de desarrollo profesional, planificación de carrera y avance profesional."
+    },
+    mentoring: {
+      name: "Mentoría",
+      description: "Mejorar los programas de mentoría, relaciones de mentoría y transferencia de conocimientos."
+    },
+    coaching: {
+      name: "Coaching",
+      description: "Mejorar las capacidades de coaching, programas de coaching y desarrollo de habilidades de coaching."
+    },
+    feedbackSystems: {
+      name: "Sistemas de Retroalimentación",
+      description: "Mejorar los sistemas de retroalimentación, procesos de evaluación y mecanismos de retroalimentación continua."
+    },
+    recognitionPrograms: {
+      name: "Programas de Reconocimiento",
+      description: "Mejorar los programas de reconocimiento de empleados, iniciativas de apreciación y sistemas de recompensas."
+    },
+    performanceReviews: {
+      name: "Evaluaciones de Rendimiento",
+      description: "Mejorar los procesos de evaluación de rendimiento, revisiones de desempeño y sistemas de evaluación."
+    },
+    goalSetting: {
+      name: "Establecimiento de Objetivos",
+      description: "Mejorar los procesos de establecimiento de objetivos, alineación de metas y seguimiento del progreso."
+    },
+    successionReadiness: {
+      name: "Preparación para la Sucesión",
+      description: "Mejorar la preparación para la sucesión, desarrollo de talento y preparación de futuros líderes."
+    },
+    talentManagement: {
+      name: "Gestión del Talento",
+      description: "Mejorar las estrategias de gestión del talento, procesos de desarrollo de talento y retención de empleados clave."
+    },
+    workforcePlanning: {
+      name: "Planificación de la Fuerza Laboral",
+      description: "Mejorar la planificación de la fuerza laboral, análisis de necesidades de personal y estrategias de dotación de personal."
+    },
+    organizationalDesign: {
+      name: "Diseño Organizacional",
+      description: "Mejorar el diseño organizacional, estructura organizacional y procesos de toma de decisiones."
+    },
+    culturalTransformation: {
+      name: "Transformación Cultural",
+      description: "Mejorar las iniciativas de transformación cultural, cambios en la cultura organizacional y desarrollo de valores."
+    },
+    employeeEngagement: {
+      name: "Compromiso de Empleados",
+      description: "Mejorar el compromiso de empleados, satisfacción laboral y niveles de motivación."
+    },
+    retentionStrategies: {
+      name: "Estrategias de Retención",
+      description: "Mejorar las estrategias de retención de empleados, reducción de rotación y lealtad de empleados."
+    },
+    recruitmentOptimization: {
+      name: "Optimización de Reclutamiento",
+      description: "Mejorar los procesos de reclutamiento, adquisición de talento y experiencia de contratación."
+    },
+    onboardingExcellence: {
+      name: "Excelencia en Incorporación",
+      description: "Mejorar los procesos de incorporación, experiencias de nuevos empleados y tiempo de productividad."
+    },
+    offboarding: {
+      name: "Despido",
+      description: "Mejorar los procesos de despido, transiciones de salida y gestión de conocimientos durante las salidas."
+    },
+    exitInterviews: {
+      name: "Entrevistas de Salida",
+      description: "Mejorar los procesos de entrevistas de salida, recopilación de comentarios y análisis de razones de salida."
+    },
+    alumniRelations: {
+      name: "Relaciones con Exalumnos",
+      description: "Mejorar los programas de relaciones con exalumnos, red de ex empleados y oportunidades de reingreso."
+    },
+    qualityImprovement: {
+      name: "Mejora de Calidad",
+      description: "Mejorar los procesos de mejora de calidad, control de calidad y estándares de excelencia."
+    },
+    dataInsights: {
+      name: "Análisis de Datos",
+      description: "Mejorar las capacidades de análisis de datos, insights empresariales y toma de decisiones basada en datos."
+    },
+    marketShareIncrease: {
+      name: "Aumento de Cuota de Mercado",
+      description: "Mejorar las estrategias para aumentar la cuota de mercado, expansión de mercado y penetración de mercado."
+    },
+    brandReputationImage: {
+      name: "Reputación e Imagen de Marca",
+      description: "Mejorar la reputación de la marca, imagen corporativa y percepción del mercado."
+    },
+    complianceRegulation: {
+      name: "Cumplimiento y Regulación",
+      description: "Mejorar el cumplimiento normativo, adherencia a regulaciones y estándares de conformidad."
+    },
+    flexibilityAgility: {
+      name: "Flexibilidad y Agilidad",
+      description: "Mejorar la flexibilidad organizacional, capacidad de adaptación y agilidad empresarial."
+    },
+    channelExpansion: {
+      name: "Expansión de Canales",
+      description: "Mejorar la expansión de canales de distribución, estrategias de canal y desarrollo de socios."
+    },
+    timeSavings: {
+      name: "Ahorro de Tiempo",
+      description: "Mejorar los procesos de ahorro de tiempo, eficiencia temporal y reducción de tiempos de ciclo."
+    },
+    resourceOptimization: {
+      name: "Optimización de Recursos",
+      description: "Mejorar la optimización de recursos, asignación eficiente de recursos y gestión de recursos."
+    },
+    productDifferentiation: {
+      name: "Diferenciación de Productos",
+      description: "Mejorar la diferenciación de productos, ventajas competitivas y posicionamiento único en el mercado."
+    },
+    operationalEfficiency: {
+      name: "Eficiencia Operacional",
+      description: "Mejorar la eficiencia operacional, optimización de procesos y excelencia operativa."
+    },
+    securityDataProtection: {
+      name: "Seguridad y Protección de Datos",
+      description: "Mejorar la seguridad de datos, protección de información y medidas de seguridad cibernética."
+    },
+    innovationCulture: {
+      name: "Cultura de Innovación",
+      description: "Mejorar la cultura de innovación, pensamiento innovador y desarrollo de ideas creativas."
+    },
+    supplierRelationships: {
+      name: "Relaciones con Proveedores",
+      description: "Mejorar las relaciones con proveedores, gestión de proveedores y colaboración con socios."
+    },
+    fasterTimeToMarket: {
+      name: "Tiempo de Lanzamiento Más Rápido",
+      description: "Mejorar el tiempo de lanzamiento al mercado, aceleración de productos y velocidad de comercialización."
+    },
+    customerSegmentationPrecision: {
+      name: "Segmentación de Clientes",
+      description: "Mejorar la segmentación de clientes, análisis de clientes y estrategias de segmentación."
+    },
+    strategicAlignment: {
+      name: "Alineación Estratégica",
+      description: "Mejorar la alineación estratégica, coherencia organizacional y alineación con objetivos empresariales."
+    }
+  },
   
   // Clipboard messages
   failedToCopyClipboard: "Error al copiar contenido al portapapeles. Por favor inténtalo de nuevo.",
@@ -1192,6 +1756,7 @@ RecapHorizon: Más allá del caos, la esencia primero.`,
   explainComplexityExpert: "Experto (técnico/profundo)",
   explainComplexityChild: "Niño de 5 años (extremadamente simple)",
   explainComplexityChildEn: "Niño de 5 años (extremadamente simple)",
+  explainComplexityHighSchool: "Escuela secundaria, 15 años",
   explainFocusArea: "Enfoque de la Explicación",
   explainFocusDecisions: "Decisiones principales",
   explainFocusConcepts: "Conceptos complejos",

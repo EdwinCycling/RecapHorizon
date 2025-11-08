@@ -17,7 +17,14 @@ export const useTranslation = (uiLang: Language = 'en') => {
         ? (maybeParams as Record<string, any>)
         : undefined;
 
-    let str = translations[uiLang]?.[key] ?? translations['en']?.[key] ?? fallback ?? key;
+    // Function to get nested value using dot notation
+    const getNestedValue = (obj: any, path: string): any => {
+      return path.split('.').reduce((current, property) => {
+        return current?.[property];
+      }, obj);
+    };
+
+    let str = getNestedValue(translations[uiLang], key) ?? getNestedValue(translations['en'], key) ?? fallback ?? key;
 
     // Handle returnObjects parameter
     if (params && (params as any).returnObjects === true) {

@@ -41,7 +41,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onIm
       await onImport(file);
       onClose();
     } catch (e: any) {
-      setError(e?.message || 'Upload mislukt.');
+      setError(e?.message || t('uploadFailed'));
     } finally {
       setBusy(false);
     }
@@ -85,7 +85,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onIm
               {t('dragFileHere')}
             </p>
             <div className="text-xs text-slate-400 mb-4 mt-1">
-              {helperText || 'TXT, PDF, RTF, HTML, MD, DOCX'}
+              {helperText || t('supportedFileTypes')}
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}

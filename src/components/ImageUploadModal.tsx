@@ -24,7 +24,7 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({ isOpen, onClose, on
       await onImport(file);
       onClose();
     } catch (e: any) {
-      setError(e?.message || 'Upload mislukt.');
+      setError(e?.message || t('uploadFailed'));
     } finally {
       setBusy(false);
     }
@@ -62,17 +62,17 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({ isOpen, onClose, on
             accept="image/*"
             id="image-file-input"
             name="imageFile"
-            aria-label="Upload image file"
+            aria-label={t('uploadImageFile')}
             aria-describedby="image-file-input-description"
           />
           <span id="image-file-input-description" className="sr-only">
-            You can drag and drop an image file or choose a file using the Select File button.
+            {t('imageUploadScreenReaderDescription')}
           </span>
           <div className="flex flex-col items-center">
             <CloudArrowUpIcon className="h-12 w-12 text-gray-400 dark:text-slate-400" />
             <label htmlFor="image-file-input" className="mt-4 text-gray-500 dark:text-slate-400 cursor-pointer">{t('dragImageHere')}</label>
             <div className="text-xs text-gray-500 dark:text-slate-400 mb-4">
-              JPG, JPEG, PNG, WEBP, GIF
+              {t('imageSupportedFormats')}
             </div>
             <button onClick={() => fileInputRef.current?.click()} disabled={busy} className="mt-6 bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 disabled:opacity-60" type="button" aria-describedby="image-file-input-description">
               {t('sessionOptionImage')}

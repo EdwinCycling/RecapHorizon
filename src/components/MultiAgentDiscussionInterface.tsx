@@ -53,22 +53,22 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
     
     // Validation checks
     if (!trimmedInput) {
-      alert(t('aiDiscussion.emptyInput', 'Voer een vraag of opmerking in'));
+      alert(t('aiDiscussion.emptyInput'));
       return;
     }
     
     if (trimmedInput.length < 25) {
-      alert(t('aiDiscussion.minCharacters', 'Je vraag moet minimaal 25 karakters bevatten'));
+      alert(t('aiDiscussion.minCharacters'));
       return;
     }
     
     if (trimmedInput.length > 250) {
-      alert(t('aiDiscussion.maxCharacters', 'Je vraag mag maximaal 250 karakters bevatten'));
+      alert(t('aiDiscussion.maxCharacters'));
       return;
     }
     
     if (selectedRoles.length === 0) {
-      alert(t('aiDiscussion.selectTargetRoles', 'Selecteer minimaal één rol om te antwoorden'));
+      alert(t('aiDiscussion.selectTargetRoles'));
       return;
     }
     
@@ -83,7 +83,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
     ];
     
     if (suspiciousPatterns.some(pattern => pattern.test(trimmedInput))) {
-      alert(t('aiDiscussion.invalidInput', 'Je invoer bevat niet-toegestane tekens'));
+      alert(t('aiDiscussion.invalidInput'));
       return;
     }
 
@@ -254,7 +254,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
             <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
               <div className="flex items-center gap-1">
                 <FiMessageCircle size={14} />
-                <span>{t('aiDiscussion.turnCount', 'Beurt {{count}}', { count: session.actualTurnNumber || 0 })}</span>
+                <span>{t('aiDiscussion.turnCount', { count: session.actualTurnNumber || 0 })}</span>
               </div>
               <div className="flex items-center gap-1">
                 <FiClock size={14} />
@@ -262,7 +262,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
               </div>
               <div className="flex items-center gap-1">
                 <FiUser size={14} />
-                <span>{session.roles.length} {t('aiDiscussion.participants', 'deelnemers')}</span>
+                <span>{session.roles.length} {t('aiDiscussion.participants')}</span>
               </div>
             </div>
           </div>
@@ -273,8 +273,8 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
               : 'bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200'
           }`}>
             {session.status === 'active' 
-              ? t('aiDiscussion.statusActive', 'Actief')
-              : t('aiDiscussion.statusCompleted', 'Voltooid')
+              ? t('aiDiscussion.statusActive')
+                : t('aiDiscussion.statusCompleted')
             }
           </div>
         </div>
@@ -282,7 +282,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
         {/* Participants */}
         <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
           <h4 className="text-base font-medium text-slate-700 dark:text-slate-300 mb-3">
-            {t('aiDiscussion.participants', 'Deelnemers')}
+            {t('aiDiscussion.participants')}
           </h4>
           <div className="flex flex-wrap gap-2">
             {session.roles.map((role) => (
@@ -304,7 +304,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg">
         <div className="p-4 border-b border-gray-200 dark:border-slate-700">
           <h4 className="font-medium text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.discussionFlow', 'Discussie verloop')}
+            {t('aiDiscussion.discussionFlow')}
           </h4>
         </div>
         
@@ -319,14 +319,14 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
                   </div>
                   <div className="flex-1">
                     <h5 className="font-medium text-cyan-900 dark:text-cyan-100 mb-2">
-                      {t('aiDiscussion.welcomeTitle', 'Discussie is gestart!')}
+                      {t('aiDiscussion.welcomeTitle')}
                     </h5>
                     <p className="text-sm text-cyan-800 dark:text-cyan-200 mb-3">
-                      {t('aiDiscussion.welcomeMessage', 'De AI-experts gaan nu het onderwerp bespreken vanuit hun unieke perspectieven. Elke deelnemer zal hun expertise inbrengen om tot waardevolle inzichten te komen.')}
+                      {t('aiDiscussion.welcomeMessage')}
                     </p>
                     <div className="text-xs text-cyan-700 dark:text-cyan-300">
-                      {t('aiDiscussion.welcomeAction', 'Klik op "Discussie voortzetten" om de eerste reacties te genereren.')}
-                    </div>
+              {t('aiDiscussion.welcomeAction')}
+            </div>
                   </div>
                 </div>
               </div>
@@ -334,7 +334,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
               {/* Preview of participants */}
               <div className="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4">
                 <h5 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                  {t('aiDiscussion.participantsPreview', 'Deze experts gaan deelnemen aan de discussie:')}
+                  {t('aiDiscussion.participantsPreview')}
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {session.roles.slice(0, 6).map((role) => (
@@ -350,8 +350,8 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
                   ))}
                   {session.roles.length > 6 && (
                     <div className="text-xs text-slate-500 dark:text-slate-400 italic">
-                      {t('aiDiscussion.moreParticipants', 'En {{count}} andere experts...', { count: session.roles.length - 6 })}
-                    </div>
+              {t('aiDiscussion.moreParticipants', { count: session.roles.length - 6 })}
+            </div>
                   )}
                 </div>
               </div>
@@ -376,7 +376,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
                       {isUserMessage && message.targetRoles && message.targetRoles.length > 0 && (
                         <span className="text-xs text-cyan-600 dark:text-cyan-400">
                           → {message.targetRoles.length === session.roles.length 
-                            ? t('aiDiscussion.allRoles', 'Alle rollen')
+                            ? t('aiDiscussion.allRoles')
                             : message.targetRoles.map(roleId => 
                                 session.roles.find(r => r.id === roleId)?.name || roleId
                               ).join(', ')
@@ -388,7 +388,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
                       </span>
                       {!isUserMessage && (
                         <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200">
-                          {getEnthusiasmEmoji(session.roles.find(r => r.id === message.role)?.enthusiasmLevel || 3)} {t('aiDiscussion.enthusiasmLevel', 'Enthousiasme')}: {session.roles.find(r => r.id === message.role)?.enthusiasmLevel || 3}/5
+                          {getEnthusiasmEmoji(session.roles.find(r => r.id === message.role)?.enthusiasmLevel || 3)} {t('aiDiscussion.enthusiasmLevel')}: {session.roles.find(r => r.id === message.role)?.enthusiasmLevel || 3}/5
                         </span>
                       )}
                       <span className={`font-medium text-base ${
@@ -397,12 +397,12 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
                           : 'text-slate-800 dark:text-slate-200'
                       }`}>
                         {isUserMessage 
-                          ? (message.userName || t('aiDiscussion.user', 'Gebruiker'))
+                          ? (message.userName || t('aiDiscussion.user'))
                           : (role ? t(`aiDiscussion.role.${role.id}`, role.name) : 'Unknown')
                         }
                         {isUserMessage && (
                           <span className="text-xs text-cyan-600 dark:text-cyan-400 ml-1">
-                            ({t('aiDiscussion.userIntervention', 'Gebruiker')})
+                            ({t('aiDiscussion.userIntervention')})
                           </span>
                         )}
                       </span>
@@ -440,7 +440,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
               <div className="flex-1">
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
                   <p className="text-base text-slate-500 dark:text-slate-400 italic">
-                    {t('aiDiscussion.generating', 'Nieuwe reacties worden gegenereerd...')}
+                    {t('aiDiscussion.generating')}
                   </p>
                 </div>
               </div>
@@ -455,10 +455,10 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
           <h4 className="font-medium text-lg text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.progress', 'Voortgang')}
+            {t('aiDiscussion.progress')}
           </h4>
           <span className="text-base text-slate-500 dark:text-slate-400">
-            {session.actualTurnNumber || 0}/10 {t('aiDiscussion.turns', 'beurten')}
+            {session.actualTurnNumber || 0}/10 {t('aiDiscussion.turns')}
           </span>
         </div>
         
@@ -471,8 +471,8 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
         
         <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
           {(session.actualTurnNumber || 0) < 10 
-            ? t('aiDiscussion.canContinue', 'Je kunt de discussie voortzetten of een rapport genereren')
-            : t('aiDiscussion.maxReached', 'Maximum aantal beurten bereikt - genereer een rapport')
+            ? t('aiDiscussion.canContinue')
+              : t('aiDiscussion.maxReached')
           }
         </div>
       </div>
@@ -484,11 +484,11 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
             <div className="flex items-center gap-2">
               <FiMessageCircle size={20} color="#0891b2" />
               <h4 className="font-medium text-lg text-slate-800 dark:text-slate-200">
-                {t('aiDiscussion.userIntervention', 'Stel een vraag of geef een opmerking')}
+                {t('aiDiscussion.userIntervention')}
               </h4>
             </div>
             <div className="text-sm text-slate-500 dark:text-slate-400">
-              {t('aiDiscussion.interventionCount', 'Vragen: {{count}}/5', { count: session.userInterventionCount || 0 })}
+              {t('aiDiscussion.interventionCount', { count: session.userInterventionCount || 0 })}
             </div>
           </div>
 
@@ -497,14 +497,14 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
             <div className="mb-4 flex items-start gap-2 rounded-md border border-green-200 bg-green-50 dark:border-emerald-900/40 dark:bg-emerald-900/20 p-3 text-sm text-emerald-800 dark:text-emerald-200">
               <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-emerald-500" />
               <p>
-                {t('aiDiscussion.readyForIntervention', 'Je kunt nu je vraag stellen. Druk op Ctrl+Enter of klik op Verstuur.')}
+                {t('aiDiscussion.readyForIntervention')}
               </p>
             </div>
           ) : (
             <div className="mb-4 flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 dark:border-amber-900/40 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-200">
               <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-amber-500" />
               <p>
-                {t('aiDiscussion.notAwaitingIntervention', "Je kunt nog niet versturen. Klik eerst op 'Discussie voortzetten' om een vraag te kunnen stellen.")}
+                {t('aiDiscussion.notAwaitingIntervention')}
               </p>
             </div>
           )}
@@ -512,7 +512,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
           {/* Role Selection */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('aiDiscussion.selectTargetRoles', 'Selecteer rollen om te antwoorden:')}
+              {t('aiDiscussion.selectTargetRoles')}
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               <button
@@ -524,7 +524,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
                 }`}
               >
                 <span className="inline mr-1"><FiUsers size={16} /></span>
-                {t('aiDiscussion.allRoles', 'Alle rollen')}
+                {t('aiDiscussion.allRoles')}
               </button>
               {session.roles.map(role => (
                 <button
@@ -547,7 +547,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
             <textarea
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder={t('aiDiscussion.interventionPlaceholder', 'Typ hier je vraag of opmerking...')}
+              placeholder={t('aiDiscussion.interventionPlaceholder')}
               className="w-full p-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
               rows={3}
               maxLength={250}
@@ -562,10 +562,10 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
               }}
             />
             <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1">
-              <span>{t('aiDiscussion.submitHint', 'Druk op Ctrl+Enter om te verzenden')}</span>
+              <span>{t('aiDiscussion.submitHint')}</span>
               <span className={userInput.length < 20 ? 'text-red-500' : userInput.length > 200 ? 'text-orange-500' : 'text-green-500'}>
-                {userInput.length}/250 karakters
-              </span>
+              {userInput.length}/250 {t('aiDiscussion.characters')}
+            </span>
             </div>
           </div>
 
@@ -577,7 +577,7 @@ const MultiAgentDiscussionInterface: React.FC<MultiAgentDiscussionInterfaceProps
               className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               <FiSend />
-              {t('aiDiscussion.submitIntervention', 'Verstuur')}
+              {t('aiDiscussion.submitIntervention')}
             </button>
           </div>
         </div>

@@ -22,8 +22,8 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
 
   const formatRenewalDate = (date: Date) => {
     const months = [
-      'januari', 'februari', 'maart', 'april', 'mei', 'juni',
-      'juli', 'augustus', 'september', 'oktober', 'november', 'december'
+      t('january'), t('february'), t('march'), t('april'), t('may'), t('june'),
+      t('july'), t('august'), t('september'), t('october'), t('november'), t('december')
     ];
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
@@ -45,10 +45,10 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
           bgColor: 'bg-gradient-to-br from-gray-100 to-gray-200',
           icon: '🥈',
           features: [
-            'Onbeperkte AI analyses',
-            'Geavanceerde samenvattingen',
-            'Export naar PDF/Word',
-            'Email ondersteuning'
+            t('unlimitedAiAnalyses'),
+            t('advancedSummaries'),
+            t('pdfExport') + '/' + t('wordExport'),
+            t('emailSupport')
           ]
         };
       case SubscriptionTier.GOLD:
@@ -58,13 +58,13 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
           bgColor: 'bg-gradient-to-br from-yellow-100 to-yellow-200',
           icon: '🥇',
           features: [
-            'Onbeperkte AI analyses',
-            'Geavanceerde samenvattingen',
-            'Export naar PDF/Word',
-            'Chat met transcript',
-            'PowerPoint export',
-            'Business Case Generator',
-            'Email ondersteuning'
+            t('unlimitedAiAnalyses'),
+            t('advancedSummaries'),
+            t('pdfExport') + '/' + t('wordExport'),
+            t('chatWithTranscript'),
+            t('powerpointExport'),
+            t('businessCaseGenerator'),
+            t('emailSupport')
           ]
         };
       case SubscriptionTier.ENTERPRISE:
@@ -74,14 +74,14 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
           bgColor: 'bg-gradient-to-br from-blue-100 to-blue-200',
           icon: '🏢',
           features: [
-            'Onbeperkte AI analyses',
-            'Geavanceerde samenvattingen',
-            'Export naar PDF/Word',
-            'Chat met transcript',
-            'PowerPoint export',
-            'Business Case Generator',
-            'Web Pagina Import',
-            'Email ondersteuning'
+            t('unlimitedAiAnalyses'),
+            t('advancedSummaries'),
+            t('pdfExport') + '/' + t('wordExport'),
+            t('chatWithTranscript'),
+            t('powerpointExport'),
+            t('businessCaseGenerator'),
+            t('webPageImport'),
+            t('emailSupport')
           ]
         };
       default:
@@ -104,10 +104,10 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
         <div className={`${tierInfo.bgColor} px-6 py-8 text-center rounded-t-xl`}>
           <div className="text-6xl mb-4 animate-bounce">🎉</div>
           <h2 className="text-2xl font-bold text-slate-800 mb-2">
-            Gefeliciteerd!
+            {t('congratulations')}
           </h2>
           <p className="text-slate-600 text-lg">
-            Je {tierInfo.name} abonnement is actief
+            {t('yourSubscriptionIsActive', { tierName: tierInfo.name })}
           </p>
         </div>
 
@@ -118,7 +118,7 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
             <div className={`flex items-center space-x-3 px-4 py-2 rounded-full ${tierInfo.bgColor} border-2 border-slate-200`}>
               <span className="text-2xl">{tierInfo.icon}</span>
               <span className={`font-semibold text-lg ${tierInfo.color}`}>
-                {tierInfo.name} Plan
+                {tierInfo.name} {t('plan')}
               </span>
             </div>
           </div>
@@ -127,21 +127,21 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
           <div className="text-center space-y-3">
             <div className="text-green-600 dark:text-green-400 text-4xl">✅</div>
             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-              Betaling Succesvol!
+              {t('paymentSuccessful')}
             </h3>
             <p className="text-slate-600 dark:text-slate-400">
-              Je abonnement is direct actief en je hebt volledige toegang tot alle functies.
+              {t('subscriptionActiveImmediately')}
             </p>
           </div>
 
           {/* Account Info */}
           <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 space-y-2">
-            <h4 className="font-medium text-slate-800 dark:text-slate-100">Account Details</h4>
+            <h4 className="font-medium text-slate-800 dark:text-slate-100">{t('accountDetails')}</h4>
             <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
               <p><span className="font-medium">Email:</span> {userEmail}</p>
-              <p><span className="font-medium">Plan:</span> {tierInfo.name}</p>
-              <p><span className="font-medium">Status:</span> <span className="text-green-600">Actief</span></p>
-              <p><span className="font-medium">Verlenging:</span> {formatRenewalDate(displayRenewalDate)}</p>
+              <p><span className="font-medium">{t('plan')}:</span> {tierInfo.name}</p>
+              <p><span className="font-medium">{t('status')}:</span> <span className="text-green-600">{t('active')}</span></p>
+              <p><span className="font-medium">{t('renewal')}:</span> {formatRenewalDate(displayRenewalDate)}</p>
             </div>
           </div>
 
@@ -149,7 +149,7 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
           {tierInfo.features.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium text-slate-800 dark:text-slate-100">
-                Wat krijg je nu toegang tot:
+                {t('featuresAvailable')}
               </h4>
               <ul className="space-y-2">
                 {tierInfo.features.map((feature, index) => (
@@ -164,22 +164,22 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
 
           {/* Next Steps */}
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 space-y-2">
-            <h4 className="font-medium text-blue-800 dark:text-blue-200">Volgende Stappen</h4>
+            <h4 className="font-medium text-blue-800 dark:text-blue-200">{t('nextSteps')}</h4>
             <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-              <li>• Je ontvangt een bevestigingsmail van Stripe</li>
-              <li>• Alle {tierInfo.name.toLowerCase()} functies zijn nu beschikbaar</li>
-              <li>• Je kunt je abonnement beheren via de instellingen</li>
-              <li>• Bij vragen: support@recaphorizon.com</li>
+              <li>• {t('confirmationEmail')}</li>
+              <li>• {t('allFeaturesAvailable', { tierName: tierInfo.name.toLowerCase() })}</li>
+              <li>• {t('manageSubscriptionViaSettings')}</li>
+              <li>• {t('supportContact')} {t('supportEmail')}</li>
             </ul>
           </div>
 
           {/* Thank You Message */}
           <div className="text-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
             <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">
-              Bedankt voor je vertrouwen! 🙏
+              {t('thankYouTrust')} 🙏
             </h4>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              We zijn blij dat je voor RecapHorizon hebt gekozen. Veel succes met je AI-gestuurde analyses!
+              {t('thankYouMessage')}
             </p>
           </div>
 
@@ -189,7 +189,7 @@ const SubscriptionSuccessModal: React.FC<SubscriptionSuccessModalProps> = ({
               onClick={onClose}
               className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              Start met RecapHorizon! 🚀
+              {t('startWithRecapHorizon')} 🚀
             </button>
           </div>
         </div>

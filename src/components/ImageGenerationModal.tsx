@@ -29,7 +29,7 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-600">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {t('imageGeneration') || 'Afbeelding Generatie'}
+            {t('imageGeneration')}
           </h2>
           <button
             onClick={onClose}
@@ -46,10 +46,10 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600 dark:text-gray-300 text-lg">
-                {t('generatingImage') || 'Afbeelding instructies genereren...'}
+                {t('generatingImage')}
               </p>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                Dit kan een paar seconden duren...
+                {t('generatingImageDescription')}
               </p>
             </div>
           ) : imageInstructions ? (
@@ -57,10 +57,10 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
             <div>
               <div className="mb-4">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  {t('aiImageInstruction') || 'AI Afbeelding Instructie'}
+                  {t('aiImageInstruction')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
-                  {t('aiImageInstructionDescription') || 'Hieronder een instructie voor het maken van een bijbehorende afbeelding. Kopieer en plak deze bij een AI-tool voor het genereren van afbeeldingen.'}
+                  {t('aiImageInstructionDescription')}
                 </p>
               </div>
 
@@ -68,7 +68,7 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
               <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-4 border border-gray-200 dark:border-slate-600">
                 <div className="flex items-start justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Afbeelding Instructie:
+                    {t('imageInstructionLabel')}
                   </span>
                   <button
                     onClick={onCopyInstructions}
@@ -81,12 +81,12 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
                     {instructionsCopied ? (
                       <>
                         <Check className="w-4 h-4" />
-                        Gekopieerd!
+                        {t('copied')}
                       </>
                     ) : (
                       <>
                         <Copy className="w-4 h-4" />
-                        {t('copyImageInstruction') || 'Kopieer'}
+                        {t('copyImageInstruction')}
                       </>
                     )}
                   </button>
@@ -99,7 +99,7 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
               {/* Suggestion */}
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <p className="text-blue-800 dark:text-blue-200 text-sm">
-                  <strong>{t('aiImageInstructionExample') || 'Bijvoorbeeld met'}:</strong> Google Gemini Banana, of andere AI afbeelding generators.
+                  <strong>{t('aiImageInstructionExample')}:</strong> {t('aiImageInstructionExampleTools')}
                 </p>
               </div>
             </div>
@@ -113,7 +113,7 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
             >
-              Sluiten
+              {t('close')}
             </button>
           </div>
         )}

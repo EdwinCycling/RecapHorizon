@@ -115,7 +115,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
           <div className="flex gap-3">
             <CopyButton
               text={emailContent}
-              label={t('copyEmailBody', 'Kopieer email inhoud')}
+              label={t('copyEmailBody')}
               t={t}
             />
             <MailtoButton
@@ -124,7 +124,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
               bccEmails={bccEmails}
               subject={emailSubject}
               body={emailContent}
-              label={t('openInEmailClient', 'Open in email client')}
+              label={t('openInEmailClient')}
               t={t}
             />
           </div>
@@ -132,7 +132,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
             onClick={onClose}
             className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors"
           >
-            {t('close', 'Sluiten')}
+            {t('close')}
           </button>
         </div>
       </div>
@@ -154,10 +154,10 @@ const CopyButton: React.FC<CopyButtonProps> = ({ text, label, t }) => {
     try {
       await copyToClipboard(text);
       setCopied(true);
-      displayToast(t('copiedToClipboard', 'Gekopieerd naar klembord!'), 'success');
+      displayToast(t('copiedToClipboard'), 'success');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      displayToast(t('copyFailed', 'Kopiëren mislukt'), 'error');
+      displayToast(t('copyFailed'), 'error');
     }
   };
 
@@ -171,7 +171,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({ text, label, t }) => {
       ) : (
         <ClipboardIcon className="w-4 h-4" />
       )}
-      {copied ? t('copied', 'Gekopieerd!') : label}
+      {copied ? t('copied') : label}
     </button>
   );
 };

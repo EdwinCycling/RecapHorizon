@@ -92,7 +92,7 @@ const InfoPage: React.FC<Props> = ({ t, addToWaitlist, onWaitlistMoreInfo, waitl
                     onClick={() => setWaitlistFeedback({ message: '', type: 'info', show: false })}
                     className="mt-3 text-cyan-700 dark:text-cyan-400 hover:underline text-sm"
                   >
-                    {t('tryAgain') || 'Probeer opnieuw'}
+                    {t('tryAgain')}
                   </button>
                 )}
               </div>

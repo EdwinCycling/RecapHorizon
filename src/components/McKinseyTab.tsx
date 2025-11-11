@@ -133,7 +133,7 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
         ...prev,
         step: 'selectTopic',
         topics: [],
-        error: t('topicGenerationError') || 'Fout bij het genereren van onderwerpen'
+        error: t('topicGenerationError')
       }));
     }
   }, [language, userId, userTier, sessionId]); // Keep callback stable; exclude `t` to avoid unnecessary re-creations
@@ -144,7 +144,7 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
 
     const content = (summary || transcript || '').trim();
     if (!content) {
-      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError') || 'Er is onvoldoende inhoud om onderwerpen te genereren' }));
+      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError') }));
       return;
     }
 
@@ -277,7 +277,7 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
       setState(prev => ({
         ...prev,
         step: 'selectFramework',
-        error: t('analysisError') || msg
+        error: t('analysisError')
       }));
     }
   };

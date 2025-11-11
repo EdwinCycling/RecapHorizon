@@ -11,6 +11,7 @@ interface DiscussionStyleModalProps {
   currentStyles: DiscussionStyleConfiguration;
   onStylesUpdate: (newStyles: DiscussionStyleConfiguration) => void;
   onRoleUpdate?: (roleId: string, updates: Partial<AIDiscussionRole>) => void;
+  language?: string;
 }
 
 const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
@@ -20,7 +21,8 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
   selectedRoles,
   currentStyles,
   onStylesUpdate,
-  onRoleUpdate
+  onRoleUpdate,
+  language = 'en'
 }) => {
   const [localStyles, setLocalStyles] = useState<DiscussionStyleConfiguration>(currentStyles);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
@@ -192,6 +194,10 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                         {styleCategories.communication_tone.map((style) => {
                           const currentRoleStyles = localStyles.roleStyles[role.id] || { roleId: role.id, selectedStyles: [] };
                           const isSelected = currentRoleStyles.selectedStyles.includes(style.id);
+                          const fallbackName = language === 'nl' ? style.nameNL : style.nameEN;
+                          const fallbackDesc = language === 'nl' ? style.descriptionNL : style.descriptionEN;
+                          const styleName = t(`aiDiscussion.styles.${style.id}.name`, fallbackName);
+                          const styleDesc = t(`aiDiscussion.styles.${style.id}.desc`, fallbackDesc);
                           
                           return (
                             <button
@@ -205,7 +211,7 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                             >
                               <div className="flex items-center justify-between mb-2">
                                 <span className="font-medium text-slate-800 dark:text-slate-200">
-                                  {style.nameNL}
+                                  {styleName}
                                 </span>
                                 {isSelected && (
                                   <div className="text-cyan-600 dark:text-cyan-400">
@@ -214,7 +220,7 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                                 )}
                               </div>
                               <p className="text-sm text-slate-600 dark:text-slate-400">
-                                {style.descriptionNL}
+                                {styleDesc}
                               </p>
                             </button>
                           );
@@ -231,6 +237,10 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                         {styleCategories.interaction_pattern.map((style) => {
                           const currentRoleStyles = localStyles.roleStyles[role.id] || { roleId: role.id, selectedStyles: [] };
                           const isSelected = currentRoleStyles.selectedStyles.includes(style.id);
+                          const fallbackName = language === 'nl' ? style.nameNL : style.nameEN;
+                          const fallbackDesc = language === 'nl' ? style.descriptionNL : style.descriptionEN;
+                          const styleName = t(`aiDiscussion.styles.${style.id}.name`, fallbackName);
+                          const styleDesc = t(`aiDiscussion.styles.${style.id}.desc`, fallbackDesc);
                           
                           return (
                             <button
@@ -244,7 +254,7 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                             >
                               <div className="flex items-center justify-between mb-2">
                                 <span className="font-medium text-slate-800 dark:text-slate-200">
-                                  {style.nameNL}
+                                  {styleName}
                                 </span>
                                 {isSelected && (
                                   <div className="text-cyan-600 dark:text-cyan-400">
@@ -253,7 +263,7 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                                 )}
                               </div>
                               <p className="text-sm text-slate-600 dark:text-slate-400">
-                                {style.descriptionNL}
+                                {styleDesc}
                               </p>
                             </button>
                           );
@@ -270,6 +280,10 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                         {styleCategories.depth_focus.map((style) => {
                           const currentRoleStyles = localStyles.roleStyles[role.id] || { roleId: role.id, selectedStyles: [] };
                           const isSelected = currentRoleStyles.selectedStyles.includes(style.id);
+                          const fallbackName = language === 'nl' ? style.nameNL : style.nameEN;
+                          const fallbackDesc = language === 'nl' ? style.descriptionNL : style.descriptionEN;
+                          const styleName = t(`aiDiscussion.styles.${style.id}.name`, fallbackName);
+                          const styleDesc = t(`aiDiscussion.styles.${style.id}.desc`, fallbackDesc);
                           
                           return (
                             <button
@@ -283,7 +297,7 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                             >
                               <div className="flex items-center justify-between mb-2">
                                 <span className="font-medium text-slate-800 dark:text-slate-200">
-                                  {style.nameNL}
+                                  {styleName}
                                 </span>
                                 {isSelected && (
                                   <div className="text-cyan-600 dark:text-cyan-400">
@@ -292,7 +306,7 @@ const DiscussionStyleModal: React.FC<DiscussionStyleModalProps> = ({
                                 )}
                               </div>
                               <p className="text-sm text-slate-600 dark:text-slate-400">
-                                {style.descriptionNL}
+                                {styleDesc}
                               </p>
                             </button>
                           );

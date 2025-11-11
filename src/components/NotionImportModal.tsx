@@ -53,7 +53,7 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
     const authUrl = '/.netlify/functions/notion-auth-start';
     const popup = window.open(authUrl, 'notion_oauth', 'width=600,height=750');
     if (!popup) {
-      setError(t('popupBlocked') || 'Popup geblokkeerd. Sta popups toe en probeer opnieuw.');
+      setError(t('popupBlocked'));
       setLoading(false);
       return;
     }
@@ -82,7 +82,7 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
         clearInterval(interval);
         try { popup.close(); } catch {}
         setLoading(false);
-        setError(t('oauthTimeout') || 'De verbinding met Notion duurde te lang. Probeer het opnieuw.');
+        setError(t('oauthTimeout'));
       }
     }, 1000);
   };
@@ -106,7 +106,7 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
         body: JSON.stringify({ query })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Search failed');
+      if (!res.ok) throw new Error(data?.error || t('searchFailed'));
       setPages(data.pages || []);
     } catch (e: any) {
       setError(e?.message || 'Unable to search Notion');
@@ -125,7 +125,7 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
         body: JSON.stringify({ page_id: selectedPageId })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Load failed');
+      if (!res.ok) throw new Error(data?.error || t('loadFailed'));
       onAuthorizedAndLoaded(data.text || '');
     } catch (e: any) {
       setError(e?.message || 'Unable to load Notion page');
@@ -146,18 +146,18 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
             <rect x="10" y="10" width="80" height="80" rx="10" fill="#111111" />
             <path d="M35 70V30h6l18 26V30h6v40h-6L41 44v26h-6z" fill="#ffffff"/>
           </svg>
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{t('notionWorkspace') || 'Notion Workspace'}</h3>
+          <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{t('notionWorkspace')}</h3>
           {connected ? (
-            <span className="ml-auto text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{t('connected') || 'Connected'}</span>
+            <span className="ml-auto text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{t('connected')}</span>
           ) : (
-            <span className="ml-auto text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700 dark:bg-slate-700/60 dark:text-gray-300">{t('notConnected') || 'Not connected'}</span>
+            <span className="ml-auto text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700 dark:bg-slate-700/60 dark:text-gray-300">{t('notConnected')}</span>
           )}
         </div>
 
         {!connected ? (
           <div className="text-center">
             <button onClick={connect} className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white">
-              {t('connectNotion') || 'Connect Notion'}
+              {t('connectNotion')}
             </button>
             {error && (
               <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-sm text-red-700 dark:text-red-300">{error}</div>
@@ -167,13 +167,13 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
           <>
             <div className="space-y-3">
               <div className="flex gap-2">
-                <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('search') || 'Search pages by title...'} className="flex-1 px-3 py-2 rounded-md border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 focus:outline-none" />
-                <button onClick={searchPages} disabled={loading} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50">{loading ? t('processing') || 'Searching...' : t('search') || 'Search'}</button>
+                <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('searchPagesPlaceholder')} className="flex-1 px-3 py-2 rounded-md border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 focus:outline-none" />
+                <button onClick={searchPages} disabled={loading} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50">{loading ? t('searching') : t('search')}</button>
               </div>
 
               <div className="max-h-64 overflow-y-auto rounded-md border border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-700 bg-white dark:bg-slate-900">
                 {pages.length === 0 ? (
-                  <div className="p-4 text-sm text-gray-500 dark:text-slate-400">{t('noResults') || 'No results yet. Try a search.'}</div>
+                  <div className="p-4 text-sm text-gray-500 dark:text-slate-400">{t('noSearchResults')}</div>
                 ) : (
                   pages.map(p => (
                     <button key={p.id} onClick={() => { setSelectedPageId(p.id); setSelectedPageTitle(p.title); }} className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 ${selectedPageId === p.id ? 'bg-cyan-50 dark:bg-slate-800/50' : ''}`}>
@@ -189,10 +189,10 @@ const NotionImportModal: React.FC<NotionImportModalProps> = ({ isOpen, onClose, 
 
               <div className="flex gap-2">
                 <button onClick={loadSelectedPage} disabled={loading || !selectedPageId} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white disabled:opacity-50">
-                  {loading ? (t('processing') || 'Loading Page...') : (t('processWebPage') || 'Load Page')}
+                  {loading ? t('loadingPage') : t('loadPage')}
                 </button>
                 <button onClick={disconnect} className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-gray-100">
-                  {t('disconnect') || 'Disconnect'}
+                  {t('disconnect')}
                 </button>
               </div>
             </div>

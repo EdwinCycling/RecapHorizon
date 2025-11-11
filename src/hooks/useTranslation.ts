@@ -19,16 +19,39 @@ export const useTranslation = (uiLang: Language = 'en') => {
 
     // Function to get nested value using dot notation
     const getNestedValue = (obj: any, path: string): any => {
-      return path.split('.').reduce((current, property) => {
-        return current?.[property];
-      }, obj);
+      if (obj == null) return undefined;
+
+      // 1) Try direct key lookup (supports flat keys with dots like "aiDiscussion.selectTopic")
+      if (Object.prototype.hasOwnProperty.call(obj, path)) {
+        return obj[path];
+      }
+
+      // 2) Fallback to nested lookup for objects structured as { aiDiscussion: { selectTopic: "..." } }
+      return path.split('.').reduce((current, property) => current?.[property], obj);
     };
 
-    let str = getNestedValue(translations[uiLang], key) ?? getNestedValue(translations['en'], key) ?? fallback ?? key;
+    let str = getNestedValue(translations[uiLang], key) ?? getNestedValue(translations['en'], key) ?? fallback;
 
     // Handle returnObjects parameter
     if (params && (params as any).returnObjects === true) {
-      return str;
+      if (typeof str === 'object' && str !== null) {
+        return str;
+      }
+      // If not an object, maybe it's a prefix for other keys
+      const prefixedKeys = Object.keys(translations[uiLang]).filter(k => k.startsWith(key + '.'));
+      if (prefixedKeys.length > 0) {
+        const obj: Record<string, any> = {};
+        prefixedKeys.forEach(k => {
+          const subKey = k.substring(key.length + 1);
+          // This is a simplified version, doesn't create nested objects
+          obj[subKey] = (translations as any)[uiLang][k];
+        });
+        return obj;
+      }
+    }
+
+    if (str === undefined) {
+      str = fallback || key;
     }
 
     // Handle string replacements like {name}

@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Operationele Efficiëntie Kansen",
+    "prompt_text": "Je bent een operationeel consultant. Identificeer 5-7 kansen voor het verbeteren van de operationele efficiëntie, gebaseerd op de algemene processen besproken in de gehele transcriptie.",
+    "requires_topic": false,
+    "is_active": true
+  },
+  {
+    "title": "Innovatie Brainstorm",
+    "prompt_text": "Je bent een innovatie consultant. Help me met brainstormen over {topic}. Geef me 5 concrete, uitvoerbare ideeën met voor elk idee: 1) Een korte beschrijving, 2) Potentiële impact, 3) Benodigde resources, 4) Mogelijke uitdagingen. Maak het praktisch en actionable.",
+    "requires_topic": true,
+    "is_active": true
+  }
+]

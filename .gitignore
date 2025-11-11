@@ -34,3 +34,12 @@ firebase-service-account.json
 # Local tools and generated reports
 tools/
 gitleaks_report.json
+
+# Local prompt manager (not for production)
+prompt-manager.html
+generate-prompt-manager.js
+start-prompt-manager.bat
+start-prompt-manager.ps1
+PROMPT_MANAGER_README.md
+scripts/initializePrompts.js
+addPrompts.cjs

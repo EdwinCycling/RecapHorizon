@@ -59,16 +59,16 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
   const makeDefaultAnswer = (question: string): AnswerRecord => ({
     question,
     key: 'neutral',
-    label: String(t('likertNeutral', 'Neutral / Somewhat relevant')),
+    label: String(t('likertNeutral')),
     scale: 3,
   });
 
   const LIKERT_OPTIONS: LikertOption[] = [
-    { key: 'strongly_agree', label: t('likertStronglyAgree', 'Strongly agree / Very relevant'), scale: 5 },
-    { key: 'agree', label: t('likertAgree', 'Agree / Relevant'), scale: 4 },
-    { key: 'neutral', label: t('likertNeutral', 'Neutral / Somewhat relevant'), scale: 3 },
-    { key: 'disagree', label: t('likertDisagree', 'Disagree / Not very relevant'), scale: 2 },
-    { key: 'strongly_disagree', label: t('likertStronglyDisagree', 'Strongly disagree / Irrelevant'), scale: 1 },
+    { key: 'strongly_agree', label: t('likertStronglyAgree'), scale: 5 },
+    { key: 'agree', label: t('likertAgree'), scale: 4 },
+    { key: 'neutral', label: t('likertNeutral'), scale: 3 },
+    { key: 'disagree', label: t('likertDisagree'), scale: 2 },
+    { key: 'strongly_disagree', label: t('likertStronglyDisagree'), scale: 1 },
   ];
 
   const [round1Questions, setRound1Questions] = useState<string[]>([]);
@@ -135,7 +135,7 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
       const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
       
       if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
-        setError('Alleen TXT, PDF en DOCX bestanden worden ondersteund');
+        setError(t('unsupportedFileTypeError'));
         return;
       }
       
@@ -146,10 +146,10 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
         // Add file content to existing text instead of overwriting
         setInitialIdea(prev => prev ? `${prev}\n\n${text}` : text);
       } else {
-        setError('PDF en DOCX ondersteuning komt binnenkort. Gebruik voor nu TXT bestanden.');
+        setError(t('pdfDocxNotSupportedError'));
       }
     } catch (e: any) {
-      setError('Fout bij het lezen van het bestand: ' + (e.message || 'Onbekende fout'));
+      setError(t('fileReadError', { error: e.message || t('unknownError') }));
     }
   };
 
@@ -784,7 +784,7 @@ const IdeaBuilderModal: React.FC<IdeaBuilderModalProps> = ({
                     Bestand uploaden
                   </button>
                   <p className="text-xs text-gray-500 dark:text-slate-400 mt-2">
-                    Ondersteunde formaten: TXT, PDF, DOCX
+                    {t('supportedFileTypes', 'TXT, PDF, DOCX')}
                   </p>
                 </div>
               </div>

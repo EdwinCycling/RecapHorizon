@@ -108,7 +108,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         ...prev,
         step: 'selectTopic',
         topics: [],
-        error: t('opportunityTopicGenerationError') || 'Fout bij het genereren van onderwerpen',
+        error: t('opportunityTopicGenerationError'),
         isGenerating: false
       }));
     }
@@ -125,7 +125,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         ...prev, 
         step: 'selectTopic', 
         topics: [], 
-        error: t('opportunityTopicGenerationError') || 'Er is onvoldoende inhoud om onderwerpen te genereren' 
+        error: t('opportunityTopicGenerationError') 
       }));
       return;
     }
@@ -165,7 +165,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         };
       } else {
         // Select only one topic and automatically continue to roles
-        const newState = {
+        const newState: OpportunityState = {
           ...prev,
           selectedTopics: [topic],
           step: 'selectRole'
@@ -185,7 +185,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     if (state.selectedTopics.length === 0) {
       setState(prev => ({ 
         ...prev, 
-        error: t('selectAtLeastOneTopic') || 'Selecteer minimaal één onderwerp' 
+        error: t('selectAtLeastOneTopic') 
       }));
       return;
     }
@@ -207,7 +207,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         };
       } else {
         // Select only this role (replace any existing selection) and automatically continue to types
-        const newState = {
+        const newState: OpportunityState = {
           ...prev,
           selectedRoles: [role],
           step: 'selectType',
@@ -228,7 +228,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     if (state.selectedRoles.length === 0) {
       setState(prev => ({ 
         ...prev, 
-        error: t('selectAtLeastOneRole') || 'Selecteer minimaal één AI-rol' 
+        error: t('selectAtLeastOneRole') 
       }));
       return;
     }
@@ -267,7 +267,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     if (state.selectedOpportunityTypes.length === 0) {
       setState(prev => ({ 
         ...prev, 
-        error: t('selectAtLeastOneType') || 'Selecteer minimaal één opportunity type' 
+        error: t('selectAtLeastOneType') 
       }));
       return;
     }
@@ -311,7 +311,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       console.error('Error generating opportunities:', error);
       setState(prev => ({
         ...prev,
-        error: t('opportunityGenerationError') || 'Fout bij het genereren van opportunities',
+        error: t('opportunityGenerationError'),
         isGenerating: false
       }));
     }
@@ -337,10 +337,10 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      displayToast(t('opportunityCopied', 'Opportunity gekopieerd naar klembord'), 'success');
+      displayToast(t('opportunityCopied'), 'success');
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      displayToast(t('copyError', 'Kopiëren mislukt'), 'error');
+      displayToast(t('copyError'), 'error');
     }
   };
 
@@ -359,7 +359,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     element.click();
     document.body.removeChild(element);
     
-    displayToast(t('opportunitiesDownloaded', 'Alle opportunities gedownload als tekstbestand'), 'success');
+    displayToast(t('opportunitiesDownloaded'), 'success');
   };
 
   const downloadAllAsPDF = async () => {
@@ -402,10 +402,10 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       });
       
       doc.save(`kansen-analyse-${new Date().getTime()}.pdf`);
-      displayToast(t('opportunitiesDownloadedPDF', 'Alle opportunities gedownload als PDF'), 'success');
+      displayToast(t('opportunitiesDownloadedPDF'), 'success');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      displayToast(t('pdfGenerationError', 'PDF genereren mislukt'), 'error');
+      displayToast(t('pdfGenerationError'), 'error');
     }
   };
 
@@ -505,10 +505,10 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     <div className="space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-          {t('selectOpportunityTopics', 'Selecteer onderwerpen')}
+          {t('selectOpportunityTopics')}
         </h3>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('selectOpportunityTopicsDesc', 'Kies 1 onderwerp voor opportunity generatie')}
+          {t('selectOpportunityTopicsDesc')}
         </p>
       </div>
 
@@ -519,7 +519,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
             onClick={generateTopics}
             className="mt-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 text-sm font-medium"
           >
-            {t('tryAgain', 'Probeer opnieuw')}
+            {t('tryAgain')}
           </button>
         </div>
       )}
@@ -527,13 +527,13 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
       {state.topics.length === 0 && !state.error && (
         <div className="text-center py-8">
           <p className="text-slate-500 dark:text-slate-400">
-            {t('noOpportunityTopicsGenerated', 'Geen onderwerpen gegenereerd')}
+            {t('noOpportunityTopicsGenerated')}
           </p>
           <button
             onClick={generateTopics}
             className="mt-2 text-cyan-600 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-200 text-sm font-medium"
           >
-            {t('tryAgain', 'Probeer opnieuw')}
+            {t('tryAgain')}
           </button>
         </div>
       )}
@@ -575,8 +575,8 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         <div className="pt-4">
           <p className="text-sm text-slate-600 dark:text-slate-400 text-center">
             {state.selectedTopics.length > 0 
-              ? t('opportunitiesTopicSelected', '1 onderwerp geselecteerd - automatisch doorgaan naar AI-rollen') 
-              : t('opportunitiesSelectOneTopic', 'Selecteer 1 onderwerp om door te gaan')}
+              ? t('opportunitiesTopicSelected') 
+              : t('opportunitiesSelectOneTopic')}
           </p>
         </div>
       )}
@@ -595,20 +595,20 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
           <FiArrowLeft size={16} />
-          {t('backToTopics', 'Terug naar onderwerpen')}
+          {t('backToTopics')}
         </button>
       </div>
 
       <div className="text-center">
         <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-          {t('selectOpportunityRoles', 'Kies AI-rollen')}
+          {t('selectOpportunityRoles')}
         </h3>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          {t('selectOpportunityRolesDesc', 'Selecteer 1 rol voor een specifiek perspectief')}
+          {t('selectOpportunityRolesDesc')}
         </p>
         <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-3 mb-6">
           <p className="text-sm text-cyan-800 dark:text-cyan-200">
-            <span className="font-medium">{t('selectedTopics', 'Geselecteerde onderwerpen')}:</span> {state.selectedTopics.map(t => t.title).join(', ')}
+            <span className="font-medium">{t('selectedTopics')}:</span> {state.selectedTopics.map(t => t.title).join(', ')}
           </p>
         </div>
       </div>
@@ -729,25 +729,25 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
 
       <div className="flex justify-between items-center pt-4">
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {state.selectedOpportunityTypes.length} {t('opportunitiesTypesSelected', 'van {total} types geselecteerd', { total: OPPORTUNITY_TYPES.length })}
+          {state.selectedOpportunityTypes.length} {t('opportunitiesTypesSelected', { total: OPPORTUNITY_TYPES.length })}
         </p>
         <button
           onClick={handleGenerateOpportunities}
           disabled={state.selectedOpportunityTypes.length === 0}
           className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
-          {t('generateOpportunities', 'Genereer Opportunities')}
+          {t('generateOpportunities')}
         </button>
       </div>
     </div>
   );
 
   const renderGeneratingStep = () => (
-    <BlurredLoadingOverlay text={t('generatingOpportunityTopics', 'Onderwerpen genereren...')} />
+    <BlurredLoadingOverlay text={t('generatingOpportunityTopics')} />
   );
 
   const renderGeneratingOpportunitiesStep = () => (
-    <BlurredLoadingOverlay text={t('generatingOpportunities', 'Opportunities genereren...')} />
+    <BlurredLoadingOverlay text={t('generatingOpportunities')} />
   );
 
   const renderCompleteStep = () => (
@@ -758,7 +758,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
           <FiArrowLeft size={16} />
-          {t('backToTypes', 'Terug naar types')}
+          {t('backToTypes')}
         </button>
         <div className="flex gap-2">
           <button
@@ -766,13 +766,13 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
             className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
             <FiRefreshCw size={16} />
-            {t('regenerateOpportunities', 'Opportunities opnieuw genereren')}
+            {t('regenerateOpportunities')}
           </button>
           <button
             onClick={handleReset}
             className="px-3 py-2 text-sm bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 rounded-lg hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-colors"
           >
-            {t('startNewOpportunityAnalysis', 'Nieuwe analyse starten')}
+            {t('startNewOpportunityAnalysis')}
           </button>
           <div className="relative" ref={menuRef}>
             <button
@@ -791,7 +791,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
                   }}
                 >
                   <FiDownload size={16} />
-                  {t('downloadAsText', 'Downloaden als tekst')}
+                  {t('downloadAsText')}
                 </button>
                 <button
                   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
@@ -801,7 +801,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
                   }}
                 >
                   <FiDownload size={16} />
-                  {t('downloadAsPDF', 'Downloaden als PDF')}
+                  {t('downloadAsPDF')}
                 </button>
                 <button
                   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
@@ -811,7 +811,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
                   }}
                 >
                   <FiMail size={16} />
-                  {t('email', 'E-mailen')}
+                  {t('email')}
                 </button>
               </div>
             )}
@@ -837,7 +837,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
               className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
             >
               <FiCopy size={16} />
-              {t('copyOpportunity', 'Kopiëren')}
+              {t('copyOpportunity')}
             </button>
           </div>
 
@@ -862,16 +862,16 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
               <FiZap size={48} />
             </div>
             <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-              {t('opportunitiesUpgradeRequired', 'Upgrade vereist voor Kansen Generatie')}
+              {t('opportunitiesUpgradeRequired')}
             </h3>
             <p className="text-slate-600 dark:text-slate-400 mb-6">
-              {t('opportunitiesUpgradeMessage', 'Kansen generatie is beschikbaar voor Silver, Gold, Diamond en Enterprise gebruikers. Deze functionaliteit biedt AI-gegenereerde zakelijke kansen en mogelijkheden.')}
+              {t('opportunitiesUpgradeMessage')}
             </p>
           </div>
 
           <div className="bg-white dark:bg-slate-800 rounded-lg p-6 mb-6">
             <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">
-              {t('opportunitiesAvailableForTiers', 'Beschikbaar voor:')}
+              {t('opportunitiesAvailableForTiers')}
             </h4>
             <div className="flex justify-center gap-4 text-sm">
               <span className="px-3 py-1 bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full">Silver</span>
@@ -882,14 +882,14 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
           </div>
 
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-            {t('opportunitiesUpgradeNote', 'Upgrade je abonnement om toegang te krijgen tot deze geavanceerde AI functionaliteit.')}
+            {t('opportunitiesUpgradeNote')}
           </p>
 
           <button
             onClick={() => window.open('/pricing', '_blank')}
             className="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium"
           >
-            {t('viewPricing', 'Bekijk Prijzen')}
+            {t('viewPricing')}
           </button>
         </div>
       </div>

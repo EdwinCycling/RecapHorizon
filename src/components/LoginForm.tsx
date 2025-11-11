@@ -163,7 +163,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
     try {
       await Promise.resolve(handleLogin(email, password));
     } catch (error: any) {
-      const message = error?.message || t('invalidCredentials', 'Ongeldige inloggegevens. Probeer opnieuw.');
+      const message = error?.message || t('invalidCredentials');
       setNotification({
         isOpen: true,
         title: t('login'),
@@ -178,7 +178,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
     try {
       await Promise.resolve(handleCreateAccount(email, password));
     } catch (error: any) {
-      const message = error?.message || t('accountCreationFailed', 'Account aanmaken mislukt. Probeer het opnieuw.');
+      const message = error?.message || t('accountCreationFailed');
       setNotification({
         isOpen: true,
         title: t('accountCreate'),
@@ -378,7 +378,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
             }}
             className="text-gray-700 dark:text-gray-300"
           >
-            {t('rememberMe') || 'Onthoud mij'}
+            {t('rememberMe')}
           </label>
         </div>
       )}
@@ -500,6 +500,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ handleLogin, handleCreateAccount,
         title={notification.title}
         message={notification.message}
         type={notification.type}
+        t={t}
       />
     </div>
   );

@@ -51,7 +51,7 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
     // Check subscription tier first
     const allowedTiers = ['gold', 'enterprise', 'diamond'];
     if (!userSubscription || !allowedTiers.includes(userSubscription.toLowerCase())) {
-      setError('Email upload is alleen beschikbaar voor Gold, Enterprise en Diamond abonnementen.');
+      setError(t('emailUploadSubscriptionRequired'));
       return;
     }
     
@@ -62,7 +62,7 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
                        file.name.includes('outlook-email');
     
     if (!isEmailFile) {
-      setError('invalidEmailFileType');
+      setError(t('invalidEmailFileType'));
       return;
     }
     
@@ -79,7 +79,7 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
       // Close modal after starting analysis
       onClose();
     } else {
-      setError('emailExtractionFailed');
+      setError(t('emailExtractionFailed'));
       setAnalysisState('idle');
     }
   };
@@ -125,7 +125,7 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
     }
     
     // If no valid email data found, show error
-    setError('invalidEmailFileType');
+    setError(t('invalidEmailFileType'));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,11 +163,11 @@ const EmailUploadModal: React.FC<EmailUploadModalProps> = ({
               accept=".eml,.msg"
               id="email-file-input"
               name="emailFile"
-              aria-label="Upload email file (.eml, .msg) or drag from Outlook"
+              aria-label={t('emailUploadAriaLabel')}
               aria-describedby="email-file-input-description"
             />
             <span id="email-file-input-description" className="sr-only">
-              You can drag and drop an .eml or .msg file, drag emails directly from Outlook, or choose a file using the Select File button.
+              {t('emailUploadScreenReaderDescription')}
             </span>
             <div className="flex flex-col items-center">
               <CloudArrowUpIcon className="h-12 w-12 text-gray-400 dark:text-slate-400" />

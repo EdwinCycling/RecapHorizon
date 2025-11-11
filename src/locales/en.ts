@@ -163,6 +163,11 @@ export const en = {
   exportPPT: "Powerpoint",
   copyContent: "Copy content",
   noContent: "No content generated yet.",
+  congratulations: "Congratulations!",
+  paymentSuccessful: "Payment Successful!",
+  unlimitedAiAnalyses: "Unlimited AI analyses",
+  advancedSummaries: "Advanced summaries",
+  thankYouTrust: "Thank you for your trust!",
   chatWithTranscript: "Chat with Transcript",
   specials: "RecapHorizon Special prompts",
   specialsSubtitle: "Prompts are in English; the result will be in your chosen output language.",
@@ -1929,6 +1934,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   mobileAudioHelpOption2iOS: "For iOS: Go to Settings > Focus > Do Not Disturb and activate this mode. Set up a schedule for planned recordings through the settings.",
   mobileAudioHelpOption2Android: "For Android: Open the Quick Menu by swiping down, tap Do Not Disturb. Configure a rule via Settings > Sounds & vibration > Do not disturb for fixed times.",
   mobileAudioHelpOption2Explanation: "Explanation: This mode suppresses calls while you stay online for other notifications. This is suitable if you want to remain reachable for non-phone communication.",
+  mobileAudioHelpExtraTip: "Test your chosen setting before starting an important recording. This way you can be sure everything works as expected.",
   mobileAudioHelpClose: "Got it",
   
   // Image Upload FAQ
@@ -1985,6 +1991,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   // Pricing page image upload
   pricingImageUpload: "AI Image Analysis (JPG, PNG, WEBP, GIF)",
   pricingEmailUpload: "Email Upload (.msg, .eml files)",
+  emailUploadSubscriptionRequired: "Email upload is only available for Gold, Enterprise and Diamond subscriptions.",
   
   // Image upload help modal
   imageUploadHelpTitle: "Image Upload Help",
@@ -3053,6 +3060,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   audioCompressionDescription: "Compress audio to reduce file size and improve processing speed",
   autoStopRecording: "Auto-stop recording",
   autoStopRecordingDescription: "Automatically stop recording after a period of silence",
+  speechRecognition: "Speech recognition",
   bccField: "BCC",
   bccPlaceholder: "Enter BCC recipients...",
   bodyField: "Body",
@@ -3171,6 +3179,32 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   // Technical Console Messages - Clipboard
   clipboardToastMessage: "{type}: {message}",
 
+  // Toast Messages
+  toastApiKeyNotAvailable: "API key not available. Contact the administrator.",
+  toastTokenLimitReached: "Token limit reached. Upgrade your subscription for more AI generations.",
+  toastDiamondTokenCompleted: "Diamond token action completed!",
+  toastDiamondTokenError: "An error occurred during the diamond token action.",
+  toastCopiedToClipboard: "Copied to clipboard",
+  toastCopyFailed: "Copy failed",
+  toastFileDownloaded: "File downloaded",
+  toastErrorLoadingPreferences: "Error loading preferences",
+  toastPleaseSelectAIProvider: "Please select an AI provider",
+  toastPreferencesSaved: "AI Provider preferences saved successfully",
+  toastErrorSavingPreferences: "Error saving preferences",
+  toastBusinessCaseGenerated: "Business case generated!",
+  toastTooManyChatMessages: "Too many chat messages. Please try again in a minute.",
+  toastNotEnoughCredits: "Unfortunately, you do not have enough credits to perform this feature. Click here to upgrade to a higher subscription.",
+  toastNoUserManagementAccess: "No access to user management. Admin rights required.",
+  toastErrorLoadingUsers: "Error loading users.",
+  toastErrorAddingUser: "Error adding user.",
+  toastConfirmationEmailSent: "A confirmation email has been sent. Check your inbox.",
+  toastWaitlistError: "An error occurred while signing up for the waitlist.",
+  toastNoEmailAccess: "No access to email functions. Admin rights required.",
+  toastErrorPreparingInvitations: "Error preparing invitation emails.",
+  toastWebSpeechAPINotSupported: "Web Speech API does not support saved audio transcription",
+  toastErrorPreparingLargeAudio: "Error preparing large audio file. Try a smaller file.",
+  toastFailedToDownloadFile: "Failed to download file. Please try again.",
+
   // Expert Chat Console Messages
   expertChatRateLimitExceeded: "Rate limit exceeded for expert chat",
   expertChatInvalidMessage: "Invalid message content:",
@@ -3280,6 +3314,53 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   "aiDiscussion.currentModerator": "Current moderator",
   "aiDiscussion.backToGoals": "Back to goals",
   "aiDiscussion.startDiscussion": "Start discussion",
+  "aiDiscussion.configureStyles": "Configure Styles",
+  "aiDiscussion.stylesConfiguration": "Style Configuration",
+  "aiDiscussion.stylesConfigurationDesc": "Adjust the communication style and tone of the discussion",
+  "aiDiscussion.configureRoleStyles": "Configure Role Styles",
+  "aiDiscussion.configureRoleStylesDesc": "Set the communication style per role",
+  "aiDiscussion.communicationTone": "Communication Tone",
+  "aiDiscussion.interactionPattern": "Interaction Pattern & Questioning",
+  "aiDiscussion.depthFocus": "Depth & Focus",
+  "aiDiscussion.backToRoles": "Back to roles",
+  "aiDiscussion.moderator": "Moderator",
+
+  "discussionStyles.adjustTitle": "Adjust Discussion Styles",
+  "discussionStyles.adjustDescription": "Adjust the discussion styles for each role. These changes apply to future messages in the discussion.",
+  "discussionStyles.communicationTone": "Communication Tone",
+  "discussionStyles.interactionPattern": "Interaction Pattern",
+  "discussionStyles.depthFocus": "Depth & Focus",
+
+  // AI Discussion style categories
+  "aiDiscussion.category.vision": "Vision & Concept Validation",
+  "aiDiscussion.category.lean": "Lean Finance & Resources",
+  "aiDiscussion.category.execution": "Speed & Agile Execution",
+  "aiDiscussion.category.people": "People, Talent & Culture",
+  "aiDiscussion.category.market": "Market & Adoption",
+
+  // AI Discussion styles (names and descriptions by ID)
+  "aiDiscussion.styles.concise_direct.name": "Concise & Direct",
+  "aiDiscussion.styles.concise_direct.desc": "Delivers curt, to-the-point answers without much embellishment.",
+  "aiDiscussion.styles.elaborate_indepth.name": "Elaborate & In-depth",
+  "aiDiscussion.styles.elaborate_indepth.desc": "Provides detailed analyses, context, and extensive explanations.",
+  "aiDiscussion.styles.encouraging_positive.name": "Encouraging & Positive",
+  "aiDiscussion.styles.encouraging_positive.desc": "Focuses on opportunities, strengths, and potential, with an optimistic and motivating tone.",
+  "aiDiscussion.styles.critical_challenging.name": "Critical & Challenging",
+  "aiDiscussion.styles.critical_challenging.desc": "Questions the status quo, seeks out weaknesses, and challenges assumptions.",
+  "aiDiscussion.styles.highly_questioning.name": "Highly Questioning",
+  "aiDiscussion.styles.highly_questioning.desc": "Often responds with open-ended questions to dig deeper and gather more information.",
+  "aiDiscussion.styles.solution_oriented.name": "Solution-Oriented",
+  "aiDiscussion.styles.solution_oriented.desc": "Focuses directly on proposing concrete solutions and action plans for discussed problems.",
+  "aiDiscussion.styles.collaborative.name": "Collaborative",
+  "aiDiscussion.styles.collaborative.desc": "Seeks consensus, builds upon existing ideas, and facilitates joint conclusions.",
+  "aiDiscussion.styles.drawing_comparisons.name": "Drawing Comparisons",
+  "aiDiscussion.styles.drawing_comparisons.desc": "Draws parallels with other situations, best practices, or industry standards.",
+  "aiDiscussion.styles.action_oriented.name": "Action-Oriented",
+  "aiDiscussion.styles.action_oriented.desc": "Consistently steers the discussion towards concrete steps, responsibilities, and the next logical actions.",
+  "aiDiscussion.styles.big_picture_thinker.name": "Big Picture Thinker",
+  "aiDiscussion.styles.big_picture_thinker.desc": "Places details in a broader context, connects topics to higher goals and overarching strategies.",
+  "aiDiscussion.styles.narrative_example_rich.name": "Narrative & Example-Rich",
+  "aiDiscussion.styles.narrative_example_rich.desc": "Explains concepts and supports arguments with relevant scenarios or examples for greater vividness and understanding.",
 
   // AI Discussion goals (names and descriptions by ID)
   "aiDiscussion.goal.v1": "Core Hypothesis Validation",
@@ -3380,6 +3461,16 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   "aiDiscussion.role.investerDesc": "Focus on opportunities, costs, profitability and time to market",
   "aiDiscussion.role.generaal": "The General",
   "aiDiscussion.role.generaalDesc": "Wants structure, alignment, makes decisions when facing multiple options, cuts the knot",
+  "aiDiscussion.role.storyteller": "Storyteller",
+  "aiDiscussion.role.storytellerDesc": "Crafts narratives, simplifies complex ideas, and frames messages for different audiences",
+  "aiDiscussion.role.dromer": "Dreamer",
+  "aiDiscussion.role.dromerDesc": "Vision-oriented, imagines ideal scenarios, pushes boundaries and inspires new directions",
+  "aiDiscussion.role.skeptische_advocaat": "Devil's Advocate",
+  "aiDiscussion.role.skeptische_advocaatDesc": "Challenges assumptions, identifies risks, and asks critical questions",
+  "aiDiscussion.role.gamification_architect": "Gamification Architect",
+  "aiDiscussion.role.gamification_architectDesc": "Designs engagement mechanics, incentives, and challenges to motivate behavior",
+  "aiDiscussion.role.ethicus_impact_analist": "Ethics & Impact Analyst",
+  "aiDiscussion.role.ethicus_impact_analistDesc": "Evaluates moral implications, societal impact, and compliance with ethical standards",
 
   manageSubscriptionDesc: "View and modify your payment information via Stripe",
   customerPortalTitleDiamond: "Manage RecapHorizon subscription",
@@ -3462,7 +3553,22 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   
   // Audio Usage Meter
   unlimitedAudio: "Unlimited audio - no restrictions!",
-  approachingAudioLimit: "You are approaching your monthly audio limit. Consider upgrading to a higher plan."
+  approachingAudioLimit: "You are approaching your monthly audio limit. Consider upgrading to a higher plan.",
+
+  // Subscription Success Modal
+  yourSubscriptionIsActive: "Your {tierName} subscription is active",
+  subscriptionActiveImmediately: "Your subscription is immediately active and you have full access to all features.",
+  featuresAvailable: "What you now have access to:",
+  nextSteps: "Next Steps",
+  confirmationEmail: "You will receive a confirmation email from Stripe",
+  allFeaturesAvailable: "All {tierName} features are now available",
+  manageSubscriptionViaSettings: "You can manage your subscription via the settings",
+  pdfExport: "PDF export",
+  wordExport: "Word export",
+  powerpointExport: "PowerPoint export",
+  businessCaseGenerator: "Business Case Generator",
+  webPageImport: "Web Page Import",
+  emailSupport: "Email support"
 
   // Referral Program
 ,referralProgramTitle: "Referral Program"
@@ -4021,4 +4127,69 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,"summaryLengthOptions.standard": "Standard"
   ,"summaryLengthOptions.extensive": "Extensive"
   ,"summaryLengthOptions.fullTimeline": "Full timeline"
+  
+  // Audio Recording Screen - Missing translations
+  ,recordingDetails: "Recording Details"
+  ,fileSize: "File size"
+  ,audioFormat: "Audio format"
+  ,quality: "Quality"
+  ,optimizedFor: "Optimized for"
+  ,listenBack: "Listen back to your recording before transcribing"
+  ,transcribe: "Transcribe"
+  ,aiTranscription: "AI transcription"
+  ,aiTranscriptionDesc: "High-quality transcription with AI technology"
+
+  ,maxRecordingTimeReached: "Maximum recording time reached!"
+  ,noAudioDetected: "No audio detected"
+  ,audioDetected: "Audio detected"
+  ,yourRecordingIsReady: "Your audio recording is ready. Listen back and start transcription when you're ready."
+  ,recordingTime: "Recording time"
+  ,pauseTime: "Pause time"
+  ,startTime: "Start time"
+
+  // Months
+  ,january: "January"
+  ,february: "February"
+  ,march: "March"
+  ,april: "April"
+  ,may: "May"
+  ,june: "June"
+  ,july: "July"
+  ,august: "August"
+  ,september: "September"
+  ,october: "October"
+  ,november: "November"
+  ,december: "December"
+
+  // Subscription Success Modal
+  ,startWithRecapHorizon: "Start with RecapHorizon!"
+  ,thankYouMessage: "We're glad you chose RecapHorizon. Good luck with your AI-driven analyses!"
+
+  // Email Confirmation Modal
+  ,emailConfirmTitle: "Confirm your email address for registration"
+  ,emailConfirmDescription: "We have sent a confirmation code to your email address to create your account."
+  ,emailConfirmInstruction: "Enter the 6-digit code you received by email."
+  ,emailConfirmPlaceholder: "Enter 6-digit code"
+  ,emailConfirmVerify: "Confirm"
+  ,emailConfirmVerifying: "Confirming..."
+  ,emailConfirmNoCode: "Didn't receive a code?"
+  ,emailConfirmResend: "Resend code"
+  ,emailConfirmResending: "Sending..."
+  ,emailConfirmResendCooldown: "Resend ({seconds}s)"
+  ,emailConfirmAttemptCount: "Attempt {count} of {total}. {remaining} attempts remaining."
+  ,emailConfirmAccountCreating: "Your account will be created once your email address is confirmed."
+  ,emailConfirmWaitlistAdding: "You will be added to the waitlist once your email address is confirmed."
+  ,emailConfirmCheckSpam: "Also check your spam/junk email folder if you don't see the code."
+  ,emailConfirmTechnicalError: "A technical error occurred. Please try again."
+  ,emailConfirmCodeExpired: "The confirmation code has expired. Request a new one."
+  ,emailConfirmCodeInvalid: "Invalid confirmation code. Check the code and try again."
+  ,emailConfirmTooManyAttempts: "Too many attempts. Please try again later."
+  ,emailConfirmCodeAlreadySent: "A confirmation email has already been sent. Check your inbox."
+  ,emailConfirmTooManyRequests: "Too many requests. Please try again later."
+  ,emailConfirmCouldNotResend: "Could not send new confirmation code. Please try again later."
+  ,emailConfirmErrorSending: "A technical error occurred while sending a new code."
+
+  ,uploadFailed: "Upload failed."
+  ,supportedFileTypes: "TXT, PDF, RTF, HTML, MD, DOCX"
+  ,audioFormats: "MP3, MP4, WebM, WAV"
 };

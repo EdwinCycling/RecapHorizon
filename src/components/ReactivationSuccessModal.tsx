@@ -40,19 +40,19 @@ const ReactivationSuccessModal: React.FC<ReactivationSuccessModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('subscriptionReactivationSuccessTitle', 'Welcome back!')}>
+    <Modal isOpen={isOpen} onClose={onClose} title={t('subscriptionReactivationSuccessTitle')}>
       <div className="space-y-4">
         <p className="text-sm text-slate-700 dark:text-slate-300">
-          {t('subscriptionReactivationSuccessMessage', 'Great to have you back! Your subscription has been successfully reactivated.')}
+          {t('subscriptionReactivationSuccessMessage')}
         </p>
         
         <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
           <p className="text-sm text-green-800 dark:text-green-200">
-            {t('subscriptionReactivationActiveFrom', 'Your subscription will become active again on')}{' '}
+            {t('subscriptionReactivationActiveFrom')}{' '}
             <strong>{formattedDate}</strong>.
           </p>
           <p className="text-xs mt-1 text-green-700 dark:text-green-300">
-            {t('subscriptionReactivationEnjoy', 'Thank you for choosing RecapHorizon again. Enjoy all the features!')}
+            {t('subscriptionReactivationEnjoy')}
           </p>
         </div>
 
@@ -60,7 +60,7 @@ const ReactivationSuccessModal: React.FC<ReactivationSuccessModalProps> = ({
         {stripeCustomerId && (
           <div className="p-3 sm:p-4 bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-lg">
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-              {t('subscriptionReactivationPortalInfo', 'Want to manage your subscription or view billing details?')}
+              {t('subscriptionReactivationPortalInfo')}
             </p>
             <button
               onClick={handleCustomerPortal}
@@ -69,7 +69,7 @@ const ReactivationSuccessModal: React.FC<ReactivationSuccessModalProps> = ({
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
-              {t('customerPortalTitle', 'Stripe Customer Portal')}
+              {t('customerPortalTitle')}
             </button>
           </div>
         )}
@@ -79,7 +79,7 @@ const ReactivationSuccessModal: React.FC<ReactivationSuccessModalProps> = ({
             onClick={onClose}
             className="px-6 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors"
           >
-            {t('close', 'Close')}
+            {t('close')}
           </button>
         </div>
       </div>

@@ -12,11 +12,11 @@ interface EnterpriseContactModalProps {
 }
 
 const estimatedUserOptions = [
-  { key: '2-5', labelKey: 'enterpriseUsers_2_5', fallback: '2 - 5' },
-  { key: '6-10', labelKey: 'enterpriseUsers_6_10', fallback: '6 - 10' },
-  { key: '11-25', labelKey: 'enterpriseUsers_11_25', fallback: '11 - 25' },
-  { key: '26-100', labelKey: 'enterpriseUsers_26_100', fallback: '26 - 100' },
-  { key: '100+', labelKey: 'enterpriseUsers_100_plus', fallback: '100+' }
+  { key: '2-5', labelKey: 'enterpriseUsers_2_5' },
+  { key: '6-10', labelKey: 'enterpriseUsers_6_10' },
+  { key: '11-25', labelKey: 'enterpriseUsers_11_25' },
+  { key: '26-100', labelKey: 'enterpriseUsers_26_100' },
+  { key: '100+', labelKey: 'enterpriseUsers_100_plus' }
 ];
 
 const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen, onClose, t, userEmail }) => {
@@ -44,19 +44,19 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
   const validateForm = (): { valid: boolean; error?: string } => {
     // Basic presence
     if (!name.trim() || !workEmail.trim() || !company.trim() || !estimatedUsers) {
-      return { valid: false, error: t('enterpriseRequiredFields', 'Please fill in all required fields.') };
+      return { valid: false, error: t('enterpriseRequiredFields') };
     }
 
     // Detect obvious injection/XSS
     const inputs = [name, workEmail, company, estimatedUsers, message];
     if (inputs.some(i => containsSQLInjection(i) || containsXSS(i))) {
-      return { valid: false, error: t('enterpriseUnsafeInput', 'Unsafe input detected. Please remove special scripts or suspicious patterns.') };
+      return { valid: false, error: t('enterpriseUnsafeInput') };
     }
 
     // Email validation
     const emailCheck = validateEmailEnhanced(workEmail, { allowSuspicious: false });
     if (!emailCheck.isValid) {
-      return { valid: false, error: t('invalidEmail', 'Invalid email address.') };
+      return { valid: false, error: t('invalidEmail') };
     }
 
     return { valid: true };
@@ -69,7 +69,7 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
 
     const validation = validateForm();
     if (!validation.valid) {
-      setError(validation.error || t('formError', 'Please correct the errors in the form.'));
+      setError(validation.error || t('formError'));
       return;
     }
 
@@ -94,18 +94,18 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
       });
 
       if (result.success) {
-        setSuccess(t('enterpriseContactSuccess', 'Thanks! Your request has been sent. We will contact you shortly.'));
+        setSuccess(t('enterpriseContactSuccess'));
         // Optionally auto-close after a short delay
         setTimeout(() => {
           resetForm();
           onClose();
         }, 1500);
       } else {
-        setError(result.error || t('enterpriseContactError', 'Failed to send your request. Please try again later.'));
+        setError(result.error || t('enterpriseContactError'));
       }
     } catch (err: any) {
       console.error('Enterprise contact submit error:', err);
-      setError(err?.message || t('enterpriseContactError', 'Failed to send your request. Please try again later.'));
+      setError(err?.message || t('enterpriseContactError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -115,12 +115,12 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
     <Modal
       isOpen={isOpen}
       onClose={() => { resetForm(); onClose(); }}
-      title={t('enterpriseContactTitle', 'Enterprise contact')}
+      title={t('enterpriseContactTitle')}
       maxWidth="max-w-2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-slate-700 dark:text-slate-300">
-          {t('enterpriseContactIntro', 'Tell us a bit about your organization, and we will reach out to tailor RecapHorizon for your team.')}
+          {t('enterpriseContactIntro')}
         </p>
 
         {error && (
@@ -132,25 +132,25 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">{t('enterpriseYourName', 'Your name')}</label>
+            <label className="block text-sm font-medium mb-1">{t('enterpriseYourName')}</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-800 dark:border-slate-700"
-              placeholder={t('enterpriseYourNamePlaceholder', 'e.g. Jane Doe')}
+              placeholder={t('enterpriseYourNamePlaceholder')}
               maxLength={200}
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">{t('enterpriseWorkEmail', 'Work email')}</label>
+            <label className="block text-sm font-medium mb-1">{t('enterpriseWorkEmail')}</label>
             <input
               type="email"
               value={workEmail}
               onChange={e => setWorkEmail(e.target.value)}
               className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-800 dark:border-slate-700"
-              placeholder={t('enterpriseWorkEmailPlaceholder', 'name@company.com')}
+              placeholder={t('enterpriseWorkEmailPlaceholder')}
               maxLength={254}
               required
             />
@@ -159,29 +159,29 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">{t('enterpriseCompany', 'Company')}</label>
+            <label className="block text-sm font-medium mb-1">{t('enterpriseCompany')}</label>
             <input
               type="text"
               value={company}
               onChange={e => setCompany(e.target.value)}
               className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-800 dark:border-slate-700"
-              placeholder={t('enterpriseCompanyPlaceholder', 'Company name')}
+              placeholder={t('enterpriseCompanyPlaceholder')}
               maxLength={200}
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">{t('enterpriseEstimatedUsers', 'Estimated users')}</label>
+            <label className="block text-sm font-medium mb-1">{t('enterpriseEstimatedUsers')}</label>
             <select
               value={estimatedUsers}
               onChange={e => setEstimatedUsers(e.target.value)}
               className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-800 dark:border-slate-700"
               required
             >
-              <option value="" disabled>{t('enterpriseSelectOption', 'Select...')}</option>
+              <option value="" disabled>{t('enterpriseSelectOption')}</option>
               {estimatedUserOptions.map(opt => (
                 <option key={opt.key} value={opt.key}>
-                  {t(opt.labelKey, opt.fallback)}
+                  {t(opt.labelKey)}
                 </option>
               ))}
             </select>
@@ -189,12 +189,12 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('enterpriseMessage', 'Additional info')}</label>
+          <label className="block text-sm font-medium mb-1">{t('enterpriseMessage')}</label>
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
             className="w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-800 dark:border-slate-700"
-            placeholder={t('enterpriseMessagePlaceholder', 'What are your goals and needs?')}
+            placeholder={t('enterpriseMessagePlaceholder')}
             rows={4}
             maxLength={2000}
           />
@@ -214,7 +214,7 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
             disabled={isSubmitting}
             className={`px-4 py-2 rounded-md text-white ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
           >
-            {isSubmitting ? t('sending', 'Sending...') : t('enterpriseSendRequest', 'Send request')}
+            {isSubmitting ? t('sending') : t('enterpriseSubmitButton')}
           </button>
         </div>
       </form>

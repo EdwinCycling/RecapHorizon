@@ -64,7 +64,7 @@ const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ isOpen, onClose, t })
             onClick={onClose} 
             className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
           >
-            {t('close', 'Close')}
+            {t('close')}
           </button>
         </div>
       </div>

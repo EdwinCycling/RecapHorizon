@@ -1860,7 +1860,7 @@ Tekst: ${content}`;
 
     try {
       if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        displayToast(t('toastApiKeyNotAvailable'), 'error');
         setIsGeneratingImage(false);
         return;
       }
@@ -1882,7 +1882,7 @@ Tekst: ${content}`;
       const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
       
       if (!tokenValidation.allowed) {
-        displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+        displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
         setIsGeneratingImage(false);
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
@@ -2234,7 +2234,7 @@ Constraints:
       const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
       
       if (!tokenValidation.allowed) {
-        displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+        displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
         setLoadingText('');
         return;
@@ -2326,7 +2326,7 @@ ${sanitizedTranscript}`;
       
       setActiveView('businessCase');
       
-      displayToast('Business case gegenereerd!', 'success');
+      displayToast(t('toastBusinessCaseGenerated'), 'success');
     } catch (e: any) {
       setError(`${t('generationFailed', { type: 'Business Case' })}: ${e.message || t('unknownError')}`);
     } finally {
@@ -3276,7 +3276,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     if (!message.trim() || isChatting) return;
 
     if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        displayToast(t('toastApiKeyNotAvailable'), 'error');
         return;
     }
     
@@ -3286,7 +3286,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     // Rate limiting check (max 15 chat messages per minute)
     const sessionId = 'chat_' + (auth.currentUser?.uid || 'anonymous');
     if (!rateLimiter.isAllowed(sessionId, 15, 60000)) {
-        displayToast('Te veel chatberichten. Probeer het over een minuut opnieuw.', 'error');
+        displayToast(t('toastTooManyChatMessages'), 'error');
         return;
     }
     
@@ -3314,7 +3314,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
     
     if (!tokenValidation.allowed) {
-        displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+        displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
@@ -3365,7 +3365,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     // Check if user has access to chat
     const effectiveTier = userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'chat')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        displayToast(t('toastNotEnoughCredits'), 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
@@ -3373,7 +3373,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     const message = chatInput.trim();
     if (message) {
       if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        displayToast(t('toastApiKeyNotAvailable'), 'error');
         return;
       }
       setChatInput('');
@@ -3412,7 +3412,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                 if (apiKey) {
                     submitMessage(finalTranscript.trim());
                 } else {
-                    displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+                    displayToast(t('toastApiKeyNotAvailable'), 'error');
                 }
             }
         };
@@ -5236,7 +5236,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     }
 
     if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        displayToast(t('toastApiKeyNotAvailable'), 'error');
         return;
     }
     
@@ -5329,7 +5329,7 @@ const handleKeywordClick = async (keyword: string) => {
     // Don't reset other analysis data when generating keyword explanation
 
     if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        displayToast(t('toastApiKeyNotAvailable'), 'error');
         setIsFetchingExplanation(false);
         return;
     }
@@ -5359,7 +5359,7 @@ const handleKeywordClick = async (keyword: string) => {
         );
         
         if (!tokenValidation.allowed) {
-            displayToast(tokenValidation.reason || 'Token limiet bereikt voor keyword uitleg.', 'error');
+            displayToast(tokenValidation.reason || t('toastTokenLimitKeywordExplanation'), 'error');
             setIsFetchingExplanation(false);
             return;
         }
@@ -5407,7 +5407,7 @@ const handleGenerateKeywordAnalysis = async () => {
     }
 
     if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        displayToast(t('toastApiKeyNotAvailable'), 'error');
         return;
     }
     
@@ -5492,7 +5492,7 @@ const handleAnalyzeSentiment = async () => {
     }
     
     if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        displayToast(t('toastApiKeyNotAvailable'), 'error');
         return;
     }
     
@@ -6052,7 +6052,7 @@ const handleAnalyzeSentiment = async () => {
     // Controleer of gebruiker admin is
     if (!bypass && (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND)) {
       console.error('Unauthorized access to loadUsers');
-      displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
+      displayToast(t('toastNoUserManagementAccess'), 'error');
       return;
     }
 
@@ -6081,7 +6081,7 @@ const handleAnalyzeSentiment = async () => {
       (Data);
     } catch (error: any) {
       console.error('Load  error:', error);
-              displayToast('Fout bij laden van gebruikers.', 'error');
+              displayToast(t('toastErrorLoadingUsers'), 'error');
     }
   };
 
@@ -6089,7 +6089,7 @@ const handleAnalyzeSentiment = async () => {
     // Controleer of gebruiker admin is
     if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to addUser');
-      displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
+      displayToast(t('toastNoUserManagementAccess'), 'error');
       return;
     }
 
@@ -6110,7 +6110,7 @@ const handleAnalyzeSentiment = async () => {
               displayToast(`Gebruiker ${email} succesvol toegevoegd!`, 'success');
     } catch (error: any) {
       console.error('Add user error:', error);
-              displayToast('Fout bij toevoegen van gebruiker.', 'error');
+              displayToast(t('toastErrorAddingUser'), 'error');
       throw error;
     }
   };
@@ -6119,7 +6119,7 @@ const handleAnalyzeSentiment = async () => {
     // Controleer of gebruiker admin is
     if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to toggleUserStatus');
-      displayToast('Geen toegang tot gebruikersbeheer. Admin rechten vereist.', 'error');
+      displayToast(t('toastNoUserManagementAccess'), 'error');
       return;
     }
 
@@ -6398,14 +6398,14 @@ const handleAnalyzeSentiment = async () => {
       
       if (result.success && result.requiresConfirmation) {
         setShowEmailConfirmation(true);
-        displayToast('Een bevestigingsmail is verzonden. Controleer je inbox.', 'success');
+        displayToast(t('toastConfirmationEmailSent'), 'success');
       } else {
         displayToast(result.error || 'Er is een fout opgetreden.', 'error');
       }
       
     } catch (error) {
       console.error('Error initiating waitlist signup:', error);
-      displayToast('Er is een fout opgetreden bij het aanmelden voor de wachtlijst.', 'error');
+      displayToast(t('toastWaitlistError'), 'error');
     }
   };
   */
@@ -6540,7 +6540,7 @@ const handleAnalyzeSentiment = async () => {
       displayToast(t('emailClientOpened').replace('{email}', email), 'success');
     } catch (error) {
       console.error('Error sending invitation email:', error);
-              displayToast(t('emailErrorPreparing'), 'error');
+              displayToast(t('toastErrorPreparingInvitations'), 'error');
     }
   };
 
@@ -6548,7 +6548,7 @@ const handleAnalyzeSentiment = async () => {
     // Controleer of gebruiker admin is
     if (!authState.user || authState.user.subscriptionTier !== SubscriptionTier.DIAMOND) {
       console.error('Unauthorized access to sendInvitationEmails');
-      displayToast('Geen toegang tot email functies. Admin rechten vereist.', 'error');
+      displayToast(t('toastNoEmailAccess'), 'error');
       return;
     }
 
@@ -6609,13 +6609,13 @@ const handleAnalyzeSentiment = async () => {
       }
     } catch (error) {
       console.error('Error sending invitation emails:', error);
-              displayToast('Fout bij voorbereiden van uitnodigingsmails.', 'error');
+              displayToast(t('toastErrorPreparingInvitations'), 'error');
     }
   };
 
   const checkApiKey = () => {
     if (!apiKey) {
-      displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+      displayToast(t('toastApiKeyNotAvailable'), 'error');
       return false;
     }
     return true;
@@ -6633,7 +6633,7 @@ const handleAnalyzeSentiment = async () => {
     // Check if user has access to PowerPoint export
     const effectiveTier = userSubscription;
     if (!subscriptionService.isFeatureAvailable(effectiveTier, 'exportPpt')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        displayToast(t('toastNotEnoughCredits'), 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
@@ -6644,7 +6644,7 @@ const handleAnalyzeSentiment = async () => {
     }
     
     if (!apiKey) {
-        displayToast('API key niet beschikbaar. Neem contact op met de administrator.', 'error');
+        displayToast(t('toastApiKeyNotAvailable'), 'error');
         return;
     }
     
@@ -6732,7 +6732,7 @@ ${transcript}
         const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
         
         if (!tokenValidation.allowed) {
-            displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+            displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
             setTimeout(() => setShowPricingPage(true), 2000);
             setLoadingText('');
             return;
@@ -6937,7 +6937,7 @@ ${transcript}
   const handleWebSpeechTranscribe = async () => {
     setError('Web Speech API kan alleen live opnames transcriberen, niet opgeslagen audio. Gebruik de AI transcriptie optie voor opgeslagen opnames.');
     setStatus(RecordingStatus.ERROR);
-    displayToast('Web Speech API ondersteunt geen opgeslagen audio transcriptie', 'error');
+    displayToast(t('toastWebSpeechAPINotSupported'), 'error');
   };
 
   // Audio compressie functie
@@ -7263,7 +7263,7 @@ ${transcript}
         const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, estimatedTokens);
         
         if (!tokenValidation.allowed) {
-            displayToast(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.', 'error');
+            displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
             setTimeout(() => setShowPricingPage(true), 2000);
             setStatus(RecordingStatus.ERROR);
             setLoadingText('');
@@ -7321,7 +7321,7 @@ ${transcript}
             }
           } catch (e) {
             console.error(`[${transcribeTimestamp}] handleTranscribe: Segmentatie mislukt:`, e);
-            displayToast('Fout bij voorbereiden van groot audiobestand. Probeer een kleiner bestand.', 'error');
+            displayToast(t('toastErrorPreparingLargeAudio'), 'error');
             setStatus(RecordingStatus.ERROR);
             setLoadingText('');
             return;
@@ -7539,7 +7539,7 @@ ${transcript}
       displayToast(`File "${filename}" downloaded successfully!`, 'success');
     } catch (e) {
       console.error('Download failed', e);
-      displayToast('Failed to download file. Please try again.', 'error');
+      displayToast(t('toastFailedToDownloadFile'), 'error');
     }
   };
 
@@ -7824,9 +7824,9 @@ ${transcript}
               return (
                 <>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">Maandelijks gebruik</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">{t('monthlyUsage')}</span>
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      {usedDisplay}/{limit} min
+                      {usedDisplay}/{limit} {t('minutes')}
                     </span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
@@ -7836,7 +7836,7 @@ ${transcript}
                     ></div>
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Resterend: {remainingDisplay} minuten
+                    {t('remaining')}: {remainingDisplay} {t('minutes')}
                   </div>
                 </>
               );
@@ -7848,19 +7848,19 @@ ${transcript}
         <div className="flex flex-col items-center gap-2">
           <div className="flex flex-wrap items-center justify-center gap-4">
             <div className="px-4 py-2 rounded-md bg-gray-100 dark:bg-slate-700">
-              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">start</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('startTime')}</div>
               <div className="font-mono text-base font-semibold text-green-600">
                 {recordingStartMs ? new Date(recordingStartMs).toLocaleTimeString('nl-NL') : '--:--:--'}
               </div>
             </div>
             <div className="px-4 py-2 rounded-md bg-gray-100 dark:bg-slate-700">
-              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">opname</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('recordingTime')}</div>
               <div className="font-mono text-base font-semibold text-red-600">
                 {new Date(computeRecordingElapsedMs()).toISOString().substr(11, 8)}
               </div>
             </div>
             <div className="px-4 py-2 rounded-md bg-gray-100 dark:bg-slate-700">
-              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">pauze</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('pauseTime')}</div>
               <div className="font-mono text-base font-semibold text-orange-500">
                 {new Date(computePauseElapsedMs()).toISOString().substr(11, 8)}
               </div>
@@ -7939,19 +7939,19 @@ ${transcript}
             <div className="flex flex-col items-center gap-2">
               <div className="flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                <span className="text-red-600 dark:text-red-400 font-medium">Opname actief</span>
+                <span className="text-red-600 dark:text-red-400 font-medium">{t('recordingActive')}</span>
               </div>
               {/* Reserveer vaste ruimte voor de audiostatus om 'springen' te voorkomen */}
               <div className="h-5 flex items-center justify-center">
                 {showNoInputHint ? (
                   <div className="flex items-center gap-2 text-orange-500 dark:text-orange-400">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-xs">Geen audio gedetecteerd</span>
+                    <span className="text-xs">{t('noAudioDetected')}</span>
                   </div>
                 ) : avgInputLevel > 0.01 ? (
                   <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs">Audio gedetecteerd</span>
+                    <span className="text-xs">{t('audioDetected')}</span>
                   </div>
                 ) : (
                   // Onzichtbare placeholder houdt de hoogte gelijk
@@ -7963,13 +7963,13 @@ ${transcript}
           {status === RecordingStatus.PAUSED && (
             <div className="flex items-center justify-center gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span className="text-yellow-600 dark:text-yellow-400 font-medium">Opname gepauzeerd</span>
+              <span className="text-yellow-600 dark:text-yellow-400 font-medium">{t('recordingPaused')}</span>
             </div>
           )}
           {recordingPercentage >= 100 && (
             <div className="flex items-center justify-center gap-2 mt-2">
               <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-              <span className="text-red-600 dark:text-red-400 font-medium text-xs">Maximale opnametijd bereikt!</span>
+              <span className="text-red-600 dark:text-red-400 font-medium text-xs">{t('maxRecordingTimeReached')}</span>
             </div>
           )}
         </div>
@@ -7989,25 +7989,25 @@ ${transcript}
             <div className="text-center">
               <p className="text-lg text-green-600 dark:text-green-400 mb-2">{t('recordingStopped')}</p>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Je audio opname is klaar. Luister terug en start de transcriptie wanneer je klaar bent.
+                {t('yourRecordingIsReady')}
               </p>
             </div>
             
             {/* Audio informatie panel */}
             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 w-full max-w-md">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">📊 Opname Details</h3>
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">📊 {t('recordingDetails')}</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Bestandsgrootte:</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t('fileSize')}:</span>
                   <span className="text-slate-800 dark:text-slate-200">
                     {audioChunksRef.current && audioChunksRef.current.length > 0 
                       ? `${(audioChunksRef.current.reduce((total, chunk) => total + chunk.size, 0) / 1024 / 1024).toFixed(1)} MB`
-                      : 'Onbekend'
+                      : t('unknown')
                     }
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Audio formaat:</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t('audioFormat')}:</span>
                   <span className="text-slate-800 dark:text-slate-200">
                     {audioChunksRef.current && audioChunksRef.current.length > 0 
                       ? audioChunksRef.current[0].type || 'audio/webm'
@@ -8016,12 +8016,12 @@ ${transcript}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Kwaliteit:</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t('quality')}:</span>
                   <span className="text-slate-800 dark:text-slate-200">64 kbps, 16kHz mono</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Geoptimaliseerd voor:</span>
-                  <span className="text-slate-800 dark:text-slate-200">Spraakherkenning</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t('optimizedFor')}:</span>
+                  <span className="text-slate-800 dark:text-slate-200">{t('speechRecognition')}</span>
                 </div>
               </div>
             </div>
@@ -8044,7 +8044,7 @@ ${transcript}
               {audioURL && (
                 <div className="mt-2 text-center space-y-2">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    🎧 Luister je opname terug voordat je transcribeert
+                    🎧 {t('listenBack')}
                   </p>
                   <button 
                     onClick={() => {
@@ -8082,7 +8082,7 @@ ${transcript}
                 className="w-full px-6 py-3 rounded-xl bg-cyan-500 text-white font-semibold hover:bg-cyan-600 disabled:bg-slate-600 transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <span>🚀</span>
-                Transcriberen
+                {t('transcribe')}
               </button>
               <button 
                 onClick={() => {
@@ -8116,14 +8116,14 @@ ${transcript}
                 className="flex-1 px-6 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <span>❌</span>
-                Annuleren
+                {t('cancel')}
               </button>
             </div>
             
             {/* Informatie over transcriptie */}
             <div className="text-xs text-slate-500 dark:text-slate-400 text-center max-w-md space-y-2">
-              <p>🚀 <strong>AI transcriptie:</strong> Hoogwaardige transcriptie met AI technologie</p>
-              <p>⚠️ Tip: Controleer je opname voordat je transcribeert. De annuleren knop wist alle sessiedata.</p>
+              <p>🚀 <strong>{t('aiTranscription')}:</strong> {t('aiTranscriptionDesc')}</p>
+              <p>⚠️ {t('audioDeleteWarning')}</p>
             </div>
           </div>
         );
@@ -9023,7 +9023,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             // Check if user has access to PowerPoint export
             const effectiveTier = userSubscription;
                 if (!subscriptionService.isFeatureAvailable(effectiveTier, 'exportPpt')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        displayToast(t('toastNotEnoughCredits'), 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
@@ -9035,7 +9035,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             // Check feature availability for businessCase
             const effectiveTier = userSubscription;
                 if (!subscriptionService.isFeatureAvailable(effectiveTier, 'businessCase')) {
-        displayToast('Helaas heeft u niet genoeg credits om deze functie uit te voeren. Klik hier om te upgraden naar een hoger abonnement.', 'error');
+        displayToast(t('toastNotEnoughCredits'), 'error');
         setTimeout(() => setShowPricingPage(true), 2000);
         return;
     }
@@ -10548,59 +10548,36 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('summaryFormat')}</label>
                                 <select value={summaryOptions.format} onChange={(e) => setSummaryOptions(s => ({ ...s, format: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="">-</option>
-                                    <option value="executiveSummary">{t('summaryFormatOptions.executiveSummary')}</option>
-                                    <option value="toThePointSummary">{t('summaryFormatOptions.toThePointSummary')}</option>
-                                    <option value="narrativeSummary">{t('summaryFormatOptions.narrativeSummary')}</option>
-                                    <option value="decisionMakingSummary">{t('summaryFormatOptions.decisionMakingSummary')}</option>
-                                    <option value="problemSolutionSummary">{t('summaryFormatOptions.problemSolutionSummary')}</option>
-                                    <option value="detailedSummaryWithQuotes">{t('summaryFormatOptions.detailedSummaryWithQuotes')}</option>
-                                    <option value="highLevelOverview">{t('summaryFormatOptions.highLevelOverview')}</option>
+                                    {Object.entries(t('summaryFormatOptions', { returnObjects: true })).map(([key, value]) => (
+                                        <option key={key} value={key}>{value as string}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('summaryTargetAudience')}</label>
                                 <select value={summaryOptions.targetAudience} onChange={(e) => setSummaryOptions(s => ({ ...s, targetAudience: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="">-</option>
-                                    <option value="internalTeam">{t('summaryTargetAudienceOptions.internalTeam')}</option>
-                                    <option value="management">{t('summaryTargetAudienceOptions.management')}</option>
-                                    <option value="customers">{t('summaryTargetAudienceOptions.customers')}</option>
-                                    <option value="investors">{t('summaryTargetAudienceOptions.investors')}</option>
-                                    <option value="newEmployees">{t('summaryTargetAudienceOptions.newEmployees')}</option>
-                                    <option value="generalPublic">{t('summaryTargetAudienceOptions.generalPublic')}</option>
-                                    <option value="academics">{t('summaryTargetAudienceOptions.academics')}</option>
-                                    <option value="competitors">{t('summaryTargetAudienceOptions.competitors')}</option>
-                                    <option value="localCommunity">{t('summaryTargetAudienceOptions.localCommunity')}</option>
-                                    <option value="alumni">{t('summaryTargetAudienceOptions.alumni')}</option>
-                                    <option value="internationalStakeholders">{t('summaryTargetAudienceOptions.internationalStakeholders')}</option>
-                                    <option value="specificInterestGroups">{t('summaryTargetAudienceOptions.specificInterestGroups')}</option>
+                                    {Object.entries(t('summaryTargetAudienceOptions', { returnObjects: true })).map(([key, value]) => (
+                                        <option key={key} value={key}>{value as string}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('summaryToneStyle')}</label>
                                 <select value={summaryOptions.toneStyle} onChange={(e) => setSummaryOptions(s => ({ ...s, toneStyle: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="">-</option>
-                                    <option value="formal">{t('summaryToneStyleOptions.formal')}</option>
-                                    <option value="informal">{t('summaryToneStyleOptions.informal')}</option>
-                                    <option value="inspiring">{t('summaryToneStyleOptions.inspiring')}</option>
-                                    <option value="critical">{t('summaryToneStyleOptions.critical')}</option>
-                                    <option value="humorous">{t('summaryToneStyleOptions.humorous')}</option>
-                                    <option value="neutral">{t('summaryToneStyleOptions.neutral')}</option>
-                                    <option value="professional">{t('summaryToneStyleOptions.professional')}</option>
-                                    <option value="conversational">{t('summaryToneStyleOptions.conversational')}</option>
-                                    <option value="authoritative">{t('summaryToneStyleOptions.authoritative')}</option>
-                                    <option value="friendly">{t('summaryToneStyleOptions.friendly')}</option>
-                                    <option value="technical">{t('summaryToneStyleOptions.technical')}</option>
-                                    <option value="simple">{t('summaryToneStyleOptions.simple')}</option>
+                                    {Object.entries(t('summaryToneStyleOptions', { returnObjects: true })).map(([key, value]) => (
+                                        <option key={key} value={key}>{value as string}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t('summaryLength')}</label>
                                 <select value={summaryOptions.length} onChange={(e) => setSummaryOptions(s => ({ ...s, length: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 dark:focus:ring-cyan-400 dark:focus:border-cyan-400">
                                     <option value="">-</option>
-                                    <option value="concise">{t('summaryLengthOptions.concise')}</option>
-                                    <option value="standard">{t('summaryLengthOptions.standard')}</option>
-                                    <option value="extensive">{t('summaryLengthOptions.extensive')}</option>
-                                    <option value="fullTimeline">{t('summaryLengthOptions.fullTimeline')}</option>
+                                    {Object.entries(t('summaryLengthOptions', { returnObjects: true })).map(([key, value]) => (
+                                        <option key={key} value={key}>{value as string}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -14575,6 +14552,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
          title={t('anonymizationRulesSavedTitle')}
          message={t('anonymizationRulesSavedDesc')}
          type="success"
+         t={t}
        />
      )}
 
@@ -14588,6 +14566,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
            setShowQuotaExceededModal(false);
            setShowPricingPage(true);
          }}
+         t={t}
        />
      )}
      

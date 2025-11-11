@@ -41,6 +41,7 @@ interface SpecialsState {
   // UI state for searching and pagination
   searchQuery: string;
   currentPage: number;
+  selectedCategory: string | null;
 }
 
 const SpecialsTab: React.FC<SpecialsTabProps> = ({
@@ -67,7 +68,8 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
     isGeneratingTopics: false,
     isGeneratingResult: false,
     searchQuery: '',
-    currentPage: 1
+    currentPage: 1,
+    selectedCategory: null
   });
 
   const [showMoveToTranscriptModal, setShowMoveToTranscriptModal] = useState(false);
@@ -221,15 +223,16 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
       topics: [],
       selectedTopic: null,
       result: '',
-      error: undefined
+      error: undefined,
+      selectedCategory: null
     }));
   }, []);
 
   const copyToClipboard = useCallback((content: string) => {
     navigator.clipboard.writeText(content).then(() => {
-      displayToast('Gekopieerd naar klembord', 'success');
+      displayToast(t('toastCopiedToClipboard'), 'success');
     }).catch(() => {
-      displayToast('Kopiëren mislukt', 'error');
+      displayToast(t('toastCopyFailed'), 'error');
     });
   }, []);
 
@@ -243,7 +246,7 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    displayToast('Bestand gedownload', 'success');
+    displayToast(t('toastFileDownloaded'), 'success');
   }, []);
 
   // Ensure safe filenames for browser downloads (remove illegal characters and normalize spaces)
@@ -258,18 +261,59 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
   // Pagination size for prompts list
   const PAGE_SIZE = 25;
 
-  // Derived list of prompts based on search query (search starts from 2+ characters)
+  // Categoriefilter opties
+  const categories = [
+    'Product Manager',
+    'Product Owner', 
+    'Marketeer',
+    'Scrum',
+    'Safe',
+    'Project Manager',
+    'Sales Manager',
+    'HR Manager',
+    'Customer Success Manager',
+    'Operations manager',
+    'Financial Manager',
+    'Thinking partner',
+    'Save Time',
+    'Personal Tutor',
+    // Nieuwe knoppen die niet vertaald moeten worden
+    'Summarize',
+    'Product description',
+    'Idea generation',
+    'Presentation',
+    'Decision',
+    'Vibe coding'
+  ];
+
+  // Derived list of prompts based on search query and category filter
   const filteredPrompts = useMemo(() => {
+    let filtered = state.availablePrompts;
+    
+    // Apply category filter if selected
+    if (state.selectedCategory) {
+      filtered = filtered.filter(p => {
+        const title = (p.title || '').toLowerCase();
+        const category = state.selectedCategory.toLowerCase();
+        // Flexibele matching: verwijder spaties en vergelijk
+        const titleNormalized = title.replace(/\s+/g, '');
+        const categoryNormalized = category.replace(/\s+/g, '');
+        return titleNormalized.includes(categoryNormalized) || title.includes(category);
+      });
+    }
+    
+    // Apply search query filter (search starts from 2+ characters)
     const q = state.searchQuery.trim().toLowerCase();
     if (q.length >= 2) {
-      return state.availablePrompts.filter(p => {
+      filtered = filtered.filter(p => {
         const title = (p.title || '').toLowerCase();
         const text = (p.prompt_text || '').toLowerCase();
         return title.includes(q) || text.includes(q);
       });
     }
-    return state.availablePrompts;
-  }, [state.availablePrompts, state.searchQuery]);
+    
+    return filtered;
+  }, [state.availablePrompts, state.searchQuery, state.selectedCategory]);
 
   // Keep current page within bounds when filtered results change
   useEffect(() => {
@@ -351,6 +395,29 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
       {/* Subtitle explaining input vs output language behavior */}
       <p className="text-sm text-slate-600 dark:text-slate-400">{t('specialsSubtitle')}</p>
 
+      {/* Category filter buttons */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => {
+              setState(prev => ({
+                ...prev, 
+                selectedCategory: prev.selectedCategory === category ? null : category,
+                currentPage: 1
+              }));
+            }}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              state.selectedCategory === category
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-slate-600 hover:bg-gray-200 dark:hover:bg-slate-600'
+            }`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
       {/* Search input for prompts (activates when 2+ characters are typed) */}
       <div className="relative">
         <div className="flex items-center">
@@ -361,7 +428,7 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
               value={state.searchQuery}
               onChange={(e) => setState(prev => ({ ...prev, searchQuery: e.target.value, currentPage: 1 }))}
               placeholder={t('specials.searchPlaceholder', 'Search prompts...')}
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -394,7 +461,7 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
               <button
                 key={prompt.id}
                 onClick={() => handlePromptSelection(prompt)}
-                className="text-left p-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-cyan-300 dark:hover:border-cyan-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="text-left p-4 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               >
                 <h4 className="font-semibold text-slate-800 dark:text-slate-200">
                   {prompt.title}
@@ -415,7 +482,7 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
               <button
                 onClick={() => setState(prev => ({ ...prev, currentPage: Math.max(1, prev.currentPage - 1) }))}
                 disabled={state.currentPage === 1}
-                className="px-3 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 dark:border-slate-600"
               >
                 {t('prev', 'Prev')}
               </button>
@@ -425,7 +492,7 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
               <button
                 onClick={() => setState(prev => ({ ...prev, currentPage: Math.min(Math.max(1, Math.ceil(filteredPrompts.length / PAGE_SIZE)), prev.currentPage + 1) }))}
                 disabled={state.currentPage >= Math.max(1, Math.ceil(filteredPrompts.length / PAGE_SIZE))}
-                className="px-3 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 dark:border-slate-600"
               >
                 {t('next', 'Next')}
               </button>

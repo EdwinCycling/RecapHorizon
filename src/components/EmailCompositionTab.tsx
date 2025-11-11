@@ -121,7 +121,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
       const firstSentence = sentences[0].trim();
       return firstSentence.length > 80 ? firstSentence.substring(0, 77) + '...' : firstSentence;
     }
-    return t('emailComposition.defaultSubject', 'Vergaderverslag');
+    return t('emailComposition.defaultSubject');
   };
 
   // Initialize extracted emails and auto subject
@@ -145,28 +145,28 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
     if (isCustomMode) return customBody;
     const parts: string[] = [];
     // Salutation starts the email body; do NOT duplicate the title/subject here
-    parts.push(t('emailSalutation', 'Beste koersliefhebbers,'));
+    parts.push(t('emailSalutation'));
     // Summary
     if (emailData.includeSummary && (summary?.trim()?.length || 0) > 0) {
       parts.push('');
-      parts.push(`${t('summary', 'Samenvatting')}:`);
+      parts.push(`${t('summary')}:`);
       parts.push(summary.trim());
     }
     // Conclusion
     if (emailData.includeConclusion && sentiment?.conclusion && sentiment.conclusion.trim().length > 0) {
       parts.push('');
-      parts.push(`${t('conclusions', 'Conclusies')}:`);
+      parts.push(`${t('conclusions')}:`);
       parts.push(sentiment.conclusion.trim());
     }
     // Action Points
     if (emailData.includeActionPoints && followup && followup.trim().length > 0) {
       parts.push('');
-      parts.push(`${t('actionPoints', 'Actiepunten')}:`);
+      parts.push(`${t('actionPoints')}:`);
       parts.push(followup.trim());
     }
     // Closing
     parts.push('');
-    parts.push(t('emailClosing', 'Met sportieve groet,'));
+    parts.push(t('emailClosing'));
     parts.push('Edwin');
     return parts.join('\n');
   };
@@ -201,7 +201,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
     )?.toString().trim();
     if (!apiKey) {
       console.error(t('emailMissingApiKey'));
-      throw new Error(t('missingApiKey', 'API sleutel ontbreekt. Configureer GEMINI_API_KEY in de omgeving.'));
+      throw new Error(t('missingApiKey'));
     }
 
     // Build prompt using selections

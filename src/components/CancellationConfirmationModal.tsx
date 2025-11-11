@@ -109,8 +109,8 @@ const CancellationConfirmationModal: React.FC<CancellationConfirmationModalProps
               {getTierDisplayName(currentTier)}
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-              {t('cancellationActiveUntil', { date: (() => { try { const d = new Date(renewalDate); return isNaN(d.getTime()) ? renewalDate : d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return renewalDate; } })() })}
-            </p>
+                {t('cancellationActiveUntil', { date: (() => { try { const d = new Date(renewalDate); return isNaN(d.getTime()) ? renewalDate : d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return renewalDate; } })() })}
+              </p>
           </div>
         </div>
 
@@ -172,7 +172,7 @@ const CancellationConfirmationModal: React.FC<CancellationConfirmationModalProps
                 {t('cancellationEffectiveDate')}
               </p>
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                {t('cancellationWillTakeEffect', { date: (() => { try { const d = new Date(renewalDate); return isNaN(d.getTime()) ? renewalDate : d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return renewalDate; } })() })}
+                {t('cancellationWillTakeEffect', { date: (() => { try { const d = new Date(renewalDate); return isNaN(d.getTime()) ? renewalDate : d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return renewalDate; } })() })}
               </p>
             </div>
           </div>
@@ -190,7 +190,7 @@ const CancellationConfirmationModal: React.FC<CancellationConfirmationModalProps
           <EnableButtonSlider
             onSliderComplete={setIsCancellationEnabled}
             isLoading={isLoading}
-            enabledText={t('cancellationEnabled', 'Opzegging knop geactiveerd')}
+            enabledText={t('cancellationEnabled')}
             sliderText={t('cancellationSliderText')}
             theme={theme}
             disabled={isLoading}
@@ -221,7 +221,7 @@ const CancellationConfirmationModal: React.FC<CancellationConfirmationModalProps
                 {t('processing', 'Verwerken...')}
               </div>
             ) : (
-              t('confirmCancellation', 'Bevestig Opzegging')
+              t('confirmCancellation')
             )}
           </button>
         </div>

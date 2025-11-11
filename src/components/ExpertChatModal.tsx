@@ -54,14 +54,14 @@ const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
       const initialMessage: ExpertChatMessage = {
         id: Date.now().toString(),
         role: 'expert',
-        content: t('expertInitialMessage', 'Hello! I am your {role} specialized in {branche}. I\'m ready to help you with questions about "{topic}". What would you like to discuss?')
+        content: t('expertInitialMessage')
           .replace('{role}', configuration.role.name)
           .replace('{branche}', configuration.branche.name)
           .replace('{topic}', configuration.topic.name),
         timestamp: new Date()
       };
       setMessages([initialMessage]);
-      setSuggestedQuestion(t('expertInitialSuggestion', 'Can you tell me more about the key aspects of this topic?'));
+      setSuggestedQuestion(t('expertInitialSuggestion'));
     }
   }, [isOpen, configuration]);
 
@@ -130,11 +130,13 @@ const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
         t('expertTranscriptContext', 'Here is the transcript the user has questions about:\n\n---\n{transcript}\n---\n\nUse this transcript as context for your answers.')
           .replace('{transcript}', transcript) : '';
       
-      const systemInstruction = t('expertSystemInstruction', 'You are an expert {role} specialized in {topic} within the {branche} sector.\n\nYour task is to:\n1. Provide professional and detailed answers in English\n2. Offer specific insights from your expertise in {topic}\n3. Give practical advice relevant to the {branche} sector\n4. Use the transcript context to make targeted analyses\n5. Make concrete recommendations based on best practices in your field\n\n{transcriptContext}\n\nAlways respond in English and from your role as a {role} expert.')
-        .replace('{role}', configuration.role.name)
-        .replace('{topic}', configuration.topic.name)
-        .replace('{branche}', configuration.branche.name)
-        .replace('{transcriptContext}', transcriptContext);
+      const systemInstruction = t('expertSystemInstruction', {
+        role: configuration.role.name,
+        branche: configuration.branche.name,
+        topic: configuration.topic.name,
+        transcriptContext,
+        verificationGuideline: t('expertVerificationGuideline')
+      });
 
       // Build conversation history for context
       const conversationHistory = chatHistory.map(msg => 
@@ -188,7 +190,10 @@ const ExpertChatModal: React.FC<ExpertChatModalProps> = ({
         }).join('\n\n');
         const lastResponse = fullResponse;
         
-        const followUpPrompt = t('expertFollowUpPrompt', 'You are a helpful assistant that generates relevant follow-up questions based on a chat conversation.\n\nHere is a recent chat conversation between a user and an expert:\n\n{recentMessages}\n\nLatest response from the expert:\n{lastResponse}\n\nGenerate one specific follow-up question that the user could ask to delve deeper into the content of this conversation. The question should be directly related to the discussed topics and help the user gain more insight.\n\nReturn only the question, without introduction or explanation.')
+        const followUpPrompt = t('expertFollowUpPrompt', {
+        recentMessages,
+        lastResponse
+      })
           .replace('{recentMessages}', recentMessages)
           .replace('{lastResponse}', lastResponse);
         

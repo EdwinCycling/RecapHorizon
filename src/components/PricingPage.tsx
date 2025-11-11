@@ -258,7 +258,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
         await stripeService.redirectToCheckout(tier, userId, userEmail);
       } catch (error) {
         console.error('Error redirecting to checkout:', error);
-        displayToast(t('pricingCheckoutError', 'Er is een fout opgetreden bij het starten van de checkout. Probeer het opnieuw.'), 'error');
+        displayToast(t('pricingCheckoutError'), 'error');
         setIsLoading(null);
       }
       return;
@@ -266,7 +266,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
 
     // Paid user -> cancel to Free OR change plan
     if (!stripeCustomerId) {
-      displayToast(t('pricingPortalMissingCustomer', 'Stripe klant-ID ontbreekt. Open abonnementbeheer via Instellingen.'), 'error');
+      displayToast(t('pricingPortalMissingCustomer'), 'error');
       return;
     }
 
@@ -299,7 +299,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
       await stripeService.redirectToCustomerPortal(stripeCustomerId);
     } catch (error) {
       console.error('Error redirecting to customer portal:', error);
-      displayToast(t('subscriptionPortalError', 'Er is een fout opgetreden bij het openen van Stripe. Probeer het opnieuw.'), 'error');
+      displayToast(t('subscriptionPortalError'), 'error');
     } finally {
       setIsLoading(null);
     }
@@ -313,15 +313,15 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
     };
 
     if (tier === SubscriptionTier.FREE) {
-      return t('pricingFree', 'Gratis');
+      return t('pricingFree');
     }
 
     if (tier === SubscriptionTier.DIAMOND) {
-      return t('pricingAdminOnly', 'Admin Only');
+      return t('pricingAdminOnly');
     }
 
     if (tier === SubscriptionTier.ENTERPRISE) {
-      return t('pricingPriceOnRequest', 'Prijs op aanvraag');
+      return t('pricingPriceOnRequest');
     }
 
     const price = prices[tier];
@@ -462,7 +462,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                     const isExpired = subscriptionService.isTrialExpired(userSubscription);
                     
                     if (isExpired) {
-                      return t('pricingTrialExpired', 'Proefperiode verlopen');
+                      return t('pricingTrialExpired');
                     } else {
                       return t('pricingTrialEndsOn', { 
                         date: trialEndDate.toLocaleDateString('nl-NL'),
@@ -511,12 +511,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                 {/* Free for 4 weeks text for FREE tier */}
                 {(tier.tier as SubscriptionTier) === SubscriptionTier.FREE && (
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {t('pricingFreeFor4Weeks', 'Gratis voor 4 weken')}
+                    {t('pricingFreeFor4Weeks')}
                   </div>
                 )}
                 {(tier.tier as SubscriptionTier) === SubscriptionTier.ENTERPRISE && (
                   <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                    {t('pricingContactUs', 'Neem contact met ons op')}
+                    {t('pricingContactUs')}
                   </div>
                 )}
 
@@ -609,7 +609,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                       <div className="flex items-center">
                         <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
                         <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {t('pricingBasicWebPageImport', 'Basic Web Page Import (single URL)')}
+                          {t('pricingBasicWebPageImport')}
                         </span>
                       </div>
                     )}
@@ -617,7 +617,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                       <div className="flex items-center">
                         <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
                         <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {t('pricingWebExpertImport', 'WebExpert URL Import (multiple pages)')}
+                          {t('pricingWebExpertImport')}
                         </span>
                       </div>
                     )}
@@ -641,7 +641,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                       <div className="flex items-center">
                         <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
                         <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {t('pricingIdeaBuilderFeature', 'Idea Builder, structured ideation workflow')}
+                          {t('pricingIdeaBuilderFeature')}
                         </span>
                       </div>
                     )}
@@ -719,7 +719,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                             
                           } catch (error) {
                             console.error('Error reactivating subscription:', error);
-                            displayToast(t('pricingReactivateError', 'Er is een fout opgetreden bij het heractiveren van het abonnement. Probeer het opnieuw.'), 'error');
+                            displayToast(t('pricingReactivateError'), 'error');
                           } finally {
                             setIsLoading(null);
                           }
@@ -727,7 +727,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                         className="w-full py-3 px-6 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors"
                         disabled={isLoading === 'reactivate'}
                       >
-                        {isLoading === 'reactivate' ? t('loading', 'Laden...') : t('subscriptionReactivate', 'Re-activate...')}
+                        {isLoading === 'reactivate' ? t('loading') : t('subscriptionReactivate')}
                       </button>
                     ) : (
                       <button
@@ -769,7 +769,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                               </svg>
-                              {t('pricingProcessing', 'Verwerken...')}
+                              {t('pricingProcessing')}
                             </span>
                           ) : (
                             tier.tier === SubscriptionTier.FREE 
@@ -800,7 +800,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
               {!isLoggedIn && (
                 <div className="text-center mt-auto">
                   <div className="w-full py-3 px-6 text-gray-500 dark:text-gray-400 text-sm">
-                    {t('pricingLoginRequired', 'Log in om deze tier te selecteren')}
+                    {t('pricingLoginRequired')}
                   </div>
                 </div>
               )}
@@ -817,25 +817,25 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
             </div>
             {!isHorizonEligible && (
               <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                Alleen beschikbaar voor <strong>Silver</strong> en <strong>Gold</strong> members.
-              </div>
+              {t('horizonPackageAvailableFor', { defaultValue: 'Alleen beschikbaar voor <strong>Silver</strong> en <strong>Gold</strong> members.' })}
+            </div>
             )}
 
             <div className="grid sm:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-gray-300 mt-2">
               <div className="flex items-center">
                 <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
-                <span>4 uur extra audio‑opname (<span className="whitespace-nowrap">240 minuten</span>)</span>
+                <span>{t('horizonPackageAudio', { defaultValue: '4 uur extra audio‑opname (<span className="whitespace-nowrap">240 minuten</span>)' })}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
-                <span>25.000 extra tokens</span>
+                <span>{t('horizonPackageTokens', { defaultValue: '25.000 extra tokens' })}</span>
               </div>
             </div>
 
             <div className="mt-3 text-sm text-gray-700 dark:text-gray-300">
-              <div>Prijs: <strong>eenmalig €4</strong></div>
-              <div>Alleen geldig in jouw abonnementsmaand{isLoggedIn && nextBillingDate ? ` — geldig t/m ${nextBillingDate.toLocaleDateString('nl-NL')}` : ''}.</div>
-              <div>Niet mee te nemen naar een nieuwe abonnementsperiode.</div>
+              <div>{t('horizonPackagePrice', { defaultValue: 'Prijs: <strong>eenmalig €4</strong>' })}</div>
+              <div>{t('horizonPackageValidUntil', { defaultValue: 'Alleen geldig in jouw abonnementsmaand{{billingDate}}.', billingDate: isLoggedIn && nextBillingDate ? ` — geldig t/m ${nextBillingDate.toLocaleDateString('nl-NL')}` : '' })}</div>
+              <div>{t('horizonPackageNotTransferable', { defaultValue: 'Niet mee te nemen naar een nieuwe abonnementsperiode.' })}</div>
             </div>
 
             <div className="mt-4">
@@ -843,7 +843,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                 disabled
                 className="w-full py-3 px-6 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded font-medium cursor-not-allowed"
               >
-                Komt binnenkort
+                {t('horizonPackageComingSoon', { defaultValue: 'Komt binnenkort' })}
               </button>
             </div>
           </div>
@@ -852,14 +852,14 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
         {/* Uitleg over tokens (positief en kort) */}
         <div className="px-4 sm:px-6 mt-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 sm:p-6">
-            <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">Wat zijn tokens?</h3>
+            <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">{t('whatAreTokensTitle', { defaultValue: 'Wat zijn tokens?' })}</h3>
             <p className="text-sm text-blue-900 dark:text-blue-300 mb-2">
-              Tokens zijn kleine stukjes tekst die we gebruiken om AI-berekeningen te doen. Je hoeft er bijna niets voor te weten of te doen: jij werkt gewoon door, wij bewaken netjes je limieten per tier.
+              {t('whatAreTokensDescription', { defaultValue: 'Tokens zijn kleine stukjes tekst die we gebruiken om AI-berekeningen te doen. Je hoeft er bijna niets voor te weten of te doen: jij werkt gewoon door, wij bewaken netjes je limieten per tier.' })}
             </p>
             <ul className="text-sm text-blue-900 dark:text-blue-300 list-disc pl-5 space-y-1">
-              <li>We tellen tokens die je uploadt (naar de AI) en tokens die je downloadt (van de AI). Samen vormen ze je verbruik.</li>
-              <li>Downloadtokens (het AI‑resultaat) zijn iets duurder dan uploadtokens. Zo houden we de kwaliteit van de antwoorden hoog.</li>
-              <li>Kom je ooit in de buurt van je limiet? Dan laten we dat vriendelijk weten en kun je eenvoudig upgraden.</li>
+              <li>{t('whatAreTokensPoint1', { defaultValue: 'We tellen tokens die je uploadt (naar de AI) en tokens die je downloadt (van de AI). Samen vormen ze je verbruik.' })}</li>
+              <li>{t('whatAreTokensPoint2', { defaultValue: 'Downloadtokens (het AI‑resultaat) zijn iets duurder dan uploadtokens. Zo houden we de kwaliteit van de antwoorden hoog.' })}</li>
+              <li>{t('whatAreTokensPoint3', { defaultValue: 'Kom je ooit in de buurt van je limiet? Dan laten we dat vriendelijk weten en kun je eenvoudig upgraden.' })}</li>
             </ul>
           </div>
         </div>
@@ -883,7 +883,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                 onClick={onClose} 
                 className="px-6 py-3 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors"
               >
-                {t('close', 'Close')}
+                {t('close')}
               </button>
             </div>
           </div>

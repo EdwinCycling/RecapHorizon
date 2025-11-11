@@ -136,7 +136,7 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        title={t('tokenUsageOverview') || 'Token Usage Overview'}
+        title={t('tokenUsageOverview')}
         maxWidth="max-w-2xl"
       >
         <div className="space-y-6">
@@ -226,7 +226,7 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
                 <span className="text-xl">⚠️</span>
                 <div>
                   <h4 className="font-semibold text-orange-800 dark:text-orange-200 mb-1">
-                    {t('warningTitle') || 'Usage Warning'}
+                    {t('warningTitle')}
                   </h4>
                   <p className="text-sm text-orange-700 dark:text-orange-300">
                     {t('approachingTokenLimit')}

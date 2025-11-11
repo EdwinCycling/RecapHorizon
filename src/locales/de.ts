@@ -90,6 +90,11 @@ export const de = {
   exportPPT: "Powerpoint",
   copyContent: "Inhalt kopieren",
   noContent: "Noch kein Inhalt generiert.",
+  congratulations: "Glückwunsch!",
+  paymentSuccessful: "Zahlung Erfolgreich!",
+  unlimitedAiAnalyses: "Unbegrenzte KI-Analysen",
+  advancedSummaries: "Erweiterte Zusammenfassungen",
+  thankYouTrust: "Danke für dein Vertrauen!",
   chatWithTranscript: "Mit Transkript chatten",
   specials: "RecapHorizon Special prompts",
   specialsSubtitle: "Die Prompts sind auf Englisch; das Ergebnis erfolgt in Ihrer gewählten Ausgabesprache.",
@@ -304,18 +309,7 @@ export const de = {
       name: "Geschäftskontinuität",
       description: "Wie die Lösung die Widerstandsfähigkeit und Geschäftskontinuität verbessert."
     },
-    qualityImprovement: {
-      name: "Qualitätsverbesserung",
-      description: "Wie die Lösung die Qualität von Produkten, Dienstleistungen oder Prozessen verbessert."
-    },
-    dataInsights: {
-      name: "Daten & Erkenntnisse",
-      description: "Wie die Lösung bessere Daten und Erkenntnisse für die Entscheidungsfindung liefert."
-    },
-    marketShareIncrease: {
-      name: "Marktanteilssteigerung",
-      description: "Wie die Lösung hilft, den Marktanteil und die Wettbewerbsposition zu erhöhen."
-    },
+
     flexibilityAgility: {
       name: "Flexibilität & Agilität",
       description: "Wie die Lösung die organisatorische Flexibilität und Agilität verbessert."
@@ -1343,6 +1337,7 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   mobileAudioHelpOption2iOS: "Für iOS: Gehen Sie zu Einstellungen > Fokus > Nicht stören und aktivieren Sie diesen Modus. Richten Sie einen Zeitplan für geplante Aufnahmen über die Einstellungen ein.",
   mobileAudioHelpOption2Android: "Für Android: Öffnen Sie das Schnellmenü durch Herunterziehen, tippen Sie auf Nicht stören. Konfigurieren Sie eine Regel über Einstellungen > Töne & Vibration > Nicht stören für feste Zeiten.",
   mobileAudioHelpOption2Explanation: "Erklärung: Dieser Modus unterdrückt Anrufe, während Sie für andere Benachrichtigungen online bleiben. Dies ist geeignet, wenn Sie für nicht-telefonische Kommunikation erreichbar bleiben möchten.",
+  mobileAudioHelpExtraTip: "Testen Sie Ihre gewählte Einstellung, bevor Sie eine wichtige Aufnahme starten. Auf diese Weise können Sie sicher sein, dass alles wie erwartet funktioniert.",
   mobileAudioHelpClose: "Verstanden",
   
   // Bild-Upload FAQ
@@ -1372,6 +1367,7 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   // Preisseite Bild-Upload
   pricingImageUpload: "KI-Bildanalyse (JPG, PNG, WEBP, GIF)",
   pricingEmailUpload: "E-Mail-Upload (.msg, .eml Dateien)",
+
   
   // Image upload help modal
   imageUploadHelpTitle: "Bild-Upload Hilfe",
@@ -2346,6 +2342,32 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   // Technical Console Messages - Clipboard
   clipboardToastMessage: "{type}: {message}",
 
+  // Toast Messages
+  toastApiKeyNotAvailable: "API-Schlüssel nicht verfügbar. Kontaktieren Sie den Administrator.",
+  toastTokenLimitReached: "Token-Limit erreicht. Upgrade dein Abonnement für mehr KI-Generierungen.",
+  toastDiamondTokenCompleted: "Diamant-Token-Aktion abgeschlossen!",
+  toastDiamondTokenError: "Ein Fehler ist während der Diamant-Token-Aktion aufgetreten.",
+  toastCopiedToClipboard: "In die Zwischenablage kopiert",
+  toastCopyFailed: "Kopieren fehlgeschlagen",
+  toastFileDownloaded: "Datei heruntergeladen",
+  toastErrorLoadingPreferences: "Fehler beim Laden der Einstellungen",
+  toastPleaseSelectAIProvider: "Bitte wählen Sie einen KI-Anbieter",
+  toastPreferencesSaved: "KI-Anbieter-Einstellungen erfolgreich gespeichert",
+  toastErrorSavingPreferences: "Fehler beim Speichern der Einstellungen",
+  toastBusinessCaseGenerated: "Business Case generiert",
+  toastTooManyChatMessages: "Zu viele Chat-Nachrichten",
+  toastNotEnoughCredits: "Nicht genug Credits",
+  toastNoUserManagementAccess: "Kein Zugriff auf Benutzerverwaltung",
+  toastErrorLoadingUsers: "Fehler beim Laden der Benutzer",
+  toastErrorAddingUser: "Fehler beim Hinzufügen des Benutzers",
+  toastConfirmationEmailSent: "Bestätigungs-E-Mail gesendet",
+  toastWaitlistError: "Wartelistenfehler",
+  toastNoEmailAccess: "Kein E-Mail-Zugriff",
+  toastErrorPreparingInvitations: "Fehler beim Vorbereiten der Einladungen",
+  toastWebSpeechAPINotSupported: "Web Speech API nicht unterstützt",
+  toastErrorPreparingLargeAudio: "Fehler beim Vorbereiten großer Audiodateien",
+  toastFailedToDownloadFile: "Fehler beim Herunterladen der Datei",
+
   // Expert Chat Console Messages
   expertChatRateLimitExceeded: "Ratenlimit für Expert Chat überschritten",
   expertChatInvalidMessage: "Ungültiger Nachrichteninhalt:",
@@ -2485,6 +2507,57 @@ RecapHorizon: Jenseits des Chaos, die Essenz an erster Stelle.`,
   "aiDiscussion.currentModerator": "Aktuelle/r Moderator:in",
   "aiDiscussion.backToGoals": "Zurück zu Zielen",
   "aiDiscussion.startDiscussion": "Diskussion starten",
+  "aiDiscussion.configureStyles": "Stile konfigurieren",
+  "aiDiscussion.stylesConfiguration": "Stil‑Konfiguration",
+  "aiDiscussion.stylesConfigurationDesc": "Kommunikationsstil und Ton der Diskussion anpassen",
+  "aiDiscussion.configureRoleStyles": "Rollenstile konfigurieren",
+  "aiDiscussion.configureRoleStylesDesc": "Kommunikationsstil pro Rolle festlegen",
+  "aiDiscussion.communicationTone": "Kommunikationston",
+  "aiDiscussion.interactionPattern": "Interaktionsmuster & Fragestellung",
+  "aiDiscussion.depthFocus": "Tiefe & Fokus",
+  "aiDiscussion.backToRoles": "Zurück zu Rollen",
+  "aiDiscussion.moderator": "Moderator/in",
+
+  // AI Discussion style categories
+  "aiDiscussion.category.vision": "Vision & Konzeptvalidierung",
+  "aiDiscussion.category.lean": "Lean‑Finanzen & Ressourcen",
+  "aiDiscussion.category.execution": "Geschwindigkeit & Agile Umsetzung",
+  "aiDiscussion.category.people": "Menschen, Talent & Kultur",
+  "aiDiscussion.category.market": "Markt & Adoption",
+
+  // AI Discussion styles (Bezeichnungen und Beschreibungen nach ID)
+  "aiDiscussion.styles.concise_direct.name": "Knapp & Direkt",
+  "aiDiscussion.styles.concise_direct.desc": "Liefert kurze, prägnante Antworten ohne viel Ausschmückung.",
+  "aiDiscussion.styles.elaborate_indepth.name": "Ausführlich & Tiefgehend",
+  "aiDiscussion.styles.elaborate_indepth.desc": "Bietet detaillierte Analysen, Kontext und umfassende Erklärungen.",
+  "aiDiscussion.styles.encouraging_positive.name": "Ermutigend & Positiv",
+  "aiDiscussion.styles.encouraging_positive.desc": "Konzentriert sich auf Chancen, Stärken und Potenzial mit einem optimistischen, motivierenden Ton.",
+  "aiDiscussion.styles.critical_challenging.name": "Kritisch & Herausfordernd",
+  "aiDiscussion.styles.critical_challenging.desc": "Stellt den Status quo infrage, sucht nach Schwachstellen und hinterfragt Annahmen.",
+  "aiDiscussion.styles.highly_questioning.name": "Stark Fragend",
+  "aiDiscussion.styles.highly_questioning.desc": "Reagiert häufig mit offenen Fragen, um tiefer zu gehen und mehr Informationen zu sammeln.",
+  "aiDiscussion.styles.solution_oriented.name": "Lösungsorientiert",
+  "aiDiscussion.styles.solution_oriented.desc": "Konzentriert sich direkt auf konkrete Lösungsvorschläge und Aktionspläne.",
+  "aiDiscussion.styles.collaborative.name": "Kollaborativ",
+  "aiDiscussion.styles.collaborative.desc": "Sucht Konsens, baut auf bestehenden Ideen auf und fördert gemeinsame Schlussfolgerungen.",
+  "aiDiscussion.styles.drawing_comparisons.name": "Vergleiche herstellen",
+  "aiDiscussion.styles.drawing_comparisons.desc": "Zieht Parallelen zu anderen Situationen, Best Practices oder Branchenstandards.",
+  "aiDiscussion.styles.action_oriented.name": "Handlungsorientiert",
+  "aiDiscussion.styles.action_oriented.desc": "Lenkt die Diskussion konsequent auf konkrete Schritte, Verantwortlichkeiten und nächste logische Aktionen.",
+  "aiDiscussion.styles.big_picture_thinker.name": "Big‑Picture‑Denker",
+  "aiDiscussion.styles.big_picture_thinker.desc": "Stellt Details in einen größeren Kontext und verknüpft Themen mit übergeordneten Zielen und Strategien.",
+  "aiDiscussion.styles.narrative_example_rich.name": "Narrativ & Beispielreich",
+  "aiDiscussion.styles.narrative_example_rich.desc": "Erklärt Konzepte und stützt Argumente mit relevanten Szenarien oder Beispielen für bessere Anschaulichkeit und Verständnis.",
+  "aiDiscussion.role.storyteller": "Geschichtenerzähler/in",
+  "aiDiscussion.role.storytellerDesc": "Formt Erzählungen, vereinfacht komplexe Ideen und passt Botschaften an unterschiedliche Zielgruppen an",
+  "aiDiscussion.role.dromer": "Träumer/in",
+  "aiDiscussion.role.dromerDesc": "Visionorientiert, stellt sich ideale Szenarien vor, sprengt Grenzen und inspiriert neue Richtungen",
+  "aiDiscussion.role.skeptische_advocaat": "Anwalt des Teufels",
+  "aiDiscussion.role.skeptische_advocaatDesc": "Hinterfragt Annahmen, identifiziert Risiken und stellt kritische Fragen",
+  "aiDiscussion.role.gamification_architect": "Gamification‑Architekt/in",
+  "aiDiscussion.role.gamification_architectDesc": "Entwirft Engagement‑Mechaniken, Anreize und Herausforderungen zur Verhaltensmotivation",
+  "aiDiscussion.role.ethicus_impact_analist": "Ethik‑ & Impact‑Analyst/in",
+  "aiDiscussion.role.ethicus_impact_analistDesc": "Bewertet moralische Implikationen, gesellschaftliche Auswirkungen und die Einhaltung ethischer Standards",
 
   // AI Discussion Ziele (Bezeichnungen und Beschreibungen nach ID)
   "aiDiscussion.goal.v1": "Validierung der Kernhypothese",
@@ -3357,6 +3430,23 @@ notionIntegrationSecurityDesc: "Ihre Notion-Daten bleiben sicher, da wir nur auf
   downgradeWillLose: "Funktionen, die du verlieren wirst:",
   downgradeFeatureLimitedTokens: "Begrenzte Token-Limits",
   downgradeFeatureLimitedSessions: "Begrenzte Sitzungen pro Monat",
+  
+  // Month names
+  january: "Januar",
+  february: "Februar",
+  march: "März",
+  april: "April",
+  may: "Mai",
+  june: "Juni",
+  july: "Juli",
+  august: "August",
+  september: "September",
+  october: "Oktober",
+  november: "November",
+  december: "Dezember",
+  
+  // Subscription modal
+  startWithRecapHorizon: "Mit RecapHorizon beginnen",
   downgradeFeatureNoPowerPoint: "Kein PowerPoint-Export",
   downgradeFeatureNoBusinessCase: "Kein Business-Case-Generator",
   downgradeEffectiveDate: "Effektives Datum",
@@ -3408,15 +3498,26 @@ notionIntegrationSecurityDesc: "Ihre Notion-Daten bleiben sicher, da wir nur auf
   opportunitiesSelectedRoles: "Ausgewählte Rollen",
   opportunitiesSelectedTopics: "Ausgewählte Themen",
   opportunitiesSelectedTypes: "Ausgewählte Typen",
-  opportunity: "Chance",
-  opportunityRole: "Rolle",
-  opportunityTopic: "Thema",
-  opportunityType: "Typ",
-  passwordResetEmailSent: "Passwort-Reset-E-Mail gesendet",
-  passwordResetError: "Passwort-Reset-Fehler",
-  passwordResetInvalidEmail: "Ungültige E-Mail für Passwort-Reset",
-  passwordResetTooManyRequests: "Zu viele Passwort-Reset-Anfragen",
-  passwordResetUserNotFound: "Benutzer für Passwort-Reset nicht gefunden",
+  
+  // Audio Recording - Missing translations
+  recordingDetails: "Aufzeichnungsdetails",
+  fileSize: "Dateigröße",
+  audioFormat: "Audioformat",
+  quality: "Qualität",
+  optimizedFor: "Optimiert für",
+  listenBack: "Aufzeichnung anhören",
+  transcribe: "Transkribieren",
+  aiTranscription: "KI-Transkription",
+  aiTranscriptionDesc: "Hochwertige Transkription mit KI-Technologie",
+
+  maxRecordingTimeReached: "Maximale Aufzeichnungszeit erreicht!",
+  noAudioDetected: "Kein Audio erkannt",
+  audioDetected: "Audio erkannt",
+  speechRecognition: "Spracherkennung",
+  yourRecordingIsReady: "Ihre Audioaufnahme ist fertig. Hören Sie sie an und starten Sie die Transkription, wenn Sie bereit sind.",
+  recordingTime: "Aufzeichnungszeit",
+  pauseTime: "Pausenzeit",
+  startTime: "Startzeit",
 
   // New German translations
   previewEmail: "E-Mail-Vorschau",
@@ -3506,5 +3607,10 @@ notionIntegrationSecurityDesc: "Ihre Notion-Daten bleiben sicher, da wir nur auf
   "summaryLengthOptions.concise": "Knapp",
   "summaryLengthOptions.standard": "Standard",
   "summaryLengthOptions.extensive": "Umfangreich",
-  "summaryLengthOptions.fullTimeline": "Vollständiger Zeitstrahl"
+  "summaryLengthOptions.fullTimeline": "Vollständiger Zeitstrahl",
+  thankYouMessage: "Wir freuen uns, dass Sie sich für RecapHorizon entschieden haben. Viel Erfolg mit Ihren KI-gestützten Analysen!",
+  emailUploadSubscriptionRequired: "E-Mail-Upload ist nur für Gold-, Enterprise- und Diamond-Abonnements verfügbar.",
+  uploadFailed: "Upload fehlgeschlagen.",
+  supportedFileTypes: "TXT, PDF, RTF, HTML, MD, DOCX",
+  audioFormats: "MP3, MP4, WebM, WAV"
 };

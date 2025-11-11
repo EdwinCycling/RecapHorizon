@@ -44,7 +44,7 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-slate-700">
-          <h2 className="text-2xl font-medium text-gray-800 dark:text-white tracking-tight">{t('summaryQuestionsTitle', 'Samenvatting opties')}</h2>
+          <h2 className="text-2xl font-medium text-gray-800 dark:text-white tracking-tight">{t('summaryQuestionsTitle')}</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-medium"
@@ -56,20 +56,20 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
         {/* Content */}
         <div className="p-6">
           <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg">
-            {t('summaryQuestionsSubtitle', 'Kies de gewenste opties voor je samenvatting')}
+            {t('summaryQuestionsSubtitle')}
           </p>
           
           <div className="text-sm text-cyan-600 dark:text-cyan-400 mb-6 p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg">
-            {t('summaryOptional', 'Alle velden zijn optioneel')}
+            {t('summaryOptional')}
           </div>
 
           {/* Format */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('summaryFormat', 'Formaat')}
+              {t('summaryFormat')}
             </label>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              {t('summaryFormatQuestion', 'Welk type samenvatting wil je genereren?')}
+              {t('summaryFormatQuestion')}
             </p>
             <select
               value={options.format}
@@ -78,25 +78,25 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
             >
               <option value="">-</option>
               <option value="executiveSummary">
-                {t('summaryFormatOptions.executiveSummary', 'Managementsamenvatting')}
+                {t('summaryFormatOptions.executiveSummary')}
               </option>
               <option value="toThePointSummary">
-                {t('summaryFormatOptions.toThePointSummary', 'Kernachtige samenvatting')}
+                {t('summaryFormatOptions.toThePointSummary')}
               </option>
               <option value="narrativeSummary">
-                {t('summaryFormatOptions.narrativeSummary', 'Verhalende samenvatting')}
+                {t('summaryFormatOptions.narrativeSummary')}
               </option>
               <option value="decisionMakingSummary">
-                {t('summaryFormatOptions.decisionMakingSummary', 'Besluitvormingssamenvatting')}
+                {t('summaryFormatOptions.decisionMakingSummary')}
               </option>
               <option value="problemSolutionSummary">
-                {t('summaryFormatOptions.problemSolutionSummary', 'Probleem–oplossing samenvatting')}
+                {t('summaryFormatOptions.problemSolutionSummary')}
               </option>
               <option value="detailedSummaryWithQuotes">
-                {t('summaryFormatOptions.detailedSummaryWithQuotes', 'Gedetailleerde samenvatting met citaten')}
+                {t('summaryFormatOptions.detailedSummaryWithQuotes')}
               </option>
               <option value="highLevelOverview">
-                {t('summaryFormatOptions.highLevelOverview', 'Hoog-over overzicht')}
+                {t('summaryFormatOptions.highLevelOverview')}
               </option>
             </select>
           </div>
@@ -104,10 +104,10 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
           {/* Target Audience */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('summaryTargetAudience', 'Doelgroep')}
+              {t('summaryTargetAudience')}
             </label>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              {t('summaryTargetAudienceQuestion', 'Voor wie is deze samenvatting bedoeld?')}
+              {t('summaryTargetAudienceQuestion')}
             </p>
             <select
               value={options.targetAudience}
@@ -116,40 +116,40 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
             >
               <option value="">-</option>
               <option value="internalTeam">
-                {t('summaryTargetAudienceOptions.internalTeam', 'Intern team')}
+                {t('summaryTargetAudienceOptions.internalTeam')}
               </option>
               <option value="management">
-                {t('summaryTargetAudienceOptions.management', 'Management')}
+                {t('summaryTargetAudienceOptions.management')}
               </option>
               <option value="customers">
-                {t('summaryTargetAudienceOptions.customers', 'Klanten')}
+                {t('summaryTargetAudienceOptions.customers')}
               </option>
               <option value="investors">
-                {t('summaryTargetAudienceOptions.investors', 'Investeerders')}
+                {t('summaryTargetAudienceOptions.investors')}
               </option>
               <option value="newEmployees">
-                {t('summaryTargetAudienceOptions.newEmployees', 'Nieuwe medewerkers')}
+                {t('summaryTargetAudienceOptions.newEmployees')}
               </option>
               <option value="generalPublic">
-                {t('summaryTargetAudienceOptions.generalPublic', 'Algemeen publiek')}
+                {t('summaryTargetAudienceOptions.generalPublic')}
               </option>
               <option value="academics">
-                {t('summaryTargetAudienceOptions.academics', 'Academici')}
+                {t('summaryTargetAudienceOptions.academics')}
               </option>
               <option value="competitors">
-                {t('summaryTargetAudienceOptions.competitors', 'Concurrenten')}
+                {t('summaryTargetAudienceOptions.competitors')}
               </option>
               <option value="localCommunity">
-                {t('summaryTargetAudienceOptions.localCommunity', 'Lokale gemeenschap')}
+                {t('summaryTargetAudienceOptions.localCommunity')}
               </option>
               <option value="alumni">
-                {t('summaryTargetAudienceOptions.alumni', 'Alumni')}
+                {t('summaryTargetAudienceOptions.alumni')}
               </option>
               <option value="internationalStakeholders">
-                {t('summaryTargetAudienceOptions.internationalStakeholders', 'Internationale stakeholders')}
+                {t('summaryTargetAudienceOptions.internationalStakeholders')}
               </option>
               <option value="specificInterestGroups">
-                {t('summaryTargetAudienceOptions.specificInterestGroups', 'Specifieke belangengroepen')}
+                {t('summaryTargetAudienceOptions.specificInterestGroups')}
               </option>
             </select>
           </div>
@@ -157,10 +157,10 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
           {/* Tone and Style */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('summaryToneStyle', 'Toon en stijl')}
+              {t('summaryToneStyle')}
             </label>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              {t('summaryToneStyleQuestion', 'Welke toon en stijl moet de samenvatting hebben?')}
+              {t('summaryToneStyleQuestion')}
             </p>
             <select
               value={options.toneStyle}
@@ -169,40 +169,40 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
             >
               <option value="">-</option>
               <option value="formal">
-                {t('summaryToneStyleOptions.formal', 'Formeel')}
+                {t('summaryToneStyleOptions.formal')}
               </option>
               <option value="informal">
-                {t('summaryToneStyleOptions.informal', 'Informeel')}
+                {t('summaryToneStyleOptions.informal')}
               </option>
               <option value="inspiring">
-                {t('summaryToneStyleOptions.inspiring', 'Inspirerend')}
+                {t('summaryToneStyleOptions.inspiring')}
               </option>
               <option value="critical">
-                {t('summaryToneStyleOptions.critical', 'Kritisch')}
+                {t('summaryToneStyleOptions.critical')}
               </option>
               <option value="humorous">
-                {t('summaryToneStyleOptions.humorous', 'Humoristisch')}
+                {t('summaryToneStyleOptions.humorous')}
               </option>
               <option value="neutral">
-                {t('summaryToneStyleOptions.neutral', 'Neutraal')}
+                {t('summaryToneStyleOptions.neutral')}
               </option>
               <option value="professional">
-                {t('summaryToneStyleOptions.professional', 'Professioneel')}
+                {t('summaryToneStyleOptions.professional')}
               </option>
               <option value="conversational">
-                {t('summaryToneStyleOptions.conversational', 'Gesprekstoon')}
+                {t('summaryToneStyleOptions.conversational')}
               </option>
               <option value="authoritative">
-                {t('summaryToneStyleOptions.authoritative', 'Autoritatief')}
+                {t('summaryToneStyleOptions.authoritative')}
               </option>
               <option value="friendly">
-                {t('summaryToneStyleOptions.friendly', 'Vriendelijk')}
+                {t('summaryToneStyleOptions.friendly')}
               </option>
               <option value="technical">
-                {t('summaryToneStyleOptions.technical', 'Technisch')}
+                {t('summaryToneStyleOptions.technical')}
               </option>
               <option value="simple">
-                {t('summaryToneStyleOptions.simple', 'Eenvoudig')}
+                {t('summaryToneStyleOptions.simple')}
               </option>
             </select>
           </div>
@@ -210,10 +210,10 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
            {/* Length */}
            <div className="mb-6">
              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-               {t('summaryLength', 'Gewenste lengte')}
+               {t('summaryLength')}
              </label>
              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-               {t('summaryLengthQuestion', 'Hoe uitgebreid moet de samenvatting zijn?')}
+               {t('summaryLengthQuestion')}
              </p>
              <select
                value={options.length}
@@ -222,16 +222,16 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
              >
                <option value="">-</option>
                <option value="concise">
-                 {t('summaryLengthOptions.concise', 'Bondig')}
+                 {t('summaryLengthOptions.concise')}
                </option>
                <option value="standard">
-                 {t('summaryLengthOptions.standard', 'Standaard')}
+                 {t('summaryLengthOptions.standard')}
                </option>
                <option value="extensive">
-                 {t('summaryLengthOptions.extensive', 'Uitgebreid')}
+                 {t('summaryLengthOptions.extensive')}
                </option>
                <option value="fullTimeline">
-                 {t('summaryLengthOptions.fullTimeline', 'Volledige tijdlijn')}
+                 {t('summaryLengthOptions.fullTimeline')}
                </option>
              </select>
            </div>
@@ -242,19 +242,19 @@ const SummaryQuestionsModal: React.FC<SummaryQuestionsModalProps> = ({
               onClick={handleReset}
               className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-slate-600 rounded-lg transition-colors"
             >
-              {t('reset', 'Resetten')}
+              {t('reset')}
             </button>
             <button
               onClick={onClose}
               className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-slate-600 rounded-lg transition-colors"
             >
-              {t('cancel', 'Annuleren')}
+              {t('cancel')}
             </button>
             <button
               onClick={handleGenerate}
               className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
             >
-              {t('generate', 'Genereren')}
+              {t('generate')}
             </button>
           </div>
         </div>

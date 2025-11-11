@@ -47,7 +47,7 @@ const AIDiscussionAnalytics: React.FC<AIDiscussionAnalyticsProps> = ({ session, 
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
         <span className="ml-3 text-slate-600 dark:text-slate-400">
-          {t('aiDiscussion.analytics.loading') || 'Analytics genereren...'}
+          {t('aiDiscussion.analytics.loading')}
         </span>
       </div>
     );
@@ -60,17 +60,17 @@ const AIDiscussionAnalytics: React.FC<AIDiscussionAnalyticsProps> = ({ session, 
           <FiBarChart2 size={48} />
         </div>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('aiDiscussion.analytics.noData') || 'Geen analytics data beschikbaar'}
+          {t('aiDiscussion.analytics.noData')}
         </p>
       </div>
     );
   }
 
   const tabs = [
-    { id: 'overview', label: t('aiDiscussion.analytics.overview') || 'Overzicht', icon: FiBarChart2 },
-    { id: 'roles', label: t('aiDiscussion.analytics.roles') || 'Rol Activiteit', icon: FiUsers },
-    { id: 'topics', label: t('aiDiscussion.analytics.topics') || 'Controversiële Onderwerpen', icon: FiAlertTriangle },
-    { id: 'voting', label: t('aiDiscussion.analytics.voting') || 'Stemresultaten', icon: FiThumbsUp }
+    { id: 'overview', label: t('aiDiscussion.analytics.overview'), icon: FiBarChart2 },
+    { id: 'roles', label: t('aiDiscussion.analytics.roles'), icon: FiUsers },
+    { id: 'topics', label: t('aiDiscussion.analytics.topics'), icon: FiAlertTriangle },
+    { id: 'voting', label: t('aiDiscussion.analytics.voting'), icon: FiThumbsUp }
   ];
 
   return (
@@ -82,11 +82,11 @@ const AIDiscussionAnalytics: React.FC<AIDiscussionAnalyticsProps> = ({ session, 
             <FiBarChart2 size={24} />
           </div>
           <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.analytics.title') || 'Discussie Analytics'}
+            {t('aiDiscussion.analytics.title')}
           </h3>
         </div>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('aiDiscussion.analytics.description') || 'Inzichten in de discussiedynamiek, rolparticipatie en controversiële onderwerpen'}
+          {t('aiDiscussion.analytics.description')}
         </p>
       </div>
 
@@ -148,14 +148,14 @@ const OverviewTab: React.FC<{
             <FiActivity size={20} />
           </div>
           <h4 className="font-medium text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.analytics.totalTurns') || 'Totaal Beurten'}
+            {t('aiDiscussion.analytics.totalTurns')}
           </h4>
         </div>
         <p className="text-2xl font-bold text-slate-900 dark:text-white">
           {analytics.totalTurns}
         </p>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-          {t('aiDiscussion.analytics.turnsDescription') || 'Aantal discussiebeurten'}
+          {t('aiDiscussion.analytics.turnsDescription')}
         </p>
       </div>
 
@@ -166,14 +166,14 @@ const OverviewTab: React.FC<{
             <FiMessageSquare size={20} />
           </div>
           <h4 className="font-medium text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.analytics.totalMessages') || 'Totaal Berichten'}
+            {t('aiDiscussion.analytics.totalMessages', 'Totaal Berichten')}
           </h4>
         </div>
         <p className="text-2xl font-bold text-slate-900 dark:text-white">
           {analytics.totalMessages}
         </p>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-          {t('aiDiscussion.analytics.messagesDescription') || 'Inclusief gebruikersinterventies'}
+          {t('aiDiscussion.analytics.messagesDescription')}
         </p>
       </div>
 
@@ -184,14 +184,14 @@ const OverviewTab: React.FC<{
             <FiTrendingUp size={20} />
           </div>
           <h4 className="font-medium text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.analytics.avgResponseLength') || 'Gem. Reactielengte'}
+            {t('aiDiscussion.analytics.avgResponseLength')}
           </h4>
         </div>
         <p className="text-2xl font-bold text-slate-900 dark:text-white">
           {Math.round(analytics.averageResponseLength)}
         </p>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-          {t('aiDiscussion.analytics.charactersAvg') || 'karakters gemiddeld'}
+          {t('aiDiscussion.analytics.charactersAvg')}
         </p>
       </div>
 
@@ -202,14 +202,14 @@ const OverviewTab: React.FC<{
             <FiTarget size={20} />
           </div>
           <h4 className="font-medium text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.analytics.userInterventions') || 'Gebruikersinterventies'}
+            {t('aiDiscussion.analytics.userInterventions')}
           </h4>
         </div>
-        <p className="text-2xl font-bold text-slate-900 dark:text-white">
+        <p className="text-2xl font-bold text-slate-900 dark:text-slate-200">
           {analytics.userInterventions}
         </p>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-          {t('aiDiscussion.analytics.interventionsDescription') || 'Vragen en opmerkingen'}
+          {t('aiDiscussion.analytics.interventionsDescription')}
         </p>
       </div>
 
@@ -220,14 +220,14 @@ const OverviewTab: React.FC<{
             <FiZap size={20} />
           </div>
           <h4 className="font-medium text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.analytics.mostActiveRole') || 'Meest Actieve Rol'}
+            {t('aiDiscussion.analytics.mostActiveRole')}
           </h4>
         </div>
         <p className="text-lg font-semibold text-slate-900 dark:text-white">
-          {analytics.mostActiveRole?.name || t('aiDiscussion.analytics.noActiveRole') || 'Geen data'}
+          {analytics.mostActiveRole?.name || t('aiDiscussion.analytics.noActiveRole')}
         </p>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-          {analytics.mostActiveRole?.messageCount || 0} {t('aiDiscussion.analytics.messages') || 'berichten'}
+          {analytics.mostActiveRole?.messageCount || 0} {t('aiDiscussion.analytics.messages')}
         </p>
       </div>
 
@@ -238,14 +238,14 @@ const OverviewTab: React.FC<{
             <FiClock size={20} />
           </div>
           <h4 className="font-medium text-slate-800 dark:text-slate-200">
-            {t('aiDiscussion.analytics.duration') || 'Discussieduur'}
+            {t('aiDiscussion.analytics.duration')}
           </h4>
         </div>
         <p className="text-2xl font-bold text-slate-900 dark:text-white">
-          {Math.round(analytics.discussionDuration / 60000)} {t('aiDiscussion.analytics.minutes') || 'min'}
+          {Math.round(analytics.discussionDuration / 60000)} {t('aiDiscussion.analytics.minutes')}
         </p>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-          {t('aiDiscussion.analytics.durationDescription') || 'Totale discussietijd'}
+          {t('aiDiscussion.analytics.durationDescription')}
         </p>
       </div>
     </div>
@@ -262,7 +262,7 @@ const RoleActivityTab: React.FC<{
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
         <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
-          {t('aiDiscussion.analytics.roleActivity') || 'Rol Activiteit'}
+          {t('aiDiscussion.analytics.roleActivity')}
         </h4>
         <div className="space-y-4">
           {analytics.roleActivity.map((role: RoleActivityMetrics) => (
@@ -274,19 +274,19 @@ const RoleActivityTab: React.FC<{
                 />
                 <div>
                   <p className="font-medium text-slate-800 dark:text-slate-200">
-                    {session.roles.find(r => r.id === role.roleId)?.name || t('aiDiscussion.analytics.unknownRole') || 'Onbekende rol'}
+                    {session.roles.find(r => r.id === role.roleId)?.name || t('aiDiscussion.analytics.unknownRole')}
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {t('aiDiscussion.analytics.enthusiasm') || 'Enthousiasme'}: {session.roles.find(r => r.id === role.roleId)?.enthusiasmLevel || 3}/5
+                    {t('aiDiscussion.analytics.enthusiasm')}: {session.roles.find(r => r.id === role.roleId)?.enthusiasmLevel || 3}/5
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                  {role.messageCount} {t('aiDiscussion.analytics.messages') || 'berichten'}
+                  {role.messageCount} {t('aiDiscussion.analytics.messages')}
                 </p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {Math.round(role.averageMessageLength)} {t('aiDiscussion.analytics.avgChars') || 'gem. karakters'}
+                  {Math.round(role.averageMessageLength)} {t('aiDiscussion.analytics.avgChars')}
                 </p>
               </div>
             </div>
@@ -297,7 +297,7 @@ const RoleActivityTab: React.FC<{
       {/* Participation Chart */}
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
         <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
-          {t('aiDiscussion.analytics.participationDistribution') || 'Participatie Verdeling'}
+          {t('aiDiscussion.analytics.participationDistribution')}
         </h4>
         <div className="space-y-3">
           {analytics.roleActivity.map((role: RoleActivityMetrics) => {
@@ -306,7 +306,7 @@ const RoleActivityTab: React.FC<{
               <div key={role.roleId} className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-700 dark:text-slate-300">
-                    {session.roles.find(r => r.id === role.roleId)?.name || t('aiDiscussion.analytics.unknownRole') || 'Onbekende rol'}
+                    {session.roles.find(r => r.id === role.roleId)?.name || t('aiDiscussion.analytics.unknownRole')}
                   </span>
                   <span className="text-slate-600 dark:text-slate-400">
                     {percentage.toFixed(1)}%
@@ -342,7 +342,7 @@ const ControversialTopicsTab: React.FC<{
           <FiAlertTriangle size={48} />
         </div>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('aiDiscussion.analytics.noControversialTopics') || 'Geen controversiële onderwerpen gedetecteerd'}
+          {t('aiDiscussion.analytics.noControversialTopics')}
         </p>
       </div>
     );
@@ -352,10 +352,10 @@ const ControversialTopicsTab: React.FC<{
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
         <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
-          {t('aiDiscussion.analytics.controversialTopics') || 'Controversiële Onderwerpen'}
+          {t('aiDiscussion.analytics.controversialTopics')}
         </h4>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-          {t('aiDiscussion.analytics.controversialDescription') || 'Onderwerpen die tot verschillende meningen hebben geleid tussen de AI-rollen'}
+          {t('aiDiscussion.analytics.controversialDescription')}
         </p>
         <div className="space-y-4">
           {analytics.controversialTopics.map((topic: ControversialTopic, index: number) => (
@@ -369,7 +369,7 @@ const ControversialTopicsTab: React.FC<{
                     <FiAlertTriangle size={16} />
                   </div>
                   <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
-                    {t('aiDiscussion.analytics.controversyLevel') || 'Controverse'}: {topic.controversyLevel}/5
+                    {t('aiDiscussion.analytics.controversyLevel')}: {topic.controversyLevel}/5
                   </span>
                 </div>
               </div>
@@ -378,7 +378,7 @@ const ControversialTopicsTab: React.FC<{
               </p>
               <div className="space-y-2">
                 <h6 className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {t('aiDiscussion.analytics.differentPerspectives') || 'Verschillende perspectieven'}:
+                  {t('aiDiscussion.analytics.differentPerspectives')}:
                 </h6>
                 <div className="space-y-1">
                   {topic.differentPerspectives.map((perspective, pIndex) => (
@@ -408,7 +408,7 @@ const VotingResultsTab: React.FC<{
           <FiThumbsUp size={48} />
         </div>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('aiDiscussion.analytics.noVotingData') || 'Geen stemdata beschikbaar'}
+          {t('aiDiscussion.analytics.noVotingData')}
         </p>
       </div>
     );
@@ -418,10 +418,10 @@ const VotingResultsTab: React.FC<{
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6">
         <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">
-          {t('aiDiscussion.analytics.votingResults') || 'Stemresultaten'}
+          {t('aiDiscussion.analytics.votingResults')}
         </h4>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-          {t('aiDiscussion.analytics.votingDescription') || 'Resultaten van stemrondes tijdens de discussie'}
+          {t('aiDiscussion.analytics.votingDescription')}
         </p>
         <div className="space-y-4">
           {analytics.votingResults.map((result: VotingResults, index: number) => (
@@ -434,19 +434,19 @@ const VotingResultsTab: React.FC<{
                   <div className="flex items-center gap-2">
                     <FiThumbsUp className="text-green-500" size={16} />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {t('aiDiscussion.analytics.votesFor') || 'Voor'}: {result.votesFor}
+                      {t('aiDiscussion.analytics.votesFor')}: {result.votesFor}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FiThumbsDown className="text-red-500" size={16} />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {t('aiDiscussion.analytics.votesAgainst') || 'Tegen'}: {result.votesAgainst}
+                      {t('aiDiscussion.analytics.votesAgainst')}: {result.votesAgainst}
                     </span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="text-sm text-slate-600 dark:text-slate-400">
-                    {t('aiDiscussion.analytics.totalVotes') || 'Totaal stemmen'}: {result.totalVotes}
+                    {t('aiDiscussion.analytics.totalVotes')}: {result.totalVotes}
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
                     <div

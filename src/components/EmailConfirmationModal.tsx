@@ -57,7 +57,7 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
 
     // Enhanced security: Rate limiting for verification attempts
     if (attemptCount >= 5) {
-      setError('Te veel pogingen. Probeer het later opnieuw.');
+      setError(t('tooManyAttempts'));
       return;
     }
 
@@ -78,18 +78,18 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
       } else {
         // Enhanced error handling with security considerations
         if (result.error?.includes('expired')) {
-          setError('De bevestigingscode is verlopen. Vraag een nieuwe aan.');
+          setError(t('emailConfirmCodeExpired'));
         } else if (result.error?.includes('Invalid') || result.error?.includes('invalid')) {
-          setError('Ongeldige bevestigingscode. Controleer de code en probeer opnieuw.');
+          setError(t('emailConfirmCodeInvalid'));
         } else if (result.error?.includes('rate limit') || result.error?.includes('too many')) {
-          setError('Te veel pogingen. Probeer het later opnieuw.');
+          setError(t('tooManyAttempts'));
         } else {
-          setError('Er is een fout opgetreden bij het bevestigen. Probeer het opnieuw.');
+          setError(t('emailConfirmTechnicalError'));
         }
       }
     } catch (error: any) {
       console.error('Email confirmation error:', error);
-      setError('Er is een technische fout opgetreden. Probeer het opnieuw.');
+      setError(t('emailConfirmTechnicalError'));
     } finally {
       setIsVerifying(false);
     }
@@ -115,17 +115,17 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
         setAttemptCount(0); // Reset attempt count on successful resend
       } else {
         if (result.pendingConfirmation) {
-          setError('Er is al een bevestigingsmail verstuurd. Controleer je inbox.');
+          setError(t('emailConfirmCodeAlreadySent'));
         } else if (result.error?.includes('rate limit') || result.error?.includes('too many')) {
-          setError('Te veel verzoeken. Probeer het later opnieuw.');
+          setError(t('emailConfirmTooManyRequests'));
           setResendCooldown(300); // 5 minute cooldown for rate limiting
         } else {
-          setError('Kon geen nieuwe bevestigingscode verzenden. Probeer het later opnieuw.');
+          setError(t('emailConfirmCouldNotResend'));
         }
       }
     } catch (error: any) {
       console.error('Resend code error:', error);
-      setError('Er is een technische fout opgetreden bij het verzenden van een nieuwe code.');
+      setError(t('emailConfirmErrorSending'));
     } finally {
       setIsResending(false);
     }
@@ -149,15 +149,15 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
   const getContextualContent = () => {
     if (context === 'referral') {
       return {
-        title: 'Bevestig je e-mailadres voor registratie',
-        description: 'We hebben een bevestigingscode naar je e-mailadres gestuurd om je account aan te maken.',
-        instruction: 'Voer de 6-cijferige code in die je per e-mail hebt ontvangen.'
+        title: t('emailConfirmTitle'),
+        description: t('emailConfirmDescription'),
+        instruction: t('emailConfirmInstruction')
       };
     } else {
       return {
-        title: t('confirmEmailAddress'),
-        description: t('confirmationCodeSent'),
-        instruction: t('enterConfirmationCodeInstruction')
+        title: t('emailConfirmTitle'),
+        description: t('emailConfirmDescription'),
+        instruction: t('emailConfirmInstruction')
       };
     }
   };
@@ -174,15 +174,15 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {contextContent.title}
+            {t('emailConfirmTitle')}
           </h3>
           <p className="text-gray-600 mb-4">
-            {contextContent.description}
+            {t('emailConfirmDescription')}
           </p>
           <p className="font-medium text-gray-900 mb-6">{email}</p>
           <p className="text-sm text-gray-500">
-            {contextContent.instruction}
-          </p>
+              {t('emailConfirmInstruction')}
+            </p>
         </div>
 
         <div>
@@ -196,7 +196,7 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
             onChange={(e) => setConfirmationCode(sanitizeInput(e.target.value))}
             onKeyPress={handleKeyPress}
             onPaste={handlePaste}
-            placeholder="Voer 6-cijferige code in"
+            placeholder={t('emailConfirmPlaceholder')}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg tracking-widest"
             disabled={isVerifying}
             autoFocus
@@ -207,20 +207,22 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-3">
-            <div className="flex">
-              <svg className="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
+          <div className="text-sm text-red-600 text-center">
+            {error === 'INVALID_CODE' && t('emailConfirmCodeInvalid')}
+            {error === 'CODE_EXPIRED' && t('emailConfirmCodeExpired')}
+            {error === 'TOO_MANY_ATTEMPTS' && t('emailConfirmTooManyAttempts')}
+            {error === 'TOO_MANY_REQUESTS' && t('emailConfirmTooManyRequests')}
+            {error === 'TECHNICAL_ERROR' && t('emailConfirmTechnicalError')}
+            {error === 'CODE_ALREADY_SENT' && t('emailConfirmCodeAlreadySent')}
+            {error === 'COULD_NOT_RESEND' && t('emailConfirmCouldNotResend')}
+            {error === 'ERROR_SENDING' && t('emailConfirmErrorSending')}
           </div>
         )}
 
         {attemptCount > 0 && attemptCount < 5 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
             <p className="text-sm text-yellow-800">
-              Poging {attemptCount} van 5. {5 - attemptCount} pogingen over.
+              {t('emailConfirmAttemptCount').replace('{count}', attemptCount.toString()).replace('{total}', '5').replace('{remaining}', (5 - attemptCount).toString())}
             </p>
           </div>
         )}
@@ -231,35 +233,18 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
             disabled={isVerifying || !confirmationCode.trim() || attemptCount >= 5}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isVerifying ? (
-              <div className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Bevestigen...
-              </div>
-            ) : (
-              'Bevestigen'
-            )}
+            {isVerifying ? t('emailConfirmVerifying') : t('emailConfirmVerify')}
           </button>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">
-              Geen code ontvangen?
-            </p>
+            <p className="text-sm text-gray-500 mb-2">{t('emailConfirmNoCode')}</p>
             <button
+              type="button"
               onClick={handleResendCode}
               disabled={isResending || resendCooldown > 0}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {isResending ? (
-                'Verzenden...'
-              ) : resendCooldown > 0 ? (
-                `Opnieuw verzenden (${resendCooldown}s)`
-              ) : (
-                'Code opnieuw verzenden'
-              )}
+              {isResending ? t('emailConfirmResending') : resendCooldown > 0 ? t('emailConfirmResendCooldown').replace('{seconds}', resendCooldown.toString()) : t('emailConfirmResend')}
             </button>
           </div>
         </div>
@@ -277,7 +262,7 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
                 }
               </p>
               <p className="text-xs text-blue-700 mt-1">
-                Controleer ook je spam/ongewenste e-mail map als je de code niet ziet.
+                {t('emailConfirmCheckSpam')}
               </p>
             </div>
           </div>

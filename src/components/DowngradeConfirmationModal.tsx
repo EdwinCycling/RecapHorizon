@@ -157,7 +157,7 @@ const DowngradeConfirmationModal: React.FC<DowngradeConfirmationModalProps> = ({
                 {t('downgradeEffectiveDate')}
               </p>
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                {t('downgradeWillTakeEffect', { date: (() => { try { const d = new Date(renewalDate); return isNaN(d.getTime()) ? renewalDate : d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return renewalDate; } })() })}
+                {t('downgradeWillTakeEffect', { date: (() => { try { const d = new Date(renewalDate); return isNaN(d.getTime()) ? renewalDate : d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return renewalDate; } })() })}
               </p>
             </div>
           </div>
@@ -175,7 +175,7 @@ const DowngradeConfirmationModal: React.FC<DowngradeConfirmationModalProps> = ({
           <EnableButtonSlider
             onSliderComplete={setIsDowngradeEnabled}
             isLoading={isLoading}
-            enabledText={t('downgradeEnabled', 'Downgrade knop geactiveerd')}
+            enabledText={t('downgradeEnabled')}
             sliderText={t('downgradeSliderText')}
             theme={theme}
             disabled={isLoading}

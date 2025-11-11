@@ -163,6 +163,11 @@ export const fr = {
   exportPPT: "Powerpoint",
   copyContent: "Copier le contenu",
   noContent: "Aucun contenu généré pour le moment.",
+  congratulations: "Félicitations!",
+  paymentSuccessful: "Paiement Réussi!",
+  unlimitedAiAnalyses: "Analyses IA illimitées",
+  advancedSummaries: "Résumés avancés",
+  thankYouTrust: "Merci pour votre confiance!",
   chatWithTranscript: "Chatter avec la transcription",
   specials: "RecapHorizon Special prompts",
   specialsSubtitle: "Les prompts sont en anglais ; le résultat sera dans la langue de sortie choisie.",
@@ -385,18 +390,7 @@ export const fr = {
       name: "Durabilité & RSE",
       description: "Comment la solution contribue aux objectifs de durabilité et à la responsabilité sociale d'entreprise."
     },
-    qualityImprovement: {
-      name: "Amélioration de la qualité",
-      description: "Comment la solution améliore la qualité des produits ou services."
-    },
-    dataInsights: {
-      name: "Insights de données",
-      description: "Comment la solution fournit de meilleures insights à partir des données pour la prise de décision."
-    },
-    marketShareIncrease: {
-      name: "Augmentation de part de marché",
-      description: "Comment la solution aide à gagner des parts de marché."
-    },
+
     brandReputationImage: {
       name: "Réputation de marque & Image",
       description: "Comment la solution améliore l'image de marque et la réputation."
@@ -1338,24 +1332,9 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   settingsSave: "Enregistrer",
   settingsClose: "Fermer",
   anonymizationRulesSavedTitle: "Paramètres enregistrés",
-  anonymizationRulesSavedDesc: "Vos paramètres d’anonymisation ont été enregistrés avec succès.",
+  anonymizationRulesSavedDesc: "Vos paramètres d'anonymisation ont été enregistrés avec succès.",
   
-  // Loading text
-  loading: "Chargement...",
   // Libellés génériques de navigation/pagination
-  prev: "Précédent",
-  next: "Suivant",
-  page: "Page",
-  of: "sur",
-  back: "Retour",
-  generateTopics: "Générer des sujets",
-  
-  // Login text
-  login: "Se connecter",
-  backToLogin: "Retour à la connexion",
-  loginFailed: "Échec de la connexion: {error}",
-  loginLeftProminent: "Se connecter (gauche, proéminent)",
-  appControls: "Visible uniquement après la connexion",
   
   // Explain functionality
   explain: "Expliquer",
@@ -1394,6 +1373,7 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   mobileAudioHelpOption2iOS: "Pour iOS : Allez dans Réglages > Concentration > Ne pas déranger et activez ce mode. Configurez un horaire pour les enregistrements planifiés via les réglages.",
   mobileAudioHelpOption2Android: "Pour Android : Ouvrez le menu rapide en glissant vers le bas, appuyez sur Ne pas déranger. Configurez une règle via Réglages > Sons et vibrations > Ne pas déranger pour des heures fixes.",
   mobileAudioHelpOption2Explanation: "Explication : Ce mode supprime les appels tout en restant en ligne pour les autres notifications. Ceci convient si vous voulez rester joignable pour la communication non téléphonique.",
+  mobileAudioHelpExtraTip: "Testez votre paramètre choisi avant de commencer un enregistrement important. De cette façon, vous pouvez être sûr que tout fonctionne comme prévu.",
   mobileAudioHelpClose: "Compris",
   
   // FAQ Téléchargement d'images
@@ -1423,6 +1403,7 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   // Page de tarification téléchargement d'images
   pricingImageUpload: "Analyse d'Images IA (JPG, PNG, WEBP, GIF)",
   pricingEmailUpload: "Téléchargement d'Email (fichiers .msg, .eml)",
+
   
   // Image upload help modal
   imageUploadHelpTitle: "Aide Téléchargement d'Images",
@@ -1502,9 +1483,6 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   expertSystemInstruction: "Vous êtes un expert {role} spécialisé en {topic} dans le secteur {branche}.\n\nVotre tâche est de :\n1. Fournir des réponses professionnelles et détaillées en français\n2. Offrir des insights spécifiques de votre expertise en {topic}\n3. Donner des conseils pratiques pertinents pour le secteur {branche}\n4. Utiliser le contexte de la transcription pour créer des analyses ciblées\n5. Fournir des recommandations concrètes basées sur les meilleures pratiques de votre domaine\n\n{transcriptContext}\n\nRépondez toujours en français et depuis votre rôle d'expert {role}.",
   expertTranscriptContext: "Voici la transcription sur laquelle l'utilisateur a des questions :\n\n---\n{transcript}\n---\n\nUtilisez cette transcription comme contexte pour vos réponses.",
   expertFollowUpPrompt: "Vous êtes un assistant utile qui génère des questions de suivi pertinentes basées sur une conversation de chat.\n\nVoici une conversation de chat actuelle entre un utilisateur et un expert :\n\n{recentMessages}\n\nDernière réponse de l'expert :\n{lastResponse}\n\nGénérez une question de suivi spécifique que l'utilisateur pourrait poser pour approfondir le contenu de cette conversation. La question doit être directement liée aux sujets discutés et aider l'utilisateur à obtenir plus d'insights.\n\nRetournez seulement la question, sans introduction ou explication.",
-  expertChatUser: "Utilisateur",
-  expertChatExpert: "Expert",
-  confirmAnalysis: "Chat terminé, procéder à l'analyse ?",
 
   // Expert Configuration Options - 50 Topics
   expertTopics: {
@@ -1785,7 +1763,6 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   noCodeReceived: "Vous n'avez pas reçu de code ?",
   bcc: "CCI",
   notApplicable: "N/A",
-  copyForEmail: "Copier pour e-mail",
 
   // UI states (additional)
   download: "Télécharger",
@@ -1813,7 +1790,6 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   // Expert configuration
   role: "Rôle :",
   industry: "Secteur :",
-  topic: "Sujet :",
 
   // File upload
   supportedImageFormats: "JPG, JPEG, PNG, WEBP, GIF",
@@ -1924,9 +1900,6 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   accountCreationNotAllowed: "La création de compte n'est pas autorisée. Contactez l'administrateur.",
   keywordAnalysisGenerationError: "Erreur lors de la génération de l'analyse des mots-clés :",
   
-  // New unique translations
-  exportToPdf: "Exporter en PDF",
-  exportToText: "Exporter en texte",
   noResultsYet: "Aucun résultat pour le moment. Essayez une recherche.",
   pageLoadedSuccessfully: "Page chargée avec succès !",
   language: "Langue",
@@ -1954,12 +1927,10 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   checkInternetFirebaseConfig: "Vérifiez votre connexion internet et la configuration Firebase",
   checkFirestoreSecurityRules: "Vérifiez les règles de sécurité Firestore",
   noReadPermissionsFirestore: "Aucune permission de lecture pour Firestore",
-  checkFirestoreReadRules: "Vérifiez les règles de sécurité Firestore pour la lecture",
   makeSureUserLoggedIn: "Assurez-vous que l'utilisateur est connecté et a accès à ses propres données",
   skippingPermissionTests: "Ignorer les tests de permissions - authentification requise",
   pleaseLoginDatabaseFeatures: "Veuillez vous connecter pour accéder à toutes les fonctionnalités de la base de données",
   noWritePermissionsFirestore: "Aucune permission d'écriture pour Firestore",
-  checkFirestoreWriteRules: "Vérifiez les règles de sécurité Firestore pour l'écriture",
   firestoreIndexesNotWorking: "Les index Firestore ne fonctionnent pas correctement",
   checkFirebaseConsoleMissingIndexes: "Vérifiez Firebase Console pour les index manquants",
   createRequiredCompositeIndexes: "Créez les index composites requis dans Firebase Console",
@@ -2221,6 +2192,32 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   // Technical Console Messages - Clipboard
   clipboardToastMessage: "{type} : {message}",
 
+  // Toast Messages
+  toastApiKeyNotAvailable: "Clé API non disponible. Contactez l'administrateur.",
+  toastTokenLimitReached: "Limite de jetons atteinte. Mettez à niveau votre abonnement pour plus de générations IA.",
+  toastDiamondTokenCompleted: "Action du jeton diamant terminée !",
+  toastDiamondTokenError: "Une erreur s'est produite lors de l'action du jeton diamant.",
+  toastCopiedToClipboard: "Copié dans le presse-papiers",
+  toastCopyFailed: "Échec de la copie",
+  toastFileDownloaded: "Fichier téléchargé",
+  toastErrorLoadingPreferences: "Erreur lors du chargement des préférences",
+  toastPleaseSelectAIProvider: "Veuillez sélectionner un fournisseur IA",
+  toastPreferencesSaved: "Préférences du fournisseur IA enregistrées avec succès",
+  toastErrorSavingPreferences: "Erreur lors de l'enregistrement des préférences",
+  toastBusinessCaseGenerated: "Cas d'affaires généré",
+  toastTooManyChatMessages: "Trop de messages de chat",
+  toastNotEnoughCredits: "Pas assez de crédits",
+  toastNoUserManagementAccess: "Pas d'accès à la gestion des utilisateurs",
+  toastErrorLoadingUsers: "Erreur lors du chargement des utilisateurs",
+  toastErrorAddingUser: "Erreur lors de l'ajout d'un utilisateur",
+  toastConfirmationEmailSent: "Email de confirmation envoyé",
+  toastWaitlistError: "Erreur de liste d'attente",
+  toastNoEmailAccess: "Pas d'accès email",
+  toastErrorPreparingInvitations: "Erreur lors de la préparation des invitations",
+  toastWebSpeechAPINotSupported: "API Web Speech non supportée",
+  toastErrorPreparingLargeAudio: "Erreur lors de la préparation du grand fichier audio",
+  toastFailedToDownloadFile: "Échec du téléchargement du fichier",
+
   // Expert Chat Console Messages
   expertChatRateLimitExceeded: "Limite de taux dépassée pour le chat expert",
   expertChatInvalidMessage: "Contenu de message invalide:",
@@ -2256,12 +2253,7 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   subscriptionAccountCreated: "Compte créé",
   subscriptionNextProlongation: "Prochaine prolongation",
   subscriptionManagement: "Gestion de l'Abonnement",
-  subscriptionViewPricing: "Voir les Tarifs",
-  subscriptionViewPricingDesc: "Comparer tous les plans disponibles",
-  subscriptionUpgrade: "Mettre à Niveau",
-  subscriptionUpgradeDesc: "Accédez à plus de fonctionnalités",
-  subscriptionChangeplan: "Changer de Plan",
-  subscriptionChangeplanDesc: "Mettre à niveau ou rétrograder votre plan actuel",
+
   manageSubscription: "Gérer l'abonnement",
 
   // Discussion IA - clés UI communes
@@ -2330,6 +2322,57 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   "aiDiscussion.currentModerator": "Modérateur actuel",
   "aiDiscussion.backToGoals": "Retour aux objectifs",
   "aiDiscussion.startDiscussion": "Lancer la discussion",
+  "aiDiscussion.configureStyles": "Configurer les styles",
+  "aiDiscussion.stylesConfiguration": "Configuration des styles",
+  "aiDiscussion.stylesConfigurationDesc": "Ajuster le style de communication et le ton de la discussion",
+  
+  // Catégories de styles de discussion IA
+  "aiDiscussion.category.vision": "Vision et validation du concept",
+  "aiDiscussion.category.lean": "Finances lean et ressources",
+  "aiDiscussion.category.execution": "Vitesse et exécution agile",
+  "aiDiscussion.category.people": "Humain, talents et culture",
+  "aiDiscussion.category.market": "Marché et adoption",
+
+  // Styles de discussion IA (noms et descriptions par ID)
+  "aiDiscussion.styles.concise_direct.name": "Concis et direct",
+  "aiDiscussion.styles.concise_direct.desc": "Fournit des réponses brèves et directes, sans détour inutile.",
+  "aiDiscussion.styles.elaborate_indepth.name": "Développé et approfondi",
+  "aiDiscussion.styles.elaborate_indepth.desc": "Propose des analyses détaillées, du contexte et des explications complètes.",
+  "aiDiscussion.styles.encouraging_positive.name": "Encourageant et positif",
+  "aiDiscussion.styles.encouraging_positive.desc": "Met l’accent sur les opportunités, les forces et le potentiel, avec un ton optimiste et motivant.",
+  "aiDiscussion.styles.critical_challenging.name": "Critique et exigeant",
+  "aiDiscussion.styles.critical_challenging.desc": "Remet en question le statu quo, recherche les points faibles et confronte les hypothèses.",
+  "aiDiscussion.styles.highly_questioning.name": "Très interrogatif",
+  "aiDiscussion.styles.highly_questioning.desc": "Répond souvent par des questions ouvertes pour approfondir et obtenir davantage d’informations.",
+  "aiDiscussion.styles.solution_oriented.name": "Orienté solution",
+  "aiDiscussion.styles.solution_oriented.desc": "Se concentre directement sur des solutions concrètes et des plans d’action pour les problèmes discutés.",
+  "aiDiscussion.styles.collaborative.name": "Collaboratif",
+  "aiDiscussion.styles.collaborative.desc": "Recherche le consensus, s’appuie sur les idées existantes et facilite des conclusions communes.",
+  "aiDiscussion.styles.drawing_comparisons.name": "Fait des comparaisons",
+  "aiDiscussion.styles.drawing_comparisons.desc": "Établit des parallèles avec d’autres situations, des bonnes pratiques ou des standards du secteur.",
+  "aiDiscussion.styles.action_oriented.name": "Orienté action",
+  "aiDiscussion.styles.action_oriented.desc": "Oriente la discussion vers des étapes concrètes, des responsabilités et les prochaines actions logiques.",
+  "aiDiscussion.styles.big_picture_thinker.name": "Penseur vision globale",
+  "aiDiscussion.styles.big_picture_thinker.desc": "Replace les détails dans un cadre plus large et relie les sujets à des objectifs supérieurs et des stratégies globales.",
+  "aiDiscussion.styles.narrative_example_rich.name": "Narratif et riche en exemples",
+  "aiDiscussion.styles.narrative_example_rich.desc": "Explique les concepts et étaye les arguments avec des scénarios ou des exemples pertinents pour une meilleure compréhension.",
+  "aiDiscussion.configureRoleStyles": "Configurer les styles par rôle",
+  "aiDiscussion.configureRoleStylesDesc": "Définir le style de communication par rôle",
+  "aiDiscussion.communicationTone": "Ton de communication",
+  "aiDiscussion.interactionPattern": "Modèle d'interaction & questionnement",
+  "aiDiscussion.depthFocus": "Profondeur & focus",
+  "aiDiscussion.backToRoles": "Retour aux rôles",
+  "aiDiscussion.moderator": "Modérateur",
+  "aiDiscussion.role.storyteller": "Narrateur",
+  "aiDiscussion.role.storytellerDesc": "Crée des récits, simplifie des idées complexes et adapte les messages à différents publics",
+  "aiDiscussion.role.dromer": "Rêveur",
+  "aiDiscussion.role.dromerDesc": "Orienté vision, imagine des scénarios idéaux, repousse les limites et inspire de nouvelles directions",
+  "aiDiscussion.role.skeptische_advocaat": "Avocat du diable",
+  "aiDiscussion.role.skeptische_advocaatDesc": "Remet en question les hypothèses, identifie les risques et pose des questions critiques",
+  "aiDiscussion.role.gamification_architect": "Architecte de gamification",
+  "aiDiscussion.role.gamification_architectDesc": "Conçoit des mécaniques d'engagement, des incitations et des défis pour motiver les comportements",
+  "aiDiscussion.role.ethicus_impact_analist": "Analyste Éthique & Impact",
+  "aiDiscussion.role.ethicus_impact_analistDesc": "Évalue les implications morales, l'impact sociétal et la conformité aux standards éthiques",
 
   // Objectifs de discussion IA (noms et descriptions par ID)
   "aiDiscussion.goal.v1": "Validation de l’hypothèse centrale",
@@ -2480,14 +2523,6 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
   pricingStripeFootnote: "Les paiements sont traités en toute sécurité via <a href=\"https://stripe.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:text-blue-800 underline\">Stripe.com</a>, le leader mondial des solutions de paiement en ligne fiables et sécurisées.",
 
   // Notion Integration
-  notionOption: "Page Notion",
-  notionOptionDesc: "Analysez vos pages Notion.",
-  notionSearchHelp: "Recherchez dans votre espace de travail Notion en toute sécurité via notre intégration côté serveur. Votre secret Notion n'est jamais exposé au navigateur.",
-  notionWorkspace: "Espace de travail Notion",
-  connectNotion: "Connecter Notion",
-  connectNotionHelp: "Connectez votre compte Notion en toute sécurité. Nous n'exposons jamais votre token au navigateur ; il est stocké chiffré dans un cookie HttpOnly.",
-  notionIntegrationInstall: "Installer l'intégration Notion",
-notionIntegrationHelpTitle: "Installer l'intégration Notion",
 
   // Usage Modal
   usageOverview: "Aperçu de l'utilisation",
@@ -2501,8 +2536,6 @@ notionIntegrationHelpTitle: "Installer l'intégration Notion",
   changePlan: "Changer de Plan",
 
   // Social Post translations
-  socialPost: "Post Social",
-  socialPostX: "Post X / BlueSky",
   copySocialPost: "Copier le post social",
   downloadSocialPost: "Télécharger le post social",
   emailSocialPost: "Envoyer le post social par e-mail",
@@ -2524,19 +2557,6 @@ notionIntegrationHelpTitle: "Installer l'intégration Notion",
   aiImageInstructionExample: "Par exemple avec",
 
   // Audio Limit Modal
-  currentUsage: "Utilisation actuelle",
-  upgradeForMoreMinutes: "Mettre à niveau pour plus de minutes",
-  audioMinutesPerMonth: "{limit} minutes par mois",
-  upgradeTo: "Mettre à niveau vers {tier}",
-
-  goldTierContactSupport: "Contactez le support pour les options d'entreprise.",
-  viewAllPricingOptions: "Voir toutes les options de tarification",
-  monthlyAudioLimitExceeded: "Vous avez atteint votre limite audio mensuelle.",
-  freeMonthlyLimit: "Les utilisateurs gratuits peuvent enregistrer jusqu'à 60 minutes par mois.",
-  silverMonthlyLimit: "Les utilisateurs Silver peuvent enregistrer jusqu'à 500 minutes par mois.",
-  goldMonthlyLimit: "Les utilisateurs Gold peuvent enregistrer jusqu'à 1000 minutes par mois.",
-  upgradeToSilver: "Passer à Argent",
-  upgradeToGold: "Passer à Or",
   viewPricingOptions: "Voir les Options de Prix",
   minutesUsedThisMonth: "Minutes utilisées ce mois",
   minutesRemaining: "Minutes restantes",
@@ -3007,14 +3027,6 @@ notionIntegrationHelpTitle: "Installer l'intégration Notion",
   opportunitiesAnalysis: "Opportunités & Chances",
 
   // McKinsey Analysis
-  mckinseyAccessRestricted: "L'analyse McKinsey est disponible uniquement pour les utilisateurs Gold, Enterprise et Diamond.",
-  mckinseyFeatureUpgrade: "Mettez à niveau votre plan pour accéder à l'analyse McKinsey",
-  mckinseyGeneratingTopics: "Génération des sujets d'analyse McKinsey...",
-  mckinseySelectTopic: "Sélectionnez un sujet à analyser",
-  mckinseySelectRole: "Sélectionnez votre rôle de conseil",
-  mckinseySelectFramework: "Sélectionnez un cadre d'analyse",
-  mckinseyGeneratingAnalysis: "Génération de l'analyse McKinsey...",
-  mckinseyAnalysisComplete: "Analyse McKinsey terminée",
   
   // McKinsey Roles
   
@@ -3033,11 +3045,9 @@ notionIntegrationHelpTitle: "Installer l'intégration Notion",
   mckinseyErrorTopics: "Erreur lors de la génération des sujets. Utilisation des sujets par défaut.",
   
   // McKinsey Actions
-  mckinseyDownloadText: "Télécharger en Texte",
   mckinseyDownloadPDF: "Télécharger en PDF",
   mckinseyEmail: "Envoyer par Email",
   mckinseyCopy: "Copier l'Analyse",
-  mckinseyReset: "Réinitialiser l'Analyse",
   mckinseyRegenerate: "Régénérer l'Analyse",
 
   // Missing translations from Dutch file
@@ -3156,6 +3166,29 @@ notionIntegrationHelpTitle: "Installer l'intégration Notion",
   waarom: "pourquoi",
   werk: "travail",
   
+  // Audio Recording - Missing translations
+  recordingDetails: "Détails de l'enregistrement",
+  fileSize: "Taille du fichier",
+  audioFormat: "Format audio",
+  quality: "Qualité",
+  optimizedFor: "Optimisé pour",
+  listenBack: "Écouter l'enregistrement",
+  transcribe: "Transcrire",
+  aiTranscription: "Transcription IA",
+  aiTranscriptionDesc: "Transcription de haute qualité avec technologie IA",
+  maxRecordingTimeReached: "Durée maximale d'enregistrement atteinte !!",
+  noAudioDetected: "Aucun audio détecté",
+  audioDetected: "Audio détecté",
+  speechRecognition: "Reconnaissance vocale",
+  yourRecordingIsReady: "Votre enregistrement audio est prêt. Écoutez-le et commencez la transcription lorsque vous êtes prêt.",
+  audioCompression: "Compression audio",
+  audioCompressionDesc: "Description de la compression audio",
+  autoStopRecording: "Arrêt automatique de l'enregistrement",
+  autoStopRecordingDesc: "Description de l'arrêt automatique de l'enregistrement",
+  recordingTime: "Temps d'enregistrement",
+  pauseTime: "Temps de pause",
+  startTime: "Heure de début",
+  
   // AI Discussion - Enthusiasm Meter
   "aiDiscussion.enthusiasmLevel": "Niveau d'enthousiasme",
   "aiDiscussion.enthusiasmLow": "Pessimiste",
@@ -3214,5 +3247,27 @@ notionIntegrationHelpTitle: "Installer l'intégration Notion",
   "summaryLengthOptions.concise": "Concis",
   "summaryLengthOptions.standard": "Standard",
   "summaryLengthOptions.extensive": "Détaillé",
-  "summaryLengthOptions.fullTimeline": "Chronologie complète"
+  "summaryLengthOptions.fullTimeline": "Chronologie complète",
+  
+  // Month names
+  january: "Janvier",
+  february: "Février",
+  march: "Mars",
+  april: "Avril",
+  may: "Mai",
+  june: "Juin",
+  july: "Juillet",
+  august: "Août",
+  september: "Septembre",
+  october: "Octobre",
+  november: "Novembre",
+  december: "Décembre",
+  
+  // Subscription modal
+  startWithRecapHorizon: "Commencer avec RecapHorizon",
+  thankYouMessage: "Nous sommes ravis que vous ayez choisi RecapHorizon. Bonne chance avec vos analyses pilotées par l'IA !",
+  emailUploadSubscriptionRequired: "Le téléchargement d'e-mails n'est disponible que pour les abonnements Gold, Enterprise et Diamond.",
+  uploadFailed: "Téléchargement échoué.",
+  supportedFileTypes: "TXT, PDF, RTF, HTML, MD, DOCX",
+  audioFormats: "MP3, MP4, WebM, WAV"
 };

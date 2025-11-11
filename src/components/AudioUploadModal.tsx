@@ -136,7 +136,7 @@ const AudioUploadModal: React.FC<AudioUploadModalProps> = ({
               {isUploading ? t('audioUploadProcessing') : t('audioUploadDragText')}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              MP3, MP4, WebM, WAV (max 100MB)
+              {t('audioFormats')} (max 100MB)
             </p>
             
             <button
@@ -192,7 +192,7 @@ const AudioUploadModal: React.FC<AudioUploadModalProps> = ({
             disabled={isUploading}
             className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors disabled:opacity-50"
           >
-            {t('cancel', 'Annuleren')}
+            {t('cancel')}
           </button>
         </div>
       </div>

@@ -138,11 +138,10 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
             </div>
             <div className="ml-3">
               <h4 className="text-sm font-medium text-blue-800">
-                Veilig en betrouwbaar
+                {t('customerPortalSecurityTitle')}
               </h4>
               <p className="mt-1 text-sm text-blue-700">
-                Het Customer Portal wordt beheerd door Stripe, een van de meest vertrouwde 
-                betalingsverwerkers ter wereld. Je gegevens zijn volledig beveiligd.
+                {t('customerPortalSecurityDescription')}
               </p>
             </div>
           </div>
@@ -154,10 +153,10 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
             onClick={onClose}
             className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
           >
-            Annuleren
+            {t('cancel')}
           </button>
           <a
-            href="https://billing.stripe.com/p/login/test_6oU14nb0ggped403Q124000"
+            href={t('customerPortalUrl')}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
@@ -172,7 +171,7 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
         {/* Footer note */}
         <div className="text-center">
           <p className="text-xs text-gray-500">
-            Je wordt doorgestuurd naar een beveiligde Stripe-pagina en keert automatisch terug naar RecapHorizon.
+            {t('customerPortalFooterNote')}
           </p>
         </div>
       </div>

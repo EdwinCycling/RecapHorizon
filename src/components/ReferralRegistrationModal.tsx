@@ -85,27 +85,27 @@ const ReferralRegistrationModal: React.FC<ReferralRegistrationModalProps> = ({
   const passwordRequirements: PasswordRequirement[] = [
     {
       id: 'minLength',
-      label: t('passwordMinLength', 'Minimaal 8 karakters'),
+      label: t('passwordMinLength'),
       test: (pwd: string) => pwd.length >= 8
     },
     {
       id: 'hasSpecialChar',
-      label: t('passwordSpecialChar', 'Minimaal 1 speciaal karakter (!@#$%^&*(),.?":{}|<>)'),
+      label: t('passwordSpecialChar'),
       test: (pwd: string) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd)
     },
     {
       id: 'hasUppercase',
-      label: t('passwordUppercase', 'Minimaal 1 hoofdletter'),
+      label: t('passwordUppercase'),
       test: (pwd: string) => /[A-Z]/.test(pwd)
     },
     {
       id: 'hasLowercase',
-      label: t('passwordLowercase', 'Minimaal 1 kleine letter'),
+      label: t('passwordLowercase'),
       test: (pwd: string) => /[a-z]/.test(pwd)
     },
     {
       id: 'hasNumber',
-      label: t('passwordNumber', 'Minimaal 1 cijfer'),
+      label: t('passwordNumber'),
       test: (pwd: string) => /[0-9]/.test(pwd)
     }
   ];
@@ -128,10 +128,10 @@ const ReferralRegistrationModal: React.FC<ReferralRegistrationModalProps> = ({
 
   const getPasswordStrength = () => {
     const score = Object.values(passwordValidation).filter(Boolean).length - 1; // -1 for allValid
-    if (score <= 1) return { text: t('passwordStrengthWeak', 'Zwak'), color: '#ef4444' };
-    if (score <= 2) return { text: t('passwordStrengthMedium', 'Gemiddeld'), color: '#f59e0b' };
-    if (score <= 4) return { text: t('passwordStrengthStrong', 'Sterk'), color: '#10b981' };
-    return { text: t('passwordStrengthVeryStrong', 'Zeer sterk'), color: '#059669' };
+    if (score <= 1) return { text: t('passwordStrengthWeak'), color: '#ef4444' };
+    if (score <= 2) return { text: t('passwordStrengthMedium'), color: '#f59e0b' };
+    if (score <= 4) return { text: t('passwordStrengthStrong'), color: '#10b981' };
+    return { text: t('passwordStrengthVeryStrong'), color: '#059669' };
   };
 
   useEffect(() => {

@@ -16,6 +16,7 @@ interface AIDiscussionConfigurationProps {
   selectedTopic: AIDiscussionTopic;
   goals: AIDiscussionGoal[];
   roles: AIDiscussionRole[];
+  language: string;
   onConfigurationComplete: (goal: AIDiscussionGoal, selectedRoles: AIDiscussionRole[], discussionStyles: DiscussionStyleConfiguration) => void;
 }
 
@@ -24,6 +25,7 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
   selectedTopic,
   goals,
   roles,
+  language,
   onConfigurationComplete
 }) => {
   const [selectedGoal, setSelectedGoal] = useState<AIDiscussionGoal | null>(null);
@@ -36,31 +38,31 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
   const categories: DiscussionCategory[] = [
     {
       id: 'vision',
-      name: 'Visie en Conceptvalidatie',
+      name: t('aiDiscussion.category.vision', 'Visie en Conceptvalidatie'),
       icon: FiTarget,
       goals: goals.filter(g => g.category === 'vision')
     },
     {
       id: 'lean',
-      name: 'Lean Financiën en Middelen',
+      name: t('aiDiscussion.category.lean', 'Lean Financiën en Middelen'),
       icon: FiTool,
       goals: goals.filter(g => g.category === 'lean')
     },
     {
       id: 'execution',
-      name: 'Snelheid en Flexibele Uitvoering',
+      name: t('aiDiscussion.category.execution', 'Snelheid en Flexibele Uitvoering'),
       icon: FiZap,
       goals: goals.filter(g => g.category === 'execution')
     },
     {
       id: 'people',
-      name: 'Mensen, Talent en Cultuur',
+      name: t('aiDiscussion.category.people', 'Mensen, Talent en Cultuur'),
       icon: FiUsers,
       goals: goals.filter(g => g.category === 'people')
     },
     {
       id: 'market',
-      name: 'Markt en Adoptie',
+      name: t('aiDiscussion.category.market', 'Markt en Adoptie'),
       icon: FiCheckCircle,
       goals: goals.filter(g => g.category === 'market')
     }
@@ -228,7 +230,7 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
             <span className="text-cyan-600 dark:text-cyan-400 mt-1 flex-shrink-0"><FiInfo size={20} /></span>
             <div>
               <h4 className="font-medium text-cyan-800 dark:text-cyan-200 mb-1">
-                {t('aiDiscussion.selectedTopic') || 'Geselecteerd onderwerp'}
+                {t('aiDiscussion.selectedTopic')}
               </h4>
               <h5 className="font-semibold text-cyan-900 dark:text-cyan-100 mb-2">
                 {selectedTopic.title}
@@ -243,10 +245,10 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
         {/* Goal Selection */}
         <div className="text-center">
           <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-            {t('aiDiscussion.selectGoal') || 'Selecteer discussiedoel'}
+            {t('aiDiscussion.selectGoal')}
           </h3>
           <p className="text-slate-600 dark:text-slate-400 mb-6">
-            {t('aiDiscussion.selectGoalDesc') || 'Kies het hoofddoel voor deze discussie uit 5 categorieën'}
+            {t('aiDiscussion.selectGoalDesc')}
           </p>
         </div>
 
@@ -273,10 +275,10 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                       </span>
                       <div>
                         <h5 className="font-medium text-slate-800 dark:text-slate-200 mb-1 text-sm">
-                          {t(`aiDiscussion.goal.${goal.id}`) || goal.name}
+                          {t(`aiDiscussion.goal.${goal.id}`)}
                         </h5>
                         <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                          {t(`aiDiscussion.goal.${goal.id}Desc`) || goal.description}
+                          {t(`aiDiscussion.goal.${goal.id}Desc`)}
                         </p>
                       </div>
                     </div>
@@ -299,13 +301,13 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
             <span className="text-green-600 dark:text-green-400 mt-1 flex-shrink-0"><FiTarget size={20} /></span>
             <div>
               <h4 className="font-medium text-green-800 dark:text-green-200 mb-1">
-                {t('aiDiscussion.selectedGoal') || 'Geselecteerd doel'}
+                {t('aiDiscussion.selectedGoal')}
               </h4>
               <h5 className="font-semibold text-green-900 dark:text-green-100 mb-2">
-                {selectedGoal && (t(`aiDiscussion.goal.${selectedGoal.id}`) || selectedGoal.name)}
+                {selectedGoal && t(`aiDiscussion.goal.${selectedGoal.id}`)}
               </h5>
               <p className="text-sm text-green-700 dark:text-green-300">
-                {selectedGoal && (t(`aiDiscussion.goal.${selectedGoal.id}Desc`) || selectedGoal.description)}
+                {selectedGoal && t(`aiDiscussion.goal.${selectedGoal.id}Desc`)}
               </p>
             </div>
           </div>
@@ -314,10 +316,10 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
         {/* Role Selection */}
         <div className="text-center">
           <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-            {t('aiDiscussion.selectRoles') || 'Selecteer 2-4 organisatierollen'}
+            {t('aiDiscussion.selectRoles')}
           </h3>
           <p className="text-slate-600 dark:text-slate-400 mb-4">
-            {t('aiDiscussion.selectRolesDesc') || 'Kies welke rollen deelnemen aan de discussie (minimaal 2, maximaal 4)'}
+            {t('aiDiscussion.selectRolesDesc')}
           </p>
           
           {/* Role Counter */}
@@ -328,18 +330,18 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
           }`}>
             <FiUsers size={16} />
             <span className="font-medium">
-              {selectedRoles.length}/4 {t('aiDiscussion.rolesSelected') || 'rollen geselecteerd'}
+              {selectedRoles.length}/4 {t('aiDiscussion.rolesSelected')}
             </span>
           </div>
 
           {/* Moderator Info */}
           <div className="mt-3 p-3 bg-yellow-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded">
             <p className="text-sm text-slate-700 dark:text-slate-300">
-              {t('aiDiscussion.moderatorInfo') || 'De 1e geselecteerde rol is de gespreksleider (moderator). Deze rol faciliteert het gesprek, stelt verhelderende vragen en vat samen.'}
+              {t('aiDiscussion.moderatorInfo')}
             </p>
             {selectedRoles.length > 0 && (
               <p className="text-sm mt-2 text-slate-800 dark:text-slate-200">
-                <span className="font-semibold">{t('aiDiscussion.currentModerator') || 'Huidige gespreksleider'}:</span> {t(`aiDiscussion.role.${selectedRoles[0].id}`) || selectedRoles[0].name}
+                <span className="font-semibold">{t('aiDiscussion.currentModerator')}:</span> {t(`aiDiscussion.role.${selectedRoles[0].id}`)}
               </p>
             )}
           </div>
@@ -370,20 +372,20 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="font-semibold">
-                        {t(`aiDiscussion.role.${role.id}`) || role.name}
+                        {t(`aiDiscussion.role.${role.id}`)}
                       </h4>
                       {isSelected && (
                         <span className="text-cyan-600 dark:text-cyan-400"><FiCheck size={16} /></span>
                       )}
                     </div>
                     <p className="text-sm opacity-90">
-                      {t(`aiDiscussion.role.${role.id}Desc`) || role.description}
+                      {t(`aiDiscussion.role.${role.id}Desc`)}
                     </p>
                     {isSelected && (
                       <div className="mt-3 pt-3 border-t border-cyan-200 dark:border-cyan-700">
                         <div className="flex items-center justify-between mb-2">
                           <label className="text-sm font-medium text-cyan-800 dark:text-cyan-200">
-                            {t('aiDiscussion.enthusiasmLevel') || 'Enthousiasme niveau'}:
+                            {t('aiDiscussion.enthusiasmLevel')}:
                           </label>
                           <span className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
                             {roleEnthusiasmLevels[role.id] || role.enthusiasmLevel || 3}/5
@@ -409,8 +411,8 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                           }}
                         />
                         <div className="flex justify-between text-xs text-cyan-600 dark:text-cyan-400 mt-1">
-                          <span>{t('aiDiscussion.enthusiasmLow') || 'Pessimistisch'}</span>
-                          <span>{t('aiDiscussion.enthusiasmHigh') || 'Zeer enthousiast'}</span>
+                          <span>{t('aiDiscussion.enthusiasmLow')}</span>
+                          <span>{t('aiDiscussion.enthusiasmHigh')}</span>
                         </div>
                       </div>
                     )}
@@ -427,7 +429,7 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
             onClick={handleBackToGoals}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
-            {t('aiDiscussion.backToGoals') || 'Terug naar doelen'}
+            {t('aiDiscussion.backToGoals', 'Terug naar doelen')}
           </button>
 
           <button
@@ -436,7 +438,7 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
             className="flex items-center gap-2 px-6 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             <FiMessageSquare size={16} />
-            {t('aiDiscussion.configureStyles') || 'Configureer discussiestijlen'}
+            {t('aiDiscussion.configureStyles', 'Configureer discussiestijlen')}
           </button>
         </div>
       </div>
@@ -453,10 +455,10 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
             <span className="text-green-600 dark:text-green-400 mt-1 flex-shrink-0"><FiSettings size={20} /></span>
             <div>
               <h4 className="font-medium text-green-800 dark:text-green-200 mb-1">
-                {t('aiDiscussion.stylesConfiguration') || 'Discussiestijlen configuratie'}
+                {t('aiDiscussion.stylesConfiguration', 'Discussiestijlen configuratie')}
               </h4>
               <p className="text-sm text-green-700 dark:text-green-300">
-                {t('aiDiscussion.stylesConfigurationDesc') || 'Pas de discussiestijl aan per geselecteerde rol. Standaardwaarden zijn al ingesteld op basis van de rol.'}
+                {t('aiDiscussion.stylesConfigurationDesc', 'Pas de discussiestijl aan per geselecteerde rol. Standaardwaarden zijn al ingesteld op basis van de rol.')}
               </p>
             </div>
           </div>
@@ -465,23 +467,23 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
         {/* Selected Goal and Roles Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-4">
-            <h4 className="font-medium text-cyan-800 dark:text-cyan-200 mb-2 flex items-center gap-2">
-              <FiTarget size={16} />
-              {t('aiDiscussion.selectedGoal') || 'Geselecteerd doel'}
-            </h4>
-            <p className="text-sm text-cyan-700 dark:text-cyan-300">
-              {selectedGoal && (t(`aiDiscussion.goal.${selectedGoal.id}`) || selectedGoal.name)}
-            </p>
+              <h4 className="font-medium text-cyan-800 dark:text-cyan-200 mb-2 flex items-center gap-2">
+                <FiTarget size={16} />
+              {t('aiDiscussion.selectedGoal', 'Geselecteerd doel')}
+              </h4>
+              <p className="text-sm text-cyan-700 dark:text-cyan-300">
+              {selectedGoal && t(`aiDiscussion.goal.${selectedGoal.id}`, selectedGoal.name)}
+              </p>
           </div>
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
-              <FiUsers size={16} />
-              {t('aiDiscussion.selectedRoles') || 'Geselecteerde rollen'} ({selectedRoles.length})
-            </h4>
+              <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
+                <FiUsers size={16} />
+              {t('aiDiscussion.selectedRoles', 'Geselecteerde rollen')} ({selectedRoles.length})
+              </h4>
             <div className="flex flex-wrap gap-1">
-              {selectedRoles.map((role, index) => (
+              {selectedRoles.map((role) => (
                 <span key={role.id} className="text-xs bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                  {index === 0 && '👑 '}{t(`aiDiscussion.role.${role.id}`) || role.name}
+                  {t(`aiDiscussion.role.${role.id}`, role.name)}
                 </span>
               ))}
             </div>
@@ -492,10 +494,10 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
         <div className="space-y-6">
           <div className="text-center">
             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-              {t('aiDiscussion.configureRoleStyles') || 'Configureer discussiestijlen per rol'}
+              {t('aiDiscussion.configureRoleStyles', 'Configureer discussiestijlen per rol')}
             </h3>
             <p className="text-slate-600 dark:text-slate-400 mb-4">
-              {t('aiDiscussion.configureRoleStylesDesc') || 'Selecteer discussiestijlen voor elke rol. Je kunt meerdere stijlen combineren voor een coherente benadering.'}
+              {t('aiDiscussion.configureRoleStylesDesc', 'Selecteer discussiestijlen voor elke rol. Je kunt meerdere stijlen combineren voor een coherente benadering.')}
             </p>
           </div>
 
@@ -508,15 +510,15 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                   <span className="text-2xl">{getRoleIcon(role.id)}</span>
                   <div>
                     <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                      {t(`aiDiscussion.role.${role.id}`) || role.name}
+                      {t(`aiDiscussion.role.${role.id}`, role.name)}
                       {selectedRoles.indexOf(role) === 0 && (
                         <span className="ml-2 text-sm bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded">
-                          {t('aiDiscussion.moderator') || 'Gespreksleider'}
+                          {t('aiDiscussion.moderator', 'Gespreksleider')}
                         </span>
                       )}
                     </h4>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {t(`aiDiscussion.role.${role.id}Desc`) || role.description}
+                      {t(`aiDiscussion.role.${role.id}Desc`, role.description)}
                     </p>
                   </div>
                 </div>
@@ -526,11 +528,15 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                   {/* Communication Tone & Conciseness */}
                   <div>
                     <h5 className="font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      {t('aiDiscussion.communicationTone') || 'Communicatietoon & Beknoptheid'}
+                      {t('aiDiscussion.communicationTone', 'Communicatietoon & Beknoptheid')}
                     </h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {DISCUSSION_STYLE_OPTIONS.filter(style => style.category === 'communication_tone').map((style) => {
                         const isSelected = roleStyles.selectedStyles.includes(style.id);
+                        const fallbackName = language === 'nl' ? style.nameNL : style.nameEN;
+                        const fallbackDesc = language === 'nl' ? style.descriptionNL : style.descriptionEN;
+                        const styleName = t(`aiDiscussion.styles.${style.id}.name`, fallbackName);
+                        const styleDesc = t(`aiDiscussion.styles.${style.id}.desc`, fallbackDesc);
                         return (
                           <button
                             key={style.id}
@@ -543,14 +549,14 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                           >
                             <div className="flex items-center justify-between mb-2">
                               <h6 className="font-medium text-sm text-slate-800 dark:text-slate-200">
-                                {style.nameNL}
+                                {styleName}
                               </h6>
                               {isSelected && (
                                 <span className="text-cyan-600 dark:text-cyan-400"><FiCheck size={16} /></span>
                               )}
                             </div>
                             <p className="text-xs text-slate-600 dark:text-slate-400">
-                              {style.descriptionNL}
+                              {styleDesc}
                             </p>
                           </button>
                         );
@@ -561,11 +567,15 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                   {/* Interaction Pattern & Questioning */}
                   <div>
                     <h5 className="font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      {t('aiDiscussion.interactionPattern') || 'Interactiepatroon & Vragenstelling'}
+                      {t('aiDiscussion.interactionPattern', 'Interactiepatroon & Vragenstelling')}
                     </h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {DISCUSSION_STYLE_OPTIONS.filter(style => style.category === 'interaction_pattern').map((style) => {
                         const isSelected = roleStyles.selectedStyles.includes(style.id);
+                        const fallbackName = language === 'nl' ? style.nameNL : style.nameEN;
+                        const fallbackDesc = language === 'nl' ? style.descriptionNL : style.descriptionEN;
+                        const styleName = t(`aiDiscussion.styles.${style.id}.name`, fallbackName);
+                        const styleDesc = t(`aiDiscussion.styles.${style.id}.desc`, fallbackDesc);
                         return (
                           <button
                             key={style.id}
@@ -578,14 +588,14 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                           >
                             <div className="flex items-center justify-between mb-2">
                               <h6 className="font-medium text-sm text-slate-800 dark:text-slate-200">
-                                {style.nameNL}
+                                {styleName}
                               </h6>
                               {isSelected && (
                                 <span className="text-cyan-600 dark:text-cyan-400"><FiCheck size={16} /></span>
                               )}
                             </div>
                             <p className="text-xs text-slate-600 dark:text-slate-400">
-                              {style.descriptionNL}
+                              {styleDesc}
                             </p>
                           </button>
                         );
@@ -596,11 +606,15 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                   {/* Depth Focus & Approach */}
                   <div>
                     <h5 className="font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      {t('aiDiscussion.depthFocus') || 'Diepgang & Focus'}
+                      {t('aiDiscussion.depthFocus', 'Diepgang & Focus')}
                     </h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {DISCUSSION_STYLE_OPTIONS.filter(style => style.category === 'depth_focus').map((style) => {
                         const isSelected = roleStyles.selectedStyles.includes(style.id);
+                        const fallbackName = language === 'nl' ? style.nameNL : style.nameEN;
+                        const fallbackDesc = language === 'nl' ? style.descriptionNL : style.descriptionEN;
+                        const styleName = t(`aiDiscussion.styles.${style.id}.name`, fallbackName);
+                        const styleDesc = t(`aiDiscussion.styles.${style.id}.desc`, fallbackDesc);
                         return (
                           <button
                             key={style.id}
@@ -613,14 +627,14 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
                           >
                             <div className="flex items-center justify-between mb-2">
                               <h6 className="font-medium text-sm text-slate-800 dark:text-slate-200">
-                                {style.nameNL}
+                                {styleName}
                               </h6>
                               {isSelected && (
                                 <span className="text-cyan-600 dark:text-cyan-400"><FiCheck size={16} /></span>
                               )}
                             </div>
                             <p className="text-xs text-slate-600 dark:text-slate-400">
-                              {style.descriptionNL}
+                              {styleDesc}
                             </p>
                           </button>
                         );
@@ -639,7 +653,7 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
             onClick={handleBackToRoles}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
-            {t('aiDiscussion.backToRoles') || 'Terug naar rollen'}
+            {t('aiDiscussion.backToRoles', 'Terug naar rollen')}
           </button>
 
           <button
@@ -647,7 +661,7 @@ const AIDiscussionConfiguration: React.FC<AIDiscussionConfigurationProps> = ({
             className="flex items-center gap-2 px-6 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
           >
             <FiUsers size={16} />
-            {t('aiDiscussion.startDiscussion') || 'Start discussie'}
+            {t('aiDiscussion.startDiscussion', 'Start discussie')}
           </button>
         </div>
       </div>

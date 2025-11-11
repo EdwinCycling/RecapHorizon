@@ -141,6 +141,11 @@ export const nl = {
   exportPPT: "Powerpoint",
   copyContent: "Kopieer inhoud",
   noContent: "Nog geen inhoud gegenereerd.",
+  congratulations: "Gefeliciteerd!",
+  paymentSuccessful: "Betaling Succesvol!",
+  unlimitedAiAnalyses: "Onbeperkte AI analyses",
+  advancedSummaries: "Geavanceerde samenvattingen",
+  thankYouTrust: "Bedankt voor je vertrouwen!",
   chatWithTranscript: "Chat met Transcript",
   specials: "RecapHorizon Special prompts",
   specialsSubtitle: "De prompts zijn in het Engels, het resultaat in uw gekozen output taal",
@@ -1737,6 +1742,37 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   "aiDiscussion.configureRoleStylesDesc": "Stel de communicatiestijl per rol in",
   "aiDiscussion.communicationTone": "Communicatietoon",
   "aiDiscussion.moderator": "Moderator",
+  
+  // AI Discussion style categories
+  "aiDiscussion.category.vision": "Visie en Conceptvalidatie",
+  "aiDiscussion.category.lean": "Lean Financiën en Middelen",
+  "aiDiscussion.category.execution": "Snelheid en Flexibele Uitvoering",
+  "aiDiscussion.category.people": "Mensen, Talent en Cultuur",
+  "aiDiscussion.category.market": "Markt en Adoptie",
+
+  // AI Discussion styles (namen en beschrijvingen per ID)
+  "aiDiscussion.styles.concise_direct.name": "Beknopt & Direct",
+  "aiDiscussion.styles.concise_direct.desc": "Levert antwoorden kortaf en to-the-point, zonder veel omhaal.",
+  "aiDiscussion.styles.elaborate_indepth.name": "Uitgebreid & Diepgaand",
+  "aiDiscussion.styles.elaborate_indepth.desc": "Biedt gedetailleerde analyses, context en uitgebreide uitleg.",
+  "aiDiscussion.styles.encouraging_positive.name": "Encouragerend & Positief",
+  "aiDiscussion.styles.encouraging_positive.desc": "Richt zich op de mogelijkheden, sterke punten en het potentieel, met een optimistische en motiverende toon.",
+  "aiDiscussion.styles.critical_challenging.name": "Kritisch & Uitdagend",
+  "aiDiscussion.styles.critical_challenging.desc": "Stelt de status quo ter discussie, zoekt naar zwakke plekken en daagt aannames uit.",
+  "aiDiscussion.styles.highly_questioning.name": "Veel Vragen Stellend",
+  "aiDiscussion.styles.highly_questioning.desc": "Reageert vaak met open vragen om dieper te graven en meer informatie te verzamelen.",
+  "aiDiscussion.styles.solution_oriented.name": "Gericht op Oplossingen",
+  "aiDiscussion.styles.solution_oriented.desc": "Focust direct op het aandragen van concrete oplossingen en actieplannen voor besproken problemen.",
+  "aiDiscussion.styles.collaborative.name": "Samenwerkend",
+  "aiDiscussion.styles.collaborative.desc": "Zoekt naar consensus, bouwt voort op bestaande ideeën en faciliteert gezamenlijke conclusies.",
+  "aiDiscussion.styles.drawing_comparisons.name": "Vergelijkingen Makend",
+  "aiDiscussion.styles.drawing_comparisons.desc": "Trekt parallellen met andere situaties, best practices of industriestandaarden.",
+  "aiDiscussion.styles.action_oriented.name": "Actiegericht",
+  "aiDiscussion.styles.action_oriented.desc": "Stuurt de discussie consistent naar concrete stappen, verantwoordelijkheden en de volgende logische acties.",
+  "aiDiscussion.styles.big_picture_thinker.name": "Big Picture Denker",
+  "aiDiscussion.styles.big_picture_thinker.desc": "Plaatst details in een bredere context, verbindt onderwerpen met hogere doelen en overkoepelende strategieën.",
+  "aiDiscussion.styles.narrative_example_rich.name": "Verhalend & Voorbeeld‑Rijk",
+  "aiDiscussion.styles.narrative_example_rich.desc": "Legt concepten uit en onderbouwt argumenten met relevante scenario's of voorbeelden, voor meer levendigheid en begrip.",
   "aiDiscussion.viewAnalytics": "Bekijk Analytics",
   "aiDiscussion.adjustStyles": "Pas Stijlen Aan",
   "aiDiscussion.endDiscussionTitle": "Discussie Beëindigen",
@@ -1808,6 +1844,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   mobileAudioHelpOption2iOS: "Voor iOS: Ga naar Instellingen > Focus > Niet Storen en activeer deze modus. Stel een schema in voor geplande opnames via de instellingen.",
   mobileAudioHelpOption2Android: "Voor Android: Open het Snelmenu door omlaag te vegen, tik op Niet Storen. Configureer een regel via Instellingen > Geluiden & trillingen > Niet storen voor vaste tijden.",
   mobileAudioHelpOption2Explanation: "Toelichting: Deze modus onderdrukt oproepen terwijl u online blijft voor andere notificaties. Dit is geschikt als u bereikbaar wilt blijven voor niet-telefonische communicatie.",
+  mobileAudioHelpExtraTip: "Test je gekozen instelling voordat je een belangrijke opname start. Zo weet je zeker dat alles werkt zoals verwacht.",
   mobileAudioHelpClose: "Sluiten",
   
   // Pricing page afbeelding upload
@@ -2248,6 +2285,10 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   // Email upload FAQ
   faqEmailUpload: "Kan ik e-mails uploaden en analyseren?",
   faqEmailUploadAnswer: "Ja! Met onze e-mail upload functie kunt u .msg en .eml bestanden uploaden voor analyse. Deze functie is beschikbaar voor Gold, Enterprise en Diamond abonnementen. E-mail adressen worden automatisch geëxtraheerd en bovenaan getoond voor uw gemak.",
+  emailUploadSubscriptionRequired: "E-mail upload is alleen beschikbaar voor Gold, Enterprise en Diamond abonnementen.",
+  uploadFailed: "Upload mislukt.",
+  supportedFileTypes: "TXT, PDF, RTF, HTML, MD, DOCX",
+  audioFormats: "MP3, MP4, WebM, WAV",
   
   // Pricing email upload
   pricingEmailUpload: "E-mail Upload (.msg, .eml bestanden)",
@@ -2514,7 +2555,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   // UI states (additional)
   error: "Fout",
   download: "Download",
-  downloadAudio: "Download audio",
+
   audioDeleteWarning: "Let op: De originele audio opname wordt verwijderd zodra het transcriptieproces start.",
   actions: "Acties",
   signUpWithEmail: "Meld je aan met je email adres",
@@ -2985,6 +3026,32 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   // Technical Console Messages - Clipboard
   clipboardToastMessage: "{type}: {message}",
 
+  // Toast Messages
+  toastApiKeyNotAvailable: "API key niet beschikbaar. Neem contact op met de administrator.",
+  toastTokenLimitReached: "Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.",
+  toastDiamondTokenCompleted: "Diamond token actie voltooid!",
+  toastDiamondTokenError: "Er is een fout opgetreden bij de diamond token actie.",
+  toastCopiedToClipboard: "Gekopieerd naar klembord",
+  toastCopyFailed: "Kopiëren mislukt",
+  toastFileDownloaded: "Bestand gedownload",
+  toastErrorLoadingPreferences: "Fout bij het laden van voorkeuren",
+  toastPleaseSelectAIProvider: "Selecteer een AI-provider",
+  toastPreferencesSaved: "AI Provider voorkeuren succesvol opgeslagen",
+  toastErrorSavingPreferences: "Fout bij het opslaan van voorkeuren",
+  toastBusinessCaseGenerated: "Business case gegenereerd",
+  toastTooManyChatMessages: "Te veel chatberichten",
+  toastNotEnoughCredits: "Onvoldoende credits",
+  toastNoUserManagementAccess: "Geen toegang tot gebruikersbeheer",
+  toastErrorLoadingUsers: "Fout bij het laden van gebruikers",
+  toastErrorAddingUser: "Fout bij toevoegen gebruiker",
+  toastConfirmationEmailSent: "Bevestigingsmail verzonden",
+  toastWaitlistError: "Fout bij wachtlijst",
+  toastNoEmailAccess: "Geen e-mailtoegang",
+  toastErrorPreparingInvitations: "Fout bij voorbereiden uitnodigingen",
+  toastWebSpeechAPINotSupported: "Web Speech API niet ondersteund",
+  toastErrorPreparingLargeAudio: "Fout bij voorbereiden groot audiobestand",
+  toastFailedToDownloadFile: "Downloaden van bestand mislukt",
+
   // Expert Chat Console Messages
   expertChatRateLimitExceeded: "Snelheidslimiet overschreden voor expert chat",
   expertChatInvalidMessage: "Ongeldige berichtinhoud:",
@@ -3111,60 +3178,74 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   
   // Audio Usage Meter
   unlimitedAudio: "Onbeperkte audio - geen beperkingen!",
-  approachingAudioLimit: "Je nadert je maandelijkse audio limiet. Overweeg een upgrade naar een hoger abonnement."
+  approachingAudioLimit: "Je nadert je maandelijkse audio limiet. Overweeg een upgrade naar een hoger abonnement.",
+  
+  // Audio recording related translations
+  speechRecognition: "Spraakherkenning",
+  fileSize: "Bestandsgrootte",
+  unknown: "Onbekend",
+  audioFormat: "Audio formaat",
+  quality: "Kwaliteit",
+  optimizedFor: "Geoptimaliseerd voor",
+  listenBack: "🎧 Luister je opname terug voordat je transcribeert",
+  downloadAudio: "Download audio",
+  transcribe: "Transcriberen",
+  aiTranscription: "AI transcriptie",
+  aiTranscriptionDesc: "Hoogwaardige transcriptie met AI technologie",
+  yourRecordingIsReady: "Je audio opname is klaar. Luister terug en start de transcriptie wanneer je klaar bent.",
 
   // Referral Programma
-,referralProgramTitle: "Referral Programma"
-,referralWhatIsIt: "Wat is dit?"
-,referralIntro: "Verdien 1 dollar per maand terugkerende commissie op elke betaald abonnement dat je aanbrengt."
-,referralRulePaidCustomer: "Je moet een betalende klant zijn om je in te schrijven."
-,referralRulePayment: "Uitbetalingen worden maandelijks gedaan via PayPal."
-,referralRulePaypal: "Een geldige PayPal.Me link is vereist om uitbetalingen te ontvangen."
-,referralRuleJoinUrl: "Je unieke aanmeld-URL laat nieuwe gebruikers zich automatisch aanmelden als jouw referral."
-,referralRulePayoutSchedule: "Commissies bouwen maandelijks op en worden binnen 7 dagen na maandafsluiting uitbetaald."
-,referralRuleFree: "Nieuwe gebruikers worden eerst gratis lid, geen kosten; zodra ze zelf kiezen voor een betaald abonnement, gaat jouw referral lopen, elke maand."
-  ,referralAlreadyEnrolled: "Je bent ingeschreven in het referral programma."
-  ,referralYourJoinUrl: "Jouw aanmeld-URL"
-  ,referralEnrollButton: "Inschrijven"
-  ,referralDashboardTitle: "Referral Dashboard"
-  ,referralNeedEnroll: "Je moet je inschrijven om je referral dashboard te zien."
-  ,referralEarningsTotal: "Totale verdiensten"
-  ,referralEarningsMonth: "Verdiensten deze maand"
-  ,referralEarningsPreviousMonth: "Verdiensten vorige maand"
-  ,referralColEmail: "E-mail"
-  ,referralColCurrentTier: "Huidige abonnement"
-  ,referralColMonthStartTier: "Abonnement aan begin van de maand"
-  ,referralNoEntries: "Nog geen referrals."
-  ,referralPaypalMeDesc: "We gebruiken PayPal.Me voor eenvoudige, veilige uitbetalingen."
-  ,referralPaypalLearnMore: "Meer informatie"
-  ,referralPaypalMeLabel: "Jouw PayPal.Me link"
-  ,referralPaypalInvalid: "Voer een geldige PayPal.Me link in zoals https://paypal.me/jouwnaam"
-  ,referralSignupTitle: "Inschrijven voor Referral Programma"
-  ,referralGenerateCode: "Genereer referralcode"
-  ,referralYourCode: "Jouw referralcode"
-  ,referralJoinUrl: "Jouw aanmeld-URL"
-  ,mustBeLoggedIn: "Je moet ingelogd zijn om door te gaan."
-  ,copy: "Kopiëren"
-  ,referralEnrollSuccess: "Je bent ingeschreven! Je referralprofiel is opgeslagen."
-  ,referralEnrollError: "Kon niet inschrijven voor het referral programma. Probeer opnieuw."
-  ,welcomeNewReferral: "Welkom! Je account is aangemaakt via een referral."
-  ,referralExportPdf: "Export PDF"
-  ,referralExportError: "Exporteren mislukt. Probeer opnieuw."
-  ,referralOneTimeWarning: "BELANGRIJK: Deze code wordt slechts EENMALIG verstrekt! Kopieer en bewaar deze zorgvuldig."
-  ,copyCode: "Code kopiëren"
-  ,referralInstructions: "Instructies:"
-  ,referralInstruction1: "Deel deze URL met mensen die zich (gratis) willen aanmelden"
-  ,referralInstruction2: "De URL kan door iedereen worden gebruikt"
-  ,referralInstruction3: "Bewaar de URL op een veilige plaats"
-  ,referralInstruction4: "Voor communicatie met RecapHorizon over jouw referral programma, geef altijd jouw unieke code mee"
+  referralProgramTitle: "Referral Programma",
+  referralWhatIsIt: "Wat is dit?",
+  referralIntro: "Verdien 1 dollar per maand terugkerende commissie op elke betaald abonnement dat je aanbrengt.",
+  referralRulePaidCustomer: "Je moet een betalende klant zijn om je in te schrijven.",
+  referralRulePayment: "Uitbetalingen worden maandelijks gedaan via PayPal.",
+  referralRulePaypal: "Een geldige PayPal.Me link is vereist om uitbetalingen te ontvangen.",
+  referralRuleJoinUrl: "Je unieke aanmeld-URL laat nieuwe gebruikers zich automatisch aanmelden als jouw referral.",
+  referralRulePayoutSchedule: "Commissies bouwen maandelijks op en worden binnen 7 dagen na maandafsluiting uitbetaald.",
+  referralRuleFree: "Nieuwe gebruikers worden eerst gratis lid, geen kosten; zodra ze zelf kiezen voor een betaald abonnement, gaat jouw referral lopen, elke maand.",
+  referralAlreadyEnrolled: "Je bent ingeschreven in het referral programma.",
+  referralYourJoinUrl: "Jouw aanmeld-URL",
+  referralEnrollButton: "Inschrijven",
+  referralDashboardTitle: "Referral Dashboard",
+  referralNeedEnroll: "Je moet je inschrijven om je referral dashboard te zien.",
+  referralEarningsTotal: "Totale verdiensten",
+  referralEarningsMonth: "Verdiensten deze maand",
+  referralEarningsPreviousMonth: "Verdiensten vorige maand",
+  referralColEmail: "E-mail",
+  referralColCurrentTier: "Huidige abonnement",
+  referralColMonthStartTier: "Abonnement aan begin van de maand",
+  referralNoEntries: "Nog geen referrals.",
+  referralPaypalMeDesc: "We gebruiken PayPal.Me voor eenvoudige, veilige uitbetalingen.",
+  referralPaypalLearnMore: "Meer informatie",
+  referralPaypalMeLabel: "Jouw PayPal.Me link",
+  referralPaypalInvalid: "Voer een geldige PayPal.Me link in zoals https://paypal.me/jouwnaam",
+  referralSignupTitle: "Inschrijven voor Referral Programma",
+  referralGenerateCode: "Genereer referralcode",
+  referralYourCode: "Jouw referralcode",
+  referralJoinUrl: "Jouw aanmeld-URL",
+  mustBeLoggedIn: "Je moet ingelogd zijn om door te gaan.",
+  copy: "Kopiëren",
+  referralEnrollSuccess: "Je bent ingeschreven! Je referralprofiel is opgeslagen.",
+  referralEnrollError: "Kon niet inschrijven voor het referral programma. Probeer opnieuw.",
+  welcomeNewReferral: "Welkom! Je account is aangemaakt via een referral.",
+  referralExportPdf: "Export PDF",
+  referralExportError: "Exporteren mislukt. Probeer opnieuw.",
+  referralOneTimeWarning: "BELANGRIJK: Deze code wordt slechts EENMALIG verstrekt! Kopieer en bewaar deze zorgvuldig.",
+  copyCode: "Code kopiëren",
+  referralInstructions: "Instructies:",
+  referralInstruction1: "Deel deze URL met mensen die zich (gratis) willen aanmelden",
+  referralInstruction2: "De URL kan door iedereen worden gebruikt",
+  referralInstruction3: "Bewaar de URL op een veilige plaats",
+  referralInstruction4: "Voor communicatie met RecapHorizon over jouw referral programma, geef altijd jouw unieke code mee",
 
 // Referral Registration Modal
-,referralWelcomeTitle: "Welkom!"
-,referralWelcomeGreeting: "Welkom,"
-,referralWelcomeMessage: "We zijn super blij dat je via een referral bij ons terecht bent gekomen. Je kan nu je account aanmaken (gratis) om gebruik te maken van de Free tier."
-,referralWelcomeGetStarted: "Na het aanmaken kun je meteen aan de slag."
-,referralCodeUsed: "Gebruikte referral code"
-,errorValidatingReferralCode: "Fout bij valideren referral code:",
+  referralWelcomeTitle: "Welkom!",
+  referralWelcomeGreeting: "Welkom,",
+  referralWelcomeMessage: "We zijn super blij dat je via een referral bij ons terecht bent gekomen. Je kan nu je account aanmaken (gratis) om gebruik te maken van de Free tier.",
+  referralWelcomeGetStarted: "Na het aanmaken kun je meteen aan de slag.",
+  referralCodeUsed: "Gebruikte referral code",
+  errorValidatingReferralCode: "Fout bij valideren referral code:",
   invalidReferralCode: "Ongeldige referral code",
   referralCodeNotFound: "Referral code niet gevonden",
 
@@ -3663,5 +3744,46 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   "summaryLengthOptions.extensive": "Uitgebreid",
   "summaryLengthOptions.fullTimeline": "Volledige tijdlijn",
 
+  // Months
+  january: "januari",
+  february: "februari",
+  march: "maart",
+  april: "april",
+  may: "mei",
+  june: "juni",
+  july: "juli",
+  august: "augustus",
+  september: "september",
+  october: "oktober",
+  november: "november",
+  december: "december",
+
+  // Subscription Success Modal
+  startWithRecapHorizon: "Start met RecapHorizon!",
+  thankYouMessage: "We zijn blij dat je voor RecapHorizon hebt gekozen. Veel succes met je AI-gestuurde analyses!",
+
+  // Email Confirmation Modal
+  emailConfirmTitle: "Bevestig je e-mailadres voor registratie",
+  emailConfirmDescription: "We hebben een bevestigingscode naar je e-mailadres gestuurd om je account aan te maken.",
+  emailConfirmInstruction: "Voer de 6-cijferige code in die je per e-mail hebt ontvangen.",
+  emailConfirmPlaceholder: "Voer 6-cijferige code in",
+  emailConfirmVerify: "Bevestigen",
+  emailConfirmVerifying: "Bevestigen...",
+  emailConfirmNoCode: "Geen code ontvangen?",
+  emailConfirmResend: "Code opnieuw versturen",
+  emailConfirmResending: "Versturen...",
+  emailConfirmResendCooldown: "Opnieuw versturen ({seconds}s)",
+  emailConfirmAttemptCount: "Poging {count} van {total}. Nog {remaining} pogingen over.",
+  emailConfirmAccountCreating: "Je account wordt aangemaakt zodra je e-mailadres is bevestigd.",
+  emailConfirmWaitlistAdding: "Je wordt aan de wachtlijst toegevoegd zodra je e-mailadres is bevestigd.",
+  emailConfirmCheckSpam: "Controleer ook je spam/ongewenste e-mail map als je de code niet ziet.",
+  emailConfirmTechnicalError: "Er is een technische fout opgetreden. Probeer het opnieuw.",
+  emailConfirmCodeExpired: "De bevestigingscode is verlopen. Vraag een nieuwe aan.",
+  emailConfirmCodeInvalid: "Ongeldige bevestigingscode. Controleer de code en probeer het opnieuw.",
+  emailConfirmTooManyAttempts: "Te veel pogingen. Probeer het later opnieuw.",
+  emailConfirmCodeAlreadySent: "Er is al een bevestigingsmail verstuurd. Controleer je inbox.",
+  emailConfirmTooManyRequests: "Te veel verzoeken. Probeer het over enkele minuten opnieuw.",
+  emailConfirmCouldNotResend: "Kon geen nieuwe bevestigingscode versturen. Probeer het later opnieuw.",
+  emailConfirmErrorSending: "Er is een technische fout opgetreden bij het versturen van een nieuwe code."
 
 };

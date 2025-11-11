@@ -121,7 +121,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
 
     const content = (summary || transcript || '').trim();
     if (!content) {
-      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError') || 'Er is onvoldoende inhoud om onderwerpen te genereren' }));
+      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('topicGenerationError') }));
       return;
     }
 
@@ -189,7 +189,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
         ...prev,
         step: 'selectTopic',
         topics: [],
-        error: t('topicGenerationError') || 'Fout bij het genereren van onderwerpen'
+        error: t('topicGenerationError')
       }));
     }
   };
@@ -248,7 +248,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       setState(prev => ({
         ...prev,
         step: 'selectPartner',
-        error: t('analysisError') || 'Fout bij het uitvoeren van analyse'
+        error: t('analysisError')
       }));
     }
   };
@@ -278,10 +278,10 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      displayToast(t('analysisCopied', 'Analyse gekopieerd naar klembord'), 'success');
+      displayToast(t('analysisCopied'), 'success');
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      displayToast(t('copyError', 'Kopiëren mislukt'), 'error');
+      displayToast(t('copyError'), 'error');
     }
   };
 
@@ -296,7 +296,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
     element.click();
     document.body.removeChild(element);
     
-    displayToast(t('analysisDownloaded', 'Analyse gedownload als tekstbestand'), 'success');
+    displayToast(t('analysisDownloaded'), 'success');
   };
 
   const downloadAsPDF = async () => {
@@ -321,10 +321,10 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       doc.text(lines, 20, 60);
       
       doc.save(`denkpartner-analyse-${new Date().getTime()}.pdf`);
-      displayToast(t('analysisDownloadedPDF', 'Analyse gedownload als PDF'), 'success');
+      displayToast(t('analysisDownloadedPDF'), 'success');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      displayToast(t('pdfGenerationError', 'PDF genereren mislukt'), 'error');
+      displayToast(t('pdfGenerationError'), 'error');
     }
   };
 
@@ -366,10 +366,10 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
     <div className="space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-          {t('selectTopic', 'Selecteer een onderwerp')}
+          {t('selectTopic')}
         </h3>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('selectTopicDesc', 'Kies het onderwerp dat je wilt verkennen met een denkpartner')}
+          {t('selectTopicDesc')}
         </p>
       </div>
 
@@ -380,7 +380,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
             onClick={generateTopics}
             className="mt-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 text-sm font-medium"
           >
-            {t('tryAgain', 'Probeer opnieuw')}
+            {t('tryAgain')}
           </button>
         </div>
       )}
@@ -388,13 +388,13 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       {state.topics.length === 0 && !state.error && (
         <div className="text-center py-8">
           <p className="text-slate-500 dark:text-slate-400">
-            {t('noTopicsGenerated', 'Geen onderwerpen gegenereerd')}
+            {t('noTopicsGenerated')}
           </p>
           <button
             onClick={generateTopics}
             className="mt-2 text-cyan-600 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-200 text-sm font-medium"
           >
-            {t('tryAgain', 'Probeer opnieuw')}
+            {t('tryAgain')}
           </button>
         </div>
       )}
@@ -426,21 +426,21 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
           className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
           <FiArrowLeft size={16} />
-          {t('backToTopics', 'Terug naar onderwerpen')}
+          {t('backToTopics')}
         </button>
       </div>
 
       <div className="text-center">
         <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-          {t('selectThinkingPartner', 'Kies je denkpartner')}
+          {t('selectThinkingPartner')}
         </h3>
         <p className="text-slate-600 dark:text-slate-400 mb-4">
-          {t('selectPartnerDesc', 'Selecteer de denkmethodologie die het beste past bij je vraag')}
+          {t('selectPartnerDesc')}
         </p>
         {state.selectedTopic && (
           <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-3 mb-6">
             <p className="text-sm text-cyan-800 dark:text-cyan-200">
-              <span className="font-medium">{t('selectedTopic', 'Geselecteerd onderwerp')}:</span> {state.selectedTopic.title}
+              <span className="font-medium">{t('selectedTopic')}:</span> {state.selectedTopic.title}
             </p>
           </div>
         )}
@@ -466,7 +466,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
   );
 
   const renderGeneratingStep = () => (
-    <BlurredLoadingOverlay text={t('generatingTopics', 'Onderwerpen genereren...')} />
+    <BlurredLoadingOverlay text={t('generatingTopics')} />
   );
 
   const renderAnalyzingStep = () => (
@@ -485,7 +485,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
           className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
           <FiArrowLeft size={16} />
-          {t('backToPartners', 'Terug naar denkpartners')}
+          {t('backToPartners')}
         </button>
       </div>
 
@@ -508,7 +508,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
               className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
             >
               <FiCopy size={16} />
-              {t('copyAnalysis', 'Analyse kopiëren')}
+              {t('copyAnalysis')}
             </button>
             <div className="relative" ref={menuRef}>
               <button
@@ -529,7 +529,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
                       className="flex items-center gap-3 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
                     >
                       <FiDownload size={16} />
-                      {t('downloadAsText', 'Downloaden als tekst')}
+                      {t('downloadAsText')}
                     </button>
                     <button
                       onClick={() => {
@@ -539,7 +539,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
                       className="flex items-center gap-3 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
                     >
                       <FiDownload size={16} />
-                      {t('downloadAsPDF', 'Downloaden als PDF')}
+                      {t('downloadAsPDF')}
                     </button>
                     <button
                       onClick={() => {
@@ -549,7 +549,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
                       className="flex items-center gap-3 w-full px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
                     >
                       <FiMail size={16} />
-                      {t('emailAnalysis', 'E-mailen')}
+                      {t('emailAnalysis')}
                     </button>
                   </div>
                 </div>

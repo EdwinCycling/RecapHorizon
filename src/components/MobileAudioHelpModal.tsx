@@ -91,7 +91,7 @@ const MobileAudioHelpModal: React.FC<MobileAudioHelpModalProps> = ({ isOpen, onC
               <div>
                 <p className="font-medium text-green-800 dark:text-green-200 mb-1">{t('extraTip')}</p>
                 <p className="text-green-700 dark:text-green-300 text-sm">
-                  Test je gekozen instelling voordat je een belangrijke opname start. Zo weet je zeker dat alles werkt zoals verwacht.
+                  {t('mobileAudioHelpExtraTip')}
                 </p>
               </div>
             </div>

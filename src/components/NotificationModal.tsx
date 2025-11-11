@@ -1,5 +1,6 @@
 import React from 'react';
 import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { TranslationFunction } from '../../types';
 
 interface NotificationModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface NotificationModalProps {
   title: string;
   message: string;
   type: 'success' | 'error' | 'info';
+  t: TranslationFunction;
 }
 
 const NotificationModal: React.FC<NotificationModalProps> = ({ 
@@ -14,7 +16,8 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
   onClose, 
   title, 
   message, 
-  type 
+  type,
+  t
 }) => {
   if (!isOpen) return null;
 
@@ -69,7 +72,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors text-sm font-medium"
           >
-            OK
+            {t('ok')}
           </button>
         </div>
       </div>

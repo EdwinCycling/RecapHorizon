@@ -64,15 +64,15 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
   };
 
   const getStyleOptions = () => [
-    { value: 'infographic', label: t('imageStyleInfographic') || 'Infographic' },
-    { value: 'drawing', label: t('imageStyleDrawing') || 'Drawing' },
-    { value: 'photorealistic', label: t('imageStylePhotorealistic') || 'Photo Realistic' }
+    { value: 'infographic', label: t('imageStyleInfographic') },
+        { value: 'drawing', label: t('imageStyleDrawing') },
+        { value: 'photorealistic', label: t('imageStylePhotorealistic') }
   ];
 
   const getColorOptions = () => [
-    { value: 'blackwhite', label: t('imageColorBlackWhite') || 'Black & White' },
-    { value: 'color', label: t('imageColorColor') || 'Color' },
-    { value: 'vibrant', label: t('imageColorVibrant') || 'Very Colorful/Bright Colors' }
+    { value: 'blackwhite', label: t('imageColorBlackWhite') },
+        { value: 'color', label: t('imageColorColor') },
+        { value: 'vibrant', label: t('imageColorVibrant') }
   ];
 
   // Handle both array and string formats for backward compatibility
@@ -113,7 +113,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                   disabled={isGenerating}
                   title="Selecteer aantal berichten"
                 >
-                  {`${selectedPostCount} ${selectedPostCount === 1 ? t('socialPost') || 'post' : t('socialPost') || 'posts'}`}
+                  {`${selectedPostCount} ${selectedPostCount === 1 ? t('socialPost') : t('socialPost')}`}
                   <ChevronDown className="w-4 h-4" />
                 </button>
                 {dropdownOpen && (
@@ -127,7 +127,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                         }}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
                       >
-                        {count} {count === 1 ? t('socialPost') || 'post' : t('socialPost') || 'posts'}
+                        {count} {count === 1 ? t('socialPost') : t('socialPost')}
                       </button>
                     ))}
                   </div>
@@ -139,7 +139,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                 className="px-3 py-1 text-sm bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 disabled:from-slate-400 disabled:to-slate-500 text-white rounded transition-all shadow-md hover:shadow-lg"
                 title="Genereer nieuwe berichten"
               >
-{t('generate') || 'Generate'}
+{t('generate')}
               </button>
             </div>
           )}
@@ -152,7 +152,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-slate-700">
                 <button onClick={() => handleCopy()} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700">
-                  {t('socialPostCopyAll') || 'Copy All Posts'}
+                  {t('socialPostCopyAll')}
                 </button>
               </div>
             )}
@@ -181,7 +181,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
                   className="flex items-center gap-1 px-2 py-1 text-xs bg-cyan-100 dark:bg-cyan-900 hover:bg-cyan-200 dark:hover:bg-cyan-800 text-cyan-700 dark:text-cyan-300 rounded ml-auto transition-colors"
                 >
                   <Copy className="w-3 h-3" />
-                  {t('socialPostCopyIndividual') || 'Copy'}
+                  {t('socialPostCopyIndividual')}
                 </button>
               </div>
               <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-200 font-sans">{numberedPost}</pre>
@@ -196,7 +196,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
           <div className="flex items-center gap-2 mb-3">
             <Image className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              {t('aiImageGeneration') || 'AI Image Generation'}
+              {t('aiImageGeneration')}
             </h4>
           </div>
           
@@ -204,7 +204,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
             {/* Style Dropdown */}
             <div className="relative">
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                {t('imageStyle') || 'Style'}
+                {t('imageStyle')}
               </label>
               <button
                 onClick={() => setStyleDropdownOpen(!styleDropdownOpen)}
@@ -236,7 +236,7 @@ const SocialPostXCard: React.FC<SocialPostXCardProps> = ({
             {/* Color Dropdown */}
             <div className="relative">
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                {t('imageColor') || 'Color'}
+                {t('imageColor')}
               </label>
               <button
                 onClick={() => setColorDropdownOpen(!colorDropdownOpen)}

@@ -48,7 +48,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
       }
     } catch (error) {
       console.error('Error loading user preferences:', error);
-      displayToast('Error loading preferences', 'error');
+      displayToast(t('toastErrorLoadingPreferences'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +57,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
   const handleSave = async () => {
     // Validate that a provider is selected
     if (!selectedProvider) {
-      displayToast('Please select an AI provider', 'error');
+      displayToast(t('toastSelectAIProvider'), 'error');
       return;
     }
     
@@ -66,11 +66,11 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
       await saveUserPreferences(userId, {
         aiProvider: selectedProvider
       });
-      displayToast('AI Provider preferences saved successfully', 'success');
+      displayToast(t('toastAIPreferencesSaved'), 'success');
       onClose();
     } catch (error) {
       console.error('Error saving preferences:', error);
-      displayToast('Error saving preferences', 'error');
+      displayToast(t('toastErrorSavingPreferences'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -83,7 +83,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
       {!inline && (
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            AI Provider Settings
+            {t('aiProviderSettingsTitle')}
           </h2>
           <button
             onClick={onClose}
@@ -104,7 +104,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
             <>
               <div className="mb-6">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  As a Diamond user, you can choose your preferred AI provider for enhanced features.
+                  {t('aiProviderSettingsDescription')}
                 </p>
                 
                 <div className="space-y-3">
@@ -119,10 +119,10 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
                     />
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">
-                        Google Gemini
+                        {t('googleGemini')}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Advanced AI with multimodal capabilities and large context window
+                        {t('googleGeminiDescription')}
                       </div>
                     </div>
                   </label>
@@ -138,10 +138,10 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
                     />
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">
-                        OpenRouter
+                        {t('openRouter')}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Access to multiple AI models with flexible routing
+                        {t('openRouterDescription')}
                       </div>
                     </div>
                   </label>
@@ -154,7 +154,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
                     onClick={onClose}
                     className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button
                     onClick={handleSave}
@@ -164,7 +164,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
                     {isSaving && (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     )}
-                    Save Preferences
+                    {t('savePreferences')}
                   </button>
                 </div>
               )}
@@ -178,7 +178,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
                     {isSaving && (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     )}
-                    Save AI Provider
+                    {t('saveAIProvider')}
                   </button>
                 </div>
               )}

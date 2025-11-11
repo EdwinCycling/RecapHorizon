@@ -52,15 +52,15 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
   };
 
   const getStyleOptions = () => [
-    { value: 'infographic', label: t('imageStyleInfographic') || 'Infographic' },
-    { value: 'drawing', label: t('imageStyleDrawing') || 'Drawing' },
-    { value: 'photorealistic', label: t('imageStylePhotorealistic') || 'Photo Realistic' }
+    { value: 'infographic', label: t('imageStyleInfographic') },
+        { value: 'drawing', label: t('imageStyleDrawing') },
+        { value: 'photorealistic', label: t('imageStylePhotorealistic') }
   ];
 
   const getColorOptions = () => [
-    { value: 'blackwhite', label: t('imageColorBlackWhite') || 'Black & White' },
-    { value: 'color', label: t('imageColorColor') || 'Color' },
-    { value: 'vibrant', label: t('imageColorVibrant') || 'Very Colorful/Bright Colors' }
+    { value: 'blackwhite', label: t('imageColorBlackWhite') },
+        { value: 'color', label: t('imageColorColor') },
+        { value: 'vibrant', label: t('imageColorVibrant') }
   ];
 
   // Handle both array and string formats for backward compatibility
@@ -101,7 +101,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
       case 'Instagram':
         return 'Instagram';
       default:
-        return t('socialPost') || 'Social Post';
+        return t('socialPost');
     }
   };
 
@@ -283,7 +283,7 @@ const SocialPostCard: React.FC<SocialPostCardProps> = ({
 
       {/* Loading Overlay */}
       {isGeneratingImage && (
-        <BlurredLoadingOverlay text={t('generatingImage', 'Afbeelding genereren...')} />
+        <BlurredLoadingOverlay text={t('generatingImage')} />
       )}
     </div>
   );

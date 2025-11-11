@@ -47,237 +47,241 @@ interface AIDiscussionState {
 }
 
 // Comprehensive discussion categories and goals as defined by user requirements
-const DISCUSSION_CATEGORIES = {
+const getDiscussionCategories = (t: TranslationFunction) => ({
   vision: {
     id: 'vision',
-    name: 'Visie en Conceptvalidatie',
+    name: t('aiDiscussion.category.vision', 'Visie en Conceptvalidatie'),
     icon: FiTarget,
     goals: [
       {
         id: 'v1',
-        name: 'Kernhypothese Valideren',
-        description: 'Wat moet absoluut waar zijn om dit idee te laten slagen, en hoe testen we dat snel?',
+        name: t('aiDiscussion.goal.v1', 'Kernhypothese Valideren'),
+        description: t('aiDiscussion.goal.v1Desc', 'Wat moet absoluut waar zijn om dit idee te laten slagen, en hoe testen we dat snel?'),
         icon: FiTarget
       },
       {
         id: 'v2', 
-        name: 'Blue Sky Ideevorming',
-        description: 'Verkennen van de meest ambitieuze en \'wildste\' versies van het idee.',
+        name: t('aiDiscussion.goal.v2', 'Blue Sky Ideevorming'),
+        description: t('aiDiscussion.goal.v2Desc', 'Verkennen van de meest ambitieuze en \'wildste\' versies van het idee.'),
         icon: FiZap
       },
       {
         id: 'v3',
-        name: 'Minimale Levensvatbare Oplossing (MVP) Definitie',
-        description: 'Wat is de kleinste, snelste versie die we kunnen bouwen om waarde te leveren?',
+        name: t('aiDiscussion.goal.v3', 'Minimale Levensvatbare Oplossing (MVP) Definitie'),
+        description: t('aiDiscussion.goal.v3Desc', 'Wat is de kleinste, snelste versie die we kunnen bouwen om waarde te leveren?'),
         icon: FiCheckCircle
       },
       {
         id: 'v4',
-        name: 'Scenario-ontwikkeling (Best & Worst Case)',
-        description: 'Wat zijn de meest extreme succes- en faalscenario\'s en hoe reageren we?',
+        name: t('aiDiscussion.goal.v4', 'Scenario-ontwikkeling (Best & Worst Case)'),
+        description: t('aiDiscussion.goal.v4Desc', 'Wat zijn de meest extreme succes- en faalscenario\'s en hoe reageren we?'),
         icon: FiShield
       },
       {
         id: 'v5',
-        name: 'Kernwaarden en Merkpositionering',
-        description: 'Welke emotie of probleem lossen we primair op en hoe vertalen we dit naar onze identiteit?',
+        name: t('aiDiscussion.goal.v5', 'Kernwaarden en Merkpositionering'),
+        description: t('aiDiscussion.goal.v5Desc', 'Welke emotie of probleem lossen we primair op en hoe vertalen we dit naar onze identiteit?'),
         icon: FiUsers
       }
     ]
   },
   lean: {
     id: 'lean',
-    name: 'Lean Financiën en Middelen',
+    name: t('aiDiscussion.category.lean', 'Lean Financiën en Middelen'),
     icon: FiTool,
     goals: [
       {
         id: 'l1',
-        name: 'Kosten-Slimme Realisatiepaden',
-        description: 'Hoe kunnen we dit initiatief uitvoeren met minimale initiële investeringen (bootstrapping)?',
+        name: t('aiDiscussion.goal.l1', 'Kosten-Slimme Realisatiepaden'),
+        description: t('aiDiscussion.goal.l1Desc', 'Hoe kunnen we dit initiatief uitvoeren met minimale initiële investeringen (bootstrapping)?'),
         icon: FiTool
       },
       {
         id: 'l2',
-        name: 'Mogelijke Inkomstenstromen',
-        description: 'Brainstormen over alle mogelijke manieren om geld te verdienen (direct, indirect, data).',
+        name: t('aiDiscussion.goal.l2', 'Mogelijke Inkomstenstromen'),
+        description: t('aiDiscussion.goal.l2Desc', 'Brainstormen over alle mogelijke manieren om geld te verdienen (direct, indirect, data).'),
         icon: FiTarget
       },
       {
         id: 'l3',
-        name: 'Efficiënt Gebruik van Huidige Middelen',
-        description: 'Hoe kunnen we bestaande talenten, systemen of partners inzetten om kosten te besparen?',
+        name: t('aiDiscussion.goal.l3', 'Efficiënt Gebruik van Huidige Middelen'),
+        description: t('aiDiscussion.goal.l3Desc', 'Hoe kunnen we bestaande talenten, systemen of partners inzetten om kosten te besparen?'),
         icon: FiCheckCircle
       },
       {
         id: 'l4',
-        name: 'Focus op Vroege Cashflow',
-        description: 'Welke onderdelen van het idee kunnen het snelst geld opleveren om de rest te financieren?',
+        name: t('aiDiscussion.goal.l4', 'Focus op Vroege Cashflow'),
+        description: t('aiDiscussion.goal.l4Desc', 'Welke onderdelen van het idee kunnen het snelst geld opleveren om de rest te financieren?'),
         icon: FiZap
       },
       {
         id: 'l5',
-        name: 'Resource Ruilhandel / Partnerships',
-        description: 'Welke waarde kunnen we bieden aan partners in ruil voor hun middelen of expertise?',
+        name: t('aiDiscussion.goal.l5', 'Resource Ruilhandel / Partnerships'),
+        description: t('aiDiscussion.goal.l5Desc', 'Welke waarde kunnen we bieden aan partners in ruil voor hun middelen of expertise?'),
         icon: FiUsers
       }
     ]
   },
   execution: {
     id: 'execution',
-    name: 'Snelheid en Flexibele Uitvoering',
+    name: t('aiDiscussion.category.execution', 'Snelheid en Flexibele Uitvoering'),
     icon: FiZap,
     goals: [
       {
         id: 'u1',
-        name: 'Prioritering van Features (Moet/Zou/Kan)',
-        description: 'Bepalen welke functies cruciaal zijn voor de MVP en welke luxe zijn.',
+        name: t('aiDiscussion.goal.u1', 'Prioritering van Features (Moet/Zou/Kan)'),
+        description: t('aiDiscussion.goal.u1Desc', 'Bepalen welke functies cruciaal zijn voor de MVP en welke luxe zijn.'),
         icon: FiCheckCircle
       },
       {
         id: 'u2',
-        name: 'Versnelling van de Tijdlijn',
-        description: 'Hoe kunnen we de levering van de eerste versie met 30% versnellen?',
+        name: t('aiDiscussion.goal.u2', 'Versnelling van de Tijdlijn'),
+        description: t('aiDiscussion.goal.u2Desc', 'Hoe kunnen we de levering van de eerste versie met 30% versnellen?'),
         icon: FiZap
       },
       {
         id: 'u3',
-        name: 'Afhankelijkheden Elimineren',
-        description: 'Hoe maken we onszelf minder afhankelijk van trage of dure externe factoren?',
+        name: t('aiDiscussion.goal.u3', 'Afhankelijkheden Elimineren'),
+        description: t('aiDiscussion.goal.u3Desc', 'Hoe maken we onszelf minder afhankelijk van trage of dure externe factoren?'),
         icon: FiShield
       },
       {
         id: 'u4',
-        name: 'Operationele Simpliciteit',
-        description: 'Hoe ontwerpen we het proces zo dat het met de minste inspanning schaalbaar is?',
+        name: t('aiDiscussion.goal.u4', 'Operationele Simpliciteit'),
+        description: t('aiDiscussion.goal.u4Desc', 'Hoe ontwerpen we het proces zo dat het met de minste inspanning schaalbaar is?'),
         icon: FiTool
       },
       {
         id: 'u5',
-        name: 'Feedback Loop Design',
-        description: 'Hoe creëren we het snelste en meest effectieve mechanisme om feedback van vroege gebruikers te verzamelen en te verwerken?',
+        name: t('aiDiscussion.goal.u5', 'Feedback Loop Design'),
+        description: t('aiDiscussion.goal.u5Desc', 'Hoe creëren we het snelste en meest effectieve mechanisme om feedback van vroege gebruikers te verzamelen en te verwerken?'),
         icon: FiUsers
       }
     ]
   },
   people: {
     id: 'people',
-    name: 'Mensen, Talent en Cultuur',
+    name: t('aiDiscussion.category.people', 'Mensen, Talent en Cultuur'),
     icon: FiUsers,
     goals: [
       {
         id: 'm1',
-        name: 'Identificeren van Belangrijke Hiaten in Talent',
-        description: 'Welke kritieke expertise missen we momenteel om dit te bouwen?',
+        name: t('aiDiscussion.goal.m1', 'Identificeren van Belangrijke Hiaten in Talent'),
+        description: t('aiDiscussion.goal.m1Desc', 'Welke kritieke expertise missen we momenteel om dit te bouwen?'),
         icon: FiUsers
       },
       {
         id: 'm2',
-        name: 'Aantrekken van Vroege Adoptanten (Intern & Extern)',
-        description: 'Hoe maken we de eerste klanten/medewerkers enthousiast en bereid risico te nemen?',
+        name: t('aiDiscussion.goal.m2', 'Aantrekken van Vroege Adoptanten (Intern & Extern)'),
+        description: t('aiDiscussion.goal.m2Desc', 'Hoe maken we de eerste klanten/medewerkers enthousiast en bereid risico te nemen?'),
         icon: FiTarget
       },
       {
         id: 'm3',
-        name: 'Kleine Team Structuur',
-        description: 'Hoe stellen we het meest effectieve, compacte team samen voor de eerste 6 maanden?',
+        name: t('aiDiscussion.goal.m3', 'Kleine Team Structuur'),
+        description: t('aiDiscussion.goal.m3Desc', 'Hoe stellen we het meest effectieve, compacte team samen voor de eerste 6 maanden?'),
         icon: FiCheckCircle
       },
       {
         id: 'm4',
-        name: 'Verandering in Mindset Stimuleren',
-        description: 'Hoe communiceren we dit idee om weerstand in de organisatie te verminderen en nieuwsgierigheid te wekken?',
+        name: t('aiDiscussion.goal.m4', 'Verandering in Mindset Stimuleren'),
+        description: t('aiDiscussion.goal.m4Desc', 'Hoe communiceren we dit idee om weerstand in de organisatie te verminderen en nieuwsgierigheid te wekken?'),
         icon: FiZap
       },
       {
         id: 'm5',
-        name: 'Snel Beslissingskader',
-        description: 'Hoe versnellen we de besluitvorming rond dit project?',
+        name: t('aiDiscussion.goal.m5', 'Snel Beslissingskader'),
+        description: t('aiDiscussion.goal.m5Desc', 'Hoe versnellen we de besluitvorming rond dit project?'),
         icon: FiTool
       }
     ]
   },
   market: {
     id: 'market',
-    name: 'Markt en Adoptie',
+    name: t('aiDiscussion.category.market', 'Markt en Adoptie'),
     icon: FiCheckCircle,
     goals: [
       {
         id: 'a1',
-        name: 'Creatieve Oplossingen voor Juridische Kaders',
-        description: 'Hoe kunnen we innovatief zijn binnen de bestaande wet- en regelgeving?',
+        name: t('aiDiscussion.goal.a1', 'Creatieve Oplossingen voor Juridische Kaders'),
+        description: t('aiDiscussion.goal.a1Desc', 'Hoe kunnen we innovatief zijn binnen de bestaande wet- en regelgeving?'),
         icon: FiShield
       },
       {
         id: 'a2',
-        name: 'Marketing met Nul Budget',
-        description: 'Welke guerrillamarketing of virale strategieën kunnen we gebruiken?',
+        name: t('aiDiscussion.goal.a2', 'Marketing met Nul Budget'),
+        description: t('aiDiscussion.goal.a2Desc', 'Welke guerrillamarketing of virale strategieën kunnen we gebruiken?'),
         icon: FiZap
       },
       {
         id: 'a3',
-        name: 'Concurrentievoordeel door Proces',
-        description: 'Wat kunnen we beter of anders doen dan de concurrent, dat nauwelijks te kopiëren is?',
+        name: t('aiDiscussion.goal.a3', 'Concurrentievoordeel door Proces'),
+        description: t('aiDiscussion.goal.a3Desc', 'Wat kunnen we beter of anders doen dan de concurrent, dat nauwelijks te kopiëren is?'),
         icon: FiTarget
       },
       {
         id: 'a4',
-        name: 'Vroege Marktsegmentatie',
-        description: 'Wie zijn de eerste 100 klanten die we absoluut willen winnen en waarom?',
+        name: t('aiDiscussion.goal.a4', 'Vroege Marktsegmentatie'),
+        description: t('aiDiscussion.goal.a4Desc', 'Wie zijn de eerste 100 klanten die we absoluut willen winnen en waarom?'),
         icon: FiUsers
       },
       {
         id: 'a5',
-        name: 'Integrale Innovatie-Analyse',
-        description: 'Hoe kan dit idee elke afdeling helpen om innovatiever te zijn?',
+        name: t('aiDiscussion.goal.a5', 'Integrale Innovatie-Analyse'),
+        description: t('aiDiscussion.goal.a5Desc', 'Hoe kan dit idee elke afdeling helpen om innovatiever te zijn?'),
         icon: FiCheckCircle
       }
     ]
   }
+});
+
+// Create discussion goals array from all categories
+const getDiscussionGoals = (t: TranslationFunction): AIDiscussionGoal[] => {
+  const categories = getDiscussionCategories(t);
+  return Object.values(categories).flatMap(category => 
+    category.goals.map(goal => ({
+      ...goal,
+      category: category.id
+    }))
+  );
 };
 
-// Flatten all goals for backward compatibility
-const DISCUSSION_GOALS: AIDiscussionGoal[] = Object.values(DISCUSSION_CATEGORIES).flatMap(category => 
-  category.goals.map(goal => ({
-    ...goal,
-    category: category.id
-  }))
-);
-
 // Static organizational roles as defined in the technical architecture
-const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
+// This will be initialized inside the component where 't' is available
+const getOrganizationalRoles = (t: TranslationFunction): AIDiscussionRole[] => [
   // Leiderschap & Strategie
   {
     id: 'ceo',
-    name: 'CEO',
-    description: 'Chief Executive Officer - Focus op visie, marktleiderschap en lange termijn strategie',
-    focusArea: 'Visie, marktleiderschap en lange termijn strategie',
+    name: t('aiDiscussion.role.ceo', 'CEO'),
+    description: t('aiDiscussion.role.ceoDesc', 'Chief Executive Officer - Focus op visie, marktleiderschap en lange termijn strategie'),
+    focusArea: t('aiDiscussion.role.ceoFocus', 'Visie, marktleiderschap en lange termijn strategie'),
     category: 'leiding_strategie',
     promptTemplate: 'Als CEO focus ik op visie, marktleiderschap en lange termijn strategie. Ik benader vraagstukken vanuit een holistisch perspectief met focus op waardecreatie en stakeholder management.',
     enthusiasmLevel: 4
   },
   {
     id: 'cfo',
-    name: 'CFO',
-    description: 'Chief Financial Officer - Focus op budget, ROI, financiële risico\'s en schaalbaarheid',
-    focusArea: 'Budget, ROI, financiële risico\'s en schaalbaarheid',
+    name: t('aiDiscussion.role.cfo', 'CFO'),
+    description: t('aiDiscussion.role.cfoDesc', 'Chief Financial Officer - Focus op budget, ROI, financiële risico\'s en schaalbaarheid'),
+    focusArea: t('aiDiscussion.role.cfoFocus', 'Budget, ROI, financiële risico\'s en schaalbaarheid'),
     category: 'leiding_strategie',
     promptTemplate: 'Als CFO focus ik op budget, ROI, financiële risico\'s en schaalbaarheid. Ik benader vraagstukken vanuit financieel perspectief met focus op kostenbeheersing en winstgevendheid.',
     enthusiasmLevel: 2
   },
   {
     id: 'hr_hoofd',
-    name: 'Hoofd HR & Cultuur',
-    description: 'Focus op personeelsimpact, talentwerving en organisatieverandering',
-    focusArea: 'Personeelsimpact, talentwerving en organisatieverandering',
+    name: t('aiDiscussion.role.hr_hoofd', 'Hoofd HR & Cultuur'),
+    description: t('aiDiscussion.role.hr_hoofdDesc', 'Focus op personeelsimpact, talentwerving en organisatieverandering'),
+    focusArea: t('aiDiscussion.role.hr_hoofdFocus', 'Personeelsimpact, talentwerving en organisatieverandering'),
     category: 'leiding_strategie',
     promptTemplate: 'Als Hoofd HR & Cultuur focus ik op personeelsimpact, talentwerving en organisatieverandering. Ik benader vraagstukken vanuit menselijk perspectief met focus op engagement en cultuurontwikkeling.',
     enthusiasmLevel: 4
   },
   {
     id: 'juridisch_directeur',
-    name: 'Directeur Juridische Zaken',
-    description: 'Focus op compliance, wetgeving en ethische risico\'s',
-    focusArea: 'Compliance, wetgeving en ethische risico\'s',
+    name: t('aiDiscussion.role.juridisch_directeur', 'Directeur Juridische Zaken'),
+    description: t('aiDiscussion.role.juridisch_directeurDesc', 'Focus op compliance, wetgeving en ethische risico\'s'),
+    focusArea: t('aiDiscussion.role.juridisch_directeurFocus', 'Compliance, wetgeving en ethische risico\'s'),
     category: 'leiding_strategie',
     promptTemplate: 'Als Directeur Juridische Zaken focus ik op compliance, wetgeving en ethische risico\'s. Ik benader vraagstukken vanuit juridisch perspectief met focus op regelgeving en risicobeheer.',
     enthusiasmLevel: 2
@@ -286,43 +290,43 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   // Product & Markt
   {
     id: 'cpo',
-    name: 'CPO',
-    description: 'Chief Product Officer - Focus op productontwikkeling, user experience en roadmap',
-    focusArea: 'Productontwikkeling, user experience en roadmap',
+    name: t('aiDiscussion.role.cpo', 'CPO'),
+    description: t('aiDiscussion.role.cpoDesc', 'Chief Product Officer - Focus op productontwikkeling, user experience en roadmap'),
+    focusArea: t('aiDiscussion.role.cpoFocus', 'Productontwikkeling, user experience en roadmap'),
     category: 'product_markt',
     promptTemplate: 'Als CPO focus ik op productontwikkeling, user experience en roadmap. Ik benader vraagstukken vanuit productperspectief met focus op gebruikerswaarde en marktfit.',
     enthusiasmLevel: 4
   },
   {
     id: 'marketing_specialist',
-    name: 'Marketing Specialist',
-    description: 'Focus op marktpositionering, klantsegmentatie en communicatie',
-    focusArea: 'Marktpositionering, klantsegmentatie en communicatie',
+    name: t('aiDiscussion.role.marketing_specialist', 'Marketing Specialist'),
+    description: t('aiDiscussion.role.marketing_specialistDesc', 'Focus op marktpositionering, klantsegmentatie en communicatie'),
+    focusArea: t('aiDiscussion.role.marketing_specialistFocus', 'Marktpositionering, klantsegmentatie en communicatie'),
     category: 'product_markt',
     promptTemplate: 'Als Marketing Specialist focus ik op marktpositionering, klantsegmentatie en communicatie. Ik benader vraagstukken vanuit marketingperspectief met focus op merkwaarde en klantbereik.',
     enthusiasmLevel: 5
   },
   {
     id: 'verkoopdirecteur',
-    name: 'Verkoopdirecteur',
-    description: 'Focus op saleskanalen, omzetprognoses en klantacquisitie',
-    focusArea: 'Saleskanalen, omzetprognoses en klantacquisitie',
+    name: t('aiDiscussion.role.verkoopdirecteur', 'Verkoopdirecteur'),
+    description: t('aiDiscussion.role.verkoopdirecteurDesc', 'Focus op saleskanalen, omzetprognoses en klantacquisitie'),
+    focusArea: t('aiDiscussion.role.verkoopdirecteurFocus', 'Saleskanalen, omzetprognoses en klantacquisitie'),
     category: 'product_markt',
     promptTemplate: 'Als Verkoopdirecteur focus ik op saleskanalen, omzetprognoses en klantacquisitie. Ik benader vraagstukken vanuit verkoopperspectief met focus op omzetgroei en klantrelaties.'
   },
   {
     id: 'customer_success',
-    name: 'Customer Success Lead',
-    description: 'Focus op klanttevredenheid, retentie en servicekwaliteit',
-    focusArea: 'Klanttevredenheid, retentie en servicekwaliteit',
+    name: t('aiDiscussion.role.customer_success', 'Customer Success Lead'),
+    description: t('aiDiscussion.role.customer_successDesc', 'Focus op klanttevredenheid, retentie en servicekwaliteit'),
+    focusArea: t('aiDiscussion.role.customer_successFocus', 'Klanttevredenheid, retentie en servicekwaliteit'),
     category: 'product_markt',
     promptTemplate: 'Als Customer Success Lead focus ik op klanttevredenheid, retentie en servicekwaliteit. Ik benader vraagstukken vanuit klantperspectief met focus op loyaliteit en waarderealisatie.'
   },
   {
     id: 'product_owner',
-    name: 'Product Owner',
-    description: 'Let op details, is alles duidelijk, is het met klanten afgestemd, past het in ons huidige product',
-    focusArea: 'Productdetails, klantafstemming en productintegratie',
+    name: t('aiDiscussion.role.product_owner', 'Product Owner'),
+    description: t('aiDiscussion.role.product_ownerDesc', 'Let op details, is alles duidelijk, is het met klanten afgestemd, past het in ons huidige product'),
+    focusArea: t('aiDiscussion.role.product_ownerFocus', 'Productdetails, klantafstemming en productintegratie'),
     category: 'product_markt',
     promptTemplate: 'Als Product Owner let ik op details, zorg ik dat alles duidelijk is, dat het met klanten is afgestemd en dat het past in ons huidige product. Ik benader vraagstukken vanuit gebruikersperspectief met focus op functionaliteit en bruikbaarheid.'
   },
@@ -330,33 +334,33 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   // Techniek & Data
   {
     id: 'lead_architect',
-    name: 'Lead IT Architect',
-    description: 'Focus op technische infrastructuur, beveiliging en integratie',
-    focusArea: 'Technische infrastructuur, beveiliging en integratie',
+    name: t('aiDiscussion.role.lead_architect', 'Lead IT Architect'),
+    description: t('aiDiscussion.role.lead_architectDesc', 'Focus op technische infrastructuur, beveiliging en integratie'),
+    focusArea: t('aiDiscussion.role.lead_architectFocus', 'Technische infrastructuur, beveiliging en integratie'),
     category: 'technologie',
     promptTemplate: 'Als Lead IT Architect focus ik op technische infrastructuur, beveiliging en integratie. Ik benader vraagstukken vanuit architecturaal perspectief met focus op schaalbaarheid en technische excellentie.'
   },
   {
     id: 'data_analist',
-    name: 'Data Analist',
-    description: 'Focus op meetbaarheid, datakwaliteit en inzichten',
-    focusArea: 'Meetbaarheid, datakwaliteit en inzichten',
+    name: t('aiDiscussion.role.data_analist', 'Data Analist'),
+    description: t('aiDiscussion.role.data_analistDesc', 'Focus op meetbaarheid, datakwaliteit en inzichten'),
+    focusArea: t('aiDiscussion.role.data_analistFocus', 'Meetbaarheid, datakwaliteit en inzichten'),
     category: 'technologie',
     promptTemplate: 'Als Data Analist focus ik op meetbaarheid, datakwaliteit en inzichten. Ik benader vraagstukken vanuit analytisch perspectief met focus op data-gedreven besluitvorming.'
   },
   {
     id: 'security_expert',
-    name: 'Security Expert',
-    description: 'Focus op dataveiligheid, privacy (AVG) en cyberrisico\'s',
-    focusArea: 'Dataveiligheid, privacy (AVG) en cyberrisico\'s',
+    name: t('aiDiscussion.role.security_expert', 'Security Expert'),
+    description: t('aiDiscussion.role.security_expertDesc', 'Focus op dataveiligheid, privacy (AVG) en cyberrisico\'s'),
+    focusArea: t('aiDiscussion.role.security_expertFocus', 'Dataveiligheid, privacy (AVG) en cyberrisico\'s'),
     category: 'technologie',
     promptTemplate: 'Als Security Expert focus ik op dataveiligheid, privacy (AVG) en cyberrisico\'s. Ik benader vraagstukken vanuit beveiligingsperspectief met focus op bescherming en compliance.'
   },
   {
     id: 'devops_engineer',
-    name: 'DevOps Engineer',
-    description: 'Focus op implementatiesnelheid, automatisering en operationele stabiliteit',
-    focusArea: 'Implementatiesnelheid, automatisering en operationele stabiliteit',
+    name: t('aiDiscussion.role.devops_engineer', 'DevOps Engineer'),
+    description: t('aiDiscussion.role.devops_engineerDesc', 'Focus op implementatiesnelheid, automatisering en operationele stabiliteit'),
+    focusArea: t('aiDiscussion.role.devops_engineerFocus', 'Implementatiesnelheid, automatisering en operationele stabiliteit'),
     category: 'technologie',
     promptTemplate: 'Als DevOps Engineer focus ik op implementatiesnelheid, automatisering en operationele stabiliteit. Ik benader vraagstukken vanuit operationeel perspectief met focus op efficiency en betrouwbaarheid.'
   },
@@ -364,25 +368,25 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   // Operationeel
   {
     id: 'operationeel_manager',
-    name: 'Operationeel Manager',
-    description: 'Focus op efficiëntie, procesoptimalisatie en middelenbeheer',
-    focusArea: 'Efficiëntie, procesoptimalisatie en middelenbeheer',
+    name: t('aiDiscussion.role.operationeel_manager', 'Operationeel Manager'),
+    description: t('aiDiscussion.role.operationeel_managerDesc', 'Focus op efficiëntie, procesoptimalisatie en middelenbeheer'),
+    focusArea: t('aiDiscussion.role.operationeel_managerFocus', 'Efficiëntie, procesoptimalisatie en middelenbeheer'),
     category: 'operaties',
     promptTemplate: 'Als Operationeel Manager focus ik op efficiëntie, procesoptimalisatie en middelenbeheer. Ik benader vraagstukken vanuit operationeel perspectief met focus op productiviteit en kostenbeheersing.'
   },
   {
     id: 'project_manager',
-    name: 'Project/Programma Manager',
-    description: 'Focus op planning, mijlpalen, scope management en levering',
-    focusArea: 'Planning, mijlpalen, scope management en levering',
+    name: t('aiDiscussion.role.project_manager', 'Project/Programma Manager'),
+    description: t('aiDiscussion.role.project_managerDesc', 'Focus op planning, mijlpalen, scope management en levering'),
+    focusArea: t('aiDiscussion.role.project_managerFocus', 'Planning, mijlpalen, scope management en levering'),
     category: 'operaties',
     promptTemplate: 'Als Project/Programma Manager focus ik op planning, mijlpalen, scope management en levering. Ik benader vraagstukken vanuit projectperspectief met focus op tijdige en succesvolle oplevering.'
   },
   {
     id: 'kwaliteitsmanager',
-    name: 'Kwaliteitsmanager',
-    description: 'Focus op standaarden, auditprocedures en foutenreductie',
-    focusArea: 'Standaarden, auditprocedures en foutenreductie',
+    name: t('aiDiscussion.role.kwaliteitsmanager', 'Kwaliteitsmanager'),
+    description: t('aiDiscussion.role.kwaliteitsmanagerDesc', 'Focus op standaarden, auditprocedures en foutenreductie'),
+    focusArea: t('aiDiscussion.role.kwaliteitsmanagerFocus', 'Standaarden, auditprocedures en foutenreductie'),
     category: 'operaties',
     promptTemplate: 'Als Kwaliteitsmanager focus ik op standaarden, auditprocedures en foutenreductie. Ik benader vraagstukken vanuit kwaliteitsperspectief met focus op excellentie en continue verbetering.'
   },
@@ -390,25 +394,25 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   // Innovatie & Toekomst
   {
     id: 'innovatie_manager',
-    name: 'Innovatie Manager',
-    description: 'Focus op nieuwe technologieën, experimenten en disruptie',
-    focusArea: 'Nieuwe technologieën, experimenten en disruptie',
+    name: t('aiDiscussion.role.innovatie_manager', 'Innovatie Manager'),
+    description: t('aiDiscussion.role.innovatie_managerDesc', 'Focus op nieuwe technologieën, experimenten en disruptie'),
+    focusArea: t('aiDiscussion.role.innovatie_managerFocus', 'Nieuwe technologieën, experimenten en disruptie'),
     category: 'technologie',
     promptTemplate: 'Als Innovatie Manager focus ik op nieuwe technologieën, experimenten en disruptie. Ik benader vraagstukken vanuit innovatieperspectief met focus op toekomstmogelijkheden en doorbraken.'
   },
   {
     id: 'duurzaamheidsadviseur',
-    name: 'Duurzaamheidsadviseur',
-    description: 'Focus op ecologische en sociale impact (ESG)',
-    focusArea: 'Ecologische en sociale impact (ESG)',
+    name: t('aiDiscussion.role.duurzaamheidsadviseur', 'Duurzaamheidsadviseur'),
+    description: t('aiDiscussion.role.duurzaamheidsadviseurDesc', 'Focus op ecologische en sociale impact (ESG)'),
+    focusArea: t('aiDiscussion.role.duurzaamheidsadviseurFocus', 'Ecologische en sociale impact (ESG)'),
     category: 'externe_stakeholders',
     promptTemplate: 'Als Duurzaamheidsadviseur focus ik op ecologische en sociale impact (ESG). Ik benader vraagstukken vanuit duurzaamheidsperspectief met focus op maatschappelijke verantwoordelijkheid.'
   },
   {
     id: 'externe_consultant',
-    name: 'Externe Consultant (Neutraal)',
-    description: 'Focus op best practices, externe benchmarks en onafhankelijk advies',
-    focusArea: 'Best practices, externe benchmarks en onafhankelijk advies',
+    name: t('aiDiscussion.role.externe_consultant', 'Externe Consultant (Neutraal)'),
+    description: t('aiDiscussion.role.externe_consultantDesc', 'Focus op best practices, externe benchmarks en onafhankelijk advies'),
+    focusArea: t('aiDiscussion.role.externe_consultantFocus', 'Best practices, externe benchmarks en onafhankelijk advies'),
     category: 'externe_stakeholders',
     promptTemplate: 'Als Externe Consultant focus ik op best practices, externe benchmarks en onafhankelijk advies. Ik benader vraagstukken vanuit neutraal perspectief met focus op objectieve analyse en marktinzichten.'
   },
@@ -416,17 +420,17 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   // Gebruiker & Controle
   {
     id: 'eindgebruiker',
-    name: 'Eindgebruiker/Klantvertegenwoordiger',
-    description: 'Focus op de daadwerkelijke behoeften en problemen van de gebruiker',
-    focusArea: 'Daadwerkelijke behoeften en problemen van de gebruiker',
+    name: t('aiDiscussion.role.eindgebruiker', 'Eindgebruiker/Klantvertegenwoordiger'),
+    description: t('aiDiscussion.role.eindgebruikerDesc', 'Focus op de daadwerkelijke behoeften en problemen van de gebruiker'),
+    focusArea: t('aiDiscussion.role.eindgebruikerFocus', 'Daadwerkelijke behoeften en problemen van de gebruiker'),
     category: 'externe_stakeholders',
     promptTemplate: 'Als Eindgebruiker/Klantvertegenwoordiger focus ik op de daadwerkelijke behoeften en problemen van de gebruiker. Ik benader vraagstukken vanuit gebruikersperspectief met focus op praktische bruikbaarheid en waarde.'
   },
   {
     id: 'interne_auditor',
-    name: 'Interne Auditor',
-    description: 'Focus op risicobeheersing en naleving van interne beleidsregels',
-    focusArea: 'Risicobeheersing en naleving van interne beleidsregels',
+    name: t('aiDiscussion.role.interne_auditor', 'Interne Auditor'),
+    description: t('aiDiscussion.role.interne_auditorDesc', 'Focus op risicobeheersing en naleving van interne beleidsregels'),
+    focusArea: t('aiDiscussion.role.interne_auditorFocus', 'Risicobeheersing en naleving van interne beleidsregels'),
     category: 'operaties',
     promptTemplate: 'Als Interne Auditor focus ik op risicobeheersing en naleving van interne beleidsregels. Ik benader vraagstukken vanuit controleperspectief met focus op compliance en risicomitigatie.'
   },
@@ -434,57 +438,57 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
   // Markt
   {
     id: 'invester',
-    name: 'De Invester',
-    description: 'Focus op kansen, kosten, winstgevendheid en time2market',
-    focusArea: 'Kansen, kosten, winstgevendheid en time2market',
+    name: t('aiDiscussion.role.invester', 'De Invester'),
+    description: t('aiDiscussion.role.investerDesc', 'Focus op kansen, kosten, winstgevendheid en time2market'),
+    focusArea: t('aiDiscussion.role.investerFocus', 'Kansen, kosten, winstgevendheid en time2market'),
     category: 'marketing',
     promptTemplate: 'Als Invester focus ik op kansen, kosten, winstgevendheid en time2market. Ik benader vraagstukken vanuit investeringsperspectief met focus op rendement en marktpotentieel.'
   },
   {
     id: 'generaal',
-    name: 'De Generaal',
-    description: 'Wil structuur, is iedereen mee, neemt beslissing bij meerdere keuzes, knoop doorhakken',
-    focusArea: 'Structuur, consensus en besluitvorming',
+    name: t('aiDiscussion.role.generaal', 'De Generaal'),
+    description: t('aiDiscussion.role.generaalDesc', 'Wil structuur, is iedereen mee, neemt beslissing bij meerdere keuzes, knoop doorhakken'),
+    focusArea: t('aiDiscussion.role.generaalFocus', 'Structuur, consensus en besluitvorming'),
     category: 'leiding_strategie',
     promptTemplate: 'Als Generaal wil ik structuur, zorg ik dat iedereen mee is, neem ik beslissingen bij meerdere keuzes en hak ik knopen door. Ik benader vraagstukken vanuit leiderschapsperspectief met focus op duidelijkheid en actie.'
   },
   {
     id: 'dromer',
-    name: 'De Dromer',
-    description: 'Denkt in onbegrensde mogelijkheden en genereert vergezichten. Focust op baanbrekende ideeën, toekomstige trends en disruptieve concepten, zonder rekening te houden met huidige beperkingen.',
-    focusArea: 'Onbegrensde mogelijkheden en toekomstvisies',
+    name: t('aiDiscussion.role.dromer', 'De Dromer'),
+    description: t('aiDiscussion.role.dromerDesc', 'Denkt in onbegrensde mogelijkheden en genereert vergezichten. Focust op baanbrekende ideeën, toekomstige trends en disruptieve concepten, zonder rekening te houden met huidige beperkingen.'),
+    focusArea: t('aiDiscussion.role.dromerFocus', 'Onbegrensde mogelijkheden en toekomstvisies'),
     category: 'leiding_strategie',
     promptTemplate: 'Als Dromer denk ik in onbegrensde mogelijkheden en genereer ik vergezichten. Ik focus op baanbrekende ideeën, toekomstige trends en disruptieve concepten, zonder rekening te houden met huidige beperkingen. Focus: Extreem forward-looking. Beschrijf een ideale, toekomstige staat gebaseerd op de onderliggende behoeften die in de transcriptie besproken worden, en stel radicale manieren voor om die te vervullen. Negeer huidige operationele of budgettaire restricties.'
   },
   {
     id: 'skeptische_advocaat',
-    name: 'De Skeptische Advocaat',
-    description: 'Zoekt actief naar zwakke punten, onuitgesproken aannames en potentiële valkuilen in besproken plannen of ideeën, om ze robuuster te maken.',
-    focusArea: 'Kritische analyse en risicobewustzijn',
+    name: t('aiDiscussion.role.skeptische_advocaat', 'De Skeptische Advocaat'),
+    description: t('aiDiscussion.role.skeptische_advocaatDesc', 'Zoekt actief naar zwakke punten, onuitgesproken aannames en potentiële valkuilen in besproken plannen of ideeën, om ze robuuster te maken.'),
+    focusArea: t('aiDiscussion.role.skeptische_advocaatFocus', 'Kritische analyse en risicobewustzijn'),
     category: 'operaties',
     promptTemplate: 'Als Skeptische Advocaat van de Duivel zoek ik actief naar zwakke punten, onuitgesproken aannames en potentiële valkuilen in besproken plannen of ideeën, om ze robuuster te maken. Focus: Kritisch en risicobewust. Identificeer gaten, tegenargumenten, onrealistische aannames, en potentiële negatieve gevolgen van de besproken onderwerpen. Presenteer deze als uitdagingen om te overwinnen of te mitigeren.'
   },
   {
     id: 'gamification_architect',
-    name: 'De Gamification Architect',
-    description: 'Ontwerpt methoden om betrokkenheid en motivatie te verhogen door spelelementen, beloningsstructuren en interactieve uitdagingen toe te passen.',
-    focusArea: 'Betrokkenheid en motivatie door gamification',
+    name: t('aiDiscussion.role.gamification_architect', 'De Gamification Architect'),
+    description: t('aiDiscussion.role.gamification_architectDesc', 'Ontwerpt methoden om betrokkenheid en motivatie te verhogen door spelelementen, beloningsstructuren en interactieve uitdagingen toe te passen.'),
+    focusArea: t('aiDiscussion.role.gamification_architectFocus', 'Betrokkenheid en motivatie door gamification'),
     category: 'product_markt',
     promptTemplate: 'Als Gamification Architect ontwerp ik methoden om betrokkenheid en motivatie te verhogen door spelelementen, beloningsstructuren en interactieve uitdagingen toe te passen. Focus: Betrokkenheid en motivatie. Neem een besproken proces, project of doel en stel spelelementen, scoresystemen, badges, leaderboards of uitdagingen voor om de participatie en het succes te stimuleren.'
   },
   {
     id: 'ethicus_impact_analist',
-    name: 'De Ethicus & Impact Analist',
-    description: 'Evalueert besproken plannen of initiatieven op hun ethische implicaties, maatschappelijke impact, privacy en potentiële onbedoelde gevolgen.',
-    focusArea: 'Ethische implicaties en maatschappelijke impact',
+    name: t('aiDiscussion.role.ethicus_impact_analist', 'De Ethicus & Impact Analist'),
+    description: t('aiDiscussion.role.ethicus_impact_analistDesc', 'Evalueert besproken plannen of initiatieven op hun ethische implicaties, maatschappelijke impact, privacy en potentiële onbedoelde gevolgen.'),
+    focusArea: t('aiDiscussion.role.ethicus_impact_analistFocus', 'Ethische implicaties en maatschappelijke impact'),
     category: 'externe_stakeholders',
     promptTemplate: 'Als Ethicus & Impact Analist evalueer ik besproken plannen of initiatieven op hun ethische implicaties, maatschappelijke impact, privacy en potentiële onbedoelde gevolgen. Focus: Maatschappelijke verantwoordelijkheid. Analyseer de transcriptie op potentiële ethische dilemma\'s, privacyrisico\'s, sociale of ecologische impact, en onbedoelde neveneffecten van de besproken acties of producten. Stel oplossingen of overwegingen voor.'
   },
   {
     id: 'storyteller',
-    name: 'De Storyteller',
-    description: 'Vertaalt complexe informatie, strategieën of ideeën naar een boeiend verhaal dat resoneert met verschillende doelgroepen, om begrip en buy-in te creëren.',
-    focusArea: 'Verhaalvertelling en communicatie',
+    name: t('aiDiscussion.role.storyteller', 'De Storyteller'),
+    description: t('aiDiscussion.role.storytellerDesc', 'Vertaalt complexe informatie, strategieën of ideeën naar een boeiend verhaal dat resoneert met verschillende doelgroepen, om begrip en buy-in te creëren.'),
+    focusArea: t('aiDiscussion.role.storytellerFocus', 'Verhaalvertelling en communicatie'),
     category: 'product_markt',
     promptTemplate: 'Als Storyteller vertaal ik complexe informatie, strategieën of ideeën naar een boeiend verhaal dat resoneert met verschillende doelgroepen, om begrip en buy-in te creëren. Focus: Begrijpelijkheid en emotionele connectie. Neem het user_selected_topic en de hoofdconclusies uit de transcriptie, en construeer een kort, overtuigend verhaal (bijv. een \'Elevator Pitch\', een \'Case Study Narrative\' of een \'Vision Story\') dat de essentie communiceert en de beoogde impact van een besproken idee/project beschrijft.'
   }
@@ -493,20 +497,20 @@ const ORGANIZATIONAL_ROLES: AIDiscussionRole[] = [
 // Helper function to get display name for discussion phases
 const getPhaseDisplayName = (phase: string, t: TranslationFunction): string => {
   const phaseNames: Record<string, string> = {
-    introduction: t('aiDiscussion.phase.introduction') || 'Introductie',
-    problem_analysis: t('aiDiscussion.phase.problem_analysis') || 'Probleemanalyse',
-    root_cause: t('aiDiscussion.phase.root_cause') || 'Oorzaakanalyse',
-    solution_generation: t('aiDiscussion.phase.solution_generation') || 'Oplossingsgeneratie',
-    solution_evaluation: t('aiDiscussion.phase.solution_evaluation') || 'Oplossing Evaluatie',
-    critical_evaluation: t('aiDiscussion.phase.critical_evaluation') || 'Kritische Evaluatie',
-    implementation_plan: t('aiDiscussion.phase.implementation_plan') || 'Implementatieplan',
-    risk_assessment: t('aiDiscussion.phase.risk_assessment') || 'Risicoanalyse',
-    stakeholder_analysis: t('aiDiscussion.phase.stakeholder_analysis') || 'Stakeholder Analyse',
-    implementation_planning: t('aiDiscussion.phase.implementation_planning') || 'Implementatieplanning',
-    success_metrics: t('aiDiscussion.phase.success_metrics') || 'Succesmetrieken',
-    conclusion: t('aiDiscussion.phase.conclusion') || 'Conclusie',
-    recommendations: t('aiDiscussion.phase.recommendations') || 'Aanbevelingen',
-    synthesis: t('aiDiscussion.phase.synthesis') || 'Synthese'
+    introduction: t('aiDiscussion.phase.introduction'),
+    problem_analysis: t('aiDiscussion.phase.problem_analysis'),
+    root_cause: t('aiDiscussion.phase.root_cause'),
+    solution_generation: t('aiDiscussion.phase.solution_generation'),
+    solution_evaluation: t('aiDiscussion.phase.solution_evaluation'),
+    critical_evaluation: t('aiDiscussion.phase.critical_evaluation'),
+    implementation_plan: t('aiDiscussion.phase.implementation_plan'),
+    risk_assessment: t('aiDiscussion.phase.risk_assessment'),
+    stakeholder_analysis: t('aiDiscussion.phase.stakeholder_analysis'),
+    implementation_planning: t('aiDiscussion.phase.implementation_planning'),
+    success_metrics: t('aiDiscussion.phase.success_metrics'),
+    conclusion: t('aiDiscussion.phase.conclusion'),
+    recommendations: t('aiDiscussion.phase.recommendations'),
+    synthesis: t('aiDiscussion.phase.synthesis')
   };
   
   return phaseNames[phase] || phase;
@@ -579,7 +583,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   const generateTopics = useCallback(async () => {
     const content = (summary || transcript || '').trim();
     if (!content) {
-      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('aiDiscussion.topicGenerationError') || 'Er is onvoldoende inhoud om onderwerpen te genereren' }));
+      setState(prev => ({ ...prev, step: 'selectTopic', topics: [], error: t('aiDiscussion.topicGenerationError') }));
       return;
     }
 
@@ -603,17 +607,17 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     } catch (error) {
       console.error('Error generating discussion topics:', error);
       
-      let errorMessage = t('aiDiscussion.topicGenerationError') || 'Er is een fout opgetreden bij het genereren van discussieonderwerpen';
+      let errorMessage = t('aiDiscussion.topicGenerationError');
       
       if (error instanceof Error) {
         const errorText = error.message.toLowerCase();
         
         if (errorText.includes('overloaded') || errorText.includes('503')) {
-          errorMessage = t('aiDiscussion.serverOverloadError') || 'De AI-service is momenteel overbelast. Probeer het over een paar minuten opnieuw.';
+          errorMessage = t('aiDiscussion.serverOverloadError');
         } else if (errorText.includes('quota') || errorText.includes('rate limit')) {
-          errorMessage = t('aiDiscussion.quotaExceededError') || 'Het dagelijkse gebruik van de AI-service is bereikt. Probeer het later opnieuw of upgrade je abonnement.';
+          errorMessage = t('aiDiscussion.quotaExceededError');
         } else if (errorText.includes('network') || errorText.includes('fetch')) {
-          errorMessage = t('aiDiscussion.networkError') || 'Netwerkfout bij het verbinden met de AI-service. Controleer je internetverbinding en probeer opnieuw.';
+          errorMessage = t('aiDiscussion.networkError');
         }
       }
       
@@ -809,7 +813,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       console.error('Error continuing discussion:', error);
       setState(prev => ({ 
         ...prev, 
-        error: t('aiDiscussion.continueError') || 'Er is een fout opgetreden bij het voortzetten van de discussie',
+        error: t('aiDiscussion.continueError'),
         isDiscussionActive: false
       }));
     }
@@ -823,7 +827,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     if (state.session.status !== 'awaiting_user_input') {
       setState(prev => ({
         ...prev,
-        error: t('aiDiscussion.notAwaitingUserInput') || 'Op dit moment kan je geen vraag stellen. Klik eerst op "Discussie voortzetten".'
+        error: t('aiDiscussion.notAwaitingUserInput'),
       }));
       return;
     }
@@ -872,7 +876,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       console.error('Error handling user intervention:', error);
       setState(prev => ({ 
         ...prev, 
-        error: t('aiDiscussion.interventionError') || 'Er is een fout opgetreden bij het verwerken van je vraag',
+        error: t('aiDiscussion.interventionError'),
         isDiscussionActive: false
       }));
     }
@@ -953,7 +957,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       console.error('Error generating report:', error);
       setState(prev => ({ 
         ...prev, 
-        error: t('aiDiscussion.reportError') || 'Er is een fout opgetreden bij het genereren van het rapport',
+        error: t('aiDiscussion.reportError', 'Er is een fout opgetreden bij het genereren van het rapport'),
         isGeneratingReport: false,
         showReportConfirmationModal: false
       }));
@@ -1025,7 +1029,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             </div>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('aiDiscussionUpgradeNote') || 'Upgrade je abonnement om toegang te krijgen tot deze geavanceerde AI functionaliteit.'}
+            {t('aiDiscussionUpgradeNote', 'Upgrade je abonnement om toegang te krijgen tot deze geavanceerde AI functionaliteit.')}
           </p>
         </div>
       </div>
@@ -1038,7 +1042,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
           <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-            {t('error') || 'Er is een fout opgetreden'}
+            {t('error', 'Er is een fout opgetreden')}
           </h3>
           <p className="text-red-600 dark:text-red-400 mb-4">
             {state.error}
@@ -1047,7 +1051,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             onClick={handleBackToTopics}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            {t('tryAgain') || 'Opnieuw proberen'}
+            {t('tryAgain', 'Opnieuw proberen')}
           </button>
         </div>
       </div>
@@ -1059,7 +1063,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
     return (
       <BlurredLoadingOverlay 
         isVisible={true}
-        text={t('generatingTopics') || 'Onderwerpen genereren...'}
+        text={t('generatingTopics', 'Onderwerpen genereren...')}
       />
     );
   }
@@ -1071,10 +1075,10 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-              {t('aiDiscussion.selectTopic') || 'Selecteer een discussieonderwerp'}
+              {t('aiDiscussion.selectTopic', 'Selecteer een discussieonderwerp')}
             </h3>
             <p className="text-slate-600 dark:text-slate-400">
-              {t('aiDiscussion.selectTopicDesc') || 'Kies het onderwerp voor de AI discussie met verschillende organisatierollen'}
+              {t('aiDiscussion.selectTopicDesc', 'Kies het onderwerp voor de AI discussie met verschillende organisatierollen')}
             </p>
           </div>
           <button
@@ -1083,7 +1087,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiRefreshCw size={16} />
-            {t('aiDiscussion.refreshTopics') || 'Onderwerpen vernieuwen'}
+            {t('aiDiscussion.refreshTopics', 'Onderwerpen vernieuwen')}
           </button>
         </div>
 
@@ -1133,8 +1137,9 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
         <AIDiscussionConfiguration
           t={t}
           selectedTopic={state.selectedTopic!}
-          goals={DISCUSSION_GOALS}
-          roles={ORGANIZATIONAL_ROLES}
+          goals={getDiscussionGoals(t)}
+          roles={getOrganizationalRoles(t)}
+          language={language}
           onConfigurationComplete={handleConfigurationComplete}
         />
       </div>
@@ -1238,10 +1243,11 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
               </div>
               
               <div className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
-                {t('aiDiscussion.phaseProgress', { 
-                  current: state.session.turns.length, 
-                  total: 10 
-                }) || `Fase ${state.session.turns.length}/10`}
+                  {t(
+                    'aiDiscussion.phaseProgress',
+                    `Fase ${state.session.turns.length}/10`,
+                    { current: state.session.turns.length, total: 10 }
+                  )}
               </div>
             </div>
             
@@ -1249,7 +1255,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             <div className="mb-2">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                  {t('aiDiscussion.overallProgress') || 'Totale voortgang'}:
+                  {t('aiDiscussion.overallProgress', 'Totale voortgang')}:
                 </span>
                 <span className="text-sm text-green-600 dark:text-green-400">
                   {Math.min(100, (state.session.turns.length / 10) * 100)}%
@@ -1265,8 +1271,8 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             
             <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
               {state.session.turns.length >= 10 
-                ? t('aiDiscussion.maxReached') || 'Maximum aantal beurten bereikt - genereer een rapport'
-                : t('aiDiscussion.canContinue') || 'Je kunt de discussie voortzetten of een rapport genereren'
+                ? t('aiDiscussion.maxReached', 'Maximum aantal beurten bereikt - genereer een rapport')
+                : t('aiDiscussion.canContinue', 'Je kunt de discussie voortzetten of een rapport genereren')
               }
             </p>
           </div>
@@ -1285,9 +1291,9 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
         {/* Action buttons placed under the discussion window */}
         {state.session && state.session.turns.length > 0 && (
           <div className="flex flex-col gap-4 justify-center items-center p-4 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-lg">
-            <div className="text-base text-slate-600 dark:text-slate-400 text-center">
-              {t('aiDiscussion.nextActions') || 'Wat wil je nu doen?'}
-            </div>
+              <div className="text-base text-slate-600 dark:text-slate-400 text-center">
+                {t('aiDiscussion.nextActions', 'Wat wil je nu doen?')}
+              </div>
 
             {/* New order: Continue, Analytics, Styles, End Discussion/Generate Report */}
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -1297,7 +1303,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
                 className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-base"
               >
                 <FiPlay size={18} />
-                <span className="truncate">{t('aiDiscussion.continueDiscussion') || 'Discussie voortzetten'}</span>
+                <span className="truncate">{t('aiDiscussion.continueDiscussion', 'Discussie voortzetten')}</span>
               </button>
 
               <button
@@ -1306,16 +1312,16 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
                 className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-base"
               >
                 <FiTarget size={18} />
-                <span className="truncate">{t('aiDiscussion.viewAnalytics') || 'Analytics bekijken'}</span>
+                <span className="truncate">{t('aiDiscussion.viewAnalytics', 'Analytics bekijken')}</span>
               </button>
 
               <button
                 onClick={handleOpenStyleModal}
                 className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200 font-medium text-base"
-                title={t('aiDiscussion.adjustStyles') || 'Discussiestijlen aanpassen'}
+                title={t('aiDiscussion.adjustStyles', 'Discussiestijlen aanpassen')}
               >
                 <FiSettings size={18} />
-                {t('aiDiscussion.adjustStyles') || 'Stijlen Aanpassen'}
+                {t('aiDiscussion.adjustStyles', 'Stijlen Aanpassen')}
               </button>
 
               <button
@@ -1324,7 +1330,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
                 className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-base"
               >
                 <FiFileText size={18} />
-                <span className="truncate">{t('aiDiscussion.generateReport') || 'Einde discussie / Rapport genereren'}</span>
+                <span className="truncate">{t('aiDiscussion.generateReport', 'Einde discussie / Rapport genereren')}</span>
               </button>
             </div>
           </div>
@@ -1339,13 +1345,14 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
           selectedRoles={state.selectedRoles}
           onRoleUpdate={handleUpdateRole}
           t={t}
+          language={language}
         />
 
         {/* Report Confirmation Modal (also available in 'discussing' view) */}
         <Modal
           isOpen={state.showReportConfirmationModal}
           onClose={handleCancelGenerateReport}
-          title={t('aiDiscussion.endDiscussionTitle') || 'Einde discussie / Rapport genereren'}
+          title={t('aiDiscussion.endDiscussionTitle', 'Einde discussie / Rapport genereren')}
         >
           <div className="space-y-4">
             <div className="flex items-start gap-3">
@@ -1354,10 +1361,10 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
               </div>
               <div>
                 <h4 className="text-slate-800 dark:text-slate-200 font-medium">
-                  {t('aiDiscussion.confirmGenerateReportTitle') || 'Rapport genereren en discussie beëindigen?'}
+                  {t('aiDiscussion.confirmGenerateReportTitle', 'Rapport genereren en discussie beëindigen?')}
                 </h4>
                 <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-                  {t('aiDiscussion.confirmGenerateReportDescription') || 'Wanneer je een rapport genereert, wordt de discussie afgesloten. Je ontvangt een overzicht van de belangrijkste punten, meningsverschillen, aanbevelingen en de volledige transcriptie.'}
+                  {t('aiDiscussion.confirmGenerateReportDescription', 'Wanneer je een rapport genereert, wordt de discussie afgesloten. Je ontvangt een overzicht van de belangrijkste punten, meningsverschillen, aanbevelingen en de volledige transcriptie.')}
                 </p>
               </div>
             </div>
@@ -1367,14 +1374,14 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
                 onClick={handleCancelGenerateReport}
                 className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               >
-                {t('common.cancel') || 'Annuleren'}
+                {t('common.cancel', 'Annuleren')}
               </button>
               <button
                 onClick={handleConfirmGenerateReport}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg transition-colors flex items-center gap-2"
               >
                 <FiFileText size={16} />
-                {t('common.ok') || 'OK'}
+                {t('common.ok', 'OK')}
               </button>
             </div>
           </div>
@@ -1395,7 +1402,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
             <FiArrowLeft size={16} />
-            {t('aiDiscussion.backToDiscussion') || 'Terug naar discussie'}
+            {t('aiDiscussion.backToDiscussion', 'Terug naar discussie')}
           </button>
         </div>
 
@@ -1417,7 +1424,7 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
             className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
             <FiArrowLeft size={16} />
-            {t('aiDiscussion.backToTopics') || 'Nieuwe discussie'}
+            {t('aiDiscussion.backToTopics', 'Nieuwe discussie')}
           </button>
         </div>
 
@@ -1436,13 +1443,14 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
           currentStyles={state.discussionStyles}
           selectedRoles={state.selectedRoles}
           t={t}
+          language={language}
         />
 
         {/* Report Confirmation Modal */}
         <Modal
           isOpen={state.showReportConfirmationModal}
           onClose={handleCancelGenerateReport}
-          title={t('aiDiscussion.endDiscussionTitle') || 'Einde discussie / Rapport genereren'}
+          title={t('aiDiscussion.endDiscussionTitle', 'Einde discussie / Rapport genereren')}
         >
           <div className="space-y-4">
             <div className="flex items-start gap-3">
@@ -1471,14 +1479,14 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
                 onClick={handleCancelGenerateReport}
                 className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               >
-                {t('common.cancel') || 'Annuleren'}
+                {t('common.cancel', 'Annuleren')}
               </button>
               <button
                 onClick={handleConfirmGenerateReport}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg transition-colors flex items-center gap-2"
               >
                 <FiFileText size={16} />
-                {t('common.ok') || 'OK'}
+                {t('common.ok', 'OK')}
               </button>
             </div>
           </div>

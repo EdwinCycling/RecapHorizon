@@ -811,7 +811,38 @@ Pas deze stijlen toe in je communicatie terwijl je je rol vervult.`;
 function createTopicGenerationPrompt(content: string, language: string): string {
   const languageInstructions = getLanguageInstructions(language);
   
-  return `${languageInstructions.systemPrompt}
+  // Taal-specifieke prompts voor topic generatie
+  const topicPrompts: Record<string, string> = {
+    en: `${languageInstructions.systemPrompt}
+
+Analyze the following content and generate exactly 10 discussion topics that are DIRECTLY based on the transcript content. Focus on concrete topics that are actually discussed in the content.
+
+Each topic must:
+- Directly reference specific points, ideas, or discussions from the transcript
+- Be suitable for discussion between different organizational roles (CEO, CTO, CFO, CMO, COO)
+- Be concrete enough for a structured discussion with actionable insights
+- Be relevant to the actual content and not general strategic questions
+
+Content to analyze:
+${content}
+
+Generate the topics in the following JSON format:
+[
+  {
+    "id": "unique-id-1",
+    "title": "Short, catchy title",
+    "description": "Detailed description of the topic and why it's relevant for discussion"
+  },
+  {
+    "id": "unique-id-2",
+    "title": "Short, catchy title",
+    "description": "Detailed description of the topic and why it's relevant for discussion"
+  }
+]
+
+Ensure the output contains only valid JSON, without any additional text.`,
+
+    nl: `${languageInstructions.systemPrompt}
 
 Analyseer de volgende content en genereer precies 10 discussieonderwerpen die DIRECT gebaseerd zijn op de inhoud van het transcript. Focus op concrete onderwerpen die daadwerkelijk in de content worden besproken.
 
@@ -838,7 +869,126 @@ Genereer de onderwerpen in het volgende JSON-formaat:
   }
 ]
 
-Zorg ervoor dat de output alleen geldige JSON is, zonder extra tekst.`;
+Zorg ervoor dat de output alleen geldige JSON is, zonder extra tekst.`,
+
+    de: `${languageInstructions.systemPrompt}
+
+Analysiere den folgenden Inhalt und generiere genau 10 Diskussionsthemen, die DIREKT auf dem Transkriptinhalt basieren. Konzentriere dich auf konkrete Themen, die tatsächlich im Inhalt besprochen werden.
+
+Jedes Thema muss:
+- Direkt auf spezifische Punkte, Ideen oder Diskussionen aus dem Transkript verweisen
+- Für Diskussionen zwischen verschiedenen Organisationsrollen geeignet sein (CEO, CTO, CFO, CMO, COO)
+- Konkret genug für eine strukturierte Diskussion mit umsetzbaren Erkenntnissen sein
+- Relevant für den tatsächlichen Inhalt und nicht für allgemeine strategische Fragen sein
+
+Zu analysierender Inhalt:
+${content}
+
+Generiere die Themen im folgenden JSON-Format:
+[
+  {
+    "id": "unique-id-1",
+    "title": "Kurzer, einprägsamer Titel",
+    "description": "Detaillierte Beschreibung des Themas und warum es für die Diskussion relevant ist"
+  },
+  {
+    "id": "unique-id-2",
+    "title": "Kurzer, einprägsamer Titel",
+    "description": "Detaillierte Beschreibung des Themas und warum es für die Diskussion relevant ist"
+  }
+]
+
+Stelle sicher, dass die Ausgabe nur gültiges JSON enthält, ohne zusätzlichen Text.`,
+
+    fr: `${languageInstructions.systemPrompt}
+
+Analysez le contenu suivant et générez exactement 10 sujets de discussion qui sont DIRECTEMENT basés sur le contenu de la transcription. Concentrez-vous sur des sujets concrets qui sont réellement discutés dans le contenu.
+
+Chaque sujet doit :
+- Faire directement référence à des points, idées ou discussions spécifiques de la transcription
+- Être adapté à une discussion entre différents rôles organisationnels (CEO, CTO, CFO, CMO, COO)
+- Être assez concret pour une discussion structurée avec des insights actionnables
+- Être pertinent pour le contenu réel et non pour des questions stratégiques générales
+
+Contenu à analyser :
+${content}
+
+Générez les sujets au format JSON suivant :
+[
+  {
+    "id": "unique-id-1",
+    "title": "Titre court et accrocheur",
+    "description": "Description détaillée du sujet et pourquoi il est pertinent pour la discussion"
+  },
+  {
+    "id": "unique-id-2",
+    "title": "Titre court et accrocheur",
+    "description": "Description détaillée du sujet et pourquoi il est pertinent pour la discussion"
+  }
+]
+
+Assurez-vous que la sortie contient uniquement du JSON valide, sans texte supplémentaire.`,
+
+    es: `${languageInstructions.systemPrompt}
+
+Analiza el siguiente contenido y genera exactamente 10 temas de discusión que estén DIRECTAMENTE basados en el contenido de la transcripción. Enfócate en temas concretos que realmente se discutan en el contenido.
+
+Cada tema debe:
+- Hacer referencia directa a puntos, ideas o discusiones específicas de la transcripción
+- Ser adecuado para discusión entre diferentes roles organizacionales (CEO, CTO, CFO, CMO, COO)
+- Ser lo suficientemente concreto para una discusión estructurada con insights accionables
+- Ser relevante para el contenido real y no para preguntas estratégicas generales
+
+Contenido a analizar:
+${content}
+
+Genera los temas en el siguiente formato JSON:
+[
+  {
+    "id": "unique-id-1",
+    "title": "Título corto y llamativo",
+    "description": "Descripción detallada del tema y por qué es relevante para la discusión"
+  },
+  {
+    "id": "unique-id-2",
+    "title": "Título corto y llamativo",
+    "description": "Descripción detallada del tema y por qué es relevante para la discusión"
+  }
+]
+
+Asegúrate de que la salida contenga solo JSON válido, sin texto adicional.`,
+
+    pt: `${languageInstructions.systemPrompt}
+
+Analise o seguinte conteúdo e gere exatamente 10 tópicos de discussão que estejam DIRETAMENTE baseados no conteúdo da transcrição. Concentre-se em tópicos concretos que são realmente discutidos no conteúdo.
+
+Cada tópico deve:
+- Fazer referência direta a pontos, ideias ou discussões específicas da transcrição
+- Ser adequado para discussão entre diferentes funções organizacionais (CEO, CTO, CFO, CMO, COO)
+- Ser concreto o suficiente para uma discussão estruturada com insights acionáveis
+- Ser relevante para o conteúdo real e não para questões estratégicas gerais
+
+Conteúdo a analisar:
+${content}
+
+Gere os tópicos no seguinte formato JSON:
+[
+  {
+    "id": "unique-id-1",
+    "title": "Título curto e cativante",
+    "description": "Descrição detalhada do tópico e por que é relevante para a discussão"
+  },
+  {
+    "id": "unique-id-2",
+    "title": "Título curto e cativante",
+    "description": "Descrição detalhada do tópico e por que é relevante para a discussão"
+  }
+]
+
+Certifique-se de que a saída contenha apenas JSON válido, sem texto adicional.`
+  };
+  
+  return topicPrompts[language.toLowerCase()] || topicPrompts.nl;
 }
 
 /**

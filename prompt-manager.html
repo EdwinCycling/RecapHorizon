@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Manager - RecapHorizon</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .json-input {
+            width: 100%;
+            min-height: 400px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            resize: vertical;
+        }
+        .json-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .button-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+        .btn-secondary {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #da190b;
+        }
+        .btn-test {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-test:hover {
+            background-color: #0b7dda;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .status.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .example-structure {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .example-structure h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .example-structure pre {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        .validation-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .config-info {
+            background-color: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prompt Manager</h1>
+        <p class="subtitle">Beheer prompts voor RecapHorizon database (lokaal gebruik)</p>
+        
+        <div class="config-info">
+            <strong>Firebase Config:</strong> recapsmart-ed | <strong>Status:</strong> <span id="firebase-status">Initialiseren...</span>
+        </div>
+
+        <div class="example-structure">
+            <h3>Verwachte JSON structuur:</h3>
+            <pre id="example-structure">[
+  {
+    "title": "Your title here",
+    "prompt_text": "Your prompt text here...",
+    "requires_topic": false,
+    "is_active": true
+  }
+]</pre>
+        </div>
+
+        <textarea 
+            id="jsonInput" 
+            class="json-input" 
+            placeholder="Plak hier je JSON met prompts..."
+        ></textarea>
+        
+        <div class="button-group">
+            <button id="testBtn" class="btn-test">Test JSON</button>
+            <button id="validateBtn" class="btn-secondary">Valideer Structuur</button>
+            <button id="submitBtn" class="btn-primary">Upload naar Database</button>
+        </div>
+
+        <div id="validationResult" class="validation-result" style="display: none;"></div>
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        // Firebase configuratie uit .env.local
+        const firebaseConfig = {
+        "apiKey": "AIzaSyDJN_IVciPV_2CFhY15xl5gvsyp4qqLPss",
+        "authDomain": "recapsmart-ed.firebaseapp.com",
+        "projectId": "recapsmart-ed",
+        "storageBucket": "recapsmart-ed.firebasestorage.app",
+        "messagingSenderId": "272169568677",
+        "appId": "1:272169568677:web:33b0ca5dfefd525621004c"
+};
+
+        // Initialiseer Firebase
+        let db;
+        let auth;
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
+            document.getElementById('firebase-status').textContent = 'Verbonden';
+            document.getElementById('firebase-status').style.color = '#4CAF50';
+            console.log("Firebase geïnitialiseerd met project:", firebaseConfig.projectId);
+        } catch (error) {
+            console.error("Firebase initialisatie fout:", error.message);
+            document.getElementById('firebase-status').textContent = 'Fout: ' + error.message;
+            document.getElementById('firebase-status').style.color = '#f44336';
+        }
+
+        // DOM elementen
+        const jsonInput = document.getElementById('jsonInput');
+        const testBtn = document.getElementById('testBtn');
+        const validateBtn = document.getElementById('validateBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
+        const validationResult = document.getElementById('validationResult');
+
+        // Event listeners
+        testBtn.addEventListener('click', testJSON);
+        validateBtn.addEventListener('click', validateJSON);
+        submitBtn.addEventListener('click', submitToDatabase);
+
+        // Voorbeeld JSON genereren
+        const exampleJSON = [
+            {
+                title: "Executive Summary Generator",
+                prompt_text: "Analyze the following text and create a comprehensive executive summary that highlights the key points, main arguments, and actionable insights. Focus on clarity and conciseness.",
+                requires_topic: false,
+                is_active: true
+            },
+            {
+                title: "Quiz Questions Generator", 
+                prompt_text: "Generate a set of quiz questions based on the provided content. Include multiple choice questions with 4 options each, and provide the correct answers.",
+                requires_topic: true,
+                is_active: true
+            }
+        ];
+
+        // Vul voorbeeld JSON in textarea bij laden
+        jsonInput.value = JSON.stringify(exampleJSON, null, 2);
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            // Verberg status na 5 seconden bij success/error
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function validateJSON() {
+            try {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    showStatus("Voer eerst JSON in.", "error");
+                    return false;
+                }
+
+                const prompts = JSON.parse(input);
+                
+                if (!Array.isArray(prompts)) {
+                    showStatus("JSON moet een array van prompts zijn.", "error");
+                    return false;
+                }
+
+                const errors = [];
+                let validPrompts = 0;
+
+                prompts.forEach((prompt, index) => {
+                    const requiredFields = ['title', 'prompt_text', 'requires_topic', 'is_active'];
+                    const missingFields = requiredFields.filter(field => !(field in prompt));
+                    
+                    if (missingFields.length > 0) {
+                        errors.push(`Prompt ${index + 1}: mist verplichte velden: ${missingFields.join(', ')}`);
+                        return;
+                    }
+
+                    // Valideer dat is_active en requires_topic boolean zijn
+                    if (typeof prompt.is_active !== 'boolean') {
+                        errors.push(`Prompt ${index + 1}: 'is_active' moet een boolean zijn`);
+                    }
+                    if (typeof prompt.requires_topic !== 'boolean') {
+                        errors.push(`Prompt ${index + 1}: 'requires_topic' moet een boolean zijn`);
+                    }
+
+                    validPrompts++;
+                });
+
+                let result = `Validatie resultaat:\n`;
+                result += `Totaal prompts: ${prompts.length}\n`;
+                result += `Valide prompts: ${validPrompts}\n`;
+                
+                if (errors.length > 0) {
+                    result += `\nFouten (${errors.length}):\n`;
+                    errors.forEach(error => result += `- ${error}\n`);
+                }
+
+                validationResult.textContent = result;
+                validationResult.style.display = 'block';
+                validationResult.className = 'validation-result';
+                
+                if (errors.length === 0) {
+                    showStatus("Validatie succesvol! Alle prompts zijn valide.", "success");
+                    return true;
+                } else {
+                    showStatus(`Validatie mislukt. ${errors.length} fouten gevonden.`, "error");
+                    return false;
+                }
+
+            } catch (error) {
+                showStatus(`JSON parse fout: ${error.message}`, "error");
+                return false;
+            }
+        }
+
+        function testJSON() {
+            try {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    showStatus("Voer eerst JSON in.", "error");
+                    return;
+                }
+
+                const prompts = JSON.parse(input);
+                
+                if (!Array.isArray(prompts)) {
+                    showStatus("JSON moet een array van prompts zijn.", "error");
+                    return;
+                }
+
+                showStatus(`JSON is valide. Bevat ${prompts.length} prompts.`, "success");
+                
+                // Toon een voorbeeld van de eerste prompt
+                if (prompts.length > 0) {
+                    const firstPrompt = prompts[0];
+                    showStatus(`Voorbeeld - Titel: ${firstPrompt.title || 'Geen titel'}, Actief: ${firstPrompt.is_active}`, "info");
+                }
+
+            } catch (error) {
+                showStatus(`JSON parse fout: ${error.message}`, "error");
+            }
+        }
+
+        async function submitToDatabase() {
+            if (!validateJSON()) {
+                return;
+            }
+
+            if (!db) {
+                showStatus("Database niet geïnitialiseerd. Controleer Firebase configuratie.", "error");
+                return;
+            }
+
+            try {
+                const prompts = JSON.parse(jsonInput.value.trim());
+                
+                showStatus("Bezig met uploaden...", "info");
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Uploaden<span class="loading"></span>';
+
+                let successCount = 0;
+                let errorCount = 0;
+                const errors = [];
+
+                // Upload prompts een voor een
+                for (let i = 0; i < prompts.length; i++) {
+                    const prompt = prompts[i];
+                    try {
+                        // Voeg automatisch timestamps toe
+                        const promptData = {
+                            ...prompt,
+                            created_at: firebase.firestore.Timestamp.now(),
+                            updated_at: firebase.firestore.Timestamp.now()
+                        };
+
+                        await db.collection('prompts').add(promptData);
+                        successCount++;
+                        
+                        // Update status elke 5 prompts
+                        if ((i + 1) % 5 === 0) {
+                            showStatus(`Voortgang: ${i + 1}/${prompts.length} prompts verwerkt...`, "info");
+                        }
+                        
+                    } catch (error) {
+                        errorCount++;
+                        errors.push(`Prompt ${i + 1}: ${error.message}`);
+                        console.error(`Fout bij uploaden prompt ${i + 1}:`, error);
+                    }
+                }
+
+                // Resultaat weergeven
+                let resultMessage = `Upload voltooid! ${successCount} prompts succesvol toegevoegd.`;
+                if (errorCount > 0) {
+                    resultMessage += ` ${errorCount} fouten opgetreden.`;
+                    console.error("Upload fouten:", errors);
+                }
+                
+                showStatus(resultMessage, errorCount === 0 ? "success" : "info");
+                
+                if (errorCount > 0) {
+                    validationResult.textContent = "Fouten:\n" + errors.join('\n');
+                    validationResult.style.display = 'block';
+                }
+
+            } catch (error) {
+                showStatus(`Upload fout: ${error.message}`, "error");
+                console.error("Upload fout:", error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Upload naar Database';
+            }
+        }
+
+        // Hulpfuncties
+        // Geen hulpfuncties nodig voor de nieuwe structuur
+
+        // Auto-resize textarea
+        jsonInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 600) + 'px';
+        });
+    </script>
+</body>
+</html>

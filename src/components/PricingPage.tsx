@@ -296,6 +296,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
 
     // Otherwise, change plan via Stripe Customer Portal
     try {
+      if (userEmail) {
+        localStorage.setItem('checkout_email', userEmail);
+      }
+      localStorage.setItem('checkout_tier', currentTier);
       await stripeService.redirectToCustomerPortal(stripeCustomerId);
     } catch (error) {
       console.error('Error redirecting to customer portal:', error);
@@ -813,7 +817,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
           <div className="border-2 rounded-lg p-4 sm:p-6 bg-white dark:bg-gray-800">
             <div className="flex items-center mb-2">
               <div className="text-3xl mr-2">🌅</div>
-              <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-white">Horizon pakket</h3>
+              <h3 className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-white">{t('horizonPackageTitle', { defaultValue: 'Horizon pakket' })}</h3>
             </div>
             {!isHorizonEligible && (
               <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
@@ -824,11 +828,22 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
             <div className="grid sm:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-gray-300 mt-2">
               <div className="flex items-center">
                 <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
-                <span>{t('horizonPackageAudio', { defaultValue: '4 uur extra audio‑opname (<span className="whitespace-nowrap">240 minuten</span>)' })}</span>
+                <span>
+                  {(() => {
+                    const minutes = Number(import.meta.env.VITE_HORIZON_EXTRA_AUDIO_MINUTES ?? 240);
+                    const hours = Math.round((minutes / 60) * 10) / 10;
+                    return t('horizonPackageAudio', { defaultValue: `${hours} uur extra audio‑opname (<span className="whitespace-nowrap">${minutes} minuten</span>) — overdraagbaar` });
+                  })()}
+                </span>
               </div>
               <div className="flex items-center">
                 <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
-                <span>{t('horizonPackageTokens', { defaultValue: '25.000 extra tokens' })}</span>
+                <span>
+                  {(() => {
+                    const tokens = Number(import.meta.env.VITE_HORIZON_EXTRA_TOKENS ?? 25000);
+                    return t('horizonPackageTokens', { defaultValue: `${tokens.toLocaleString('nl-NL')} extra tokens` });
+                  })()}
+                </span>
               </div>
             </div>
 
@@ -840,10 +855,31 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
 
             <div className="mt-4">
               <button
-                disabled
-                className="w-full py-3 px-6 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded font-medium cursor-not-allowed"
+                onClick={async () => {
+                  if (!isLoggedIn) {
+                    displayToast(t('pleaseLoginFirst', { defaultValue: 'Log eerst in om te kopen' }));
+                    return;
+                  }
+                  try {
+                    const productId = import.meta.env.VITE_STRIPE_HORIZON_PRODUCT_ID as string;
+                    if (!productId) {
+                      displayToast(t('horizonProductMissing', { defaultValue: 'Product ID ontbreekt (config)' }));
+                      return;
+                    }
+                    setIsLoading('horizon');
+                    localStorage.setItem('checkout_tier', currentTier);
+                    localStorage.setItem('checkout_email', userEmail);
+                    await stripeService.redirectToHorizonPurchase(productId, userId, userEmail);
+                  } catch (e) {
+                    console.error('Horizon purchase failed', e);
+                    displayToast(t('horizonPurchaseFailed', { defaultValue: 'Kon Horizon aankoop niet starten' }));
+                  } finally {
+                    setIsLoading(null);
+                  }
+                }}
+                className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
               >
-                {t('horizonPackageComingSoon', { defaultValue: 'Komt binnenkort' })}
+                {isLoading === 'horizon' ? t('processing', { defaultValue: 'Bezig...' }) : t('horizonPackageBuyNow', { defaultValue: 'Nu kopen' })}
               </button>
             </div>
           </div>

@@ -28,6 +28,7 @@ const CustomerPortalModal: React.FC<CustomerPortalModalProps> = ({
     }
 
     try {
+      localStorage.setItem('checkout_tier', userTier);
       await stripeService.redirectToCustomerPortal(customerId);
     } catch (error) {
       console.error('Error opening customer portal:', error);

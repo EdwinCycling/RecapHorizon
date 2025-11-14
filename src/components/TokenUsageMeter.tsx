@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SubscriptionTier, TranslationFunction } from '../../types';
 import { subscriptionService } from '../subscriptionService';
-import { getTotalTokenUsage, getUserMonthlyTokens, getUserMonthlySessions } from '../firebase';
+import { getTotalTokenUsage, getUserPeriodTokens, getUserPeriodSessions } from '../firebase';
 import Modal from './Modal';
 
 interface TokenUsageMeterProps {
@@ -19,6 +19,8 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
 }) => {
   const [monthlyUsage, setMonthlyUsage] = useState<number>(0);
   const [monthlySessions, setMonthlySessions] = useState<number>(0);
+  const [periodStart, setPeriodStart] = useState<Date | null>(null);
+  const [periodEnd, setPeriodEnd] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -34,10 +36,12 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
       try {
         setIsLoading(true);
         setError(null);
-        const monthlyTokens = await getUserMonthlyTokens(user.uid);
-        const sessionsData = await getUserMonthlySessions(user.uid);
-        setMonthlyUsage(monthlyTokens.totalTokens);
+        const periodTokens = await getUserPeriodTokens(user.uid);
+        const sessionsData = await getUserPeriodSessions(user.uid);
+        setMonthlyUsage(periodTokens.totalTokens);
         setMonthlySessions(sessionsData.sessions);
+        setPeriodStart(periodTokens.periodStart);
+        setPeriodEnd(periodTokens.periodEnd);
       } catch (err) {
         console.error('Error fetching token usage:', err);
         setError('Failed to load token usage data');
@@ -57,6 +61,7 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
   // Check if user has unlimited tokens (Diamond tier)
   const isUnlimited = tierLimits.maxTokensPerMonth === -1;
   const monthlyPercentage = isUnlimited ? 0 : subscriptionService.getTokenUsagePercentage(userTier, monthlyUsage, 'monthly');
+  const daysRemaining = periodEnd ? Math.max(0, Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
   const remainingTokens = isUnlimited ? Infinity : Math.max(0, tierLimits.maxTokensPerMonth - monthlyUsage);
 
   const getProgressBarColor = (percentage: number): string => {
@@ -72,6 +77,9 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
     if (percentage >= 50) return 'text-yellow-600 dark:text-yellow-400';
     return 'text-green-600 dark:text-green-400';
   };
+
+  const horizonExtraTokens = Number(import.meta.env.VITE_HORIZON_EXTRA_TOKENS ?? 25000);
+  const horizonExtraAudio = Number(import.meta.env.VITE_HORIZON_EXTRA_AUDIO_MINUTES ?? 240);
 
   const formatTokenCount = (count: number): string => {
     if (count >= 1000000) {
@@ -144,8 +152,13 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
           <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
             <div className="flex justify-between items-center mb-3">
               <h4 className="text-base font-semibold text-slate-800 dark:text-slate-200">
-                {t('tokensThisMonth')}
+                {t('tokensThisPeriod')}
               </h4>
+              {periodStart && periodEnd && (
+                <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">
+                  {periodStart.toLocaleDateString('nl-NL')} – {periodEnd.toLocaleDateString('nl-NL')}{daysRemaining !== null ? ` · ${daysRemaining} ${t('daysRemaining')}` : ''}
+                </span>
+              )}
               <span className={`text-lg font-bold ${isUnlimited ? 'text-green-600 dark:text-green-400' : getTextColor(monthlyPercentage)}`}>
                 {formatTokenCount(monthlyUsage)} / {isUnlimited ? '∞' : formatTokenCount(tierLimits.maxTokensPerMonth)}
               </span>
@@ -179,7 +192,7 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
           <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
             <div className="flex justify-between items-center">
               <h4 className="text-base font-semibold text-slate-800 dark:text-slate-200">
-                {t('sessionsThisMonth')}
+                {t('sessionsThisPeriod')}
               </h4>
               <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                 {monthlySessions}
@@ -235,6 +248,13 @@ const TokenUsageMeter: React.FC<TokenUsageMeterProps> = ({
               </div>
             </div>
           )}
+
+          {/* Horizon Extras Config */}
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+            <div className="text-xs text-slate-600 dark:text-slate-400">
+              Horizon add‑on: +{horizonExtraTokens.toLocaleString('nl-NL')} tokens, +{horizonExtraAudio} min audio (overdraagbaar)
+            </div>
+          </div>
         </div>
       </Modal>
     </div>

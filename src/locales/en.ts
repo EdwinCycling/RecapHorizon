@@ -1521,6 +1521,19 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   pricingOnlyTxt: "TXT only",
   pricingPremiumFeatures: "Premium Features",
   pricingChatWithTranscript: "Chat with transcript",
+  horizonPackageTitle: "Horizon package",
+  horizonPackageAvailableFor: "Only available for <strong>Silver</strong> and <strong>Gold</strong> members.",
+  horizonPackageAudio: "4 hours extra audio recording (<span class=\"whitespace-nowrap\">240 minutes</span>)",
+  horizonPackageTokens: "25,000 extra tokens",
+  horizonPackagePrice: "Price: <strong>one-time €4</strong>",
+  horizonPackageValidUntil: "Only valid in your subscription month{{billingDate}}.",
+  horizonPackageNotTransferable: "Not transferable to a new billing period.",
+  horizonPackageComingSoon: "Coming soon",
+  whatAreTokensTitle: "What are tokens?",
+  whatAreTokensDescription: "Tokens are small pieces of text used for AI computation. You rarely need to think about them: you just work, we safely track your limits per tier.",
+  whatAreTokensPoint1: "We count tokens you upload (to the AI) and tokens you download (from the AI). Together these make up your usage.",
+  whatAreTokensPoint2: "Download tokens (the AI result) cost slightly more than upload tokens. This helps keep answer quality high.",
+  whatAreTokensPoint3: "Approaching your limit? We’ll kindly notify you and you can easily upgrade.",
 
   pricingPowerPointExport: "PowerPoint export",
   pricingBusinessCaseGenerator: "Business Case Generator",
@@ -3999,6 +4012,15 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,thinkingPartnerSelectedTopic: "Selected thinking partner topic"
   ,to: "to"
   ,tokensThisMonth: "Tokens this month"
+  ,tokensThisPeriod: "Tokens this period"
+  ,sessionsThisPeriod: "Sessions this period"
+  ,periodStart: "Period start"
+  ,periodEnd: "Period end"
+  ,daysRemaining: "days remaining"
+  ,horizonPackageBuyNow: "Buy now"
+  ,pleaseLoginFirst: "Please log in to purchase"
+  ,horizonProductMissing: "Product ID missing (config)"
+  ,horizonPurchaseFailed: "Could not start Horizon purchase"
   ,topicGenerationError: "Topic generation error"
   ,topicsGenerated: "Topics generated"
   ,transcriptionQuality: "Transcription quality"

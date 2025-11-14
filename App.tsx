@@ -1135,7 +1135,7 @@ export default function App() {
 
 
   const [audioURL, setAudioURL] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState<string>('Dit is een test transcript voor het testen van de knop functionaliteit. We gaan kijken of alle knoppen correct werken na de fix van de infinite re-render loop.');
+  const [transcript, setTranscript] = useState<string>('');
   
 
   const [summary, setSummary] = useState<string>('');
@@ -1450,7 +1450,7 @@ export default function App() {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');
       
-      if (sessionId && window.location.pathname.includes('subscription-success')) {
+      if (sessionId && (window.location.pathname.includes('subscription-success') || window.location.pathname.includes('horizon-success'))) {
         // Extract tier and email from localStorage or URL
         const tier = localStorage.getItem('checkout_tier') as SubscriptionTier;
         const email = localStorage.getItem('checkout_email') || authState.user?.email || '';
@@ -1470,6 +1470,8 @@ export default function App() {
       }
     }
   }, [authState.user, subscriptionSuccessModal]);
+
+  
   
   // Check for customer portal return URL parameters
   useEffect(() => {
@@ -1479,6 +1481,13 @@ export default function App() {
       
       if (portalReturn === 'true') {
         setShowCustomerPortalReturn(true);
+        const tierLs = localStorage.getItem('checkout_tier') as SubscriptionTier | null;
+        const emailLs = localStorage.getItem('checkout_email') || authState.user?.email || '';
+        if (tierLs && emailLs) {
+          setSubscriptionSuccessTier(tierLs);
+          setSubscriptionSuccessEmail(emailLs);
+          subscriptionSuccessModal.open();
+        }
         
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -5773,7 +5782,7 @@ const handleAnalyzeSentiment = async () => {
         const { initiateWaitlistSignup } = await import('./src/utils/security');
         
         // Initiate email confirmation for referral signup
-        const result = await initiateWaitlistSignup(email);
+        const result = await initiateWaitlistSignup(email, currentLanguage);
         
         if (result.success && result.requiresConfirmation) {
           setShowEmailConfirmationModal(true);
@@ -6155,7 +6164,7 @@ const handleAnalyzeSentiment = async () => {
       const { initiateWaitlistSignup } = await import('./src/utils/security');
       
       // Initiate waitlist signup with email confirmation
-      const result = await initiateWaitlistSignup(email);
+      const result = await initiateWaitlistSignup(email, currentLanguage);
       
       if (result.success && result.requiresConfirmation) {
         // Store email for confirmation
@@ -6394,7 +6403,7 @@ const handleAnalyzeSentiment = async () => {
       }
       
       // Initiate waitlist signup with email confirmation
-      const result = await initiateWaitlistSignup(email);
+      const result = await initiateWaitlistSignup(email, currentLanguage);
       
       if (result.success && result.requiresConfirmation) {
         setShowEmailConfirmation(true);
@@ -14304,7 +14313,14 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       <ExpertConfigurationModal
         isOpen={expertConfigModal.isOpen}
         onClose={expertConfigModal.close}
-        onStartChat={(config) => {
+        onStartChat={async (config) => {
+           // Check token usage before opening expert chat
+           const tokenEstimate = tokenManager.estimateTokens('Expert chat session', 10); // Schatting voor chat sessie
+           const tokenCheck = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
+           if (!tokenCheck.allowed) {
+             setError(tokenCheck.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer tokens.');
+             return;
+           }
            setExpertConfiguration(config);
            expertChatModal.open();
          }}

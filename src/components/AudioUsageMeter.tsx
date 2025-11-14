@@ -6,6 +6,7 @@ import { subscriptionService } from '../subscriptionService';
 interface AudioUsageMeterProps {
   userTier: SubscriptionTier;
   monthlyAudioUsage: number;
+  extraAudioBalance?: number;
   t: TranslationFunction;
   theme: 'light' | 'dark';
   onShowPricing?: () => void;
@@ -14,12 +15,14 @@ interface AudioUsageMeterProps {
 const AudioUsageMeter: React.FC<AudioUsageMeterProps> = ({
   userTier,
   monthlyAudioUsage,
+  extraAudioBalance = 0,
   t,
   theme,
   onShowPricing
 }) => {
   const tierLimits = subscriptionService.getTierLimits(userTier);
-  const monthlyLimit = tierLimits?.maxMonthlyAudioMinutes || 60;
+  const baseMonthlyLimit = tierLimits?.maxMonthlyAudioMinutes || 60;
+  const monthlyLimit = baseMonthlyLimit === -1 ? -1 : baseMonthlyLimit + (extraAudioBalance || 0);
   const isUnlimited = monthlyLimit === -1;
   const usagePercentage = isUnlimited ? 0 : monthlyLimit > 0 ? (monthlyAudioUsage / monthlyLimit) * 100 : 0;
   const remainingMinutes = isUnlimited ? -1 : Math.max(0, monthlyLimit - monthlyAudioUsage);

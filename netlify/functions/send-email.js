@@ -72,9 +72,9 @@ exports.handler = async (event, context) => {
     }
 
     // Validate required environment variables
-    const apiKey = process.env.MAILERSEND_API_KEY;
+    const apiKey = process.env.BREVO_API_KEY;
     if (!apiKey) {
-      throw new Error('MAILERSEND_API_KEY not configured');
+      throw new Error('BREVO_API_KEY not configured');
     }
 
     // Email templates
@@ -181,6 +181,198 @@ exports.handler = async (event, context) => {
               <div class="footer">
                 <p>© 2024 RecapHorizon. All rights reserved.</p>
                 <p>You're receiving this email because you signed up for our waitlist.</p>
+              </div>
+            </body>
+            </html>
+          `
+        },
+        'de': {
+          subject: 'Bestätige deine E-Mail-Adresse für RecapHorizon',
+          html: `
+            <!DOCTYPE html>
+            <html lang="de">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>E-Mail-Bestätigung</title>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .logo { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+                .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+                .code-box { background: white; border: 2px solid #0891b2; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+                .code { font-size: 32px; font-weight: bold; color: #0891b2; letter-spacing: 4px; }
+                .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo">RecapHorizon</div>
+                <p>Bestätige deine E-Mail-Adresse</p>
+              </div>
+              <div class="content">
+                <h2>Hallo!</h2>
+                <p>Danke für deine Anmeldung bei RecapHorizon! Um deine Registrierung für die Warteliste abzuschließen, gib bitte den folgenden Bestätigungscode ein:</p>
+                <div class="code-box">
+                  <div class="code">{{confirmationCode}}</div>
+                </div>
+                <p><strong>Wichtig:</strong></p>
+                <ul>
+                  <li>Dieser Code ist {{expiryHours}} Stunden gültig</li>
+                  <li>Verwende diesen Code nur, wenn du dich bei RecapHorizon angemeldet hast</li>
+                  <li>Teile diesen Code niemals mit anderen</li>
+                </ul>
+                <p>Sobald du deine E-Mail-Adresse bestätigt hast, fügen wir dich unserer Warteliste hinzu. Wir melden uns, sobald ein Platz verfügbar ist!</p>
+                <p>Fragen? Kontaktiere uns unter {{supportEmail}}</p>
+                <p>Viele Grüße,<br>Das RecapHorizon-Team</p>
+              </div>
+              <div class="footer">
+                <p>© 2024 RecapHorizon. Alle Rechte vorbehalten.</p>
+                <p>Du erhältst diese E-Mail, weil du dich für unsere Warteliste angemeldet hast.</p>
+              </div>
+            </body>
+            </html>
+          `
+        },
+        'fr': {
+          subject: 'Confirmez votre adresse e‑mail pour RecapHorizon',
+          html: `
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Confirmation de l’e‑mail</title>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .logo { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+                .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+                .code-box { background: white; border: 2px solid #0891b2; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+                .code { font-size: 32px; font-weight: bold; color: #0891b2; letter-spacing: 4px; }
+                .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo">RecapHorizon</div>
+                <p>Confirmez votre adresse e‑mail</p>
+              </div>
+              <div class="content">
+                <h2>Bonjour&nbsp;!</h2>
+                <p>Merci de votre inscription à RecapHorizon&nbsp;! Pour terminer votre inscription sur la liste d’attente, veuillez saisir le code de confirmation ci‑dessous&nbsp;:</p>
+                <div class="code-box">
+                  <div class="code">{{confirmationCode}}</div>
+                </div>
+                <p><strong>Important&nbsp;:</strong></p>
+                <ul>
+                  <li>Ce code est valable {{expiryHours}} heures</li>
+                  <li>N’utilisez ce code que si vous vous êtes inscrit(e) à RecapHorizon</li>
+                  <li>Ne partagez jamais ce code avec d’autres personnes</li>
+                </ul>
+                <p>Une fois votre adresse e‑mail confirmée, vous serez ajouté(e) à notre liste d’attente. Nous vous contacterons dès qu’une place sera disponible&nbsp;!</p>
+                <p>Des questions&nbsp;? Contactez‑nous à {{supportEmail}}</p>
+                <p>Cordialement,<br>L’équipe RecapHorizon</p>
+              </div>
+              <div class="footer">
+                <p>© 2024 RecapHorizon. Tous droits réservés.</p>
+                <p>Vous recevez cet e‑mail car vous vous êtes inscrit(e) sur notre liste d’attente.</p>
+              </div>
+            </body>
+            </html>
+          `
+        },
+        'es': {
+          subject: 'Confirma tu dirección de correo electrónico para RecapHorizon',
+          html: `
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Confirmación de correo</title>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .logo { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+                .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+                .code-box { background: white; border: 2px solid #0891b2; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+                .code { font-size: 32px; font-weight: bold; color: #0891b2; letter-spacing: 4px; }
+                .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo">RecapHorizon</div>
+                <p>Confirma tu dirección de correo</p>
+              </div>
+              <div class="content">
+                <h2>¡Hola!</h2>
+                <p>Gracias por registrarte en RecapHorizon. Para completar tu inscripción en la lista de espera, introduce el siguiente código de confirmación:</p>
+                <div class="code-box">
+                  <div class="code">{{confirmationCode}}</div>
+                </div>
+                <p><strong>Importante:</strong></p>
+                <ul>
+                  <li>Este código es válido durante {{expiryHours}} horas</li>
+                  <li>Usa este código solo si te registraste en RecapHorizon</li>
+                  <li>No compartas este código con otras personas</li>
+                </ul>
+                <p>Una vez confirmes tu dirección de correo, te añadiremos a nuestra lista de espera. ¡Te contactaremos en cuanto haya espacio disponible!</p>
+                <p>¿Tienes preguntas? Escríbenos a {{supportEmail}}</p>
+                <p>Saludos cordiales,<br>El equipo de RecapHorizon</p>
+              </div>
+              <div class="footer">
+                <p>© 2024 RecapHorizon. Todos los derechos reservados.</p>
+                <p>Recibes este correo porque te registraste en nuestra lista de espera.</p>
+              </div>
+            </body>
+            </html>
+          `
+        },
+        'pt': {
+          subject: 'Confirme seu endereço de e‑mail para RecapHorizon',
+          html: `
+            <!DOCTYPE html>
+            <html lang="pt">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Confirmação de e‑mail</title>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .logo { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+                .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+                .code-box { background: white; border: 2px solid #0891b2; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+                .code { font-size: 32px; font-weight: bold; color: #0891b2; letter-spacing: 4px; }
+                .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo">RecapHorizon</div>
+                <p>Confirme seu e‑mail</p>
+              </div>
+              <div class="content">
+                <h2>Olá!</h2>
+                <p>Obrigado por se cadastrar no RecapHorizon! Para concluir sua inscrição na lista de espera, insira o código de confirmação abaixo:</p>
+                <div class="code-box">
+                  <div class="code">{{confirmationCode}}</div>
+                </div>
+                <p><strong>Importante:</strong></p>
+                <ul>
+                  <li>Este código é válido por {{expiryHours}} horas</li>
+                  <li>Use este código apenas se você se cadastrou no RecapHorizon</li>
+                  <li>Nunca compartilhe este código com outras pessoas</li>
+                </ul>
+                <p>Depois de confirmar seu e‑mail, você será adicionado à nossa lista de espera. Entraremos em contato assim que houver vaga disponível!</p>
+                <p>Dúvidas? Fale conosco em {{supportEmail}}</p>
+                <p>Atenciosamente,<br>Equipe RecapHorizon</p>
+              </div>
+              <div class="footer">
+                <p>© 2024 RecapHorizon. Todos os direitos reservados.</p>
+                <p>Você está recebendo este e‑mail porque se cadastrou em nossa lista de espera.</p>
               </div>
             </body>
             </html>
@@ -292,62 +484,52 @@ exports.handler = async (event, context) => {
       subject = subject.replace(new RegExp(placeholder, 'g'), value);
     });
 
-    // Prepare MailerSend email data
-    // For trial accounts, we need to use a verified sender email
-    // The default should be the account owner's email, not a Gmail address
-    const senderEmail = process.env.MAILERSEND_SENDER_EMAIL || 'noreply@trial.mailersend.com';
-    const senderName = process.env.MAILERSEND_SENDER_NAME || 'RecapHorizon';
+    // Prepare Brevo email data
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.MAILERSEND_SENDER_EMAIL || 'noreply@recaphorizon.com';
+    const senderName = process.env.BREVO_SENDER_NAME || process.env.MAILERSEND_SENDER_NAME || 'RecapHorizon';
 
-    // Recipient logic: enterprise goes to office inbox, waitlist goes to user
-    // For trial accounts, all emails must go to the administrator's email
+    // Recipient logic
     const enterpriseRecipient = process.env.ENTERPRISE_CONTACT_RECIPIENT || process.env.MAILERSEND_ADMIN_EMAIL || 'RecapHorizonOffice@gmail.com';
-    const adminEmail = process.env.MAILERSEND_ADMIN_EMAIL || enterpriseRecipient;
-    
-    // For trial accounts, always send to admin email
-    const toEmail = emailType === 'enterprise_contact' ? enterpriseRecipient : adminEmail;
+    const userRecipient = emailData.email;
+    const toEmail = emailType === 'enterprise_contact' ? enterpriseRecipient : userRecipient;
 
     const emailPayload = {
-      from: {
-        email: senderEmail,
-        name: senderName
+      sender: {
+        name: senderName,
+        email: senderEmail
       },
-      to: [{
-        email: toEmail,
-        name: emailType === 'enterprise_contact' ? 'RecapHorizon Office' : emailData.email.split('@')[0]
-      }],
+      to: [
+        {
+          email: toEmail,
+          name: emailType === 'enterprise_contact' ? 'RecapHorizon Office' : (userRecipient ? userRecipient.split('@')[0] : 'User')
+        }
+      ],
       subject: subject,
-      html: htmlContent,
-      tags: emailType === 'enterprise_contact' 
-        ? ['enterprise', 'contact', language]
-        : ['2fa', 'waitlist', language],
-      settings: {
-        track_clicks: true,
-        track_opens: true,
-        track_content: true
-      }
+      htmlContent: htmlContent,
+      tags: emailType === 'enterprise_contact' ? ['enterprise', 'contact', language] : ['2fa', 'waitlist', language]
     };
 
-    // For enterprise, set reply-to to the user's email so office can reply directly
+    // Set reply-to
     if (emailType === 'enterprise_contact' && emailData.email) {
-      emailPayload.reply_to = { email: emailData.email };
+      emailPayload.replyTo = { email: emailData.email };
     } else if (emailData.supportEmail) {
-      emailPayload.reply_to = { email: emailData.supportEmail };
+      emailPayload.replyTo = { email: emailData.supportEmail };
     }
 
-    // Send email via MailerSend API
-    const response = await fetch('https://api.mailersend.com/v1/email', {
+    // Send email via Brevo API
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'X-Requested-With': 'XMLHttpRequest'
+        'api-key': apiKey,
+        'accept': 'application/json'
       },
       body: JSON.stringify(emailPayload)
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('MailerSend API Error Details:', {
+      console.error('Brevo API Error Details:', {
         status: response.status,
         statusText: response.statusText,
         errorData: errorData,
@@ -362,17 +544,7 @@ exports.handler = async (event, context) => {
         parsedError = { message: errorData };
       }
       
-      // Provide specific error messages for common issues
-       if (response.status === 422) {
-         if (parsedError.errors?.from?.some(err => err.includes('domain must be verified'))) {
-           throw new Error('MailerSend Configuration Error: The sender email domain is not verified. Please either: 1) Verify your domain in MailerSend dashboard, or 2) Use a verified sender email address.');
-         }
-         if (parsedError.errors?.to?.some(err => err.includes('Trial accounts'))) {
-           throw new Error('MailerSend Trial Account Limitation: Emails can only be sent to the administrator email address. Please check your MailerSend account settings to find the correct administrator email, or upgrade to a paid plan.');
-         }
-       }
-      
-      throw new Error(`MailerSend API error: ${response.status} - ${parsedError.message || errorData}`);
+      throw new Error(`Brevo API error: ${response.status} - ${parsedError.message || errorData}`);
     }
 
     const result = await response.json();
@@ -386,7 +558,7 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         success: true,
-        messageId: result.message_id || result.id
+        messageId: result.messageId || result.message_id || result.id
       })
     };
 
@@ -394,10 +566,10 @@ exports.handler = async (event, context) => {
     // Log full error server-side only
     console.error('Error sending email:', error);
 
-    const unauthorized = error?.message?.includes('401') || error?.message?.includes('unauthorized');
+    const unauthorized = error?.message?.includes('401') || error?.message?.toLowerCase()?.includes('unauthorized');
 
     const safeMessage = unauthorized
-      ? 'Email service not authorized. Please check your MailerSend API key configuration.'
+      ? 'Email service not authorized. Please check your Brevo API key configuration.'
       : (error?.message || 'Failed to send email');
 
     return {
@@ -410,7 +582,7 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         success: false,
         error: safeMessage,
-        code: unauthorized ? 'MAILERSEND_UNAUTHORIZED' : 'EMAIL_SEND_ERROR'
+        code: unauthorized ? 'BREVO_UNAUTHORIZED' : 'EMAIL_SEND_ERROR'
       })
     };
   }

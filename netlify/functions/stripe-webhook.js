@@ -111,6 +111,12 @@ async function handleSubscriptionCreated(subscription) {
     subscriptionTier: getSubscriptionTier(subscription.items.data[0]?.price?.id),
     hasHadPaidSubscription: true // Mark that this user has a paid subscription
   };
+  subscriptionData.periodStart = new Date(subscription.current_period_start * 1000);
+  subscriptionData.periodEnd = new Date(subscription.current_period_end * 1000);
+  subscriptionData.periodInputTokens = 0;
+  subscriptionData.periodOutputTokens = 0;
+  subscriptionData.periodSessionsCount = 0;
+  subscriptionData.periodExtraTokens = 0;
 
   await updateUserSubscription(subscription.customer, subscriptionData);
 }
@@ -125,6 +131,8 @@ async function handleSubscriptionUpdated(subscription) {
     nextBillingDate: new Date(subscription.current_period_end * 1000),
     subscriptionTier: getSubscriptionTier(subscription.items.data[0]?.price?.id)
   };
+  subscriptionData.periodStart = new Date(subscription.current_period_start * 1000);
+  subscriptionData.periodEnd = new Date(subscription.current_period_end * 1000);
 
   // Handle cancellation at period end
   if (subscription.cancel_at_period_end) {
@@ -170,6 +178,26 @@ async function handleInvoicePaymentSucceeded(invoice) {
     };
 
     await updateUserSubscription(invoice.customer, subscriptionData);
+
+    try {
+      const db = getAdminDb();
+      const usersRef = db.collection('users');
+      const q = usersRef.where('stripeCustomerId', '==', invoice.customer).limit(1);
+      const querySnapshot = await q.get();
+      if (!querySnapshot.empty) {
+        const userRef = usersRef.doc(querySnapshot.docs[0].id);
+        await userRef.set({
+          periodEnd: new Date(invoice.period_end * 1000),
+          periodInputTokens: 0,
+          periodOutputTokens: 0,
+          periodSessionsCount: 0,
+          periodExtraTokens: 0,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      }
+    } catch (e) {
+      console.warn('Failed to reset period counters on invoice payment succeeded:', e);
+    }
   }
 }
 
@@ -200,16 +228,29 @@ async function handleCheckoutSessionCompleted(session) {
       return;
     }
 
-    // Update user with Stripe customer ID
     const userRef = db.collection('users').doc(userId);
-    const updateData = {
-      stripeCustomerId: session.customer,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    };
+    await userRef.set({ stripeCustomerId: session.customer, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
 
-    await userRef.set(updateData, { merge: true });
-
-    console.log(`Stripe customer ID ${session.customer} linked to user ${userId}`);
+    if (session.mode === 'payment') {
+      try {
+        const expandedSession = await stripe.checkout.sessions.retrieve(session.id, { expand: ['line_items'] });
+        const lineItems = expandedSession.line_items?.data || [];
+        const horizonProductId = process.env.STRIPE_HORIZON_PRODUCT_ID || '';
+        const hasHorizon = lineItems.some(li => li.price?.product === horizonProductId);
+        if (hasHorizon) {
+          const extraTokens = parseInt(process.env.STRIPE_HORIZON_EXTRA_TOKENS || process.env.VITE_HORIZON_EXTRA_TOKENS || '25000', 10);
+          const extraAudio = parseInt(process.env.STRIPE_HORIZON_EXTRA_AUDIO_MINUTES || process.env.VITE_HORIZON_EXTRA_AUDIO_MINUTES || '240', 10);
+          await userRef.set({
+            periodExtraTokens: admin.firestore.FieldValue.increment(isNaN(extraTokens) ? 25000 : extraTokens),
+            extraAudioMinutesBalance: admin.firestore.FieldValue.increment(isNaN(extraAudio) ? 240 : extraAudio),
+            // Optional: store extra audio minutes if applicable in UI later
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+      } catch (ex) {
+        console.warn('Failed to process horizon addon from checkout session:', ex);
+      }
+    }
   } catch (error) {
     console.error('Failed to handle checkout session completed:', error);
     throw error;

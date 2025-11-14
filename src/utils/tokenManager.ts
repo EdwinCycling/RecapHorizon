@@ -1,6 +1,6 @@
 import { SubscriptionTier } from '../../types';
 import { subscriptionService } from '../subscriptionService';
-import { getTotalTokenUsage, addUserMonthlyTokens, getUserMonthlyTokens } from '../firebase';
+import { getTotalTokenUsage, addUserPeriodTokens, getUserPeriodTokens } from '../firebase';
 
 type TranslationFunction = (key: string, params?: Record<string, any>) => string;
 
@@ -85,11 +85,11 @@ class TokenManager {
     
     try {
       // Get current usage
-      const [monthlyTokens, dailyUsage] = await Promise.all([
-        getUserMonthlyTokens(userId),
+      const [periodTokens, dailyUsage] = await Promise.all([
+        getUserPeriodTokens(userId),
         getTotalTokenUsage(userId, 'daily')
       ]);
-      const monthlyUsage = monthlyTokens.totalTokens;
+      const monthlyUsage = periodTokens.totalTokens;
 
       // Check if usage is allowed
       const validation = subscriptionService.isTokenUsageAllowed(
@@ -159,7 +159,7 @@ class TokenManager {
     }
     
     try {
-      await addUserMonthlyTokens(userId, inputTokens, outputTokens);
+      await addUserPeriodTokens(userId, inputTokens, outputTokens);
     } catch (error: any) {
       // Handle Firebase permissions errors gracefully
       if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
@@ -201,13 +201,13 @@ class TokenManager {
     }
     
     try {
-      const [monthlyTokens, dailyUsage] = await Promise.all([
-        getUserMonthlyTokens(userId),
+      const [periodTokens, dailyUsage] = await Promise.all([
+        getUserPeriodTokens(userId),
         getTotalTokenUsage(userId, 'daily')
       ]);
 
       return {
-        monthly: monthlyTokens.totalTokens,
+        monthly: periodTokens.totalTokens,
         daily: dailyUsage
       };
     } catch (error: any) {

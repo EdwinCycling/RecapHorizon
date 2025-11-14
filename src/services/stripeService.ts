@@ -131,6 +131,42 @@ class StripeService {
     }
   }
 
+  async createHorizonCheckoutSession({
+    productId,
+    userId,
+    userEmail,
+    successUrl,
+    cancelUrl
+  }: {
+    productId: string;
+    userId: string;
+    userEmail: string;
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<{ sessionId: string; url: string }> {
+    const response = await fetch(`${this.baseUrl}/create-horizon-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, userId, userEmail, successUrl, cancelUrl })
+    });
+    if (!response.ok) {
+      let errorText = 'Failed to create horizon session';
+      try {
+        const errorData = await response.json();
+        if (errorData?.error) errorText = errorData.error;
+      } catch {}
+      throw new Error(errorText);
+    }
+    return await response.json();
+  }
+
+  async redirectToHorizonPurchase(productId: string, userId: string, userEmail: string): Promise<void> {
+    const successUrl = `${window.location.origin}/horizon-success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${window.location.origin}/pricing?horizon_canceled=true`;
+    const { url } = await this.createHorizonCheckoutSession({ productId, userId, userEmail, successUrl, cancelUrl });
+    window.location.href = url;
+  }
+
   /**
    * Maak een Customer Portal sessie aan voor bestaande klanten
    */

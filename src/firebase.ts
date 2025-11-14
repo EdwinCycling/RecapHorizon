@@ -381,6 +381,85 @@ export const getUserMonthlySessions = async (userId: string): Promise<MonthlySes
   return { month: currentMonth, sessions: 0 };
 };
 
+export interface PeriodTokensUsage {
+  periodStart: Date | null;
+  periodEnd: Date | null;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  extraTokens?: number;
+}
+
+export const getUserPeriodTokens = async (userId: string): Promise<PeriodTokensUsage> => {
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    return { periodStart: null, periodEnd: null, inputTokens: 0, outputTokens: 0, totalTokens: 0, extraTokens: 0 };
+  }
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  const data = userSnap.exists() ? (userSnap.data() as any) : {};
+  const periodStart = data.periodStart ? new Date(data.periodStart.seconds ? data.periodStart.seconds * 1000 : data.periodStart) : (data.currentSubscriptionStartDate ? new Date(data.currentSubscriptionStartDate.seconds * 1000) : null);
+  const periodEnd = data.periodEnd ? new Date(data.periodEnd.seconds ? data.periodEnd.seconds * 1000 : data.periodEnd) : (data.nextBillingDate ? new Date(data.nextBillingDate.seconds * 1000) : null);
+  const inTok = (data.periodInputTokens as number) || 0;
+  const outTok = (data.periodOutputTokens as number) || 0;
+  const extraTok = (data.periodExtraTokens as number) || 0;
+  const total = inTok + (outTok * 5) + extraTok;
+  return { periodStart, periodEnd, inputTokens: inTok, outputTokens: outTok, totalTokens: total, extraTokens: extraTok };
+};
+
+export const addUserPeriodTokens = async (userId: string, inputTokens: number, outputTokens: number): Promise<void> => {
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  if (!auth.currentUser || auth.currentUser.uid !== userId) return;
+  const userRef = doc(db, 'users', userId);
+  await ensureUserDocument(userId);
+  await updateDoc(userRef, {
+    periodInputTokens: increment(inputTokens),
+    periodOutputTokens: increment(outputTokens),
+    updatedAt: serverTimestamp()
+  }).catch(async () => {
+    await setDoc(userRef, {
+      periodInputTokens: inputTokens,
+      periodOutputTokens: outputTokens,
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    }, { merge: true });
+  });
+};
+
+export interface PeriodSessionsUsage { periodStart: Date | null; periodEnd: Date | null; sessions: number }
+
+export const getUserPeriodSessions = async (userId: string): Promise<PeriodSessionsUsage> => {
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  const userRef = doc(db, 'users', userId);
+  await ensureUserDocument(userId);
+  const userSnap = await getDoc(userRef);
+  const data = userSnap.exists() ? (userSnap.data() as any) : {};
+  const periodStart = data.periodStart ? new Date(data.periodStart.seconds ? data.periodStart.seconds * 1000 : data.periodStart) : (data.currentSubscriptionStartDate ? new Date(data.currentSubscriptionStartDate.seconds * 1000) : null);
+  const periodEnd = data.periodEnd ? new Date(data.periodEnd.seconds ? data.periodEnd.seconds * 1000 : data.periodEnd) : (data.nextBillingDate ? new Date(data.nextBillingDate.seconds * 1000) : null);
+  const sessions = (data.periodSessionsCount as number) || 0;
+  return { periodStart, periodEnd, sessions };
+};
+
+export const incrementUserPeriodSessions = async (userId: string): Promise<void> => {
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  const userRef = doc(db, 'users', userId);
+  await ensureUserDocument(userId);
+  await updateDoc(userRef, {
+    periodSessionsCount: increment(1),
+    updatedAt: serverTimestamp()
+  }).catch(async () => {
+    await setDoc(userRef, { periodSessionsCount: 1, updatedAt: serverTimestamp(), createdAt: serverTimestamp() }, { merge: true });
+  });
+};
+
+export const getUserExtraAudioMinutesBalance = async (userId: string): Promise<number> => {
+  if (!userId) throw new Error(t('userIdEmptyInFirestoreUser', 'userId is leeg in Firestore user functie!'));
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  const data = userSnap.exists() ? (userSnap.data() as any) : {};
+  return (data.extraAudioMinutesBalance as number) || 0;
+};
+
 export const getUserMonthlyAudioMinutes = async (userId: string): Promise<MonthlyAudioUsage> => {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;

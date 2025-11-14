@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { SubscriptionTier } from '../../types';
 import { subscriptionService } from '../subscriptionService';
-import { getUserMonthlyTokens, getUserMonthlySessions, getUserMonthlyAudioMinutes } from '../firebase';
+import { getUserPeriodTokens, getUserPeriodSessions, getUserMonthlyAudioMinutes, getUserExtraAudioMinutesBalance } from '../firebase';
 import Modal from './Modal';
 import AudioUsageMeter from './AudioUsageMeter';
 import { TranslationFunction } from '../../types';
@@ -31,7 +31,10 @@ const UsageModal: React.FC<UsageModalProps> = ({
 }) => {
   const [monthlyUsage, setMonthlyUsage] = useState<number>(0);
   const [monthlySessions, setMonthlySessions] = useState<number>(0);
+  const [periodStart, setPeriodStart] = useState<Date | null>(null);
+  const [periodEnd, setPeriodEnd] = useState<Date | null>(null);
   const [monthlyAudioUsage, setMonthlyAudioUsage] = useState<number>(0);
+  const [extraAudioBalance, setExtraAudioBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -75,16 +78,20 @@ const UsageModal: React.FC<UsageModalProps> = ({
 
      const startTs = performance.now();
      try {
-       const [tokenUsage, sessions, audioUsage] = await Promise.all([
-         getUserMonthlyTokens(user.uid),
-         getUserMonthlySessions(user.uid),
-         getUserMonthlyAudioMinutes(user.uid)
+       const [tokenUsage, sessions, audioUsage, audioBalance] = await Promise.all([
+         getUserPeriodTokens(user.uid),
+         getUserPeriodSessions(user.uid),
+         getUserMonthlyAudioMinutes(user.uid),
+         getUserExtraAudioMinutesBalance(user.uid)
        ]);
 
       if (import.meta.env.DEV) console.debug('[UsageModal] loadUsageData fetched', { tokenUsage, sessions, audioUsage });
        setMonthlyUsage(tokenUsage.totalTokens);
        setMonthlySessions(sessions.sessions);
+       setPeriodStart(tokenUsage.periodStart);
+       setPeriodEnd(tokenUsage.periodEnd);
        setMonthlyAudioUsage(audioUsage.minutes);
+       setExtraAudioBalance(audioBalance);
        if (import.meta.env.DEV) console.debug('[UsageModal] loadUsageData state updated', {
          tokenTotal: tokenUsage.totalTokens,
          sessions: sessions.sessions,
@@ -127,6 +134,7 @@ const UsageModal: React.FC<UsageModalProps> = ({
 
   // Compute effective monthly audio usage including the live-recording elapsed minutes
   const effectiveMonthlyAudioUsage = Math.max(0, monthlyAudioUsage + currentRecordingElapsedMinutes);
+  const daysRemaining = periodEnd ? Math.max(0, Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
 
   return (
     <Modal 
@@ -154,6 +162,11 @@ const UsageModal: React.FC<UsageModalProps> = ({
                   <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
                     {t('usageOverview')}
                   </h3>
+                  {periodStart && periodEnd && (
+                    <div className="text-xs text-slate-500 dark:text-slate-400 ml-3">
+                      {periodStart.toLocaleDateString('nl-NL')} – {periodEnd.toLocaleDateString('nl-NL')}{daysRemaining !== null ? ` · ${daysRemaining} ${t('daysRemaining')}` : ''}
+                    </div>
+                  )}
                   <div className="flex items-center justify-end">
                     <button
                       onClick={() => {
@@ -211,6 +224,7 @@ const UsageModal: React.FC<UsageModalProps> = ({
                 <AudioUsageMeter
                   userTier={userTier}
                   monthlyAudioUsage={effectiveMonthlyAudioUsage}
+                  extraAudioBalance={extraAudioBalance}
                   t={t}
                   theme={theme}
                   onShowPricing={onShowPricing}

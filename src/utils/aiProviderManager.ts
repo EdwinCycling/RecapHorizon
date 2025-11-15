@@ -360,20 +360,12 @@ export class AIProviderManager {
       throw new Error(`Rate limit exceeded for ${providerSelection.provider}. Try again in ${providerSelection.rateLimitStatus.retryAfter} seconds.`);
     }
 
-    // Get API key for the selected provider (support Vite env names)
-    let providerToUse = providerSelection.provider;
-    let modelToUse = providerSelection.model;
-    let apiKey = this.getApiKey(providerToUse);
-
-    // Validate API key exists
-    if (!apiKey || apiKey.trim() === '') {
-      throw new Error(`API key not configured for ${providerSelection.provider}. Please set the appropriate environment variable.`);
-    }
-    
+    const providerToUse = providerSelection.provider;
+    const modelToUse = providerSelection.model;
     const config: AIProviderConfig = {
       provider: providerToUse,
       model: modelToUse,
-      apiKey,
+      apiKey: '',
       temperature: 0.7,
       maxTokens: 4000
     };
@@ -404,47 +396,53 @@ export class AIProviderManager {
     startTime: number,
     userId?: string
   ): Promise<AIResponse> {
-    // Get or create Gemini instance
-    let gemini = this.geminiInstances.get(config.apiKey);
-    if (!gemini) {
-      gemini = new GoogleGenerativeAI(config.apiKey);
-      this.geminiInstances.set(config.apiKey, gemini);
-    }
+    const envBase = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '').trim();
+    const base = envBase && envBase.startsWith('http')
+      ? envBase
+      : (typeof window !== 'undefined' && window.location.hostname.includes('localhost'))
+        ? 'http://localhost:8888'
+        : (typeof window !== 'undefined' ? window.location.origin : '');
 
-    const model = gemini.getGenerativeModel({ 
-      model: config.model,
-      generationConfig: {
+    const url = `${base}/.netlify/functions/gemini-generate`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        model: config.model,
         temperature: config.temperature || 0.7,
-        maxOutputTokens: config.maxTokens || 4000,
-      }
+        maxTokens: config.maxTokens || 4000,
+        userId
+      })
     });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini server error ${response.status}: ${errorText}`);
+    }
 
-    // Record quota usage for monitoring
+    const data = await response.json();
+    const content = String(data.content || '');
+
     if (userId) {
       try {
         await quotaMonitoringService.recordGeminiRequest(
-          userId, 
-          response.usageMetadata?.promptTokenCount || 0,
-          response.usageMetadata?.candidatesTokenCount || 0
+          userId,
+          Number(data.usage?.inputTokens || 0),
+          Number(data.usage?.outputTokens || 0)
         );
-      } catch (error) {
-        console.warn('Failed to record quota usage:', error);
-      }
+      } catch (_err) {}
     }
 
     return {
-      content: text,
+      content,
       success: true,
       provider: AIProvider.GOOGLE_GEMINI,
       model: config.model,
       responseTime: Date.now() - startTime,
       usage: {
-        inputTokens: response.usageMetadata?.promptTokenCount || 0,
-        outputTokens: response.usageMetadata?.candidatesTokenCount || 0
+        inputTokens: Number(data.usage?.inputTokens || 0),
+        outputTokens: Number(data.usage?.outputTokens || 0)
       }
     };
   }
@@ -458,67 +456,8 @@ export class AIProviderManager {
     startTime: number,
     userId?: string
   ): Promise<AIResponse> {
-    // Get or create Gemini instance
-    let gemini = this.geminiInstances.get(config.apiKey);
-    if (!gemini) {
-      gemini = new GoogleGenerativeAI(config.apiKey);
-      this.geminiInstances.set(config.apiKey, gemini);
-    }
-
-    const model = gemini.getGenerativeModel({ 
-      model: config.model,
-      generationConfig: {
-        temperature: config.temperature || 0.7,
-        maxOutputTokens: config.maxTokens || 4000,
-      }
-    });
-
-    const result = await model.generateContentStream(prompt);
-    let fullContent = '';
-    let inputTokens = 0;
-    let outputTokens = 0;
-
-    // Record quota usage for monitoring
-    if (userId) {
-      try {
-        await quotaMonitoringService.recordGeminiRequest(
-          userId, 
-          inputTokens,
-          outputTokens
-        );
-      } catch (error) {
-        console.warn('Failed to record quota usage:', error);
-      }
-    }
-
-    // Create async iterable for streaming
-    const stream = async function* () {
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
-        fullContent += chunkText;
-        
-        // Update token usage if available
-        if (chunk.usageMetadata) {
-          inputTokens = chunk.usageMetadata.promptTokenCount || 0;
-          outputTokens = chunk.usageMetadata.candidatesTokenCount || 0;
-        }
-        
-        yield chunkText;
-      }
-    };
-
-    return {
-      content: fullContent,
-      success: true,
-      provider: AIProvider.GOOGLE_GEMINI,
-      model: config.model,
-      responseTime: Date.now() - startTime,
-      stream: stream(),
-      usage: {
-        inputTokens,
-        outputTokens
-      }
-    };
+    // Fallback to non-streaming server call for now
+    return this.callGemini(config, prompt, startTime, userId);
   }
 
   /**
@@ -1001,10 +940,18 @@ export class AIProviderManager {
         });
         return response.ok;
       } else if (provider === AIProvider.GOOGLE_GEMINI) {
-        const gemini = new GoogleGenerativeAI(apiKey);
-        const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
-        await model.generateContent('test');
-        return true;
+        const envBase = (import.meta as any).env?.VITE_FUNCTIONS_BASE_URL || '';
+        const base = envBase && String(envBase).startsWith('http')
+          ? envBase
+          : (typeof window !== 'undefined' && window.location.hostname.includes('localhost'))
+            ? 'http://localhost:8888'
+            : (typeof window !== 'undefined' ? window.location.origin : '');
+        const res = await fetch(`${base}/.netlify/functions/gemini-generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: 'health-check', model: 'gemini-2.5-flash' })
+        });
+        return res.ok;
       }
     } catch (error) {
       console.error(`Provider health check failed for ${provider}:`, error);

@@ -1,0 +1,197 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const ipRequests = new Map();
+const userRequests = new Map();
+
+function getOrigin(event) {
+  const o = event.headers?.origin || '';
+  return o;
+}
+
+function isOriginAllowed(event) {
+  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (allowed.length === 0) return true;
+  const origin = getOrigin(event);
+  return allowed.includes(origin);
+}
+
+function getClientIp(event) {
+  const xf = event.headers?.['x-forwarded-for'] || event.headers?.['X-Forwarded-For'] || '';
+  if (xf) return xf.split(',')[0].trim();
+  const cip = event.headers?.['client-ip'] || event.headers?.['Client-Ip'] || '';
+  return cip || 'unknown';
+}
+
+function checkRateLimitIp(ip, limitPerMinute) {
+  const now = Date.now();
+  const windowMs = 60000;
+  const arr = ipRequests.get(ip) || [];
+  const recent = arr.filter(ts => now - ts < windowMs);
+  if (recent.length >= limitPerMinute) {
+    const oldest = Math.min(...recent);
+    const retryAfter = Math.ceil((windowMs - (now - oldest)) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  recent.push(now);
+  ipRequests.set(ip, recent);
+  return { allowed: true };
+}
+
+function checkRateLimitUser(userId, limitPerMinute) {
+  if (!userId) return { allowed: true };
+  const now = Date.now();
+  const windowMs = 60000;
+  const arr = userRequests.get(userId) || [];
+  const recent = arr.filter(ts => now - ts < windowMs);
+  if (recent.length >= limitPerMinute) {
+    const oldest = Math.min(...recent);
+    const retryAfter = Math.ceil((windowMs - (now - oldest)) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  recent.push(now);
+  userRequests.set(userId, recent);
+  return { allowed: true };
+}
+
+exports.handler = async (event, context) => {
+  if (event.httpMethod === 'OPTIONS') {
+    const allowed = isOriginAllowed(event);
+    const origin = getOrigin(event);
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': allowed ? origin : 'null',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    const allowed = isOriginAllowed(event);
+    const origin = getOrigin(event);
+    return {
+      statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': allowed ? origin : 'null',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  try {
+    if (!isOriginAllowed(event)) {
+      return {
+        statusCode: 403,
+        headers: { 'Access-Control-Allow-Origin': 'null' },
+        body: JSON.stringify({ success: false, error: 'Error: Origin not allowed' })
+      };
+    }
+
+    const { prompt, model, temperature, maxTokens, userId } = JSON.parse(event.body || '{}');
+
+    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: JSON.stringify({ success: false, error: 'Invalid prompt' })
+      };
+    }
+
+    const ip = getClientIp(event);
+    const ipLimit = parseInt(process.env.RATE_LIMIT_PER_MINUTE || '20', 10);
+    const userLimit = parseInt(process.env.USER_RATE_LIMIT_PER_MINUTE || '30', 10);
+    const ipCheck = checkRateLimitIp(ip, ipLimit);
+    if (!ipCheck.allowed) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 429,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Retry-After': String(ipCheck.retryAfter)
+        },
+        body: JSON.stringify({ success: false, error: 'Error: Rate limit exceeded for IP' })
+      };
+    }
+    const userCheck = checkRateLimitUser(userId, userLimit);
+    if (!userCheck.allowed) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 429,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Retry-After': String(userCheck.retryAfter)
+        },
+        body: JSON.stringify({ success: false, error: 'Error: Rate limit exceeded for user' })
+      };
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_CLOUD_API_KEY;
+    if (!apiKey || apiKey.trim().length === 0) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 500,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: JSON.stringify({ success: false, error: 'Error: Missing GEMINI_API_KEY' })
+      };
+    }
+
+    const safePrompt = prompt.slice(0, 20000);
+    const selectedModel = typeof model === 'string' && model.trim().length > 0 ? model : 'gemini-2.5-flash';
+    const temp = typeof temperature === 'number' ? temperature : 0.7;
+    const maxOut = typeof maxTokens === 'number' ? maxTokens : 4000;
+
+    const genai = new GoogleGenerativeAI(apiKey);
+    const generativeModel = genai.getGenerativeModel({
+      model: selectedModel,
+      generationConfig: {
+        temperature: temp,
+        maxOutputTokens: maxOut
+      }
+    });
+
+    const result = await generativeModel.generateContent(safePrompt);
+    const response = await result.response;
+    const text = response.text();
+
+    const usage = {
+      inputTokens: response.usageMetadata?.promptTokenCount || 0,
+      outputTokens: response.usageMetadata?.candidatesTokenCount || 0
+    };
+
+    const origin = getOrigin(event);
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: JSON.stringify({ success: true, content: text, model: selectedModel, usage })
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    const origin = getOrigin(event);
+    return {
+      statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: JSON.stringify({ success: false, error: `Error: ${message}` })
+    };
+  }
+};

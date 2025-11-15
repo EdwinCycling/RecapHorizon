@@ -1653,14 +1653,12 @@ Tekst: ${content}`;
           throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
         }
 
-        // Use the same AI approach as other analyses - direct Google Gemini with tier-based model
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "analysisGeneration");
-        const response = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(response.text);
+        const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
         
         // Record actual token usage
         try {
@@ -1671,7 +1669,7 @@ Tekst: ${content}`;
           console.warn('Could not record token usage:', error);
         }
         
-        const result = response.text.trim();
+        const result = String((data as any)?.content || '').trim();
         posts.push(result);
         
       } else {
@@ -1722,14 +1720,12 @@ Tekst: ${content}`;
           throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
         }
 
-        // Use the same AI approach as other analyses - direct Google Gemini with tier-based model
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "analysisGeneration");
-        const response = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(response.text);
+        const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
         
         // Record actual token usage
         try {
@@ -1742,7 +1738,7 @@ Tekst: ${content}`;
         
         // Parse JSON response
         try {
-          const result = response.text.trim();
+          const result = String((data as any)?.content || '').trim();
           
           // Extract JSON from response
           const jsonMatch = result.match(/\{[\s\S]*\}/);
@@ -1764,7 +1760,7 @@ Tekst: ${content}`;
         } catch (parseError) {
           console.error('Error parsing JSON response:', parseError);
           // Fallback: split response by lines or paragraphs
-          const result = response.text.trim();
+          const result = String((data as any)?.content || '').trim();
           const fallbackPosts = result.split(/\n\s*\n/).filter(p => p.trim()).slice(0, seriesCount);
           fallbackPosts.forEach((post: string, index: number) => {
             const numberedPost = `${index + 1}/${seriesCount} ${post.trim()}`;
@@ -2136,8 +2132,6 @@ Prompt for AI image generator: ${imagePrompt}`;
         return;
       }
       
-      const ai = new GoogleGenAI({ apiKey: apiKey });
-      // Using configured model for general analysis
       const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
       const inputLanguage = getGeminiCode(language || 'en');
       const outputLanguageCode = getGeminiCode(outputLang || language || 'en');
@@ -2154,11 +2148,11 @@ Constraints:
 - Labels are A, B, C, D but limited to requested count.
 - Output language for question and option text: ${outputLanguageCode}.`;
       const prompt = `${sys}\n\nConstraints: number_of_questions=${quizNumQuestions}, number_of_options=${quizNumOptions}.\nTranscript (input language: ${inputLanguage}):\n${getTranscriptSlice(transcript, 18000)}`;
-      const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+      const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
       
       // Track token usage with TokenManager
       const promptTokens = tokenCounter.countPromptTokens(prompt);
-      const responseTokens = tokenCounter.countResponseTokens(res.text);
+      const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
       
       try {
         await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
@@ -2166,7 +2160,7 @@ Constraints:
         console.error('Error recording token usage:', error);
       }
 
-      let text = res.text || '';
+      let text = String((data as any)?.content || '');
       text = text.replace(/```[a-z]*|```/gi, '').trim();
       const arr = JSON.parse(text);
       setQuizQuestions(arr);
@@ -2249,7 +2243,6 @@ Constraints:
         return;
       }
       
-      const ai = new GoogleGenAI({ apiKey: apiKey });
       const modelName = await getModelForUser(authState.user?.uid || "", "businessCase");
       
       const businessCaseTypeDefinitions: { id: string; name: string; description: string }[] = [
@@ -2311,11 +2304,11 @@ ${strictLengthInstructionMap[lengthChoice]}
 Transcript (input taal: ${inputLanguage}):
 ${sanitizedTranscript}`;
 
-      const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+      const data2 = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
       
       // Track token usage with TokenManager
       const promptTokens = tokenCounter.countPromptTokens(prompt);
-      const responseTokens = tokenCounter.countResponseTokens(res.text);
+      const responseTokens = tokenCounter.countResponseTokens(String((data2 as any)?.content || ''));
       
       try {
         await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
@@ -2323,7 +2316,7 @@ ${sanitizedTranscript}`;
         console.error('Error recording token usage:', error);
       }
 
-      let text = res.text || '';
+      let text = String((data2 as any)?.content || '');
       text = text.replace(/```[a-z]*|```/gi, '').trim();
       
       setBusinessCaseData({
@@ -3333,26 +3326,16 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     setIsChatting(true);
     
     try {
-        if (!chatInstanceRef.current) {
-            const ai = new GoogleGenAI({ apiKey: apiKey });
-            const modelName = await getModelForUser(authState.user?.uid || "", "expertChat");
-            chatInstanceRef.current = ai.chats.create({
-              model: modelName,
-              history: chatHistory.map(msg => ({ role: msg.role, parts: [{ text: msg.text }] })),
-              config: { systemInstruction: `You are a helpful assistant. The user has provided a transcript of a meeting. Answer their questions based on this transcript:\n\n---\n${transcript}\n---` },
-            });
-        }
-        
-        const responseStream = await chatInstanceRef.current.sendMessageStream({ message: sanitizedMessage });
-        
-        let fullResponse = '';
-        for await (const chunk of responseStream) {
-            fullResponse += chunk.text;
-            setChatHistory(prev => prev.map((msg, i) => i === prev.length - 1 ? { ...msg, text: fullResponse } : msg));
-        }
+        const modelName = await getModelForUser(authState.user?.uid || "", "expertChat");
+        const sys = `You are a helpful assistant. The user has provided a transcript of a meeting. Answer their questions based on this transcript:\n\n---\n${transcript}\n---`;
+        const historyText = chatHistory.map(msg => `${msg.role}: ${msg.text}`).join('\n');
+        const prompt = `${sys}\n\nConversation so far:\n${historyText}\n\nuser: ${sanitizedMessage}`;
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
+        const fullResponse = String((data as any)?.content || '');
+        setChatHistory(prev => prev.map((msg, i) => i === prev.length - 1 ? { ...msg, text: fullResponse } : msg));
         
         // Track token usage with TokenManager
-        const promptTokens = tokenCounter.countPromptTokens(sanitizedMessage);
+        const promptTokens = tokenCounter.countPromptTokens(prompt);
         const responseTokens = tokenCounter.countResponseTokens(fullResponse);
         
         try {
@@ -4309,7 +4292,7 @@ Provide a detailed analysis that could be used for further AI processing and ana
                     }
                 }
                 
-                const ai = new GoogleGenAI({ apiKey: apiKey });
+                // Using server-side image analysis via Netlify function
                 const modelName = await getModelForUser(authState.user?.uid || "", "analysisGeneration");
                 const inputLanguage = getGeminiCode(language || 'en');
                 const analysisPrompt = `Analyze this image in detail and provide a comprehensive description in ${inputLanguage}. Include:
@@ -4325,14 +4308,36 @@ Provide a detailed analysis that could be used for further AI processing and ana
                 const imagePart = { inlineData: { mimeType: file.type, data: base64Image } };
                 const textPart = { text: analysisPrompt };
                 
-                const analysisResponse = await ai.models.generateContent({ 
-                  model: modelName, 
-                  contents: { parts: [textPart, imagePart] } 
+                const envBase = (import.meta as any).env?.VITE_FUNCTIONS_BASE_URL || '';
+                const base = envBase && String(envBase).startsWith('http')
+                  ? envBase
+                  : (typeof window !== 'undefined' && window.location.hostname.includes('localhost'))
+                    ? 'http://localhost:8888'
+                    : (typeof window !== 'undefined' ? window.location.origin : '');
+                const fnRes = await fetch(`${base}/.netlify/functions/gemini-image`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    prompt: analysisPrompt,
+                    model: modelName,
+                    imageBase64: base64Image,
+                    mimeType: file.type,
+                    temperature: 0.4,
+                    maxTokens: 1000,
+                    userId: authState.user?.uid || undefined
+                  })
                 });
+                if (!fnRes.ok) {
+                  const errTxt = await fnRes.text().catch(() => '');
+                  throw new Error(`Image analysis server error ${fnRes.status}: ${errTxt}`);
+                }
+                const data = await fnRes.json();
+                const analysisText = String((data as any)?.content || '');
+                const analysisResponse = { text: analysisText };
                 
                 // Track token usage with TokenManager
                 const promptTokens = tokenCounter.countPromptTokens([textPart]);
-                const responseTokens = tokenCounter.countResponseTokens(analysisResponse.text);
+                const responseTokens = tokenCounter.countResponseTokens(analysisText);
                 
                 // Record actual token usage
                 try {
@@ -4735,73 +4740,36 @@ Provide a detailed analysis that could be used for further AI processing and ana
             let cleanText = '';
             
             if (useDeepseekOption) {
-                // Use Firecrawl API for deepseek option
-                const firecrawlApiKey = import.meta.env.VITE_FIRECRAWL_API_KEY;
-                if (!firecrawlApiKey) {
-                    throw new Error(t('firecrawlNotConfigured', 'Firecrawl API key is not configured.'));
-                }
-                
-                // Filter out empty URLs
+                // Use Firecrawl via serverless function for deepseek option
                 const validUrls = multipleUrls.filter(u => u.trim() !== '');
-                
-                // Firecrawl API: Processing URLs
-                
-                // Process multiple URLs using Firecrawl v2 API
-                const allResults = [];
-                
-                for (const singleUrl of validUrls) {
-                    // Processing URL with Firecrawl v2
-                    
-                    const response = await fetch('https://api.firecrawl.dev/v2/scrape', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${firecrawlApiKey}`
-                        },
-                        body: JSON.stringify({
-                            url: singleUrl,
-                            formats: ['markdown'],
-                            onlyMainContent: true,
-                            includeTags: ['title', 'meta', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'article', 'section'],
-                            removeBase64Images: true,
-                            blockAds: true
-                        })
-                    });
-                    
-                    // Firecrawl v2 Response Status
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        // Firecrawl v2 Error - continue with next URL
-                        continue; // Skip this URL and continue with others
-                    }
-                    
-                    const data = await response.json();
-                    // Firecrawl v2 Response Data processed
-                    
-                    if (data.success && data.data) {
-                        // Use markdown content and convert to plain text
-                        const markdownContent = data.data.markdown || data.data.content || '';
-                        const plainTextContent = markdownToPlainText(markdownContent);
-                        allResults.push({
-                            url: singleUrl,
-                            content: plainTextContent,
-                            metadata: data.data.metadata || {}
-                        });
-                    }
+                const envBase = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '').trim();
+                const base = envBase && envBase.startsWith('http')
+                  ? envBase
+                  : window.location.hostname.includes('localhost')
+                    ? 'http://localhost:8888'
+                    : window.location.origin;
+                const response = await fetch(`${base}/.netlify/functions/firecrawl-scrape`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ urls: validUrls })
+                });
+                if (!response.ok) {
+                  const errorText = await response.text();
+                  throw new Error(`Firecrawl API error: ${response.status} - ${errorText}`);
                 }
-                
-                // Firecrawl v2 API: URLs processed successfully
-                
-                if (allResults.length === 0) {
-                    throw new Error(t('noContentRetrieved', 'No content could be retrieved from any of the provided URLs.'));
+                const data = await response.json();
+                if (!data.success || !Array.isArray(data.results) || data.results.length === 0) {
+                  throw new Error(t('noContentRetrieved', 'No content could be retrieved from any of the provided URLs.'));
                 }
-                
-                // Combine text from all successfully processed URLs
+                const allResults = data.results.map((r: any) => ({
+                  url: r.url,
+                  content: markdownToPlainText(r.markdown || ''),
+                  metadata: r.metadata || {}
+                }));
                 cleanText = allResults.map((result: any) => {
-                    const content = result.content || '';
-                    const title = result.metadata?.title || 'Untitled';
-                    return `Source: ${result.url}\nTitle: ${title}\n\n${content}`;
+                  const content = result.content || '';
+                  const title = result.metadata?.title || 'Untitled';
+                  return `Source: ${result.url}\nTitle: ${title}\n\n${content}`;
                 }).join('\n\n---\n\n');
                 
                 if (cleanText.length < 100) {
@@ -4898,13 +4866,13 @@ Provide a detailed analysis that could be used for further AI processing and ana
             displayToast(successMessage, 'success');
         } catch (err: any) {
             console.error("Error loading web page:", err);
-            console.error("Error details:", {
-                message: err.message,
-                stack: err.stack,
-                useDeepseekOption,
-                validUrls: useDeepseekOption ? multipleUrls.filter(u => u.trim() !== '') : [url],
-                firecrawlApiKey: import.meta.env.VITE_FIRECRAWL_API_KEY ? 'Present' : 'Missing'
-            });
+                console.error("Error details:", {
+                    message: err.message,
+                    stack: err.stack,
+                    useDeepseekOption,
+                    validUrls: useDeepseekOption ? multipleUrls.filter(u => u.trim() !== '') : [url],
+                    firecrawlServer: 'Invoked'
+                });
             
             let errorMessage = err.message || t("webPageGenericError", 'An error occurred while loading the web page.');
             
@@ -5202,6 +5170,45 @@ const handleResetAnalysis = (type: ViewType) => {
     setActiveView(type);
 };
 
+const callGeminiServer = async (
+  prompt: string,
+  model: string,
+  userId?: string,
+  temperature: number = 0.7,
+  maxTokens: number = 4000
+) => {
+  const envBase = (import.meta as any).env?.VITE_FUNCTIONS_BASE_URL || '';
+  const candidates: string[] = [];
+  if (envBase && String(envBase).startsWith('http')) candidates.push(String(envBase));
+  if (typeof window !== 'undefined' && window.location.hostname.includes('localhost')) {
+    candidates.push('http://localhost:8888');
+    candidates.push('http://127.0.0.1:8888');
+    candidates.push('http://localhost:9000');
+    candidates.push('http://127.0.0.1:9000');
+  }
+  if (typeof window !== 'undefined') {
+    candidates.push(window.location.origin);
+  }
+
+  let lastErr: any = null;
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/.netlify/functions/gemini-generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, model, temperature, maxTokens, userId })
+      });
+      if (res.ok) return res.json();
+      const txt = await res.text().catch(() => '');
+      lastErr = new Error(`Gemini server error ${res.status}: ${txt}`);
+    } catch (e) {
+      lastErr = e;
+      continue;
+    }
+  }
+  throw lastErr ?? new Error('Failed to reach Gemini server');
+};
+
 const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => {
   
     
@@ -5244,10 +5251,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
         return;
     }
 
-    if (!apiKey) {
-        displayToast(t('toastApiKeyNotAvailable'), 'error');
-        return;
-    }
+    // Using server-side Gemini; client API key not required
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
@@ -5287,14 +5291,13 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
 
         const fullPrompt = `${prompt}\n\nHere is the text:\n\n${sanitizedTranscript}`;
 
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const { getModelForUser } = await import('./src/utils/tierModelService');
         const modelName = await getModelForUser(authState.user?.uid || '', 'analysisGeneration');
-        const response = await ai.models.generateContent({ model: modelName, contents: fullPrompt });
+        const data = await callGeminiServer(fullPrompt, modelName, authState.user?.uid || undefined);
 
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(fullPrompt);
-        const responseTokens = tokenCounter.countResponseTokens(response.text);
+        const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
         
         // Record actual token usage
         try {
@@ -5305,7 +5308,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
           console.warn('Could not record token usage:', error);
         }
 
-        const resultText = response.text;
+        const resultText = String((data as any)?.content || '');
         if (type === 'summary') setSummary(resultText);
         else if (type === 'faq') setFaq(resultText);
         else if (type === 'learning') setLearningDoc(resultText);
@@ -5375,16 +5378,15 @@ const handleKeywordClick = async (keyword: string) => {
     }
 
     try {
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `Provide a short and clear explanation of the term '${keyword}' in the context of the following **${inputLanguage}** transcript. Return the explanation in **${outputLanguage}**, no extra titles or formatting. Keep it concise. Transcript: --- ${transcript} ---`;
-        const response = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(response.text);
+        const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
         
         // Record actual token usage
         try {
@@ -5395,7 +5397,7 @@ const handleKeywordClick = async (keyword: string) => {
           console.warn('Could not record token usage:', error);
         }
 
-        setKeywordExplanation(response.text);
+        setKeywordExplanation(String((data as any)?.content || ''));
     } catch (err: any) {
         console.error("Fout bij ophalen keyword uitleg:", err);
         setKeywordExplanation(`Kon geen uitleg ophalen voor '${keyword}'. Probeer het opnieuw.`);
@@ -5447,33 +5449,16 @@ const handleGenerateKeywordAnalysis = async () => {
     }
     
     try {
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         const prompt = `Analyze the following **${inputLanguage}** transcript in **${outputLanguage}**. Identify the most frequent and important keywords. Group these into 5-7 relevant topics. For each topic, provide a short descriptive name and a list of associated keywords. Return JSON only. Transcript: --- ${transcript} ---`;
 
-        const schema = {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    topic: { type: Type.STRING },
-                    keywords: { type: Type.ARRAY, items: { type: Type.STRING } }
-                },
-                required: ["topic", "keywords"]
-            }
-        };
-
-        const response = await ai.models.generateContent({
-            model: modelName,
-            contents: prompt,
-            config: { responseMimeType: "application/json", responseSchema: schema }
-        });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
 
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(response.text);
+        const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
         
         try {
             await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
@@ -5481,7 +5466,7 @@ const handleGenerateKeywordAnalysis = async () => {
             console.error('Error recording token usage:', error);
         }
 
-        const result: KeywordTopic[] = JSON.parse(response.text);
+        const result: KeywordTopic[] = JSON.parse(String((data as any)?.content || '[]'));
         setKeywordAnalysis(result);
     } catch (err: any) {
         console.error(t('keywordAnalysisGenerationError', 'Error generating keyword analysis:'), err);
@@ -5534,30 +5519,16 @@ const handleAnalyzeSentiment = async () => {
     }
 
     try {
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
-        const prompt = `Analyze the sentiment of the following **${inputLanguage}** transcript in **${outputLanguage}**. Return a JSON object with: 1. 'summary': a short factual summary of the sentiments found (e.g., "The conversation was predominantly positive with some negative points about X."). 2. 'conclusion': an overall conclusion about the general tone and atmosphere of the conversation. Do NOT include the full transcript with tags. Transcript: --- ${transcript} ---`;
+        const prompt = `Analyze the sentiment of the following **${inputLanguage}** transcript in **${outputLanguage}**. Return a JSON object with: 1. 'summary': a short factual summary of the sentiments found (e.g., \"The conversation was predominantly positive with some negative points about X.\"). 2. 'conclusion': an overall conclusion about the general tone and atmosphere of the conversation. Do NOT include the full transcript with tags. Transcript: --- ${transcript} ---`;
 
-        const schema = {
-            type: Type.OBJECT,
-            properties: {
-                summary: { type: Type.STRING },
-                conclusion: { type: Type.STRING }
-            },
-            required: ["summary", "conclusion"]
-        };
-
-        const response = await ai.models.generateContent({
-            model: modelName,
-            contents: prompt,
-            config: { responseMimeType: "application/json", responseSchema: schema }
-        });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
 
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(response.text);
+        const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
         
         try {
             await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
@@ -5565,7 +5536,7 @@ const handleAnalyzeSentiment = async () => {
             console.error('Error recording token usage:', error);
         }
 
-        const result: SentimentAnalysisResult = JSON.parse(response.text);
+        const result: SentimentAnalysisResult = JSON.parse(String((data as any)?.content || '{}'));
         setSentimentAnalysisResult(result);
 
     } catch (err: any) {
@@ -5762,7 +5733,8 @@ const handleAnalyzeSentiment = async () => {
       } else if (error.code === 'auth/user-disabled') {
         throw new Error(t('accountDisabledContact', 'Account is uitgeschakeld. Contact administrator.'));
       } else {
-        throw new Error(userFriendlyError.message);
+        const msg = import.meta.env.DEV && error?.code ? `${userFriendlyError.message} (${error.code})` : userFriendlyError.message;
+        throw new Error(msg);
       }
     }
   };
@@ -6747,7 +6719,6 @@ ${transcript}
             return;
         }
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "pptExport");
         
         const slideContentSchema = {
@@ -6788,11 +6759,11 @@ ${transcript}
             required: ["titleSlide", "introduction", "agenda", "mainContentSlides", "projectStatus", "learnings", "improvements", "todoList", "imageStylePrompt"]
         };
 
-        const contentResponse = await ai.models.generateContent({ model: modelName, contents: prompt, config: { responseMimeType: "application/json", responseSchema: presentationSchema } });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         const promptTokens = tokenCounter.countPromptTokens(prompt);
-        const responseTokens = tokenCounter.countResponseTokens(contentResponse.text);
+        const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
         
         try {
             await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
@@ -6800,7 +6771,7 @@ ${transcript}
             console.error('Error recording token usage:', error);
         }
 
-        const presentationData: PresentationData = JSON.parse(contentResponse.text);
+        const presentationData: PresentationData = JSON.parse(String((data as any)?.content || '{}'));
 
         if (!useTemplate) {
             const allSlideContents: (SlideContent | {title:string, items:TodoItem[], imagePrompt?: string})[] = [
@@ -8156,7 +8127,6 @@ ${transcript}
         setLoadingText(t('generating', { type: 'Executive summary' }));
         
         // Validate token usage for executive summary
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         
         // Create language-specific prompt
@@ -8179,27 +8149,27 @@ ${transcript}
           return;
         }
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+      const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
-          const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+      const promptTokens = tokenCounter.countPromptTokens(prompt);
+      const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for executive summary:', error);
         }
 
-        let text = res.text || '';
+      let text = String((data as any)?.content || '');
         text = text.replace(/```[a-z]*|```/gi, '').trim();
-        const data = JSON.parse(text);
+        const parsed = JSON.parse(text);
         setExecutiveSummaryData({
-          objective: data.objective || notExplicitlyDiscussed,
-          situation: data.situation || notExplicitlyDiscussed,
-          complication: data.complication || notExplicitlyDiscussed,
-          resolution: data.resolution || notExplicitlyDiscussed,
-          benefits: data.benefits || notExplicitlyDiscussed,
-          call_to_action: data.call_to_action || notExplicitlyDiscussed
+          objective: parsed.objective || notExplicitlyDiscussed,
+          situation: parsed.situation || notExplicitlyDiscussed,
+          complication: parsed.complication || notExplicitlyDiscussed,
+          resolution: parsed.resolution || notExplicitlyDiscussed,
+          benefits: parsed.benefits || notExplicitlyDiscussed,
+          call_to_action: parsed.call_to_action || notExplicitlyDiscussed
         });
         setActiveView('exec');
       } catch (e: any) {
@@ -8258,7 +8228,6 @@ ${transcript}
           }
         }
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         
         const sys = `You receive a **${inputLanguage}** transcript from a meeting/webinar/podcast. Transform this into a narrative text in **${outputLanguage}** that reads like a story. Use storytelling elements: don't use character names, describe the setting, build tension around dilemmas or questions, and end with a clear outcome or cliffhanger. Write in an accessible and vivid style, as if it were a journalistic article or short story. Use quotes from the transcript as dialogue fragments. Focus on emotion, conflict, and the key insights that emerged. Make it readable for a broad audience, without being boring or too technical.${customInstructions}`;
         const prompt = `${sys}\n\nTranscript:\n${getTranscriptSlice(transcript, 20000)}`;
@@ -8272,18 +8241,18 @@ ${transcript}
           return;
         }
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
           const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for storytelling:', error);
         }
 
-        let text = res.text || '';
+        let text = String((data as any)?.content || '');
         text = text.replace(/```[a-z]*|```/gi, '').trim();
         setStorytellingData({
           story: text
@@ -8322,7 +8291,6 @@ ${transcript}
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const sys = `Act as an experienced content marketer/blog writer. Analyze the **${inputLanguage}** transcript thoroughly to identify key topics, discussion points, conclusions and insights. Generate a complete blog post in **${outputLanguage}** that effectively communicates the core message of the transcript to a broad audience.
 IMPORTANT: Start DIRECTLY with the title (H1), without introduction or explanation about how the blog was written.
 Blog Post Structure:
@@ -8346,18 +8314,18 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
           return;
         }
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
           const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for blog generation:', error);
         }
 
-        let text = res.text || '';
+        let text = String((data as any)?.content || '');
         text = text.replace(/```[a-z]*|```/gi, '').trim();
         setBlogData(text);
         setActiveView('blog');
@@ -8385,7 +8353,6 @@ Length: Standard length: approx. 500 words (or 4000 characters). If the transcri
         const inputLanguage = getGeminiCode(language || 'en');
         const outputLanguage = getGeminiCode(outputLang || language || 'en');
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         
         const lengthInstructions = {
           'Zeer Kort': 'Write a very brief email (2-3 sentences maximum).',
@@ -8426,18 +8393,18 @@ IMPORTANT: Start DIRECTLY with the email content, without introduction or explan
           return;
         }
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
           const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for email generation:', error);
         }
 
-        let text = res.text || '';
+        let text = String((data as any)?.content || '');
         text = text.replace(/```[a-z]*|```/gi, '').trim();
         
         setEmailContent(text);
@@ -8502,20 +8469,19 @@ IMPORTANT: Start DIRECTLY with the explanation, without introduction or explanat
           return;
         }
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
           const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for explain generation:', error);
         }
 
-        let text = res.text || '';
+        let text = String((data as any)?.content || '');
         text = text.replace(/```[a-z]*|```/gi, '').trim();
         
         setExplainData({
@@ -8587,20 +8553,19 @@ IMPORTANT: Return ONLY the JSON array, no additional text or formatting.`;
           return [];
         }
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
           const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for shared topic generation:', error);
         }
 
-        let text = res.text || '';
+        let text = String((data as any)?.content || '');
         text = text.replace(/```[a-z]*|```/gi, '').trim();
         
         const topics: TeachMeTopic[] = JSON.parse(text);
@@ -8673,20 +8638,19 @@ IMPORTANT: Start DIRECTLY with the educational content, without introduction or 
           return;
         }
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
           const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for teach me content generation:', error);
         }
 
-        let content = res.text || '';
+        let content = String((data as any)?.content || '');
         content = content.replace(/```[a-z]*|```/gi, '').trim();
         
         setTeachMeData({
@@ -8833,20 +8797,19 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
           return;
         }
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
           const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for show me content search:', error);
         }
 
-        let content = res.text || '';
+        let content = String((data as any)?.content || '');
         content = content.replace(/```[a-z]*|```/gi, '').trim();
         
         try {
@@ -8896,20 +8859,19 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
           return;
         }
         
-        const ai = new GoogleGenAI({ apiKey: apiKey });
         const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-        const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+        const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
         
         // Track token usage with TokenManager
         try {
           const promptTokens = tokenCounter.countPromptTokens(prompt);
-          const responseTokens = tokenCounter.countResponseTokens(res.text);
+          const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
           await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
         } catch (error) {
           console.error('Error recording token usage for mindmap generation:', error);
         }
         
-        const raw = res.text || '';
+        const raw = String((data as any)?.content || '');
         const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
         if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
         setMindmapMermaid(cleaned);
@@ -8975,20 +8937,19 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     return;
                   }
                   
-                  const ai = new GoogleGenAI({ apiKey: apiKey });
                   const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
-                  const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+                  const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
                   
                   // Track token usage with TokenManager
                   try {
                     const promptTokens = tokenCounter.countPromptTokens(prompt);
-                    const responseTokens = tokenCounter.countResponseTokens(res.text);
+                    const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
                     await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
                   } catch (error) {
                     console.error('Error recording token usage for mindmap generation:', error);
                   }
 
-                  const raw = res.text || '';
+                  const raw = String((data as any)?.content || '');
                   const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
                   if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
                   setMindmapMermaid(cleaned);
@@ -9268,13 +9229,11 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             (async () => {
               try {
                 setLoadingText(t('generating', { type: 'Mindmap' }));
-                const ai = new GoogleGenAI({ apiKey: apiKey });
-                // Using ModelManager for mindmap generation
                 const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
                 const sys = `You are a mindmap generator. Output ONLY Mermaid mindmap syntax (mindmap\n  root(...)) without code fences. Use at most 3 levels, 6-12 nodes total, concise labels.`;
                 const prompt = `${sys}\n\nTranscript:\n${transcript.slice(0, 12000)}`;
-                const res = await ai.models.generateContent({ model: modelName, contents: prompt });
-                const raw = res.text || '';
+                const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
+                const raw = String((data as any)?.content || '');
                 const cleaned = raw.replace(/```[a-z]*|```/gi, '').trim();
                 if (!/^mindmap\b/.test(cleaned)) throw new Error(t('invalidMindmapOutput', 'Invalid mindmap output'));
                 setMindmapMermaid(cleaned);
@@ -11578,14 +11537,13 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
                     }
                     
-                    const ai = new GoogleGenAI({ apiKey: apiKey });
                     const modelName = await getModelForUser(authState.user?.uid || "", "generalAnalysis");
                     const prompt = `${sys}\n\nConstraints: number_of_questions=${numQuestions}, number_of_options=${numOptions}.\nTranscript:\n${getTranscriptSlice(transcript, 18000)}`;
-                    const res = await ai.models.generateContent({ model: modelName, contents: prompt });
+                    const data = await callGeminiServer(prompt, modelName, authState.user?.uid || undefined);
                     
                     // Track token usage with TokenManager
                     const promptTokens = tokenCounter.countPromptTokens(prompt);
-                    const responseTokens = tokenCounter.countResponseTokens(res.text);
+                    const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
                     
                     try {
                         await tokenManager.recordTokenUsage(user.uid, promptTokens, responseTokens);
@@ -11593,7 +11551,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         console.error('Error recording token usage:', error);
                     }
                     
-                    let text = res.text || '';
+                    let text = String((data as any)?.content || '');
                     text = text.replace(/```[a-z]*|```/gi, '').trim();
                     const arr = JSON.parse(text);
                     return arr;

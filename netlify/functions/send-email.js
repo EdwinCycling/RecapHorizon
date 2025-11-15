@@ -1,10 +1,48 @@
+const ipRequests = new Map();
+
+function getOrigin(event) {
+  const o = event.headers?.origin || '';
+  return o;
+}
+
+function isOriginAllowed(event) {
+  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (allowed.length === 0) return true;
+  const origin = getOrigin(event);
+  return allowed.includes(origin);
+}
+
+function getClientIp(event) {
+  const xf = event.headers?.['x-forwarded-for'] || event.headers?.['X-Forwarded-For'] || '';
+  if (xf) return xf.split(',')[0].trim();
+  const cip = event.headers?.['client-ip'] || event.headers?.['Client-Ip'] || '';
+  return cip || 'unknown';
+}
+
+function checkRateLimitIp(ip, limitPerMinute) {
+  const now = Date.now();
+  const windowMs = 60000;
+  const arr = ipRequests.get(ip) || [];
+  const recent = arr.filter(ts => now - ts < windowMs);
+  if (recent.length >= limitPerMinute) {
+    const oldest = Math.min(...recent);
+    const retryAfter = Math.ceil((windowMs - (now - oldest)) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  recent.push(now);
+  ipRequests.set(ip, recent);
+  return { allowed: true };
+}
+
 exports.handler = async (event, context) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
+    const allowed = isOriginAllowed(event);
+    const origin = getOrigin(event);
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': allowed ? origin : 'null',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
@@ -14,10 +52,12 @@ exports.handler = async (event, context) => {
 
   // Only allow POST requests (after handling OPTIONS)
   if (event.httpMethod !== 'POST') {
+    const allowed = isOriginAllowed(event);
+    const origin = getOrigin(event);
     return {
       statusCode: 405,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': allowed ? origin : 'null',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
@@ -26,14 +66,38 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    if (!isOriginAllowed(event)) {
+      return {
+        statusCode: 403,
+        headers: { 'Access-Control-Allow-Origin': 'null' },
+        body: JSON.stringify({ success: false, error: 'Error: Origin not allowed' })
+      };
+    }
+
+    const ip = getClientIp(event);
+    const ipLimit = parseInt(process.env.RATE_LIMIT_PER_MINUTE_EMAIL || process.env.RATE_LIMIT_PER_MINUTE || '10', 10);
+    const ipCheck = checkRateLimitIp(ip, ipLimit);
+    if (!ipCheck.allowed) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 429,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Retry-After': String(ipCheck.retryAfter)
+        },
+        body: JSON.stringify({ success: false, error: 'Error: Rate limit exceeded for IP' })
+      };
+    }
+
     const { emailType, emailData } = JSON.parse(event.body);
 
     // Basic payload validation for security
     if (emailType !== '2fa_waitlist' && emailType !== 'enterprise_contact') {
+      const origin = getOrigin(event);
       return {
         statusCode: 400,
         headers: {
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Headers': 'Content-Type',
           'Access-Control-Allow-Methods': 'POST, OPTIONS'
         },
@@ -43,10 +107,11 @@ exports.handler = async (event, context) => {
 
     const email = emailData?.email;
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      const origin = getOrigin(event);
       return {
         statusCode: 400,
         headers: {
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Headers': 'Content-Type',
           'Access-Control-Allow-Methods': 'POST, OPTIONS'
         },
@@ -59,10 +124,11 @@ exports.handler = async (event, context) => {
       const requiredFields = ['name', 'company', 'estimatedUsers'];
       const missing = requiredFields.filter(f => !emailData?.[f] || String(emailData?.[f]).trim().length === 0);
       if (missing.length > 0) {
+        const origin = getOrigin(event);
         return {
           statusCode: 400,
           headers: {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Methods': 'POST, OPTIONS'
           },
@@ -485,11 +551,35 @@ exports.handler = async (event, context) => {
     });
 
     // Prepare Brevo email data
-    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.MAILERSEND_SENDER_EMAIL || 'noreply@recaphorizon.com';
-    const senderName = process.env.BREVO_SENDER_NAME || process.env.MAILERSEND_SENDER_NAME || 'RecapHorizon';
+    const senderEmail = process.env.BREVO_SENDER_EMAIL;
+    const senderName = process.env.BREVO_SENDER_NAME;
+    if (!senderEmail || !senderName) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 500,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: JSON.stringify({ success: false, error: 'Error: Missing BREVO_SENDER_EMAIL or BREVO_SENDER_NAME' })
+      };
+    }
 
     // Recipient logic
-    const enterpriseRecipient = process.env.ENTERPRISE_CONTACT_RECIPIENT || process.env.MAILERSEND_ADMIN_EMAIL || 'RecapHorizonOffice@gmail.com';
+    const enterpriseRecipient = process.env.ENTERPRISE_CONTACT_RECIPIENT;
+    if (emailType === 'enterprise_contact' && (!enterpriseRecipient || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(enterpriseRecipient))) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 500,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: JSON.stringify({ success: false, error: 'Error: Missing ENTERPRISE_CONTACT_RECIPIENT' })
+      };
+    }
     const userRecipient = emailData.email;
     const toEmail = emailType === 'enterprise_contact' ? enterpriseRecipient : userRecipient;
 
@@ -549,10 +639,11 @@ exports.handler = async (event, context) => {
 
     const result = await response.json();
 
+    const origin = getOrigin(event);
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
@@ -572,10 +663,11 @@ exports.handler = async (event, context) => {
       ? 'Email service not authorized. Please check your Brevo API key configuration.'
       : (error?.message || 'Failed to send email');
 
+    const origin = getOrigin(event);
     return {
       statusCode: unauthorized ? 403 : 500,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },

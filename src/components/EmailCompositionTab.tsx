@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { FiMail, FiCopy, FiEye, FiSend, FiUsers, FiUser, FiEdit3, FiCheck, FiX } from 'react-icons/fi';
 import EmailPreviewModal from './EmailPreviewModal';
-import { GoogleGenAI } from '@google/genai';
 import { getGeminiCode } from '../languages';
 import { displayToast } from '../utils/clipboard';
 import modelManager from '../utils/modelManager';
@@ -190,19 +189,6 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
       throw new Error(t('rateLimitExceeded', 'Rate limit exceeded'));
     }
 
-    // Resolve API key from multiple possible env sources to be robust in Vite/Netlify setups
-    const env: any = (typeof import.meta !== 'undefined' ? (import.meta as any).env : {}) || {};
-    const apiKey = (
-      env.VITE_GEMINI_API_KEY ||
-      env.VITE_GOOGLE_CLOUD_API_KEY ||
-      (process as any)?.env?.GEMINI_API_KEY ||
-      (process as any)?.env?.REACT_APP_GEMINI_API_KEY ||
-      env.GEMINI_API_KEY
-    )?.toString().trim();
-    if (!apiKey) {
-      console.error(t('emailMissingApiKey'));
-      throw new Error(t('missingApiKey'));
-    }
 
     // Build prompt using selections
     const languageCode = getGeminiCode(currentLanguage || 'nl');
@@ -314,22 +300,38 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
       throw new Error(tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer AI-generaties.');
     }
     
-    const ai = new GoogleGenAI({ apiKey });
     const modelName = await modelManager.getModelForUser(userId, userTier, 'emailComposition');
-    const response = await ai.models.generateContent({ 
-      model: modelName, 
-      contents: fullPrompt,
-      config: { responseMimeType: 'application/json', responseSchema: { type: 'object', properties: { subject: { type: 'string' }, body: { type: 'string' } }, required: ['subject', 'body'] } }
+    const envBase = (import.meta as any).env?.VITE_FUNCTIONS_BASE_URL || '';
+    const base = envBase && String(envBase).startsWith('http')
+      ? envBase
+      : (typeof window !== 'undefined' && window.location.hostname.includes('localhost'))
+        ? 'http://localhost:8888'
+        : (typeof window !== 'undefined' ? window.location.origin : '');
+    const fnRes = await fetch(`${base}/.netlify/functions/gemini-generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: fullPrompt,
+        model: modelName,
+        temperature: 0.7,
+        maxTokens: 4000,
+        userId
+      })
     });
+    if (!fnRes.ok) {
+      const txt = await fnRes.text().catch(() => '');
+      throw new Error(`Gemini server error ${fnRes.status}: ${txt}`);
+    }
+    const data = await fnRes.json();
 
     let subject = '';
     let body = '';
     try {
-      const json = JSON.parse((response as any).text);
+      const json = JSON.parse(String((data as any)?.content || ''));
       subject = (json.subject || '').toString();
       body = (json.body || '').toString();
     } catch (e) {
-      const raw = (((response as any).text || '') as string).trim();
+      const raw = String((data as any)?.content || '').trim();
       const subjMatch = raw.match(/subject\s*:\s*(.*)/i);
       const bodyMatch = raw.match(/body\s*:\s*([\s\S]*)/i);
       subject = subjMatch ? subjMatch[1].trim() : generateAutoSubject(summary || transcript);
@@ -350,7 +352,7 @@ const EmailCompositionTab: React.FC<EmailCompositionTabProps> = ({
     // Record token usage
     const { tokenCounter } = await import('../tokenCounter');
     const promptTokens = tokenCounter.countPromptTokens(fullPrompt);
-    const responseTokens = tokenCounter.countResponseTokens((response as any).text || '');
+    const responseTokens = tokenCounter.countResponseTokens(String((data as any)?.content || ''));
     
     try {
       await tokenManager.recordTokenUsage(userId, promptTokens, responseTokens);

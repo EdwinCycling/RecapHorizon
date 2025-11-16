@@ -83,10 +83,19 @@ async function updateUserSubscription(customerId, subscriptionData) {
     const userDoc = querySnapshot.docs[0];
     const userRef = usersRef.doc(userDoc.id);
 
+    // Read current doc to avoid downgrading admin/diamond accounts unintentionally
+    const currentData = userDoc.data() || {};
+    const currentTier = (currentData.subscriptionTier || '').toLowerCase();
+
     const updateData = {
       ...subscriptionData,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
+
+    // Preserve DIAMOND tier regardless of incoming subscription tier from Stripe
+    if (currentTier === 'diamond' && typeof updateData.subscriptionTier === 'string') {
+      delete updateData.subscriptionTier;
+    }
 
     await userRef.update(updateData);
 

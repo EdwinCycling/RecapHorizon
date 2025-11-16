@@ -23,7 +23,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Vind antwoorden op veelgestelde vragen over RecapHorizon AI transcriptie, meeting analyse, en meer. Bekijk onze uitgebreide FAQ sectie.');
-    }
+    },
   }, []);
 
   const toggleItem = (index: number) => {
@@ -32,7 +32,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
       newExpanded.delete(index);
     } else {
       newExpanded.add(index);
-    }
+    },
     setExpandedItems(newExpanded);
   };
 
@@ -101,7 +101,24 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
       answer: t('faqSocialPostAnswer')
     },
 
-    // Privacy & Security
+    
+    {
+      category: 'ai',
+      question: t('faqBrainstorm', 'Wat is Brainstorm en in welke tiers is het beschikbaar?'),
+      answer: t('faqBrainstormAnswer', 'Brainstorm helpt ideeën en richtingen te genereren op basis van je transcript. Beschikbaar vanaf Gold en hoger; Free kan de interface bekijken maar geen output genereren.')
+    },
+    {
+      category: 'ai',
+      question: t('faqSpecialPrompts', 'Wat zijn Special prompts en wie kan ze gebruiken?'),
+      answer: t('faqSpecialPromptsAnswer', 'Special prompts zijn kant‑en‑klare AI opdrachten voor specifieke taken. Beschikbaar vanaf Gold en hoger; Free ziet de prompts maar kan geen resultaten genereren.')
+    },
+    {
+      category: 'ai',
+      question: t('faqAIDiscussion', 'Wat doet AI discussie en is dit onderdeel beschikbaar voor mijn abonnement?'),
+      answer: t('faqAIDiscussionAnswer', 'AI discussie faciliteert een multi‑agent brainstorm/discussie met rollen en doelen. Beschikbaar vanaf Gold en hoger; Free kan de configuratie zien maar geen discussie starten.')
+    },
+
+    
     {
       category: 'privacy',
       question: t('faqStorage'),

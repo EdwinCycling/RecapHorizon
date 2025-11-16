@@ -1561,6 +1561,21 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   enterpriseCompanyPlaceholder: "Company name",
   enterpriseEstimatedUsers: "Estimated users",
   enterpriseSelectOption: "Select...",
+  enterpriseSubmitButton: "Submit request",
+  enterpriseUsers_2_5: "2 - 5",
+  enterpriseUsers_6_10: "6 - 10",
+  enterpriseUsers_11_25: "11 - 25",
+  enterpriseUsers_26_100: "26 - 100",
+  enterpriseUsers_100_plus: "100+",
+  enterpriseContactRateLimit: "You can only send this request once per session. Log in to send another.",
+  pricingUnlimitedSessions: "Unlimited sessions",
+  horizonPackageAvailableForButton: "Only for Silver and Gold",
+  faqBrainstorm: "What is Brainstorm and which tiers include it?",
+  faqBrainstormAnswer: "Brainstorm helps generate ideas and directions from your transcript. Available from Gold and above; Free can view the interface but cannot generate output.",
+  faqSpecialPrompts: "What are Special prompts and who can use them?",
+  faqSpecialPromptsAnswer: "Special prompts are ready‑made AI tasks for specific use cases. Available from Gold and above; Free can see prompts but cannot generate results.",
+  faqAIDiscussion: "What does AI discussion do, and is it available for my plan?",
+  faqAIDiscussionAnswer: "AI discussion facilitates a multi‑agent brainstorm/discussion with roles and goals. Available from Gold and above; Free can see configuration but cannot start a discussion.",
   enterpriseMessage: "Additional info",
   enterpriseMessagePlaceholder: "What are your goals and needs?",
   enterprisePrivacyNote: "We will only use this information to contact you about enterprise options.",
@@ -2637,7 +2652,7 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   confirmationCodeSent: "We have sent a confirmation code to:",
   enterConfirmationCodeInstruction: "Enter the confirmation code to complete your waitlist registration.",
   confirmationCode: "Confirmation code",
-  enterConfirmationCode: "Enter the confirmation code",
+  enterConfirmationCode: "Enter the code you received",
   confirming: "Confirming...",
   noCodeReceived: "Didn't receive a code?",
   bcc: "BCC",
@@ -4209,7 +4224,93 @@ RecapHorizon: Beyond the chaos, the essence first.`,
   ,emailConfirmCodeAlreadySent: "A confirmation email has already been sent. Check your inbox."
   ,emailConfirmTooManyRequests: "Too many requests. Please try again later."
   ,emailConfirmCouldNotResend: "Could not send new confirmation code. Please try again later."
-  ,emailConfirmErrorSending: "A technical error occurred while sending a new code."
+  ,emailConfirmErrorSending: "A technical error occurred while sending a new code.",
+
+  brainstorm: "Brainstorm & Report"
+  ,"brainstorm.title": "Brainstorm & Report"
+  ,"brainstorm.description": "Guide an interactive brainstorming flow from the transcript and generate a top‑level report based on a chosen method and, optionally, an expert role."
+  ,"brainstorm.initialIdeasLoadingTitle": "Generating initial ideas"
+  ,"brainstorm.initialIdeasLoadingMessage": "The AI is now generating initial ideas based on the transcript. Please wait..."
+  ,"brainstorm.transcriptOption": "No specific idea, brainstorm based on transcript"
+  ,"brainstorm.selectIdea": "Choose one idea (or transcript option) from the list above that you want to develop further."
+  ,"brainstorm.selectMethod": "Which brainstorming method do you want to apply to '{idea}'? Choose from the options below:"
+  ,"brainstorm.selectMethodShort": "Which brainstorming method do you want to apply? Choose from the options below:"
+  ,"brainstorm.selectExpertRole": "Run the brainstorm from a specific expert perspective?"
+  ,"brainstorm.genericRole": "Generic role"
+  ,"brainstorm.generatingReport": "The AI is now generating the brainstorm report. This may take a moment..."
+  ,"brainstorm.reportTitle": "Brainstorm Report"
+  ,"brainstorm.downloadPdf": "Download as PDF"
+  ,"brainstorm.copyToClipboard": "Copy to clipboard"
+  ,"brainstorm.moveToTranscript": "Move to Transcript"
+  ,"brainstorm.regenerate": "Regenerate"
+  ,"brainstorm.downloadTxt": "Download TXT"
+  ,"brainstorm.initialIdeaInstruction": `You are a creative AI analyst. Your task is to extract the most prominent and innovative ideas, concepts, problems or opportunities from the transcript below. These should have potential for further development or strategic discussion.
+
+**Current Transcript:**
+"""
+{transcript_text}
+"""
+
+**Instruction:**
+Identify and present between 1 and 25 (maximum 25, minimum 1) unique and relevant ideas/concepts/problems/opportunities that directly follow from the content of this transcript. Formulate each idea briefly and powerfully. Provide your own ranking from 1 to 5 stars (allow half stars) and sort by stars in the presentation.
+
+Generate the list in {output_language}, sorted by relevance. The first item must always be: "No specific idea, brainstorm based on transcript".`
+  ,"brainstorm.reportInstruction": `You are a specialized AI consultant who facilitates expert sessions and produces reports. Your task is to generate a structured brainstorming report based on a specific idea, a chosen brainstorming method, and an expert role.
+
+**Idea to brainstorm (focus):**
+"""
+{user_selected_idea}
+"""
+
+**Chosen Brainstorm Method:**
+{user_selected_method}
+
+**Current Transcript (for context and factual grounding):**
+"""
+{transcript_text}
+"""
+
+**Specific Instructions for the Chosen Method:**
+{method_specific_instructions}
+
+**Expert Role:**
+Adopt the perspective and thinking style of the following expert role: '{user_selected_expert_role_name}'. When generating the brainstorm output, focus on the aspects most relevant to this role. The description of this role is: '{user_selected_expert_role_description}'.
+
+**Output Format & Report Structure:**
+Generate the output as a comprehensive, structured report in {output_language}. The report should start with a clear title, the chosen idea, the brainstorming method used, and the expert role. The rest of the report must closely follow the instructions of the chosen method and clearly present the generated ideas. Maintain a professional and concrete tone. Use sections and bullet points where appropriate. Use clean formatting and do not include formatting codes.
+
+**Constraints:**
+• All generated ideas and analyses must be directly derivable from or strongly inspired by the transcript and the chosen idea.
+• Be creative but practical.
+• Avoid inventing external facts that are not in the transcript.
+• Respect the chosen expert role and adjust depth/focus accordingly.`
+  ,"brainstorm.method.frameworks": "Frameworks"
+  ,"brainstorm.method.frameworksDesc": "Brainstorm using known frameworks (e.g., 5 Whys, SCAMPER, Six Thinking Hats)."
+  ,"brainstorm.method.frameworksList": "5 Whys, SCAMPER, Six Thinking Hats, Mind Mapping, Starbursting"
+  ,"brainstorm.method.frameworksPromptTemplate": "Using the {selected_framework} brainstorming framework, brainstorm the following topic: {user_selected_idea}. Provide actionable insights and ideas."
+  ,"brainstorm.method.selectFramework": "Select framework"
+  ,"brainstorm.method.differentPerspectives": "Different Perspectives"
+  ,"brainstorm.method.differentPerspectivesDesc": "Approach the topic from diverse roles (e.g., Marketing expert, Sales expert, Product expert), each generating 10 ideas."
+  ,"brainstorm.method.differentPerspectivesPromptTemplate": "We are in a brainstorming session about {user_selected_idea}. From the perspective of {selected_perspectives}, generate 10 ideas from each perspective. Each idea should be distinct and practical."
+  ,"brainstorm.method.oppositeDay": "Opposite Day"
+  ,"brainstorm.method.oppositeDayDesc": "Flip the problem: brainstorm how to make customers LESS satisfied, then invert those ideas for innovative solutions."
+  ,"brainstorm.method.oppositeDayPromptTemplate": "Give me {number_of_dissatisfaction_ideas} ways I would make my customers more DISSATISFIED with my {user_selected_idea}. Then, for every point, provide the exact opposite approach as a viable solution or improvement. Structure as: 'Problematic Idea' -> 'Inverted Solution'."
+  ,"brainstorm.method.stepByStep": "Step-by-Step"
+  ,"brainstorm.method.stepByStepDesc": "Proceed step-by-step and build upon the previous step. Ideas are generated in a logical sequence."
+  ,"brainstorm.method.stepByStepPromptTemplate": "You are building a business idea for {user_selected_idea}. Let's go step-by-step: 1. List 5-10 key aspects of {initial_step_focus}. 2. For each aspect, identify 2-3 associated challenges. 3. For each challenge, brainstorm 1-2 potential solutions or innovations. 4. From these, formulate 5-7 concrete business ideas."
+  ,"brainstorm.method.creativeWords": "Creative Words"
+  ,"brainstorm.method.creativeWordsDesc": "Use words that encourage creativity (e.g., Extremely unique, Daringly different) to generate ideas."
+  ,"brainstorm.method.creativeWordsPromptTemplate": "Using words like 'Extremely unique', 'Daringly different', 'Never-before-seen', 'Utterly unexpected', 'Wildly unconventional', 'Absolutely unheard-of', 'Completely out-of-the-box', generate {number_of_ideas} creative ideas about {user_selected_idea}. Each idea should clearly reflect one or more of these creative qualities."
+  ,"brainstorm.method.chainOfDensity": "Chain of Density"
+  ,"brainstorm.method.chainOfDensityDesc": "Iteratively generates denser and more creative outputs by adding missing points and refining the output."
+  ,"brainstorm.method.chainOfDensityPromptTemplate": "You are an expert in creative recursion. For the topic: {user_selected_idea}, generate an initial creative idea. Then, repeat the following 2 steps {number_of_iterations} times:\nStep 1. Identify 1-3 missing or implicit points from the initial output that would make it more dense and creative.\nStep 2. Rewrite a new, improved output of identical length which includes these missing points, making it more detailed and impactful. Focus on generating increasingly creative outputs."
+  ,"brainstorm.method.firstPrinciples": "First Principles"
+  ,"brainstorm.method.firstPrinciplesDesc": "Break down a complex problem into basic components and reassemble it from the ground up for fundamental solutions."
+  ,"brainstorm.method.firstPrinciplesPromptTemplate": "Using First Principles thinking, thoroughly analyze the following topic: {user_selected_idea}. Break it down into its fundamental truths or core components, questioning all assumptions. Then, based on these first principles, brainstorm 3-5 innovative solutions or approaches."
+  ,"brainstorm.method.oppositeDayCountLabel": "Number of dissatisfaction ideas"
+  ,"brainstorm.method.creativeWordsCountLabel": "Number of ideas"
+  ,"brainstorm.method.chainOfDensityIterationsLabel": "Number of iterations"
+  ,"brainstorm.method.stepByStepInitialFocusLabel": "Initial step focus"
 
   ,uploadFailed: "Upload failed."
   ,supportedFileTypes: "TXT, PDF, RTF, HTML, MD, DOCX"

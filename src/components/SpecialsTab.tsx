@@ -121,7 +121,11 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
 
     if (prompt.requires_topic) {
       // Generate topics for this prompt
-      await generateTopics();
+      if (userTier === SubscriptionTier.GOLD || userTier === SubscriptionTier.ENTERPRISE || userTier === SubscriptionTier.DIAMOND) {
+        await generateTopics();
+      } else {
+        setState(prev => ({ ...prev, error: t('premiumOnly'), isGeneratingTopics: false }));
+      }
     } else {
       // Skip to result generation for prompts that don't require topics
       setState(prev => ({ ...prev, step: 'result' }));
@@ -132,6 +136,10 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
     setState(prev => ({ ...prev, isGeneratingTopics: true, error: undefined }));
     
     try {
+      if (!(userTier === SubscriptionTier.GOLD || userTier === SubscriptionTier.ENTERPRISE || userTier === SubscriptionTier.DIAMOND)) {
+        setState(prev => ({ ...prev, error: t('premiumOnly'), isGeneratingTopics: false }));
+        return;
+      }
       const topics = await generateSpecialsTopics(
         transcript,
         summary,
@@ -177,6 +185,10 @@ const SpecialsTab: React.FC<SpecialsTabProps> = ({
     setState(prev => ({ ...prev, isGeneratingResult: true, error: undefined }));
     
     try {
+      if (!(userTier === SubscriptionTier.GOLD || userTier === SubscriptionTier.ENTERPRISE || userTier === SubscriptionTier.DIAMOND)) {
+        setState(prev => ({ ...prev, error: t('premiumOnly'), isGeneratingResult: false }));
+        return;
+      }
       const result = await generateSpecialsResult(
         state.selectedPrompt,
         state.selectedTopic,

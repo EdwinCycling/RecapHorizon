@@ -18,9 +18,8 @@ export class BrowserEmailService {
   private baseUrl: string;
 
   constructor() {
-    // In development and production, use the current domain
-    // Netlify functions are proxied through the same server
-    this.baseUrl = window.location.origin;
+    const envBase = import.meta.env.VITE_FUNCTIONS_BASE_URL as string | undefined;
+    this.baseUrl = envBase && envBase.trim().length > 0 ? envBase : window.location.origin;
   }
 
   async send2FAWaitlistEmail(emailData: EmailData): Promise<EmailResult> {
@@ -35,8 +34,8 @@ export class BrowserEmailService {
           emailData: {
             email: emailData.email,
             confirmationCode: emailData.confirmationCode,
-            expiryHours: emailData.expiryHours || 24,
-            supportEmail: emailData.supportEmail || 'support@recaphorizon.com',
+            expiryHours: emailData.expiryHours || 1,
+            supportEmail: emailData.supportEmail || 'noreply@recaphorizon.com',
             language: emailData.language || 'en'
           }
         })

@@ -180,19 +180,19 @@ exports.handler = async (event, context) => {
                 
                 <p><strong>Belangrijk:</strong></p>
                 <ul>
-                  <li>Deze code is {{expiryHours}} uur geldig</li>
+                  <li>Deze code is {{expiryHours}} {{hourLabel}} geldig</li>
                   <li>Gebruik deze code alleen als je je hebt aangemeld voor RecapHorizon</li>
                   <li>Deel deze code nooit met anderen</li>
                 </ul>
                 
                 <p>Zodra je je e-mailadres hebt bevestigd, word je toegevoegd aan onze wachtlijst. We nemen zo snel mogelijk contact met je op zodra er plek is!</p>
                 
-                <p>Heb je vragen? Neem contact met ons op via {{supportEmail}}</p>
+                
                 
                 <p>Met vriendelijke groet,<br>Het RecapHorizon Team</p>
               </div>
               <div class="footer">
-                <p>© 2024 RecapHorizon. Alle rechten voorbehouden.</p>
+                <p>© 2025 RecapHorizon. Alle rechten voorbehouden.</p>
                 <p>Je ontvangt deze e-mail omdat je je hebt aangemeld voor onze wachtlijst.</p>
               </div>
             </body>
@@ -233,19 +233,19 @@ exports.handler = async (event, context) => {
                 
                 <p><strong>Important:</strong></p>
                 <ul>
-                  <li>This code is valid for {{expiryHours}} hours</li>
+                  <li>This code is valid for {{expiryHours}} {{hourLabel}}</li>
                   <li>Only use this code if you signed up for RecapHorizon</li>
                   <li>Never share this code with others</li>
                 </ul>
                 
                 <p>Once you confirm your email address, you'll be added to our waitlist. We'll contact you as soon as there's space available!</p>
                 
-                <p>Have questions? Contact us at {{supportEmail}}</p>
+                
                 
                 <p>Best regards,<br>The RecapHorizon Team</p>
               </div>
               <div class="footer">
-                <p>© 2024 RecapHorizon. All rights reserved.</p>
+                <p>© 2025 RecapHorizon. All rights reserved.</p>
                 <p>You're receiving this email because you signed up for our waitlist.</p>
               </div>
             </body>
@@ -284,16 +284,16 @@ exports.handler = async (event, context) => {
                 </div>
                 <p><strong>Wichtig:</strong></p>
                 <ul>
-                  <li>Dieser Code ist {{expiryHours}} Stunden gültig</li>
+                  <li>Dieser Code ist {{expiryHours}} {{hourLabel}} gültig</li>
                   <li>Verwende diesen Code nur, wenn du dich bei RecapHorizon angemeldet hast</li>
                   <li>Teile diesen Code niemals mit anderen</li>
                 </ul>
                 <p>Sobald du deine E-Mail-Adresse bestätigt hast, fügen wir dich unserer Warteliste hinzu. Wir melden uns, sobald ein Platz verfügbar ist!</p>
-                <p>Fragen? Kontaktiere uns unter {{supportEmail}}</p>
+                
                 <p>Viele Grüße,<br>Das RecapHorizon-Team</p>
               </div>
               <div class="footer">
-                <p>© 2024 RecapHorizon. Alle Rechte vorbehalten.</p>
+                <p>© 2025 RecapHorizon. Alle Rechte vorbehalten.</p>
                 <p>Du erhältst diese E-Mail, weil du dich für unsere Warteliste angemeldet hast.</p>
               </div>
             </body>
@@ -332,16 +332,16 @@ exports.handler = async (event, context) => {
                 </div>
                 <p><strong>Important&nbsp;:</strong></p>
                 <ul>
-                  <li>Ce code est valable {{expiryHours}} heures</li>
+                  <li>Ce code est valable {{expiryHours}} {{hourLabel}}</li>
                   <li>N’utilisez ce code que si vous vous êtes inscrit(e) à RecapHorizon</li>
                   <li>Ne partagez jamais ce code avec d’autres personnes</li>
                 </ul>
                 <p>Une fois votre adresse e‑mail confirmée, vous serez ajouté(e) à notre liste d’attente. Nous vous contacterons dès qu’une place sera disponible&nbsp;!</p>
-                <p>Des questions&nbsp;? Contactez‑nous à {{supportEmail}}</p>
+                
                 <p>Cordialement,<br>L’équipe RecapHorizon</p>
               </div>
               <div class="footer">
-                <p>© 2024 RecapHorizon. Tous droits réservés.</p>
+                <p>© 2025 RecapHorizon. Tous droits réservés.</p>
                 <p>Vous recevez cet e‑mail car vous vous êtes inscrit(e) sur notre liste d’attente.</p>
               </div>
             </body>
@@ -380,16 +380,16 @@ exports.handler = async (event, context) => {
                 </div>
                 <p><strong>Importante:</strong></p>
                 <ul>
-                  <li>Este código es válido durante {{expiryHours}} horas</li>
+                  <li>Este código es válido durante {{expiryHours}} {{hourLabel}}</li>
                   <li>Usa este código solo si te registraste en RecapHorizon</li>
                   <li>No compartas este código con otras personas</li>
                 </ul>
                 <p>Una vez confirmes tu dirección de correo, te añadiremos a nuestra lista de espera. ¡Te contactaremos en cuanto haya espacio disponible!</p>
-                <p>¿Tienes preguntas? Escríbenos a {{supportEmail}}</p>
+                
                 <p>Saludos cordiales,<br>El equipo de RecapHorizon</p>
               </div>
               <div class="footer">
-                <p>© 2024 RecapHorizon. Todos los derechos reservados.</p>
+                <p>© 2025 RecapHorizon. Todos los derechos reservados.</p>
                 <p>Recibes este correo porque te registraste en nuestra lista de espera.</p>
               </div>
             </body>
@@ -428,16 +428,16 @@ exports.handler = async (event, context) => {
                 </div>
                 <p><strong>Importante:</strong></p>
                 <ul>
-                  <li>Este código é válido por {{expiryHours}} horas</li>
+                  <li>Este código é válido por {{expiryHours}} {{hourLabel}}</li>
                   <li>Use este código apenas se você se cadastrou no RecapHorizon</li>
                   <li>Nunca compartilhe este código com outras pessoas</li>
                 </ul>
                 <p>Depois de confirmar seu e‑mail, você será adicionado à nossa lista de espera. Entraremos em contato assim que houver vaga disponível!</p>
-                <p>Dúvidas? Fale conosco em {{supportEmail}}</p>
+                
                 <p>Atenciosamente,<br>Equipe RecapHorizon</p>
               </div>
               <div class="footer">
-                <p>© 2024 RecapHorizon. Todos os direitos reservados.</p>
+                <p>© 2025 RecapHorizon. Todos os direitos reservados.</p>
                 <p>Você está recebendo este e‑mail porque se cadastrou em nossa lista de espera.</p>
               </div>
             </body>
@@ -479,9 +479,10 @@ exports.handler = async (event, context) => {
                   <p><strong>Bericht:</strong> {{message}}</p>
                 </div>
                 <p>Deze aanvraag is ingediend via de RecapHorizon website.</p>
+                <p class="text-sm text-slate-600" style="margin-top:10px;">Ingediend op: {{timestamp}} · App-taal: {{language}}</p>
               </div>
               <div class="footer">
-                <p>© 2024 RecapHorizon. Alle rechten voorbehouden.</p>
+                <p>© 2025 RecapHorizon. Alle rechten voorbehouden.</p>
               </div>
             </body>
             </html>
@@ -520,9 +521,10 @@ exports.handler = async (event, context) => {
                   <p><strong>Message:</strong> {{message}}</p>
                 </div>
                 <p>This request was submitted through the RecapHorizon website.</p>
+                <p class="text-sm text-slate-600" style="margin-top:10px;">Submitted at: {{timestamp}} · App language: {{language}}</p>
               </div>
               <div class="footer">
-                <p>© 2024 RecapHorizon. All rights reserved.</p>
+                <p>© 2025 RecapHorizon. All rights reserved.</p>
               </div>
             </body>
             </html>
@@ -532,12 +534,26 @@ exports.handler = async (event, context) => {
     };
 
     // Get template
-    const language = emailData.language || 'en';
+    const language = emailType === 'enterprise_contact' ? 'en' : (emailData.language || 'en');
     const template = templates[emailType]?.[language] || templates[emailType]?.['en'];
     
     if (!template) {
       throw new Error(`Email template not found for type: ${emailType}, language: ${language}`);
     }
+
+    // Compute language-specific hour label (singular/plural)
+    const hours = Number(emailData.expiryHours || 1);
+    const hourLabels = {
+      en: { singular: 'hour', plural: 'hours' },
+      de: { singular: 'Stunde', plural: 'Stunden' },
+      fr: { singular: 'heure', plural: 'heures' },
+      es: { singular: 'hora', plural: 'horas' },
+      pt: { singular: 'hora', plural: 'horas' },
+      nl: { singular: 'uur', plural: 'uur' }
+    };
+    const langCode = language in hourLabels ? language : 'en';
+    const hourLabel = hours === 1 ? hourLabels[langCode].singular : hourLabels[langCode].plural;
+    emailData.hourLabel = hourLabel;
 
     // Replace placeholders
     let htmlContent = template.html;
@@ -553,6 +569,8 @@ exports.handler = async (event, context) => {
     // Prepare Brevo email data
     const senderEmail = process.env.BREVO_SENDER_EMAIL;
     const senderName = process.env.BREVO_SENDER_NAME;
+    const noReplyEmail = process.env.BREVO_NOREPLY_EMAIL || senderEmail;
+    const noReplyName = process.env.BREVO_NOREPLY_NAME || senderName;
     if (!senderEmail || !senderName) {
       const origin = getOrigin(event);
       return {
@@ -585,8 +603,8 @@ exports.handler = async (event, context) => {
 
     const emailPayload = {
       sender: {
-        name: senderName,
-        email: senderEmail
+        name: emailType === '2fa_waitlist' ? noReplyName : senderName,
+        email: emailType === '2fa_waitlist' ? noReplyEmail : senderEmail
       },
       to: [
         {
@@ -602,8 +620,8 @@ exports.handler = async (event, context) => {
     // Set reply-to
     if (emailType === 'enterprise_contact' && emailData.email) {
       emailPayload.replyTo = { email: emailData.email };
-    } else if (emailData.supportEmail) {
-      emailPayload.replyTo = { email: emailData.supportEmail };
+    } else {
+      emailPayload.replyTo = { email: noReplyEmail };
     }
 
     // Send email via Brevo API

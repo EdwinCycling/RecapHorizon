@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { useTranslation } from '../hooks/useTranslation';
+import type { Language } from '../locales';
 
 interface EmailConfirmationModalProps {
   isOpen: boolean;
@@ -8,6 +9,8 @@ interface EmailConfirmationModalProps {
   email: string;
   onConfirmed: (email: string, context: 'waitlist' | 'referral') => Promise<void>;
   context: 'waitlist' | 'referral';
+  uiLang?: Language;
+  disableResend?: boolean;
 }
 
 export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
@@ -15,9 +18,11 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
   onClose,
   email,
   onConfirmed,
-  context
+  context,
+  uiLang,
+  disableResend
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(uiLang as any);
   const [confirmationCode, setConfirmationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState('');
@@ -44,7 +49,7 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
 
   // Enhanced security: Input validation and sanitization
   const sanitizeInput = (input: string): string => {
-    return input.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
+    return input.replace(/[^0-9]/g, '').substring(0, 6);
   };
 
   const handleVerifyCode = async () => {
@@ -96,6 +101,9 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
   };
 
   const handleResendCode = async () => {
+    if (disableResend) {
+      return;
+    }
     // Enhanced security: Rate limiting for resend attempts
     if (resendCooldown > 0) {
       return;
@@ -200,7 +208,7 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg tracking-widest"
             disabled={isVerifying}
             autoFocus
-            maxLength={10}
+            maxLength={6}
             autoComplete="off"
             spellCheck={false}
           />
@@ -236,17 +244,19 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
             {isVerifying ? t('emailConfirmVerifying') : t('emailConfirmVerify')}
           </button>
 
-          <div className="text-center">
-            <p className="text-sm text-gray-500 mb-2">{t('emailConfirmNoCode')}</p>
-            <button
-              type="button"
-              onClick={handleResendCode}
-              disabled={isResending || resendCooldown > 0}
-              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {isResending ? t('emailConfirmResending') : resendCooldown > 0 ? t('emailConfirmResendCooldown').replace('{seconds}', resendCooldown.toString()) : t('emailConfirmResend')}
-            </button>
-          </div>
+          {!disableResend && (
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-2">{t('emailConfirmNoCode')}</p>
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={isResending || resendCooldown > 0}
+                className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {isResending ? t('emailConfirmResending') : resendCooldown > 0 ? t('emailConfirmResendCooldown').replace('{seconds}', resendCooldown.toString()) : t('emailConfirmResend')}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
@@ -256,10 +266,7 @@ export const EmailConfirmationModal: React.FC<EmailConfirmationModalProps> = ({
             </svg>
             <div>
               <p className="text-sm text-blue-800">
-                {context === 'referral' 
-                  ? 'Je account wordt aangemaakt zodra je e-mailadres is bevestigd.'
-                  : 'Je wordt toegevoegd aan de wachtlijst zodra je e-mailadres is bevestigd.'
-                }
+                {context === 'referral' ? t('emailConfirmAccountCreating') : t('emailConfirmWaitlistAdding')}
               </p>
               <p className="text-xs text-blue-700 mt-1">
                 {t('emailConfirmCheckSpam')}

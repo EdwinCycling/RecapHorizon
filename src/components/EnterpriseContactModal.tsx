@@ -3,6 +3,7 @@ import Modal from './Modal';
 import { useTranslation } from '../hooks/useTranslation';
 import { sanitizeTextInput, validateEmailEnhanced, containsSQLInjection, containsXSS } from '../utils/security';
 import { browserEmailService } from '../services/browserEmailService';
+import { auth } from '../firebase';
 
 interface EnterpriseContactModalProps {
   isOpen: boolean;
@@ -73,6 +74,13 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
       return;
     }
 
+    const isAuthenticated = !!auth.currentUser;
+    const sessionKey = isAuthenticated ? `enterprise_contact_sent_${auth.currentUser!.uid}` : 'enterprise_contact_sent';
+    if (sessionStorage.getItem(sessionKey) === 'true') {
+      setError(t('enterpriseContactRateLimit', 'Je kunt deze aanvraag slechts één keer per sessie versturen. Log in om opnieuw te versturen.'));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Sanitize text inputs
@@ -95,6 +103,7 @@ const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({ isOpen,
 
       if (result.success) {
         setSuccess(t('enterpriseContactSuccess'));
+        sessionStorage.setItem(sessionKey, 'true');
         // Optionally auto-close after a short delay
         setTimeout(() => {
           resetForm();

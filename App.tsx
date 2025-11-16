@@ -88,6 +88,7 @@ import ThinkingPartnerTab from './src/components/ThinkingPartnerTab.tsx';
 import AIDiscussionTab from './src/components/AIDiscussionTab.tsx';
 import OpportunitiesTab from './src/components/OpportunitiesTab.tsx';
 import McKinseyTab from './src/components/McKinseyTab.tsx';
+import BrainstormTab from '@/components/BrainstormTab';
 
 import TokenUsageMeter from './src/components/TokenUsageMeter.tsx';
 import SubscriptionSuccessModal from './src/components/SubscriptionSuccessModal.tsx';
@@ -705,7 +706,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'opportunities' | 'mckinsey' | 'email' | 'socialPost' | 'socialPostX' | 'main' | 'podcast' | 'specials';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'brainstorm' | 'opportunities' | 'mckinsey' | 'email' | 'socialPost' | 'socialPostX' | 'main' | 'podcast' | 'specials';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -2361,15 +2362,6 @@ ${sanitizedTranscript}`;
   };
 
   const handleSessionOptionImageUpload = () => {
-    // Check tier access for image upload
-    const effectiveTier = userSubscription;
-    if (effectiveTier !== SubscriptionTier.GOLD && 
-        effectiveTier !== SubscriptionTier.DIAMOND && 
-        effectiveTier !== SubscriptionTier.ENTERPRISE) {
-      setShowUpgradeModal(true);
-      setError('Image upload is alleen beschikbaar voor Gold, Diamond en Enterprise abonnementen.');
-      return;
-    }
     imageUploadModal.open();
   };
 
@@ -2595,6 +2587,7 @@ ${sanitizedTranscript}`;
   const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<string>('');
   const [confirmationContext, setConfirmationContext] = useState<'waitlist' | 'referral'>('waitlist');
   const [pendingReferralPassword, setPendingReferralPassword] = useState<string>('');
+  const [disableResendInModal, setDisableResendInModal] = useState<boolean>(false);
 
   useEffect(() => {
     try {
@@ -4023,8 +4016,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
         if (!file) return;
 
         if (!language) {
-            setError(t("selectLangToUpload"));
-            return;
+            setLanguage(uiLang || 'en');
         }
 
         // Preflight subscription checks for upload
@@ -5767,42 +5759,9 @@ const handleAnalyzeSentiment = async () => {
         // Fallback to direct creation if email confirmation fails
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-
-        // Find referrer by referralProfile.code
-        let referrerUid: string | null = null;
-        try {
-          const usersRef = collection(db, 'users');
-          const qRef = query(usersRef, where('referralProfile.code', '==', referralCodeFromURL));
-          const refSnap = await getDocs(qRef);
-          if (!refSnap.empty) {
-            const refData = refSnap.docs[0].data();
-            referrerUid = refSnap.docs[0].id || (refData as any)?.uid || null;
-          }
-        } catch {}
-
-        const newUserData: UserDocumentCreate = {
-          email,
-          isActive: true,
-          lastLogin: serverTimestamp(),
-          sessionCount: 0,
-          createdAt: new Date(),
-          updatedAt: serverTimestamp(),
-          subscriptionTier: SubscriptionTier.FREE,
-          referrerCode: referralCodeFromURL,
-        };
-        await setDoc(doc(db, 'users', user.uid), newUserData);
-
-        // Create referral link record for dashboard
-        if (referrerUid) {
-          await setDoc(doc(db, 'referrals', user.uid), {
-            referrerUid,
-            referredUid: user.uid,
-            emailMasked: maskEmail(email),
-            currentTier: 'free',
-            monthStartTier: 'free',
-            createdAt: serverTimestamp()
-          });
-        }
+        const { ensureUserDocument } = await import('./src/firebase');
+        await ensureUserDocument(user.uid, email);
+        await updateDoc(doc(db, 'users', user.uid), { referrerCode: referralCodeFromURL, updatedAt: serverTimestamp() });
 
         // Convert to User interface format
         const now = new Date();
@@ -5831,78 +5790,30 @@ const handleAnalyzeSentiment = async () => {
         return;
       }
 
-      // Fallback: original path requiring pre-existing user record
-      const Ref = collection(db, 'users');
-      const q = query(Ref, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        throw new Error(t('emailNotFoundSystem', 'Email not found in system. Contact administrator to be added.'));
-      }
-      
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
-      
-      if (!userData.isActive) {
-        throw new Error(t('accountDisabled', 'Account is disabled. Contact administrator.'));
-      }
-      
-      // Check if user already has a UID (means Firebase Auth account exists)
-      if (userData.uid) {
-        try {
-          await signInWithEmailAndPassword(auth, email, 'dummy-password');
-          throw new Error(t('emailInUseFirebase', 'Dit email adres is al in gebruik in Firebase. Probeer in te loggen in plaats van een account aan te maken.'));
-        } catch (authError: any) {
-          if (authError.code === 'auth/wrong-password') {
-            throw new Error(t('firebaseEmailInUse', 'This email address is already in use in Firebase. Try logging in instead of creating an account.'));
-          } else if (authError.code === 'auth/user-not-found') {
-            // proceed
-          } else if (authError.code === 'auth/invalid-credential') {
-            // proceed
-          } else {
-            throw authError;
-          }
-        }
-      }
+      // Direct account creation without pre-existing user record check
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      await updateDoc(doc(db, 'users', userDoc.id), {
-        uid: user.uid,
-        updatedAt: serverTimestamp()
-      });
-      // Convert userData to User interface format
+      const { ensureUserDocument } = await import('./src/firebase');
+      await ensureUserDocument(user.uid, email);
+      const createdDoc = await getDoc(doc(db, 'users', user.uid));
+      const userData = createdDoc.exists() ? createdDoc.data() : {} as any;
+      const nowSeconds = Math.floor(Date.now() / 1000);
       const userForState: User = {
         uid: user.uid,
-        email: userData.email || email,
-        isActive: userData.isActive || true,
-        lastLogin: userData.lastLogin ? { seconds: Math.floor(userData.lastLogin.getTime() / 1000) } : null,
-        sessionCount: userData.sessionCount || 0,
-        createdAt: userData.createdAt ? { seconds: Math.floor(userData.createdAt.getTime() / 1000) } : { seconds: Math.floor(Date.now() / 1000) },
-        updatedAt: userData.updatedAt ? { seconds: Math.floor(userData.updatedAt.getTime() / 1000) } : { seconds: Math.floor(Date.now() / 1000) },
-        subscriptionTier: userData.subscriptionTier,
-        currentSubscriptionStatus: userData.currentSubscriptionStatus,
-        hasHadPaidSubscription: userData.hasHadPaidSubscription,
-        monthlyAudioMinutes: userData.monthlyAudioMinutes,
-        currentSubscriptionStartDate: userData.currentSubscriptionStartDate ? { seconds: Math.floor(userData.currentSubscriptionStartDate.getTime() / 1000) } : undefined,
-        nextBillingDate: userData.nextBillingDate ? { seconds: Math.floor(userData.nextBillingDate.getTime() / 1000) } : undefined,
-        stripeCustomerId: userData.stripeCustomerId,
-        scheduledTierChange: userData.scheduledTierChange ? {
-          tier: userData.scheduledTierChange.tier,
-          effectiveDate: { seconds: Math.floor(userData.scheduledTierChange.effectiveDate.getTime() / 1000) },
-          action: userData.scheduledTierChange.action
-        } : undefined,
-        referralProfile: userData.referralProfile,
-        audioCompressionEnabled: userData.audioCompressionEnabled,
-        autoStopRecordingEnabled: userData.autoStopRecordingEnabled,
-        anonymizationRules: userData.anonymizationRules,
-        transcriptionQuality: userData.transcriptionQuality
+        email: user.email || email,
+        isActive: true,
+        lastLogin: { seconds: nowSeconds },
+        sessionCount: 0,
+        createdAt: { seconds: nowSeconds },
+        updatedAt: { seconds: nowSeconds },
+        subscriptionTier: (userData.subscriptionTier as SubscriptionTier) || SubscriptionTier.FREE
       };
       
       setAuthState({
         user: userForState,
         isLoading: false,
       });
-      const tier = userData.subscriptionTier as SubscriptionTier || SubscriptionTier.FREE;
+      const tier = (userData.subscriptionTier as SubscriptionTier) || SubscriptionTier.FREE;
       setUserSubscription(tier);
       // Account creation successful
     } catch (error: any) {
@@ -5978,18 +5889,11 @@ const handleAnalyzeSentiment = async () => {
   const handleEmailConfirmed = async (email: string, context: 'waitlist' | 'referral') => {
     try {
       if (context === 'waitlist') {
-        // Complete waitlist signup
-        const { completeWaitlistSignup } = await import('./src/utils/security');
-        const result = await completeWaitlistSignup(pendingConfirmationEmail || email);
-        
-        if (result.success) {
-          displayToast(t('waitlistConfirmationMessage', 'Uw inschrijving is opgenomen in de administratie. U hoort zo snel mogelijk van ons. Bedankt!'), 'success');
-          setShowEmailConfirmationModal(false);
-          setPendingConfirmationEmail('');
-          setConfirmationContext('waitlist');
-        } else {
-          throw new Error(result.error || 'Failed to complete waitlist signup');
-        }
+        // Modal heeft de bevestiging al voltooid; update alleen UI
+        displayToast(t('waitlistConfirmationMessage', 'Uw inschrijving is opgenomen in de administratie. U hoort zo snel mogelijk van ons. Bedankt!'), 'success');
+        setShowEmailConfirmationModal(false);
+        setPendingConfirmationEmail('');
+        setConfirmationContext('waitlist');
       } else if (context === 'referral') {
         // Complete referral account creation
         const { createReferralAccount } = await import('./src/utils/security');
@@ -6142,6 +6046,7 @@ const handleAnalyzeSentiment = async () => {
         // Store email for confirmation
         setPendingConfirmationEmail(email);
         setConfirmationContext('waitlist');
+        setDisableResendInModal(false);
         setShowEmailConfirmationModal(true);
         
         return {
@@ -9031,6 +8936,13 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 setSelectedAnalysis('aiDiscussion');
                 setActiveView('aiDiscussion');
             }, disabled: () => isProcessing }] : []),
+        // Brainstorm & Rapport knop (naast AI Discussie)
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'brainstorm', type: 'action', icon: SparklesIcon, label: () => t('brainstorm'), onClick: () => {
+                setMainMode('analysis');
+                setSelectedAnalysis('brainstorm');
+                setActiveView('brainstorm');
+            }, disabled: () => isProcessing }] : []),
     ];
     const analysisActions: any[] = [
         { id: 'summary', type: 'view', icon: SummaryIcon, label: () => t('summary') },
@@ -9067,7 +8979,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', opportunities: '', mckinsey: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || ''), specials: '', main: '', podcast: '' };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', brainstorm: '', opportunities: '', mckinsey: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || ''), specials: '', main: '', podcast: '' };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -9099,6 +9011,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         }
         if (view === 'aiDiscussion') {
             setActiveView('aiDiscussion');
+            return;
+        }
+        if (view === 'brainstorm') {
+            setActiveView('brainstorm');
             return;
         }
         if (view === 'explain' && explainData?.explanation) { setActiveView('explain'); return; }
@@ -11123,6 +11039,57 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             );
         }
 
+        if (activeView === 'brainstorm') {
+            return (
+                <BrainstormTab
+                    t={t}
+                    transcript={transcript}
+                    summary={summary}
+                    isGenerating={isProcessing}
+                    language={outputLang}
+                    userId={authState.user?.uid || ''}
+                    userTier={userSubscription}
+                    sessionId={sessionId}
+                    onMoveToTranscript={async (reportContent) => {
+                        setTranscript(reportContent);
+                        setRecordingStartMs(Date.now());
+                        setMainMode('transcript');
+                        setSelectedAnalysis(null);
+                        // Clear previous analysis content
+                        setSummary('');
+                        setFaq('');
+                        setLearningDoc('');
+                        setFollowUpQuestions('');
+                        setKeywordAnalysis(null);
+                        setSentimentAnalysisResult(null);
+                        setChatHistory([]);
+                        setMindmapMermaid('');
+                        setExecutiveSummaryData(null);
+                        setStorytellingData(null);
+                        setBusinessCaseData(null);
+                        setBlogData(null);
+                        setExplainData(null);
+                        setTeachMeData(null);
+                        setThinkingPartnerAnalysis('');
+                        setSelectedThinkingPartnerTopic('');
+                        setSelectedThinkingPartner(null);
+                        setOpportunitiesData(null);
+                        setMckinseyAnalysis(null);
+                        setSelectedMckinseyTopic('');
+                        setSelectedMckinseyRole('');
+                        setSelectedMckinseyFramework('');
+                        setSocialPostData(null);
+                        setSocialPostXData(null);
+                        setQuizQuestions([]);
+                        if (authState.user?.uid) {
+                            try { await incrementUserMonthlySessions(authState.user.uid); } catch {}
+                        }
+                        setActiveView('transcript');
+                    }}
+                />
+            );
+        }
+
         if (activeView === 'opportunities') {
             return (
                 <OpportunitiesTab
@@ -12140,7 +12107,21 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         currentRecordingElapsedMinutes={duration / 60}
       />
 
-      <WaitlistModal isOpen={waitlistModal.isOpen} onClose={waitlistModal.close} t={t} waitlistEmail={waitlistEmail} setWaitlistEmail={setWaitlistEmail} addToWaitlist={addToWaitlist} />
+      <WaitlistModal 
+        isOpen={waitlistModal.isOpen} 
+        onClose={waitlistModal.close} 
+        t={t} 
+        waitlistEmail={waitlistEmail} 
+        setWaitlistEmail={setWaitlistEmail} 
+        addToWaitlist={addToWaitlist}
+        onEnterCode={(email) => {
+          setPendingConfirmationEmail(email);
+          setConfirmationContext('waitlist');
+          // Disable resend inside modal for manual code entry
+          setDisableResendInModal(true);
+          setShowEmailConfirmationModal(true);
+        }}
+      />
 
       <AudioUploadHelpModal isOpen={audioUploadHelpModal.isOpen} onClose={audioUploadHelpModal.close} t={t} />
 
@@ -13339,7 +13320,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         {waitlistLoading ? t('loading') || 'Laden...' : t('waitlistSignUp')}
                       </button>
                     </div>
-                    
+
                     {/* Feedback message */}
                     {waitlistFeedback.type && (
                       <div className={`mt-3 p-3 rounded-md text-sm ${
@@ -13350,6 +13331,20 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                         {waitlistFeedback.message}
                       </div>
                     )}
+
+                    <div className="mt-3">
+                      <button
+                        onClick={() => {
+                          setPendingConfirmationEmail(waitlistEmail);
+                          setConfirmationContext('waitlist');
+                          setDisableResendInModal(true);
+                          setShowEmailConfirmationModal(true);
+                        }}
+                        className="w-full px-4 py-2 bg-cyan-600 text-white rounded-md font-medium hover:bg-cyan-700 transition-colors"
+                      >
+                        {t('enterConfirmationCode')}
+                      </button>
+                    </div>
                     
                     <button
                       onClick={() => {
@@ -13800,7 +13795,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionImage')}</h3>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionImageDesc')}</p>
                                     </div>
-                                    <button onClick={handleSessionOptionImageUpload} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 dark:from-pink-600 dark:to-rose-700 text-white hover:from-pink-600 hover:to-rose-700 dark:hover:from-pink-700 dark:hover:to-rose-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                    <button onClick={handleSessionOptionImageUpload} disabled={isProcessing} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 dark:from-pink-600 dark:to-rose-700 text-white hover:from-pink-600 hover:to-rose-700 dark:hover:from-pink-700 dark:hover:to-rose-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
@@ -14588,8 +14583,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
          }}
          onConfirmed={handleEmailConfirmed}
          email={pendingConfirmationEmail}
-         context={confirmationContext}
-       />
+        context={confirmationContext}
+        uiLang={uiLang}
+        disableResend={disableResendInModal}
+      />
      )}
 
      {/* Summary Questions Modal */}

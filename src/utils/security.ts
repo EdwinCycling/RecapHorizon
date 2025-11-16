@@ -1160,14 +1160,13 @@ export interface EmailConfirmationToken {
  */
 export const generateConfirmationToken = async (): Promise<string> => {
   try {
-    // Generate a cryptographically secure random token
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    const code = (arr[0] % 1000000).toString().padStart(6, '0');
+    return code;
   } catch (error) {
-    console.warn('Could not generate secure token, falling back to timestamp-based:', error);
-    // Fallback for environments without crypto.getRandomValues
-    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+    console.warn('Could not generate secure OTP, falling back to Math.random:', error);
+    return Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
   }
 };
 
@@ -1189,7 +1188,7 @@ export const createEmailConfirmation = async (
     
     const token = await generateConfirmationToken();
     const now = Date.now();
-    const expiresAt = now + (24 * 60 * 60 * 1000); // 24 hours
+    const expiresAt = now + (60 * 60 * 1000); // 1 hour
     
     const docRef = await addDoc(collection(db, 'email_confirmations'), {
       email,
@@ -1337,7 +1336,7 @@ export const validateWaitlistEmail = async (email: string, checkDuplicates: bool
   if (checkDuplicates) {
     try {
       // Dynamic import to avoid circular dependencies
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
       const { db } = await import('../firebase');
       
       const waitlistQuery = query(
@@ -1352,6 +1351,20 @@ export const validateWaitlistEmail = async (email: string, checkDuplicates: bool
           isValid: false,
           error: 'This email address is already on the waitlist',
           isDuplicate: true
+        };
+      }
+
+      // Also block if an account already exists with this email
+      const usersQuery = query(
+        collection(db, 'users'),
+        where('email', '==', validation.email),
+        limit(1)
+      );
+      const usersSnapshot = await getDocs(usersQuery);
+      if (!usersSnapshot.empty) {
+        return {
+          isValid: false,
+          error: 'An account with this email already exists',
         };
       }
     } catch (error: any) {
@@ -1414,13 +1427,13 @@ export const initiateWaitlistSignup = async (email: string, language: string = '
   try {
     const { browserEmailService } = await import('../services/browserEmailService');
     
-    const emailResult = await browserEmailService.send2FAWaitlistEmail({
-      email: validation.email!,
-      language: language as any,
-      confirmationCode: confirmation.token!,
-      expiryHours: 24,
-      supportEmail: 'support@recaphorizon.com'
-    });
+      const emailResult = await browserEmailService.send2FAWaitlistEmail({
+        email: validation.email!,
+        language: language as any,
+        confirmationCode: confirmation.token!,
+        expiryHours: 1,
+        supportEmail: 'support@recaphorizon.com'
+      });
     
     // Log email delivery for admin monitoring
     await browserEmailService.logEmailDelivery(
@@ -1642,43 +1655,12 @@ export const createReferralAccount = async (
 
     // Handle referral if code provided with enhanced validation
     if (referralCode) {
-      try {
-        // Sanitize referral code
-        const sanitizedReferralCode = sanitizeTextInput(referralCode, 50);
-        
-        if (containsSQLInjection(sanitizedReferralCode) || containsXSS(sanitizedReferralCode)) {
-          console.warn('Suspicious referral code detected:', referralCode);
-          // Continue without referral processing
-        } else {
-          const referrerQuery = await getDoc(doc(db, 'users', sanitizedReferralCode));
-          if (referrerQuery.exists()) {
-            const referrerData = referrerQuery.data();
-            
-            // Validate referrer account
-            if (referrerData.isActive && !referrerData.securityFlags?.suspiciousActivity) {
-              userData.referralCode = sanitizedReferralCode;
-              userData.referredBy = referrerData.email;
-              
-              // Create referral link record with security metadata
-              await addDoc(collection(db, 'referralLinks'), {
-                referrerEmail: referrerData.email,
-                referredEmail: email,
-                createdAt: serverTimestamp(),
-                status: 'completed',
-                verificationMethod: 'email_confirmation',
-                securityCheck: {
-                  emailVerified: true,
-                  ipAddress: 'masked_for_privacy',
-                  userAgent: 'masked_for_privacy',
-                  timestamp: Date.now()
-                }
-              });
-            }
-          }
-        }
-      } catch (referralError) {
-        console.warn('Error processing referral (continuing with account creation):', referralError);
-        // Continue with account creation even if referral processing fails
+      // Sanitize referral code and attach minimally without client-side cross-document reads/writes
+      const sanitizedReferralCode = sanitizeTextInput(referralCode, 50);
+      if (containsSQLInjection(sanitizedReferralCode) || containsXSS(sanitizedReferralCode)) {
+        console.warn('Suspicious referral code detected:', referralCode);
+      } else {
+        userData.referralCode = sanitizedReferralCode;
       }
     }
 
@@ -1891,24 +1873,7 @@ export const completeReferralRegistration = async (
       };
     }
     
-    // Log successful referral registration
-    try {
-      const { addDoc, serverTimestamp } = await import('firebase/firestore');
-      
-      await addDoc(collection(db, 'referral_registrations'), {
-        email: verification.email,
-        referralCode: referralCode,
-        referrerName: referrerName,
-        userId: accountResult.user?.uid,
-        completedAt: serverTimestamp(),
-        confirmationToken: token,
-        registrationMethod: '2fa_email',
-        status: 'completed'
-      });
-    } catch (logError) {
-      console.error('Error logging referral registration:', logError);
-      // Don't fail the registration if logging fails
-    }
+    // Skip client-side logging to referral_registrations due to Firestore rules
     
     return {
       success: true,

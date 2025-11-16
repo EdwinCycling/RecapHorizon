@@ -113,8 +113,7 @@ export const ensureUserDocument = async (userId: string, userEmail?: string): Pr
       const today = new Date().toISOString().split('T')[0];
       const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
       
-      await setDoc(userRef, {
-        email: userEmail || '',
+      const baseData: any = {
         subscriptionTier: 'free',
         currentSubscriptionStatus: 'active',
         stripeCustomerId: null,
@@ -123,7 +122,7 @@ export const ensureUserDocument = async (userId: string, userEmail?: string): Pr
         nextBillingDate: null,
         currentSubscriptionStartDate: null,
         scheduledTierChange: null,
-        hasHadPaidSubscription: false, // New users start with false
+        hasHadPaidSubscription: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         lastDailyUsageDate: today,
@@ -134,7 +133,11 @@ export const ensureUserDocument = async (userId: string, userEmail?: string): Pr
         monthlyOutputTokens: 0,
         sessionsMonth: currentMonth,
         monthlySessionsCount: 0
-      });
+      };
+      if (userEmail && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(userEmail)) {
+        baseData.email = userEmail;
+      }
+      await setDoc(userRef, baseData);
     }
   } catch (error) {
     console.error(t('errorCreatingUserDocument', 'Fout bij aanmaken gebruikersdocument:'), error);

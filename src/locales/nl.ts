@@ -1053,6 +1053,21 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   enterpriseCompanyPlaceholder: "Bedrijfsnaam",
   enterpriseEstimatedUsers: "Geschat aantal gebruikers",
   enterpriseSelectOption: "Selecteer...",
+  enterpriseSubmitButton: "Aanvraag verzenden",
+  enterpriseUsers_2_5: "2 - 5",
+  enterpriseUsers_6_10: "6 - 10",
+  enterpriseUsers_11_25: "11 - 25",
+  enterpriseUsers_26_100: "26 - 100",
+  enterpriseUsers_100_plus: "100+",
+  enterpriseContactRateLimit: "Je kunt deze aanvraag slechts één keer per sessie versturen. Log in om opnieuw te versturen.",
+  pricingUnlimitedSessions: "Onbeperkt aantal sessies",
+  horizonPackageAvailableForButton: "Alleen voor Silver en Gold",
+  faqBrainstorm: "Wat is Brainstorm en in welke tiers is het beschikbaar?",
+  faqBrainstormAnswer: "Brainstorm genereert ideeën en richtingen op basis van je transcript. Beschikbaar vanaf Gold en hoger; Free kan de interface bekijken maar geen output genereren.",
+  faqSpecialPrompts: "Wat zijn Special prompts en wie kan ze gebruiken?",
+  faqSpecialPromptsAnswer: "Special prompts zijn kant‑en‑klare AI‑opdrachten voor specifieke taken. Beschikbaar vanaf Gold en hoger; Free ziet de prompts maar kan geen resultaten genereren.",
+  faqAIDiscussion: "Wat doet AI discussie en is dit onderdeel beschikbaar voor mijn abonnement?",
+  faqAIDiscussionAnswer: "AI discussie faciliteert een multi‑agent brainstorm/discussie met rollen en doelen. Beschikbaar vanaf Gold en hoger; Free kan de configuratie zien maar geen discussie starten.",
   enterpriseMessage: "Aanvullende info",
   enterpriseMessagePlaceholder: "Wat zijn jullie doelen en behoeften?",
   enterprisePrivacyNote: "We gebruiken deze informatie alleen om contact op te nemen over enterprise‑opties.",
@@ -2559,7 +2574,7 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   confirmationCodeSent: "We hebben een bevestigingscode gestuurd naar:",
   enterConfirmationCodeInstruction: "Voer de bevestigingscode in om je aanmelding voor de wachtlijst te voltooien.",
   confirmationCode: "Bevestigingscode",
-  enterConfirmationCode: "Voer de bevestigingscode in",
+  enterConfirmationCode: "Voer je verstuurde code in",
   confirming: "Bevestigen...",
   noCodeReceived: "Geen code ontvangen?",
   notApplicable: "N/A",
@@ -3806,6 +3821,91 @@ RecapHorizon: Voorbij de chaos, de essentie voorop.`,
   emailConfirmCodeAlreadySent: "Er is al een bevestigingsmail verstuurd. Controleer je inbox.",
   emailConfirmTooManyRequests: "Te veel verzoeken. Probeer het over enkele minuten opnieuw.",
   emailConfirmCouldNotResend: "Kon geen nieuwe bevestigingscode versturen. Probeer het later opnieuw.",
-  emailConfirmErrorSending: "Er is een technische fout opgetreden bij het versturen van een nieuwe code."
+  emailConfirmErrorSending: "Er is een technische fout opgetreden bij het versturen van een nieuwe code.",
 
+  "brainstorm": "Brainstorm & Rapport",
+  "brainstorm.title": "Brainstorm & Rapport",
+  "brainstorm.description": "Begeleid een interactieve brainstormflow vanuit de transcriptie en genereer een top‑level rapport op basis van een gekozen methode en, optioneel, een expertrol.",
+  "brainstorm.initialIdeasLoadingTitle": "Initiële ideeën genereren",
+  "brainstorm.initialIdeasLoadingMessage": "De AI genereert nu initiële ideeën op basis van de transcriptie. Even geduld alstublieft...",
+  "brainstorm.transcriptOption": "Geen specifiek idee, brainstorm op basis van transcript",
+  "brainstorm.selectIdea": "Kies één idee (of transcript optie) uit de lijst hierboven dat je verder wilt uitwerken.",
+  "brainstorm.selectMethod": "Welke brainstormmethode wil je toepassen op '{idea}'? Kies uit de onderstaande opties:",
+  "brainstorm.selectMethodShort": "Welke brainstormmethode wil je toepassen? Kies uit de onderstaande opties:",
+  "brainstorm.selectExpertRole": "Laat de brainstorm uitvoeren door een specifiek expertperspectief?",
+  "brainstorm.genericRole": "Generieke rol",
+  "brainstorm.generatingReport": "De AI genereert nu het brainstormrapport. Dit kan even duren...",
+  "brainstorm.reportTitle": "Brainstormrapport",
+  "brainstorm.downloadPdf": "Download als PDF",
+  "brainstorm.copyToClipboard": "Kopieer naar klembord",
+  "brainstorm.moveToTranscript": "Verplaats naar Transcript",
+  "brainstorm.regenerate": "Opnieuw genereren",
+  "brainstorm.downloadTxt": "Download TXT",
+  "brainstorm.initialIdeaInstruction": `Je bent een creatieve AI-analist. Jouw taak is om de meest prominente en innovatieve ideeën, concepten, problemen of kansen te extraheren uit de onderstaande transcriptie. Deze ideeën moeten potentieel hebben voor verdere uitwerking of strategische discussie.
+
+**Huidige Transcriptie:**
+"""
+{transcript_text}
+"""
+
+**Instructie:**
+Identificeer en presenteer tussen de 1 en 25 (maximaal 25, minimaal 1) unieke en relevante ideeën/concepten/problemen/kansen die direct voortvloeien uit de inhoud van deze transcriptie. Formuleer elk idee kort en krachtig. Doe zelf een rangschikking van 1 ster t/m 5 sterren (met halve sterren), sorteer op sterren bij presentatie.
+
+Genereer de lijst in {output_language}, gesorteerd op relevantie. Het eerste item moet altijd zijn: "Geen specifiek idee, brainstorm op basis van transcript".`,
+  "brainstorm.reportInstruction": `Je bent een gespecialiseerde AI-consultant die expertsessies faciliteert en rapporten opstelt. Jouw taak is om een gestructureerd brainstormrapport te genereren op basis van een specifiek idee, een gekozen brainstormmethode en een expertrol.
+
+**Het te brainstormen idee (focus):**
+"""
+{user_selected_idea}
+"""
+
+**Gekozen Brainstorm Methode:**
+{user_selected_method}
+
+**Huidige Transcriptie (voor context en feitelijke onderbouwing):**
+"""
+{transcript_text}
+"""
+
+**Specifieke Instructies voor de Gekozen Methode:**
+{method_specific_instructions}
+
+**Expertrol:**
+Adopteer het perspectief en de denkrichting van de volgende expertrol: '{user_selected_expert_role_name}'. Focus je bij het genereren van de brainstormoutput op de aspecten die voor deze rol het meest relevant zijn. De beschrijving van deze rol is: '{user_selected_expert_role_description}'.
+
+**Output Formaat & Structuur Rapport:**
+Genereer de output als een uitgebreid, gestructureerd rapport in {output_language}. Het rapport moet beginnen met een duidelijke titel, het gekozen idee, de gebruikte brainstormmethode en de expertrol. De rest van het rapport moet de instructies van de gekozen methode nauwgezet volgen en de gegenereerde ideeën duidelijk presenteren. Zorg voor een professionele en concrete toon. Gebruik secties en opsommingen waar passend. Gebruik een mooie opmaak, zonder opmaakcodes.
+
+**Constraints:**
+• Alle gegenereerde ideeën en analyses moeten direct afleidbaar zijn uit of sterk geïnspireerd zijn door de transcriptie en het gekozen idee.
+• Wees creatief maar praktisch.
+• Vermijd het verzinnen van externe feiten die niet in de transcriptie staan.
+• Houd rekening met de gekozen expertrol en pas de diepgang/focus aan.`,
+  "brainstorm.method.frameworks": "Frameworks",
+  "brainstorm.method.frameworksDesc": "Brainstorm op basis van bekende frameworks (bijv. 5 Whys, SCAMPER, Six Thinking Hats).",
+  "brainstorm.method.frameworksList": "5 Whys, SCAMPER, Six Thinking Hats, Mind Mapping, Starbursting",
+  "brainstorm.method.frameworksPromptTemplate": "Gebruikmakend van het {selected_framework} brainstorm framework, brainstorm over het volgende onderwerp: {user_selected_idea}. Geef concrete inzichten en ideeën.",
+  "brainstorm.method.selectFramework": "Selecteer framework",
+  "brainstorm.method.differentPerspectives": "Different Perspectives",
+  "brainstorm.method.differentPerspectivesDesc": "Benader het onderwerp vanuit diverse rollen (bijv. Marketingexpert, Salesexpert, Productexpert), elk met 10 ideeën.",
+  "brainstorm.method.differentPerspectivesPromptTemplate": "We bevinden ons in een brainstormsessie over {user_selected_idea}. Genereer vanuit het perspectief van {selected_perspectives} 10 ideeën per perspectief. Elk idee moet onderscheidend en praktisch zijn.",
+  "brainstorm.method.oppositeDay": "Opposite Day",
+  "brainstorm.method.oppositeDayDesc": "Draai het probleem om: bedenk hoe je klanten MINDER tevreden maakt, en draai die ideeën dan om voor innovatieve oplossingen.",
+  "brainstorm.method.oppositeDayPromptTemplate": "Geef me {number_of_dissatisfaction_ideas} manieren waarop ik mijn klanten MINDER tevreden zou maken met mijn {user_selected_idea}. Geef vervolgens voor elk punt de exacte tegenovergestelde benadering als een haalbare oplossing of verbetering. Structureer als: 'Problematisch Idee' -> 'Omgedraaide Oplossing'.",
+  "brainstorm.method.stepByStep": "Step-by-Step",
+  "brainstorm.method.stepByStepDesc": "Ga stap voor stap te werk en bouw voort op de vorige stap. Ideeën worden in een logische sequentie gegenereerd.",
+  "brainstorm.method.stepByStepPromptTemplate": "Je bouwt aan een bedrijfsidee voor {user_selected_idea}. Laten we stap voor stap gaan: 1. Lijst 5-10 belangrijke aspecten van {initial_step_focus}. 2. Identificeer voor elk aspect 2-3 gerelateerde uitdagingen. 3. Brainstorm voor elke uitdaging 1-2 potentiële oplossingen of innovaties. 4. Formuleer hieruit 5-7 concrete bedrijfsideeën.",
+  "brainstorm.method.creativeWords": "Creative Words",
+  "brainstorm.method.creativeWordsDesc": "Gebruik woorden die creativiteit aanmoedigen (bijv. Extreem uniek, Daringly different) om ideeën te genereren.",
+  "brainstorm.method.creativeWordsPromptTemplate": "Gebruik woorden zoals 'Extreem uniek', 'Daringly different', 'Nooit eerder gezien', 'Totaal onverwacht', 'Wild onconventioneel', 'Absoluut ongehoord', 'Volledig out-of-the-box', genereer {number_of_ideas} creatieve ideeën over {user_selected_idea}. Elk idee moet duidelijk één of meer van deze creatieve eigenschappen weerspiegelen.",
+  "brainstorm.method.chainOfDensity": "Chain of Density",
+  "brainstorm.method.chainOfDensityDesc": "Genereert iteratief steeds dichtere en creatievere outputs door ontbrekende punten toe te voegen en de output te verfijnen.",
+  "brainstorm.method.chainOfDensityPromptTemplate": "Je bent een expert in creatieve recursie. Voor het onderwerp: {user_selected_idea}, genereer een initiële creatieve idee. Herhaal vervolgens de volgende 2 stappen {number_of_iterations} keer:\nStap 1. Identificeer 1-3 ontbrekende of impliciete punten uit de initiële output die deze dichter en creatiever zouden maken.\nStap 2. Herschrijf een nieuwe, verbeterde output van identieke lengte die deze ontbrekende punten bevat, waardoor deze gedetailleerder en impactvoller wordt. Focus op het genereren van steeds creatievere outputs.",
+  "brainstorm.method.firstPrinciples": "First Principles",
+  "brainstorm.method.firstPrinciplesDesc": "Breek een complex probleem af tot basiscomponenten en bouw het van de grond af aan weer op voor fundamentele oplossingen.",
+  "brainstorm.method.firstPrinciplesPromptTemplate": "Gebruikmakend van First Principles denken, analyseer grondig het volgende onderwerp: {user_selected_idea}. Breek het af tot de fundamentele waarheden of kerncomponenten, waarbij alle aannames in twijfel worden getrokken. Brainstorm vervolgens, gebaseerd op deze eerste principes, 3-5 innovatieve oplossingen of benaderingen.",
+  "brainstorm.method.oppositeDayCountLabel": "Aantal ontevredenheid‑ideeën",
+  "brainstorm.method.creativeWordsCountLabel": "Aantal ideeën",
+  "brainstorm.method.chainOfDensityIterationsLabel": "Aantal iteraties",
+  "brainstorm.method.stepByStepInitialFocusLabel": "Eerste stap focus"
 };

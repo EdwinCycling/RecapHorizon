@@ -642,7 +642,10 @@ const AIDiscussionTab: React.FC<AIDiscussionTabProps> = ({
   const hasGeneratedRef = useRef(false);
   
   useEffect(() => {
-    if (!hasAccess) return;
+    if (!hasAccess) {
+      setState(prev => ({ ...prev, error: t('premiumOnly'), step: 'selectTopic' }));
+      return;
+    }
     if (isGeneratingTopics) return;
     if (hasGeneratedRef.current) return;
 

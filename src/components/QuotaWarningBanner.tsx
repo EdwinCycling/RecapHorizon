@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { auth } from '../firebase';
+import { auth, getUserSubscriptionTier } from '../firebase';
 import { quotaMonitoringService } from '../services/quotaMonitoringService';
 import { SubscriptionTier } from '../../types';
 
@@ -17,13 +17,17 @@ const QuotaWarningBanner: React.FC<QuotaWarningBannerProps> = ({ onUpgrade }) =>
         const user = auth.currentUser;
         if (!user) return;
         
-        // Assume free tier for quota monitoring (only free tier users get warnings)
-        const warning = quotaMonitoringService.checkQuotaWarning(user.uid, SubscriptionTier.FREE);
+        // Use actual user subscription tier; only FREE users should see warnings
+        let tier: SubscriptionTier = SubscriptionTier.FREE;
+        try {
+          tier = await getUserSubscriptionTier(user.uid);
+        } catch {}
+        const warning = quotaMonitoringService.checkQuotaWarning(user.uid, tier);
         if (warning.shouldWarn) {
           setShowWarning(true);
           setUsageData({
-            current: 50 - warning.requestsRemaining, // Calculate current usage
-            limit: 50, // Free tier daily limit
+            current: 50 - warning.requestsRemaining,
+            limit: 50,
             percentage: Math.round(warning.usagePercentage)
           });
         } else {

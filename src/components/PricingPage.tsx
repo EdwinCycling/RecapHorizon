@@ -317,7 +317,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
     };
 
     if (tier === SubscriptionTier.FREE) {
-      return t('pricingFree');
+      return t('pricingFreeFor4Weeks');
     }
 
     if (tier === SubscriptionTier.DIAMOND) {
@@ -539,7 +539,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                   <span className="text-green-500 dark:text-green-400 mr-2 flex-shrink-0">✓</span>
                   <span className="text-gray-700 dark:text-gray-300 text-sm">
                     {tier.maxSessionsPerDay === -1 ? (
-                      t('pricingUnlimited')
+                      t('pricingUnlimitedSessions')
                     ) : (
                       t('pricingSessionsPerDay', { sessions: tier.maxSessionsPerDay })
                     )}
@@ -622,6 +622,30 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                         <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
                         <span className="text-sm text-gray-700 dark:text-gray-300">
                           {t('pricingWebExpertImport')}
+                        </span>
+                      </div>
+                    )}
+                    {tier.features?.thinkingPartner && (
+                      <div className="flex items-center">
+                        <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {t('pricingBrainstormFeature', { defaultValue: 'Brainstormen'})}
+                        </span>
+                      </div>
+                    )}
+                    {tier.features?.specials && (
+                      <div className="flex items-center">
+                        <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {t('pricingSpecialPromptsFeature', { defaultValue: 'Special prompts'})}
+                        </span>
+                      </div>
+                    )}
+                    {tier.features?.aiDiscussion && (
+                      <div className="flex items-center">
+                        <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {t('pricingAIDiscussionFeature', { defaultValue: 'AI discussie'})}
                         </span>
                       </div>
                     )}
@@ -856,6 +880,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
             <div className="mt-4">
               <button
                 onClick={async () => {
+                  if (!isHorizonEligible) {
+                    displayToast(t('horizonPackageAvailableFor', { defaultValue: 'Alleen beschikbaar voor Silver en Gold members.' }));
+                    return;
+                  }
                   if (!isLoggedIn) {
                     displayToast(t('pleaseLoginFirst', { defaultValue: 'Log eerst in om te kopen' }));
                     return;
@@ -877,9 +905,16 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                     setIsLoading(null);
                   }
                 }}
-                className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
+                disabled={!isHorizonEligible || isLoading === 'horizon'}
+                className={`w-full py-3 px-6 rounded font-medium ${(!isHorizonEligible || isLoading === 'horizon') ? 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
               >
-                {isLoading === 'horizon' ? t('processing', { defaultValue: 'Bezig...' }) : t('horizonPackageBuyNow', { defaultValue: 'Nu kopen' })}
+                {(!isHorizonEligible) 
+                  ? t('horizonPackageAvailableForButton', { defaultValue: 'Alleen voor Silver en Gold' })
+                  : (isLoading === 'horizon' 
+                      ? t('processing', { defaultValue: 'Bezig...' }) 
+                      : t('horizonPackageBuyNow', { defaultValue: 'Nu kopen' })
+                    )
+                }
               </button>
             </div>
           </div>

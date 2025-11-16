@@ -11,6 +11,7 @@ interface WaitlistModalProps {
   setWaitlistEmail: (email: string) => void;
   addToWaitlist: (email: string) => void;
   language?: string;
+  onEnterCode?: (email: string) => void;
 }
 
 const WaitlistModal: React.FC<WaitlistModalProps> = ({ 
@@ -20,7 +21,8 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({
   waitlistEmail, 
   setWaitlistEmail, 
   addToWaitlist, 
-  language = 'en' 
+  language = 'en',
+  onEnterCode
 }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -138,6 +140,14 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({
                   {isLoading ? t('sending') : t('signUp')}
                 </button>
               </div>
+              <div className="mt-3">
+                <button
+                  onClick={() => onEnterCode?.(waitlistEmail)}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {t('enterConfirmationCode')}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg p-4">
@@ -152,6 +162,14 @@ const WaitlistModal: React.FC<WaitlistModalProps> = ({
                   <p className="text-sm text-green-600 dark:text-green-400">
                     {t('waitlist2FAEmailInstructions')}
                   </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => onEnterCode?.(waitlistEmail)}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      {t('enterConfirmationCode')}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="text-green-700 dark:text-green-300">{t('waitlistConfirmationMessage')}</p>

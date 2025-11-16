@@ -397,54 +397,82 @@ export class AIProviderManager {
     userId?: string
   ): Promise<AIResponse> {
     const envBase = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '').trim();
-    const base = envBase && envBase.startsWith('http')
-      ? envBase
-      : (typeof window !== 'undefined' && window.location.hostname.includes('localhost'))
-        ? 'http://localhost:8888'
-        : (typeof window !== 'undefined' ? window.location.origin : '');
-
-    const url = `${base}/.netlify/functions/gemini-generate`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt,
-        model: config.model,
-        temperature: config.temperature || 0.7,
-        maxTokens: config.maxTokens || 4000,
-        userId
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini server error ${response.status}: ${errorText}`);
+    const origin = (typeof window !== 'undefined' ? window.location.origin : '');
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const candidates: string[] = [];
+    if (isLocal) {
+      candidates.push('http://127.0.0.1:9000');
+      candidates.push('http://localhost:9000');
     }
-
-    const data = await response.json();
-    const content = String(data.content || '');
-
-    if (userId) {
-      try {
-        await quotaMonitoringService.recordGeminiRequest(
-          userId,
-          Number(data.usage?.inputTokens || 0),
-          Number(data.usage?.outputTokens || 0)
-        );
-      } catch (_err) {}
+    if (envBase && envBase.startsWith('http')) candidates.push(envBase);
+    if (isLocal) {
+      candidates.push('http://localhost:8888');
     }
+    if (origin) candidates.push(origin);
 
-    return {
-      content,
-      success: true,
-      provider: AIProvider.GOOGLE_GEMINI,
-      model: config.model,
-      responseTime: Date.now() - startTime,
-      usage: {
-        inputTokens: Number(data.usage?.inputTokens || 0),
-        outputTokens: Number(data.usage?.outputTokens || 0)
+    const tried = new Set<string>();
+    for (const base of candidates) {
+      if (!base || tried.has(base)) continue;
+      tried.add(base);
+      const paths = [
+        '/.netlify/functions/gemini-generate',
+        '/gemini-generate'
+      ];
+      for (const p of paths) {
+        const url = `${base}${p}`;
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt,
+              model: config.model,
+              temperature: config.temperature || 0.7,
+              maxTokens: config.maxTokens || 0,
+              userId
+            })
+          });
+
+          if (!response.ok) {
+            const status = response.status;
+            const errorText = await response.text();
+            const lower = errorText.toLowerCase();
+            const originBlocked = lower.includes('origin not allowed');
+            if (status === 404 || status >= 500 || (status === 403 && originBlocked)) continue;
+            throw new Error(`Gemini server error ${status}: ${errorText}`);
+          }
+
+          const data = await response.json();
+          const content = String(data.content || '');
+
+          if (userId) {
+            try {
+              await quotaMonitoringService.recordGeminiRequest(
+                userId,
+                Number(data.usage?.inputTokens || 0),
+                Number(data.usage?.outputTokens || 0)
+              );
+            } catch (_err) {}
+          }
+
+          return {
+            content,
+            success: true,
+            provider: AIProvider.GOOGLE_GEMINI,
+            model: config.model,
+            responseTime: Date.now() - startTime,
+            usage: {
+              inputTokens: Number(data.usage?.inputTokens || 0),
+              outputTokens: Number(data.usage?.outputTokens || 0)
+            }
+          };
+        } catch (_err) {
+          continue;
+        }
       }
-    };
+    }
+
+    throw new Error('Gemini server not reachable on known development endpoints');
   }
 
   /**

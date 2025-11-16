@@ -23,7 +23,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Vind antwoorden op veelgestelde vragen over RecapHorizon AI transcriptie, meeting analyse, en meer. Bekijk onze uitgebreide FAQ sectie.');
-    },
+    }
   }, []);
 
   const toggleItem = (index: number) => {
@@ -32,7 +32,7 @@ const FAQPage: React.FC<FAQPageProps> = ({ onClose, t }) => {
       newExpanded.delete(index);
     } else {
       newExpanded.add(index);
-    },
+    }
     setExpandedItems(newExpanded);
   };
 

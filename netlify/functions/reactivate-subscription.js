@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import admin from 'firebase-admin';
+import zlib from 'zlib';
 
 // Initialize Stripe
 if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'VERVANG_MET_ECHTE_STRIPE_TEST_SECRET_KEY') {
@@ -14,7 +15,23 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 let adminInitialized = false;
 try {
   if (!admin.apps.length) {
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    const getServiceAccountJson = () => {
+      const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
+      if (b64 && b64.trim().length > 0) {
+        try {
+          const buf = Buffer.from(b64, 'base64');
+          try {
+            return zlib.gunzipSync(buf).toString('utf8');
+          } catch {
+            return buf.toString('utf8');
+          }
+        } catch (e) {
+          console.error('Failed to decode FIREBASE_SERVICE_ACCOUNT_B64:', e);
+        }
+      }
+      return process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    };
+    const serviceAccountJson = getServiceAccountJson();
     if (!serviceAccountJson) {
       console.error('Firebase Admin not initialized: missing FIREBASE_SERVICE_ACCOUNT or FIREBASE_SERVICE_ACCOUNT_KEY environment variable');
     } else {

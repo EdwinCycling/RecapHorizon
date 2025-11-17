@@ -632,6 +632,7 @@ export const fr = {
   featurePWADesc: "RecapHorizon prend en charge les Progressive Web Apps (PWA), ce qui signifie qu'il se charge rapidement et fonctionne comme une application sur votre appareil après installation.",
   privacyTitle: "🔒 Garantie de confidentialité totale",
   privacyLead: "Important : Vos sessions ne sont PAS stockées dans notre base de données. Toutes les données restent entièrement locales sur votre appareil.",
+  privacyItemApiKeyLocal: "🔑 Clé API stockée localement sur votre appareil",
   privacyItemRecordings: "🎙️ Les enregistrements restent locaux",
   privacyItemTranscripts: "📝 Les transcriptions sont privées",
   privacyItemAIOutput: "🤖 Sortie IA uniquement pour vous",

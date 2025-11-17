@@ -1865,11 +1865,6 @@ Tekst: ${content}`;
     setIsGeneratingImage(true);
 
     try {
-      if (!apiKey) {
-        displayToast(t('toastApiKeyNotAvailable'), 'error');
-        setIsGeneratingImage(false);
-        return;
-      }
 
       // Validate token usage for image generation
       const styleText = imageGenerationStyle === 'infographic' ? t('imageStyleInfographic') : 
@@ -3270,10 +3265,6 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
   const submitMessage = useCallback(async (message: string) => {
     if (!message.trim() || isChatting) return;
 
-    if (!apiKey) {
-        displayToast(t('toastApiKeyNotAvailable'), 'error');
-        return;
-    }
     
     // Import security utilities
     const { validateAndSanitizeForAI, rateLimiter } = await import('./src/utils/security');
@@ -3344,7 +3335,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
         const errorMsg = `Chat error: ${err.message || 'Unknown error'}`;
         setChatHistory(prev => prev.map((msg, i) => i === prev.length - 1 ? { ...msg, text: errorMsg } : msg));
     } finally { setIsChatting(false); }
-  }, [isChatting, chatHistory, transcript, isTTSEnabled, speak, apiKey, authState.user]);
+  }, [isChatting, chatHistory, transcript, isTTSEnabled, speak, authState.user]);
   
   const handleSendMessage = useCallback(async () => {
     // Check if user has access to chat
@@ -3357,14 +3348,10 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     
     const message = chatInput.trim();
     if (message) {
-      if (!apiKey) {
-        displayToast(t('toastApiKeyNotAvailable'), 'error');
-        return;
-      }
       setChatInput('');
       await submitMessage(message);
     }
-  }, [chatInput, submitMessage, apiKey, userSubscription, displayToast]);
+  }, [chatInput, submitMessage, userSubscription, displayToast]);
   
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
@@ -3394,11 +3381,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
             // Als er final results zijn, verstuur het bericht
             if (finalTranscript.trim()) {
                 setVoiceInputPreview(''); // Clear preview
-                if (apiKey) {
-                    submitMessage(finalTranscript.trim());
-                } else {
-                    displayToast(t('toastApiKeyNotAvailable'), 'error');
-                }
+                submitMessage(finalTranscript.trim());
             }
         };
 
@@ -3427,7 +3410,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
 
         speechRecognitionRef.current = recognition;
     }
-  }, [language, t, submitMessage, apiKey]);
+  }, [language, t, submitMessage]);
 
   const toggleListening = () => {
     if (!speechRecognitionRef.current) {
@@ -4247,11 +4230,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
                 const base64Data = e.target?.result as string;
                 const base64Image = base64Data.split(',')[1]; // Remove data:image/...;base64, prefix
                 
-                if (!apiKey) {
-                  setError(t('errorApiKeyNotAvailable'));
-                  setLoadingText('');
-                  return;
-                }
+                
                 
                 setLoadingText(t('loadingAnalyzingImageWithAI'));
                 
@@ -5332,11 +5311,7 @@ const handleKeywordClick = async (keyword: string) => {
     
     // Don't reset other analysis data when generating keyword explanation
 
-    if (!apiKey) {
-        displayToast(t('toastApiKeyNotAvailable'), 'error');
-        setIsFetchingExplanation(false);
-        return;
-    }
+    
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
@@ -5409,10 +5384,7 @@ const handleGenerateKeywordAnalysis = async () => {
         return;
     }
 
-    if (!apiKey) {
-        displayToast(t('toastApiKeyNotAvailable'), 'error');
-        return;
-    }
+    
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
@@ -5477,10 +5449,7 @@ const handleAnalyzeSentiment = async () => {
         return;
     }
     
-    if (!apiKey) {
-        displayToast(t('toastApiKeyNotAvailable'), 'error');
-        return;
-    }
+    
     
     // Check transcript length based on user tier
     const effectiveTier = userSubscription;
@@ -6499,13 +6468,7 @@ const handleAnalyzeSentiment = async () => {
     }
   };
 
-  const checkApiKey = () => {
-    if (!apiKey) {
-      displayToast(t('toastApiKeyNotAvailable'), 'error');
-      return false;
-    }
-    return true;
-  };
+  
 
   const handleGeneratePresentationWithOptions = async (options: { 
     maxSlides: number; 
@@ -6529,10 +6492,7 @@ const handleAnalyzeSentiment = async () => {
         return;
     }
     
-    if (!apiKey) {
-        displayToast(t('toastApiKeyNotAvailable'), 'error');
-        return;
-    }
+    
     
     setLoadingText(t('generatingPresentation'));
     displayToast(t('generatingPresentation'), 'info');
@@ -11688,8 +11648,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             {userSubscription === SubscriptionTier.DIAMOND && (
                 <button 
                     onClick={() => setIsTTSEnabled(!isTTSEnabled)} 
-                    disabled={!apiKey}
-                    className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md ${isTTSEnabled ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-500/20' : (!apiKey) ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md ${isTTSEnabled ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-500/20' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
                 >
                     {isTTSEnabled ? <SpeakerIcon className="w-5 h-5" /> : <SpeakerOffIcon className="w-5 h-5" />}
                     <span>{t('readAnswers')}</span>
@@ -11740,18 +11699,17 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     disabled={isChatting}
                 />
                 {userSubscription === SubscriptionTier.DIAMOND && (
-                    <button 
-                        onClick={toggleListening} 
-                        disabled={!apiKey}
-                        className={`p-2 rounded-full transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : (!apiKey) ? 'bg-slate-300 dark:bg-slate-600 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
-                        title={(!apiKey) ? t('setupApiKey') : (isListening ? t('stopListening') : t('startListening'))}
+                <button 
+                    onClick={toggleListening} 
+                        className={`p-2 rounded-full transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
+                        title={(isListening ? t('stopListening') : t('startListening'))}
                     > 
                         <MicIcon className="w-5 h-5"/> 
                     </button>
                 )}
                 <button 
                     onClick={handleSendMessage} 
-                    disabled={isChatting || (!chatInput.trim() && !voiceInputPreview.trim()) || (!apiKey)} 
+                    disabled={isChatting || (!chatInput.trim() && !voiceInputPreview.trim())} 
                     className="p-3 bg-cyan-500 rounded-lg text-white disabled:bg-slate-400 dark:disabled:bg-slate-600 transition-colors"
                 > 
                     <SendIcon className="w-5 h-5"/> 
@@ -13548,26 +13506,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     </div>
                   </div>
                 )}
-                {/* API Key Waarschuwing */}
-                {!apiKey && (
-                    <div className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
-                        <AlertTriangleIcon className="w-6 h-6 text-amber-500" />
-                        <div className="flex-1">
-                            <p className="font-semibold mb-1">{t('setupApiKey')}</p>
-                            <p className="text-sm mb-2">{t('haveAccessLead')}</p>
-                            <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded p-2 text-sm">
-                                <p className="text-green-700 dark:text-green-300 font-medium">{t('privacyTitle')}</p>
-                                <p className="text-green-600 dark:text-green-400">{t('privacyItemApiKeyLocal')}</p>
-                                <p className="text-green-600 dark:text-green-400">{t('privacyItemNoServers')}</p>
-                                <p className="text-green-600 dark:text-green-400">{t('privacyItemWeStoreNothing')}</p>
-                            </div>
-                        </div>
-                        
-                    </div>
-                )}
-                
-                {apiKey && (
-                    <div className="transition-opacity duration-500">
+                <div className="transition-opacity duration-500">
                         <h2 className="text-2xl font-bold text-center text-slate-800 dark:text-slate-100 mb-6">
                             {t('startOrUpload')}
                         </h2>
@@ -13861,7 +13800,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                             </div>
                         </div>
                     </div>
-                )}
             </div>
         ) : (
             status === RecordingStatus.FINISHED && (

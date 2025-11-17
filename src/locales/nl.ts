@@ -544,6 +544,7 @@ export const nl = {
   featurePWADesc: "RecapHorizon ondersteunt Progressive Web Apps (PWA's), wat betekent dat het snel laadt, en na installatie als een app op je apparaat werkt.",
   privacyTitle: "🔒 Volledige Privacy Garantie",
   privacyLead: "Belangrijk: Je sessies worden NIET opgeslagen in onze database. Alle data blijft volledig lokaal op jouw apparaat.",
+  privacyItemApiKeyLocal: "🔑 API-sleutel lokaal op jouw apparaat opgeslagen",
   privacyItemRecordings: "Opnames blijven lokaal",
   privacyItemTranscripts: "Transcripties zijn privé",
   privacyItemAIOutput: "AI output alleen voor jou",

@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.91116.1",
+  "version": "0.91117.3",
   "type": "module",
   "scripts": {
     "dev": "powershell -ExecutionPolicy Bypass -File start-dev.ps1",

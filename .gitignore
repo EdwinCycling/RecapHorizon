@@ -29,6 +29,8 @@ dist-ssr
 .env.*
 !.env.production.example
 firebase-service-account.json
+service-account.b64
+*.b64
 
 # Local Netlify folder
 .netlify

@@ -8,11 +8,20 @@ function getOrigin(event) {
   return o;
 }
 
+function normalizeOrigin(url) {
+  try { return new URL(url).origin; } catch { return (url || '').trim(); }
+}
+
 function isOriginAllowed(event) {
-  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
-  if (allowed.length === 0) return true;
-  const origin = getOrigin(event);
-  return allowed.includes(origin);
+  const list = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+  const maybeEnvOrigins = [process.env.URL, process.env.DEPLOY_URL, process.env.DEPLOY_PRIME_URL, process.env.SITE_URL]
+    .map(v => (v || '').trim())
+    .filter(Boolean)
+    .map(normalizeOrigin);
+  const allowed = new Set([...list.map(normalizeOrigin), ...maybeEnvOrigins]);
+  if (allowed.size === 0) return true;
+  const origin = normalizeOrigin(getOrigin(event));
+  return allowed.has(origin);
 }
 
 function getClientIp(event) {

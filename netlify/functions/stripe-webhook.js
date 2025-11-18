@@ -264,8 +264,8 @@ async function handleCheckoutSessionCompleted(session) {
         const horizonProductId = process.env.STRIPE_HORIZON_PRODUCT_ID || '';
         const hasHorizon = lineItems.some(li => li.price?.product === horizonProductId);
         if (hasHorizon) {
-          const extraTokens = parseInt(process.env.STRIPE_HORIZON_EXTRA_TOKENS || process.env.VITE_HORIZON_EXTRA_TOKENS || '25000', 10);
-          const extraAudio = parseInt(process.env.STRIPE_HORIZON_EXTRA_AUDIO_MINUTES || process.env.VITE_HORIZON_EXTRA_AUDIO_MINUTES || '240', 10);
+          const extraTokens = parseInt(process.env.STRIPE_HORIZON_EXTRA_TOKENS || process.env.VITE_HORIZON_EXTRA_TOKENS || '0', 10);
+          const extraAudio = parseInt(process.env.STRIPE_HORIZON_EXTRA_AUDIO_MINUTES || process.env.VITE_HORIZON_EXTRA_AUDIO_MINUTES || '0', 10);
           await userRef.set({
             periodExtraTokens: admin.firestore.FieldValue.increment(isNaN(extraTokens) ? 25000 : extraTokens),
             extraAudioMinutesBalance: admin.firestore.FieldValue.increment(isNaN(extraAudio) ? 240 : extraAudio),

@@ -864,8 +864,12 @@ const PricingPage: React.FC<PricingPageProps> = ({ currentTier, userSubscription
                 <span className="text-green-500 dark:text-green-400 mr-2">✓</span>
                 <span>
                   {(() => {
-                    const tokens = Number(import.meta.env.VITE_HORIZON_EXTRA_TOKENS ?? 25000);
-                    return t('horizonPackageTokens', { defaultValue: `${tokens.toLocaleString('nl-NL')} extra tokens` });
+                    const tokensEnv = import.meta.env.VITE_HORIZON_EXTRA_TOKENS as string | undefined;
+                    if (tokensEnv && !Number.isNaN(Number(tokensEnv))) {
+                      const tokens = Number(tokensEnv);
+                      return t('horizonPackageTokens', { defaultValue: `${tokens.toLocaleString('nl-NL')} extra tokens` });
+                    }
+                    return t('horizonPackageTokensGeneric', { defaultValue: 'Extra tokens inbegrepen' });
                   })()}
                 </span>
               </div>

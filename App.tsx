@@ -2543,7 +2543,7 @@ ${sanitizedTranscript}`;
       setPptxModalText(text);
       setPptxModalLengthWarning(null);
       const limits = subscriptionService.getTierLimits(effectiveTier);
-      if (text.length > limits.maxTranscriptLength) {
+      if (!subscriptionService.isTranscriptLengthAllowed(effectiveTier, text.length)) {
         setPptxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: text.length, maxLength: limits.maxTranscriptLength }));
       }
       try { const el = pptxTextareaRef.current; if (el) { el.focus(); el.selectionStart = el.value.length; el.selectionEnd = el.value.length; el.scrollTop = el.scrollHeight; } } catch {}
@@ -2567,7 +2567,7 @@ ${sanitizedTranscript}`;
       setXlsxModalLengthWarning(null);
       setXlsxModalError(null);
       const limits = subscriptionService.getTierLimits(effectiveTier);
-      if (text.length > limits.maxTranscriptLength) {
+      if (!subscriptionService.isTranscriptLengthAllowed(effectiveTier, text.length)) {
         setXlsxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: text.length, maxLength: limits.maxTranscriptLength }));
       }
       try { const el = xlsxTextareaRef.current; if (el) { el.focus(); el.selectionStart = el.value.length; el.selectionEnd = el.value.length; el.scrollTop = el.scrollHeight; } } catch {}
@@ -2673,7 +2673,7 @@ ${sanitizedTranscript}`;
       const sanitized = sanitizeTextInput(text);
       combined += sanitized + '\n\n';
       const limits = subscriptionService.getTierLimits(effectiveTier);
-      if (combined.length > limits.maxTranscriptLength) {
+      if (!subscriptionService.isTranscriptLengthAllowed(effectiveTier, combined.length)) {
         setMultiUploadLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: combined.length, maxLength: limits.maxTranscriptLength }));
         break;
       } else {
@@ -12668,12 +12668,12 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                     const val = e.target.value;
                     setPptxModalText(val);
                     const limits = subscriptionService.getTierLimits(userSubscription);
-                    if (val.length > limits.maxTranscriptLength) {
-                      setPptxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: val.length, maxLength: limits.maxTranscriptLength }));
-                    } else {
-                      setPptxModalLengthWarning(null);
-                    }
-                  }}
+                  if (!subscriptionService.isTranscriptLengthAllowed(userSubscription, val.length)) {
+                    setPptxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: val.length, maxLength: limits.maxTranscriptLength }));
+                  } else {
+                    setPptxModalLengthWarning(null);
+                  }
+                }}
                 />
                 {!!pptxModalLengthWarning && (
                   <div className="text-xs text-red-600 dark:text-red-400">{pptxModalLengthWarning}</div>
@@ -12684,10 +12684,12 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 {(() => {
                   const limits = subscriptionService.getTierLimits(userSubscription);
                   const current = pptxModalText.length;
-                  const percent = Math.min(100, Math.round((current / limits.maxTranscriptLength) * 100));
-                  const color = current > limits.maxTranscriptLength ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
+                  const max = limits.maxTranscriptLength;
+                  const percent = max === -1 ? 0 : Math.min(100, Math.round((current / max) * 100));
+                  const overLimit = max !== -1 && current > max;
+                  const color = overLimit ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
                   return (
-                    <div className={`text-xs ${color}`}>Lengte: {current} / Max: {limits.maxTranscriptLength} ({percent}%)</div>
+                    <div className={`text-xs ${color}`}>Lengte: {current} / Max: {max === -1 ? 'Unlimited' : max} {max === -1 ? '' : `(${percent}%)`}</div>
                   );
                 })()}
                 <div className="flex justify-end gap-3">
@@ -14657,7 +14659,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                       const val = e.target.value;
                       setXlsxModalText(val);
                       const limits = subscriptionService.getTierLimits(userSubscription);
-                      if (val.length > limits.maxTranscriptLength) {
+                      if (!subscriptionService.isTranscriptLengthAllowed(userSubscription, val.length)) {
                         setXlsxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: val.length, maxLength: limits.maxTranscriptLength }));
                       } else {
                         setXlsxModalLengthWarning(null);
@@ -14673,10 +14675,12 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                   {(() => {
                     const limits = subscriptionService.getTierLimits(userSubscription);
                     const current = xlsxModalText.length;
-                    const percent = Math.min(100, Math.round((current / limits.maxTranscriptLength) * 100));
-                    const color = current > limits.maxTranscriptLength ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
+                    const max = limits.maxTranscriptLength;
+                    const percent = max === -1 ? 0 : Math.min(100, Math.round((current / max) * 100));
+                    const overLimit = max !== -1 && current > max;
+                    const color = overLimit ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
                     return (
-                      <div className={`text-xs ${color}`}>Lengte: {current} / Max: {limits.maxTranscriptLength} ({percent}%)</div>
+                      <div className={`text-xs ${color}`}>Lengte: {current} / Max: {max === -1 ? 'Unlimited' : max} {max === -1 ? '' : `(${percent}%)`}</div>
                     );
                   })()}
                   <div className="flex justify-end gap-3">
@@ -15029,7 +15033,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                   const val = e.target.value;
                   setMultiUploadCombinedText(val);
                   const limits = subscriptionService.getTierLimits(userSubscription);
-                  if (val.length > limits.maxTranscriptLength) {
+                  if (!subscriptionService.isTranscriptLengthAllowed(userSubscription, val.length)) {
                     setMultiUploadLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: val.length, maxLength: limits.maxTranscriptLength }));
                   } else {
                     setMultiUploadLengthWarning(null);
@@ -15040,10 +15044,12 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
               {(() => {
                 const limits = subscriptionService.getTierLimits(userSubscription);
                 const current = multiUploadCombinedText.length;
-                const percent = Math.min(100, Math.round((current / limits.maxTranscriptLength) * 100));
-                const color = current > limits.maxTranscriptLength ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
+                const max = limits.maxTranscriptLength;
+                const percent = max === -1 ? 0 : Math.min(100, Math.round((current / max) * 100));
+                const overLimit = max !== -1 && current > max;
+                const color = overLimit ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
                 return (
-                  <div className={`text-xs ${color}`}>Lengte: {current} / Max: {limits.maxTranscriptLength} ({percent}%)</div>
+                  <div className={`text-xs ${color}`}>Lengte: {current} / Max: {max === -1 ? 'Unlimited' : max} {max === -1 ? '' : `(${percent}%)`}</div>
                 );
               })()}
             </div>

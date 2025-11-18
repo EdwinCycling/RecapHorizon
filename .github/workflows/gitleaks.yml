@@ -1,18 +1,32 @@
-name: gitleaks
+name: Security Scan (Gitleaks)
 
-on: [pull_request, push]
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'dist/**'
+      - 'assets/**'
+      - 'node_modules/**'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'dist/**'
+      - 'assets/**'
+      - 'node_modules/**'
 
 jobs:
-  scan:
+  gitleaks:
+    name: Run Gitleaks with repo config
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # Optional inputs:
-        # with:
-        #   config-path: .gitleaks.toml
-        #   args: --redact
+
+      - name: Run Gitleaks
+        uses: zricethezav/gitleaks-action@v2
+        with:
+          args: --config=.gitleaks.toml --source=. --verbose --redact

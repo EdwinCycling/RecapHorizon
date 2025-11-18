@@ -3915,5 +3915,59 @@ notionIntegrationSecurityDesc: "Ihre Notion-Daten bleiben sicher, da wir nur auf
   "emailTemplates.transcript.intro": "Unten finden Sie das vollständige Transkript unseres Meetings:",
   "emailTemplates.transcript.outro": "Bitte überprüfen Sie es und lassen Sie mich wissen, wenn Sie Fragen haben.",
   "emailTemplates.transcript.subject": "Meeting‑Transkript – {date}",
-  "emailTemplates.transcriptTitle": "Meeting‑Transkript"
+  "emailTemplates.transcriptTitle": "Meeting‑Transkript",
+  agilePbi: {
+    title: "Agile/SCRUM PBI erstellen",
+    generate: "Generieren",
+    refine: "Verfeinern",
+    moveToTranscript: "Zum Transkript verschieben",
+    empty: "Noch keine PBIs. Wähle Ton und Ansatz und klicke auf Generieren.",
+    noContent: "Unzureichender Inhalt",
+    generateError: "PBIs konnten nicht erzeugt werden",
+    tone: {
+      title: "Tonfall",
+      formeelZakelijk: "Formal/Geschäftlich",
+      formeelZakelijkDesc: "Objektiv, sachlich, professionell, direkt.",
+      praktischDirect: "Praktisch/Direkt",
+      praktischDirectDesc: "Handlungs‑ und funktionsorientiert, auf den Punkt.",
+      klantgerichtEmpathisch: "Kundenorientiert/Empathisch",
+      klantgerichtEmpathischDesc: "Betont Kundenbedürfnisse und Nutzerwirkung.",
+      technischGedetailleerd: "Technisch/Detailliert",
+      technischGedetailleerdDesc: "Technische Details und Überlegungen, wo relevant.",
+      motiverendVisionair: "Motivierend/Visionär",
+      motiverendVisionairDesc: "Hebt Vision, Wirkung und Langfristigkeit hervor.",
+      synthetischKortBondig: "Kompakt/Prägnant",
+      synthetischKortBondigDesc: "Sehr kurz, verdichtet und auf den Punkt.",
+      informeelVriendelijk: "Informell/Freundlich",
+      informeelVriendelijkDesc: "Locker, zugänglich, teamorientiert."
+    },
+    approach: {
+      title: "Ansatz",
+      frameworks: "Frameworks (User Story)",
+      frameworksDesc: "Im User‑Story‑Format mit klarem Nutzen formulieren.",
+      differentPerspectives: "Verschiedene Perspektiven",
+      differentPerspectivesDesc: "Geschäftsnutzen und technische Aspekte pro PBI ergänzen.",
+      stepByStep: "Schritt für Schritt",
+      stepByStepDesc: "Bedürfnisse zuerst, dann in PBIs umwandeln.",
+      creativeWords: "Kreative Ideen",
+      creativeWordsDesc: "Kern‑PBIs plus zusätzliche innovative Ideen.",
+      chainOfDensity: "Chain of Density",
+      chainOfDensityDesc: "PBIs iterativ spezifischer und messbarer machen.",
+      firstPrinciples: "First Principles",
+      firstPrinciplesDesc: "Grundlegende Bedürfnisse adressieren und kurz begründen."
+    },
+    options: {
+      includeAcceptanceCriteria: "Akzeptanzkriterien einschließen",
+      includeValueNote: "Hinweis zum Geschäftswert einschließen",
+      includeTechnicalNote: "Technische Überlegungen einschließen"
+    },
+    card: {
+      acceptanceCriteria: "Akzeptanzkriterien",
+      notes: "Notizen",
+      businessValue: "Geschäftswert",
+      technicalConsiderations: "Technische Überlegungen",
+      fundamentalReason: "Grundlegender Grund",
+      innovativeIdea: "Innovative Idee"
+    }
+  }
 };

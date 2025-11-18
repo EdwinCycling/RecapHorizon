@@ -2455,4 +2455,58 @@ RecapHorizon: Além do caos, a essência primeiro.`,
   "summaryLengthOptions.standard": "Padrão",
   "summaryLengthOptions.extensive": "Extenso",
   "summaryLengthOptions.fullTimeline": "Linha do tempo completa",
+  agilePbi: {
+    title: "Criar PBIs Agile/SCRUM",
+    generate: "Gerar",
+    refine: "Aperfeiçoar",
+    moveToTranscript: "Mover para transcrição",
+    empty: "Ainda não há PBIs. Escolha um tom e uma abordagem e clique em Gerar.",
+    noContent: "Conteúdo insuficiente",
+    generateError: "Não foi possível gerar os PBIs",
+    tone: {
+      title: "Tom de voz",
+      formeelZakelijk: "Formal/Empresarial",
+      formeelZakelijkDesc: "Objetivo, factual, profissional, direto.",
+      praktischDirect: "Prático/Direto",
+      praktischDirectDesc: "Foco em ação e funcionalidade, conciso.",
+      klantgerichtEmpathisch: "Foco no cliente/Empático",
+      klantgerichtEmpathischDesc: "Enfatiza necessidades do cliente e impacto no usuário.",
+      technischGedetailleerd: "Técnico/Detalhado",
+      technischGedetailleerdDesc: "Detalhes técnicos e considerações quando relevante.",
+      motiverendVisionair: "Motivacional/Visionário",
+      motiverendVisionairDesc: "Destaca visão, impacto e longo prazo.",
+      synthetischKortBondig: "Sintético/Conciso",
+      synthetischKortBondigDesc: "Muito curto, condensado e direto.",
+      informeelVriendelijk: "Informal/Amigável",
+      informeelVriendelijkDesc: "Descontraído, acessível, orientado à equipa."
+    },
+    approach: {
+      title: "Abordagem",
+      frameworks: "Frameworks (User Story)",
+      frameworksDesc: "Formular no formato User Story com valor claro.",
+      differentPerspectives: "Perspetivas Diferentes",
+      differentPerspectivesDesc: "Adicionar valor de negócio e considerações técnicas por PBI.",
+      stepByStep: "Passo a Passo",
+      stepByStepDesc: "Identificar necessidades primeiro e convertê‑las em PBIs.",
+      creativeWords: "Palavras Criativas",
+      creativeWordsDesc: "PBIs essenciais mais ideias inovadoras adicionais.",
+      chainOfDensity: "Cadeia de Densidade",
+      chainOfDensityDesc: "Tornar os PBIs iterativamente mais específicos e mensuráveis.",
+      firstPrinciples: "Primeiros Princípios",
+      firstPrinciplesDesc: "Abordar necessidades fundamentais e motivar brevemente."
+    },
+    options: {
+      includeAcceptanceCriteria: "Incluir critérios de aceitação",
+      includeValueNote: "Incluir nota de valor de negócio",
+      includeTechnicalNote: "Incluir considerações técnicas"
+    },
+    card: {
+      acceptanceCriteria: "Critérios de aceitação",
+      notes: "Notas",
+      businessValue: "Valor de negócio",
+      technicalConsiderations: "Considerações técnicas",
+      fundamentalReason: "Razão fundamental",
+      innovativeIdea: "Ideia inovadora"
+    }
+  }
 };

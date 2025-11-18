@@ -4386,4 +4386,59 @@ Generate the output as a comprehensive, structured report in {output_language}. 
   ,uploadFailed: "Upload failed."
   ,supportedFileTypes: "TXT, PDF, RTF, HTML, MD, DOCX"
   ,audioFormats: "MP3, MP4, WebM, WAV"
+
+  ,agilePbi: {
+    title: "Create Agile/SCRUM PBIs",
+    generate: "Generate",
+    refine: "Refine",
+    moveToTranscript: "Move to transcript",
+    empty: "No PBIs yet. Choose a tone and approach and click Generate.",
+    noContent: "Insufficient content",
+    generateError: "Could not generate PBIs",
+    tone: {
+      title: "Tone of voice",
+      formeelZakelijk: "Formal/Business",
+      formeelZakelijkDesc: "Objective, factual, professional, direct.",
+      praktischDirect: "Practical/Direct",
+      praktischDirectDesc: "Action and functionality focused, to the point.",
+      klantgerichtEmpathisch: "Customer‑focused/Empathetic",
+      klantgerichtEmpathischDesc: "Emphasizes customer needs and user impact.",
+      technischGedetailleerd: "Technical/Detailed",
+      technischGedetailleerdDesc: "Technical details and considerations where relevant.",
+      motiverendVisionair: "Motivational/Visionary",
+      motiverendVisionairDesc: "Highlights vision, impact and long‑term.",
+      synthetischKortBondig: "Synthetic/Concise",
+      synthetischKortBondigDesc: "Very short, condensed and to the point.",
+      informeelVriendelijk: "Informal/Friendly",
+      informeelVriendelijkDesc: "Relaxed, approachable, team‑oriented."
+    },
+    approach: {
+      title: "Approach",
+      frameworks: "Frameworks (User Story)",
+      frameworksDesc: "Formulate in User Story format with clear value.",
+      differentPerspectives: "Different Perspectives",
+      differentPerspectivesDesc: "Add business value and technical considerations per PBI.",
+      stepByStep: "Step‑by‑Step",
+      stepByStepDesc: "Identify needs first, then convert into PBIs.",
+      creativeWords: "Creative Words",
+      creativeWordsDesc: "Core PBIs plus extra innovative ideas.",
+      chainOfDensity: "Chain of Density",
+      chainOfDensityDesc: "Make PBIs iteratively more specific and measurable.",
+      firstPrinciples: "First Principles",
+      firstPrinciplesDesc: "Address fundamental needs and briefly motivate."
+    },
+    options: {
+      includeAcceptanceCriteria: "Include acceptance criteria",
+      includeValueNote: "Include business value note",
+      includeTechnicalNote: "Include technical considerations"
+    },
+    card: {
+      acceptanceCriteria: "Acceptance criteria",
+      notes: "Notes",
+      businessValue: "Business value",
+      technicalConsiderations: "Technical considerations",
+      fundamentalReason: "Fundamental reason",
+      innovativeIdea: "Innovative idea"
+    }
+  }
 };

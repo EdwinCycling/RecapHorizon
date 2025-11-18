@@ -14,10 +14,11 @@ function isOriginAllowed(event) {
 }
 
 function getClientIp(event) {
+  const cip = event.headers?.['client-ip'] || event.headers?.['Client-Ip'] || '';
+  if (cip) return cip.trim();
   const xf = event.headers?.['x-forwarded-for'] || event.headers?.['X-Forwarded-For'] || '';
   if (xf) return xf.split(',')[0].trim();
-  const cip = event.headers?.['client-ip'] || event.headers?.['Client-Ip'] || '';
-  return cip || 'unknown';
+  return 'unknown';
 }
 
 function checkRateLimitIp(ip, limitPerMinute) {
@@ -60,7 +61,8 @@ exports.handler = async (event, context) => {
       headers: {
         'Access-Control-Allow-Origin': allowed ? origin : 'null',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Vary': 'Origin'
       },
       body: ''
     };
@@ -74,7 +76,8 @@ exports.handler = async (event, context) => {
       headers: {
         'Access-Control-Allow-Origin': allowed ? origin : 'null',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Vary': 'Origin'
       },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
@@ -84,7 +87,7 @@ exports.handler = async (event, context) => {
     if (!isOriginAllowed(event)) {
       return {
         statusCode: 403,
-        headers: { 'Access-Control-Allow-Origin': 'null' },
+        headers: { 'Access-Control-Allow-Origin': 'null', 'Vary': 'Origin' },
         body: JSON.stringify({ success: false, error: 'Error: Origin not allowed' })
       };
     }
@@ -114,7 +117,8 @@ exports.handler = async (event, context) => {
         statusCode: 429,
         headers: {
           'Access-Control-Allow-Origin': origin,
-          'Retry-After': String(ipCheck.retryAfter)
+          'Retry-After': String(ipCheck.retryAfter),
+          'Vary': 'Origin'
         },
         body: JSON.stringify({ success: false, error: 'Error: Rate limit exceeded for IP' })
       };
@@ -126,7 +130,8 @@ exports.handler = async (event, context) => {
         statusCode: 429,
         headers: {
           'Access-Control-Allow-Origin': origin,
-          'Retry-After': String(userCheck.retryAfter)
+          'Retry-After': String(userCheck.retryAfter),
+          'Vary': 'Origin'
         },
         body: JSON.stringify({ success: false, error: 'Error: Rate limit exceeded for user' })
       };
@@ -140,7 +145,8 @@ exports.handler = async (event, context) => {
         headers: {
           'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Headers': 'Content-Type',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Vary': 'Origin'
         },
         body: JSON.stringify({ success: false, error: 'Error: Missing FIRECRAWL_API_KEY' })
       };
@@ -197,7 +203,8 @@ exports.handler = async (event, context) => {
       headers: {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Vary': 'Origin'
       },
       body: JSON.stringify({ success: true, results })
     };
@@ -209,7 +216,8 @@ exports.handler = async (event, context) => {
       headers: {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Vary': 'Origin'
       },
       body: JSON.stringify({ success: false, error: `Error: ${message}` })
     };

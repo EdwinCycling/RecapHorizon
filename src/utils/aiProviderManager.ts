@@ -375,11 +375,6 @@ export class AIProviderManager {
         ? await this.generateContentWithStreaming(config, prompt, userId)
         : await this.generateContent(config, prompt, userId);
       
-      // Record successful request for rate limiting
-      if (providerSelection.provider === AIProvider.OPENROUTER) {
-        OpenRouterRateLimiter.recordRequest(userId, providerSelection.model);
-      }
-      
       return response;
     } catch (error: any) {
       console.error(`Failed to generate content with ${providerSelection.provider}:`, error);
@@ -398,25 +393,24 @@ export class AIProviderManager {
   ): Promise<AIResponse> {
     const envBase = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '').trim();
     const origin = (typeof window !== 'undefined' ? window.location.origin : '');
-    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const candidates: string[] = [];
+    if (envBase && envBase.startsWith('http')) candidates.push(envBase);
+    if (origin) candidates.push(origin);
+    // Always add localhost proxy for dev
+    candidates.push('http://localhost:3000');
+    const host = (typeof window !== 'undefined' ? window.location.hostname : '');
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
     if (isLocal) {
       candidates.push('http://127.0.0.1:9000');
-      candidates.push('http://localhost:9000');
-    }
-    if (envBase && envBase.startsWith('http')) candidates.push(envBase);
-    if (isLocal) {
       candidates.push('http://localhost:8888');
     }
-    if (origin) candidates.push(origin);
 
     const tried = new Set<string>();
     for (const base of candidates) {
       if (!base || tried.has(base)) continue;
       tried.add(base);
       const paths = [
-        '/.netlify/functions/gemini-generate',
-        '/gemini-generate'
+        '/.netlify/functions/gemini-generate'
       ];
       for (const p of paths) {
         const url = `${base}${p}`;
@@ -665,18 +659,11 @@ export class AIProviderManager {
   static async selectProvider(
     request: ProviderSelectionRequest
   ): Promise<ProviderSelectionResponse> {
-    const { userId, functionType, userTier } = request;
+    const { userId, functionType } = request;
 
-    // Import tier model service for proper model selection
     const { getModelForUser } = await import('./tierModelService');
-    
-    // Map AIFunction to ModelConfig key
     const modelConfigKey = this.mapAIFunctionToModelConfigKey(functionType);
-    
-    // Get the appropriate Google Gemini model based on user's tier and function
     const model = await getModelForUser(userId, modelConfigKey as any);
-    
-    // Always use Google Gemini with tier-based model selection
     return {
       provider: AIProvider.GOOGLE_GEMINI,
       model,

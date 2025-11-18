@@ -66,12 +66,14 @@ import { Language } from './src/locales';
 import { AudioRecorder } from './src/utils/AudioRecorder';
 import MobileAudioHelpModal from './src/components/MobileAudioHelpModal.tsx';
 import AudioUploadHelpModal from './src/components/AudioUploadHelpModal.tsx';
+import PowerPointUploadHelpModal from './src/components/PowerPointUploadHelpModal.tsx';
 import ImageUploadHelpModal from './src/components/ImageUploadHelpModal.tsx';
 import EmailImportHelpModal from './src/components/EmailImportHelpModal.tsx';
 import EmailUploadModal from './src/components/EmailUploadModal.tsx';
 import NotionImportModal from './src/components/NotionImportModal.tsx';
 import NotionIntegrationHelpModal from './src/components/NotionIntegrationHelpModal.tsx';
 import IdeaBuilderSimpleHelp from './src/components/IdeaBuilderSimpleHelp.tsx';
+import ExcelUploadHelpModal from './src/components/ExcelUploadHelpModal.tsx';
 import FileUploadModal from './src/components/FileUploadModal.tsx';
 import ImageUploadModal from './src/components/ImageUploadModal.tsx';
 import AudioUploadModal from './src/components/AudioUploadModal.tsx';
@@ -86,6 +88,7 @@ import MsgReader from '@kenjiuno/msgreader';
 import EmailCompositionTab, { EmailData } from './src/components/EmailCompositionTab.tsx';
 import ThinkingPartnerTab from './src/components/ThinkingPartnerTab.tsx';
 import AIDiscussionTab from './src/components/AIDiscussionTab.tsx';
+import AgilePBITab from './src/components/AgilePBITab.tsx';
 import OpportunitiesTab from './src/components/OpportunitiesTab.tsx';
 import McKinseyTab from './src/components/McKinseyTab.tsx';
 import BrainstormTab from '@/components/BrainstormTab';
@@ -706,7 +709,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'brainstorm' | 'opportunities' | 'mckinsey' | 'email' | 'socialPost' | 'socialPostX' | 'main' | 'podcast' | 'specials';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'brainstorm' | 'opportunities' | 'mckinsey' | 'agilePbi' | 'email' | 'socialPost' | 'socialPostX' | 'main' | 'podcast' | 'specials';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -793,6 +796,7 @@ import { subscriptionService } from './src/subscriptionService';
 import { tokenCounter } from './src/tokenCounter';
 import { tokenManager } from './src/utils/tokenManager';
 import UpgradeModal from './src/components/UpgradeModal.tsx';
+import { buildRecapHorizonFilename } from './src/utils/downloadUtils';
 import SummaryQuestionsModal from './src/components/SummaryQuestionsModal.tsx';
 import PricingPage from './src/components/PricingPage.tsx';
 import FAQPage from './src/components/FAQPage.tsx';
@@ -1340,6 +1344,32 @@ export default function App() {
   const imageUploadModal = useModalState();
   const audioUploadModal = useModalState();
   const audioUploadHelpModal = useModalState();
+  const powerPointHelpModal = useModalState();
+  const powerPointAnalyzeModal = useModalState();
+  const excelAnalyzeModal = useModalState();
+  const excelHelpModal = useModalState();
+  const pptxInputRef = useRef<HTMLInputElement | null>(null);
+  const pptxTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [pptxFile, setPptxFile] = useState<File | null>(null);
+  const [pptxOptions, setPptxOptions] = useState<{ slides: boolean; notes: boolean; ocr: boolean }>({ slides: true, notes: false, ocr: false });
+  const [pptxModalText, setPptxModalText] = useState('');
+  const [pptxModalIsEditing, setPptxModalIsEditing] = useState(false);
+  const [pptxModalLengthWarning, setPptxModalLengthWarning] = useState<string | null>(null);
+  const [pptxOcrInProgress, setPptxOcrInProgress] = useState(false);
+  const [pptxOcrCount, setPptxOcrCount] = useState(0);
+  const [pptxOcrTotal, setPptxOcrTotal] = useState(0);
+  const [pptxOcrCurrentName, setPptxOcrCurrentName] = useState<string>('');
+
+  const xlsxInputRef = useRef<HTMLInputElement | null>(null);
+  const xlsxTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [xlsxFile, setXlsxFile] = useState<File | null>(null);
+  const [xlsxOptions, setXlsxOptions] = useState<{ sheets: boolean }>({ sheets: true });
+  const [xlsxModalText, setXlsxModalText] = useState('');
+  const [xlsxModalIsEditing, setXlsxModalIsEditing] = useState(false);
+  const [xlsxModalLengthWarning, setXlsxModalLengthWarning] = useState<string | null>(null);
+  const [xlsxModalError, setXlsxModalError] = useState<string | null>(null);
+  const multiUploadModal = useModalState();
+  const multiUploadHelpModal = useModalState();
   const notionImportModal = useModalState();
   const expertConfigModal = useModalState();
   const expertChatModal = useModalState();
@@ -2457,6 +2487,206 @@ ${sanitizedTranscript}`;
       setTranscriptionProgress(0);
       setLoadingText('');
     }
+  };
+
+  const [multiUploadCombinedText, setMultiUploadCombinedText] = useState('');
+  const [multiUploadIsEditing, setMultiUploadIsEditing] = useState(false);
+  const [multiUploadLengthWarning, setMultiUploadLengthWarning] = useState<string | null>(null);
+  const multiUploadInputRef = useRef<HTMLInputElement>(null);
+  const multiUploadTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const downloadCombinedText = () => {
+    const text = multiUploadCombinedText;
+    if (!text.trim()) return;
+    if (multiUploadLengthWarning) {
+      displayToast(String(multiUploadLengthWarning), 'error');
+    }
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = buildRecapHorizonFilename('txt');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePptxSelectedFile = async (file: File | null) => {
+    if (!file) return;
+    setPptxFile(file);
+    setPptxModalText('');
+    setPptxModalLengthWarning(null);
+    try { const el = pptxTextareaRef.current; if (el) { el.focus(); el.selectionStart = 0; el.selectionEnd = 0; el.scrollTop = 0; } } catch {}
+  };
+
+  const handleXlsxSelectedFile = async (file: File | null) => {
+    if (!file) return;
+    setXlsxFile(file);
+    setXlsxModalText('');
+    setXlsxModalLengthWarning(null);
+    setXlsxModalError(null);
+    try { const el = xlsxTextareaRef.current; if (el) { el.focus(); el.selectionStart = 0; el.selectionEnd = 0; el.scrollTop = 0; } } catch {}
+  };
+
+  const runPptxAnalysis = async () => {
+    const file = pptxFile;
+    if (!file) return;
+    const effectiveTier = userSubscription;
+    if (!(effectiveTier === SubscriptionTier.GOLD || effectiveTier === SubscriptionTier.DIAMOND || effectiveTier === SubscriptionTier.ENTERPRISE)) {
+      setShowUpgradeModal(true);
+      setError(t('pptxUnsupported', 'Deze optie is alleen voor Gold, Diamond en Enterprise.'));
+      return;
+    }
+    try {
+      const enabledOcr = (effectiveTier === SubscriptionTier.DIAMOND) && pptxOptions.ocr;
+      const text = await extractTextFromPPTX(file, { ...pptxOptions, ocr: enabledOcr });
+      setPptxModalText(text);
+      setPptxModalLengthWarning(null);
+      const limits = subscriptionService.getTierLimits(effectiveTier);
+      if (text.length > limits.maxTranscriptLength) {
+        setPptxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: text.length, maxLength: limits.maxTranscriptLength }));
+      }
+      try { const el = pptxTextareaRef.current; if (el) { el.focus(); el.selectionStart = el.value.length; el.selectionEnd = el.value.length; el.scrollTop = el.scrollHeight; } } catch {}
+    } catch (err: any) {
+      setError(err?.message || t('unknownError'));
+    }
+  };
+
+  const runXlsxAnalysis = async () => {
+    const file = xlsxFile;
+    if (!file) return;
+    const effectiveTier = userSubscription;
+    if (!(effectiveTier === SubscriptionTier.GOLD || effectiveTier === SubscriptionTier.DIAMOND || effectiveTier === SubscriptionTier.ENTERPRISE)) {
+      setShowUpgradeModal(true);
+      setError(t('xlsxUnsupported', 'Deze optie is alleen voor Gold, Diamond en Enterprise.'));
+      return;
+    }
+    try {
+      const text = await extractTextFromXLSX(file, { sheets: xlsxOptions.sheets });
+      setXlsxModalText(text);
+      setXlsxModalLengthWarning(null);
+      setXlsxModalError(null);
+      const limits = subscriptionService.getTierLimits(effectiveTier);
+      if (text.length > limits.maxTranscriptLength) {
+        setXlsxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: text.length, maxLength: limits.maxTranscriptLength }));
+      }
+      try { const el = xlsxTextareaRef.current; if (el) { el.focus(); el.selectionStart = el.value.length; el.selectionEnd = el.value.length; el.scrollTop = el.scrollHeight; } } catch {}
+    } catch (err: any) {
+      const msg = err?.message || t('unknownError');
+      setXlsxModalError(msg);
+    }
+  };
+
+  const downloadPptxText = () => {
+    const text = pptxModalText;
+    if (!text.trim()) return;
+    if (pptxModalLengthWarning) {
+      displayToast(String(pptxModalLengthWarning), 'error');
+    }
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = buildRecapHorizonFilename('txt');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadXlsxText = () => {
+    const text = xlsxModalText;
+    if (!text.trim()) return;
+    if (xlsxModalLengthWarning) {
+      displayToast(String(xlsxModalLengthWarning), 'error');
+    }
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = buildRecapHorizonFilename('txt');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const focusTextareaEnd = () => {
+    const el = multiUploadTextareaRef.current;
+    if (!el) return;
+    const len = el.value.length;
+    el.focus();
+    try {
+      el.selectionStart = len;
+      el.selectionEnd = len;
+    } catch {}
+    el.scrollTop = el.scrollHeight;
+  };
+
+  const handleSessionOptionMultiUpload = () => {
+    const tier = userSubscription;
+    if (tier !== SubscriptionTier.GOLD && tier !== SubscriptionTier.DIAMOND && tier !== SubscriptionTier.ENTERPRISE) {
+      setError(t('multiUploadFeatureUpgrade'));
+      upgradeModal.open();
+      return;
+    }
+    multiUploadModal.open();
+  };
+
+  const extractPlainTextFromFile = async (file: File): Promise<string> => {
+    const fileName = file.name.toLowerCase();
+    const fileType = file.type;
+    if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+      return await extractTextFromPDF(file);
+    } else if (fileType === 'application/rtf' || fileName.endsWith('.rtf')) {
+      return await extractTextFromRTF(file);
+    } else if (fileType === 'text/html' || fileName.endsWith('.html') || fileName.endsWith('.htm')) {
+      return await extractTextFromHTMLFile(file);
+    } else if (fileType === 'text/markdown' || fileName.endsWith('.md')) {
+      return await extractTextFromMarkdown(file);
+    } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileName.endsWith('.docx')) {
+      return await extractTextFromDOCX(file);
+    } else if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
+      return await file.text();
+    } else {
+      try {
+        return await file.text();
+      } catch {
+        throw new Error(t('unsupportedFileFormat', 'Bestandsformaat wordt niet ondersteund. Probeer PDF, RTF, HTML, MD, DOCX of TXT.'));
+      }
+    }
+  };
+
+  const handleMultiUploadFiles = async (files: FileList | File[]) => {
+    const effectiveTier = userSubscription;
+    const arr = Array.from(files);
+    let combined = multiUploadCombinedText ? multiUploadCombinedText + '\n\n' : '';
+    for (const file of arr) {
+      const normalizedType = (file.type || '').toLowerCase();
+      const uploadValidation = subscriptionService.validateFileUpload(effectiveTier, normalizedType || '', t);
+      if (!uploadValidation.allowed) {
+        setError(uploadValidation.reason || t('uploadFailedUnsupportedTier'));
+        upgradeModal.open();
+        break;
+      }
+      const text = await extractPlainTextFromFile(file);
+      const sanitized = sanitizeTextInput(text);
+      combined += sanitized + '\n\n';
+      const limits = subscriptionService.getTierLimits(effectiveTier);
+      if (combined.length > limits.maxTranscriptLength) {
+        setMultiUploadLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: combined.length, maxLength: limits.maxTranscriptLength }));
+        break;
+      } else {
+        setMultiUploadLengthWarning(null);
+      }
+    }
+    setMultiUploadCombinedText(combined.trim());
+    setTimeout(() => {
+      const el = multiUploadTextareaRef.current;
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+      }
+    }, 0);
   };
 
   // Utility function for copying content for email
@@ -3994,6 +4224,224 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
         });
     };
 
+    const extractTextFromPPTX = async (file: File, opts: { slides: boolean; notes: boolean; ocr: boolean }): Promise<string> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const arrayBuffer = e.target?.result as ArrayBuffer;
+                        if (!arrayBuffer) {
+                            reject(new Error(t('errorPptxReadFailed', 'PPTX lezen mislukt.')));
+                            return;
+                        }
+                        const { default: JSZip } = await import('jszip');
+                        const zip = await JSZip.loadAsync(arrayBuffer);
+                        let resultParts: string[] = [];
+
+                        if (opts.slides) {
+                            const slideFiles = Object.keys(zip.files).filter((k) => /^ppt\/slides\/slide\d+\.xml$/.test(k)).sort((a, b) => {
+                                const na = parseInt(a.match(/slide(\d+)\.xml/)?.[1] || '0', 10);
+                                const nb = parseInt(b.match(/slide(\d+)\.xml/)?.[1] || '0', 10);
+                                return na - nb;
+                            });
+                            for (const sf of slideFiles) {
+                                const xml = await zip.file(sf)!.async('string');
+                                const doc = new DOMParser().parseFromString(xml, 'application/xml');
+                                const texts = Array.from(doc.getElementsByTagName('a:t')).map((n) => n.textContent || '').filter(Boolean);
+                                const slideText = texts.join(' ').trim();
+                                if (slideText) resultParts.push(slideText);
+                            }
+                        }
+
+                        if (opts.notes) {
+                            const noteFiles = Object.keys(zip.files).filter((k) => /^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(k)).sort((a, b) => {
+                                const na = parseInt(a.match(/notesSlide(\d+)\.xml/)?.[1] || '0', 10);
+                                const nb = parseInt(b.match(/notesSlide(\d+)\.xml/)?.[1] || '0', 10);
+                                return na - nb;
+                            });
+                            for (const nf of noteFiles) {
+                                const xml = await zip.file(nf)!.async('string');
+                                const doc = new DOMParser().parseFromString(xml, 'application/xml');
+                                const texts = Array.from(doc.getElementsByTagName('a:t')).map((n) => n.textContent || '').filter(Boolean);
+                                const noteText = texts.join(' ').trim();
+                                if (noteText) resultParts.push(noteText);
+                            }
+                        }
+
+                        if (opts.ocr) {
+                            const MAX_OCR_IMAGES = 10;
+                            const mediaFiles = Object.keys(zip.files).filter((k) => /^ppt\/media\/image\d+\.(png|jpg|jpeg|gif|bmp|tiff|webp)$/i.test(k));
+                            const total = Math.min(mediaFiles.length, MAX_OCR_IMAGES);
+                            if (total > 0) {
+                                setPptxOcrTotal(total);
+                                setPptxOcrCount(0);
+                                setPptxOcrInProgress(true);
+                                try {
+                                    const { createWorker } = await import('tesseract.js');
+                                    const worker = await createWorker();
+                                    for (let i = 0; i < total; i++) {
+                                        const mf = mediaFiles[i];
+                                        setPptxOcrCurrentName(mf.split('/').pop() || mf);
+                                        const ext = mf.split('.').pop()!.toLowerCase();
+                                        const mime = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'bmp' ? 'image/bmp' : ext === 'tiff' ? 'image/tiff' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+                                        const u8 = await zip.file(mf)!.async('uint8array');
+                                        const blob = new Blob([u8.buffer as ArrayBuffer], { type: mime });
+                                        const url = URL.createObjectURL(blob);
+                                        try {
+                                            let res = null as any;
+                                            try {
+                                                await worker.reinitialize('nld');
+                                                res = await worker.recognize(url);
+                                            } catch {
+                                                await worker.reinitialize('eng');
+                                                res = await worker.recognize(url);
+                                            }
+                                            const ocrText = (res && res.data && res.data.text ? res.data.text : '').trim();
+                                            if (ocrText) resultParts.push(ocrText);
+                                        } catch {}
+                                        finally {
+                                            URL.revokeObjectURL(url);
+                                            setPptxOcrCount((c) => c + 1);
+                                        }
+                                    }
+                                    try { await worker.terminate(); } catch {}
+                                } catch {}
+                                setPptxOcrInProgress(false);
+                                setPptxOcrCurrentName('');
+                            }
+                        }
+
+                        const text = resultParts.join('\n\n').replace(/\s+\n/g, '\n').replace(/\n\s+/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+                        if (!text) {
+                            reject(new Error(t('noTextFoundInPptx', 'Geen tekst gevonden in de PowerPoint.')));
+                            return;
+                        }
+                        resolve(text);
+                    } catch (err: any) {
+                        reject(new Error(t('errorPptxProcessingFailed', 'PPTX verwerking mislukt: {message}', { message: err?.message || t('unknownError') })));
+                    }
+                };
+                reader.onerror = () => reject(new Error(t('errorPptxReadFailed', 'PPTX lezen mislukt.')));
+    reader.readAsArrayBuffer(file);
+  } catch (error: any) {
+    reject(new Error(t('errorPptxProcessingFailed', 'PPTX verwerking mislukt: {message}', { message: error?.message || t('unknownError') })));
+  }
+ });
+};
+
+  const extractTextFromXLSX = async (file: File, opts: { sheets: boolean }): Promise<string> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const arrayBuffer = e.target?.result as ArrayBuffer;
+            if (!arrayBuffer) {
+              reject(new Error(t('errorXlsxReadFailed', 'Excel lezen mislukt.')));
+              return;
+            }
+            const { default: JSZip } = await import('jszip');
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            let parts: string[] = [];
+            if (opts.sheets) {
+              const workbookXml = await zip.file('xl/workbook.xml')?.async('string');
+              const relsXml = await zip.file('xl/_rels/workbook.xml.rels')?.async('string');
+              if (!workbookXml || !relsXml) {
+                reject(new Error(t('errorXlsxProcessingFailed', 'Excel verwerking mislukt: {message}', { message: t('unknownError') })));
+                return;
+              }
+              const wbDoc = new DOMParser().parseFromString(workbookXml, 'application/xml');
+              const relsDoc = new DOMParser().parseFromString(relsXml, 'application/xml');
+              const rels = Array.from(relsDoc.getElementsByTagName('Relationship')).map((r) => ({ id: r.getAttribute('Id') || '', target: r.getAttribute('Target') || '' }));
+              const sheets = Array.from(wbDoc.getElementsByTagName('sheet')).map((s) => ({ name: s.getAttribute('name') || '', rid: s.getAttribute('r:id') || '' }));
+              let sharedStrings: string[] = [];
+              const ssXml = await zip.file('xl/sharedStrings.xml')?.async('string');
+              if (ssXml) {
+                const ssDoc = new DOMParser().parseFromString(ssXml, 'application/xml');
+                sharedStrings = Array.from(ssDoc.getElementsByTagName('si')).map((si) => {
+                  const texts = Array.from(si.getElementsByTagName('t')).map((t) => t.textContent || '').join('');
+                  return texts;
+                });
+              }
+              const toColIndex = (ref: string) => {
+                const m = ref.match(/^[A-Z]+/i);
+                if (!m) return 0;
+                const letters = m[0].toUpperCase();
+                let idx = 0;
+                for (let i = 0; i < letters.length; i++) {
+                  idx = idx * 26 + (letters.charCodeAt(i) - 64);
+                }
+                return idx;
+              };
+              const MAX_SHEETS = 20;
+              const MAX_ROWS_PER_SHEET = 5000;
+              for (let si = 0; si < Math.min(sheets.length, MAX_SHEETS); si++) {
+                const sh = sheets[si];
+                const rel = rels.find((r) => r.id === sh.rid);
+                if (!rel) continue;
+                const path = 'xl/' + rel.target.replace(/^\//, '');
+                const xml = await zip.file(path)?.async('string');
+                if (!xml) continue;
+                const doc = new DOMParser().parseFromString(xml, 'application/xml');
+                const rows = Array.from(doc.getElementsByTagName('row'));
+                parts.push('Sheet: ' + sh.name);
+                for (let ri = 0; ri < rows.length && ri < MAX_ROWS_PER_SHEET; ri++) {
+                  const cells = Array.from(rows[ri].getElementsByTagName('c'));
+                  let cols: string[] = [];
+                  let lastCol = 0;
+                  for (const c of cells) {
+                    const r = c.getAttribute('r') || '';
+                    const t = c.getAttribute('t') || '';
+                    const colIndex = toColIndex(r);
+                    while (cols.length < colIndex - 1) cols.push('');
+                    let val = '';
+                    const vNode = c.getElementsByTagName('v')[0];
+                    if (t === 's') {
+                      const idx = vNode && vNode.textContent ? parseInt(vNode.textContent, 10) : NaN;
+                      val = isNaN(idx) ? '' : (sharedStrings[idx] || '');
+                    } else if (t === 'inlineStr') {
+                      const isNode = c.getElementsByTagName('is')[0];
+                      const tNode = isNode ? isNode.getElementsByTagName('t')[0] : null;
+                      val = tNode && tNode.textContent ? tNode.textContent : '';
+                    } else if (t === 'b') {
+                      val = vNode && vNode.textContent === '1' ? 'TRUE' : 'FALSE';
+                    } else if (t === 'str') {
+                      val = vNode && vNode.textContent ? vNode.textContent : '';
+                    } else if (t === 'e') {
+                      val = '';
+                    } else {
+                      val = vNode && vNode.textContent ? vNode.textContent : '';
+                    }
+                    cols[colIndex - 1] = val;
+                    lastCol = Math.max(lastCol, colIndex);
+                  }
+                  if (lastCol > 0) {
+                    const line = cols.slice(0, lastCol).map((s) => (s || '').replace(/\s+/g, ' ').trim()).join('\t');
+                    if (line.trim()) parts.push(line);
+                  }
+                }
+                parts.push('');
+              }
+            }
+            const text = parts.join('\n').replace(/\s+\n/g, '\n').replace(/\n\s+/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+            if (!text) {
+              reject(new Error(t('noTextFoundInXlsx', 'Geen tekst gevonden in de Excel.')));
+              return;
+            }
+            resolve(text);
+          } catch (err: any) {
+            reject(new Error(t('errorXlsxProcessingFailed', 'Excel verwerking mislukt: {message}', { message: err?.message || t('unknownError') })));
+          }
+        };
+        reader.onerror = () => reject(new Error(t('errorXlsxReadFailed', 'Excel lezen mislukt.')));
+        reader.readAsArrayBuffer(file);
+      } catch (error: any) {
+        reject(new Error(t('errorXlsxProcessingFailed', 'Excel verwerking mislukt: {message}', { message: error?.message || t('unknownError') })));
+      }
+    });
+  };
+
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -5149,32 +5597,30 @@ const callGeminiServer = async (
   maxTokens: number = 4000
 ) => {
   const envBase = (import.meta as any).env?.VITE_FUNCTIONS_BASE_URL || '';
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const candidates: string[] = [];
+  if (origin) candidates.push(origin);
   if (envBase && String(envBase).startsWith('http')) candidates.push(String(envBase));
-  if (typeof window !== 'undefined' && window.location.hostname.includes('localhost')) {
-    candidates.push('http://localhost:8888');
-    candidates.push('http://127.0.0.1:8888');
-    candidates.push('http://localhost:9000');
-    candidates.push('http://127.0.0.1:9000');
-  }
-  if (typeof window !== 'undefined') {
-    candidates.push(window.location.origin);
-  }
 
+  const paths = ['/.netlify/functions/gemini-generate', '/gemini-generate'];
   let lastErr: any = null;
   for (const base of candidates) {
-    try {
-      const res = await fetch(`${base}/.netlify/functions/gemini-generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model, temperature, maxTokens, userId })
-      });
-      if (res.ok) return res.json();
-      const txt = await res.text().catch(() => '');
-      lastErr = new Error(`Gemini server error ${res.status}: ${txt}`);
-    } catch (e) {
-      lastErr = e;
-      continue;
+    for (const p of paths) {
+      try {
+        const res = await fetch(`${base}${p}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, model, temperature, maxTokens, userId })
+        });
+        if (res.ok) return res.json();
+        const txt = await res.text().catch(() => '');
+        lastErr = new Error(`Gemini server error ${res.status}: ${txt}`);
+        if (res.status === 404 || res.status >= 500) continue;
+        break;
+      } catch (e) {
+        lastErr = e;
+        continue;
+      }
     }
   }
   throw lastErr ?? new Error('Failed to reach Gemini server');
@@ -7478,10 +7924,7 @@ ${transcript}
   const handleExportTranscriptPdf = () => {
     try {
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-      // Try to register a Unicode font; fall back to helvetica (non-blocking)
-      import('./src/utils/pdfFont')
-        .then(({ tryUseUnicodeFont }) => tryUseUnicodeFont(doc))
-        .catch(() => {});
+      // Using default Helvetica to avoid runtime font load issues in dev
       const margin = 40;
       const pageWidth = doc.internal.pageSize.getWidth();
       const usableWidth = pageWidth - margin * 2;
@@ -7554,7 +7997,7 @@ ${transcript}
         y += 4; // paragraph spacing
       }
 
-      doc.save('transcript.pdf');
+      doc.save(buildRecapHorizonFilename('pdf'));
       displayToast(t('downloadStarted', 'Download gestart'), 'success');
     } catch (e) {
       console.error('PDF export failed', e);
@@ -7896,7 +8339,7 @@ ${transcript}
                       if (audioURL) {
                         const a = document.createElement('a');
                         a.href = audioURL;
-                        a.download = `opname-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+                        a.download = buildRecapHorizonFilename('webm');
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
@@ -8903,6 +9346,13 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 setSelectedAnalysis('brainstorm');
                 setActiveView('brainstorm');
             }, disabled: () => isProcessing }] : []),
+        // Agile/SCRUM PBI's maken knop (naast AI Discussie)
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'agilePbi', type: 'action', icon: OpportunitiesIcon, label: () => t('agilePbi.title', "Agile/SCRUM PBI's maken"), onClick: () => {
+                setMainMode('analysis');
+                setSelectedAnalysis('agilePbi');
+                setActiveView('agilePbi');
+            }, disabled: () => isProcessing }] : []),
     ];
     const analysisActions: any[] = [
         { id: 'summary', type: 'view', icon: SummaryIcon, label: () => t('summary') },
@@ -8931,6 +9381,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         // McKinsey tab - alleen zichtbaar voor Gold, Enterprise, Diamond
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
             [{ id: 'mckinsey', type: 'view', icon: OpportunitiesIcon, label: () => t('mckinsey') }] : []),
+        ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND) ? 
+            [{ id: 'agilePbi', type: 'view', icon: OpportunitiesIcon, label: () => t('agilePbi.title', 'Agile PBI\'s') }] : []),
         // Email tab - alleen zichtbaar voor Gold, Enterprise, Diamond en bij email import
         ...((userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.ENTERPRISE || userSubscription === SubscriptionTier.DIAMOND || sessionType === SessionType.EMAIL_IMPORT) ? 
             [{ id: 'email', type: 'view', icon: MailIcon, label: () => t('email') }] : []),
@@ -8939,7 +9391,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             [{ id: 'socialPost', type: 'view', icon: SocialPostIcon, label: () => t('socialPost') }] : [])
     ];
 
-    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', brainstorm: '', opportunities: '', mckinsey: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || ''), specials: '', main: '', podcast: '' };
+    const analysisContent: Record<ViewType, string> = { transcript, summary, faq, learning: learningDoc, followUp: followUpQuestions, chat: '', keyword: '', sentiment: '', mindmap: '', storytelling: storytellingData?.story || '', blog: blogData, businessCase: businessCaseData?.businessCase || '', exec: executiveSummaryData ? JSON.stringify(executiveSummaryData) : '', quiz: quizQuestions ? quizQuestions.map(q => `${q.question}\n${q.options.map(opt => `${opt.label}. ${opt.text}`).join('\n')}\n${t('correctAnswer')}: ${q.correct_answer_label}`).join('\n\n') : '', explain: explainData?.explanation || '', teachMe: teachMeData?.content || '', showMe: showMeData ? `${showMeData.tedTalks.map(talk => `${talk.title} - ${talk.url}`).join('\n')}\n\n${showMeData.newsArticles.map(article => `${article.title} - ${article.url}`).join('\n')}` : '', thinkingPartner: thinkingPartnerAnalysis || '', aiDiscussion: '', brainstorm: '', opportunities: '', mckinsey: '', agilePbi: '', email: emailContent || '', socialPost: Array.isArray(socialPostData?.post) ? socialPostData.post.join('\n\n') : (socialPostData?.post || ''), socialPostX: Array.isArray(socialPostXData?.post) ? socialPostXData.post.join('\n\n') : (socialPostXData?.post || ''), specials: '', main: '', podcast: '' };
 
     const handleTabClick = (view: ViewType) => {
         // Check if content already exists for each tab type to avoid regeneration
@@ -8971,6 +9423,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
         }
         if (view === 'aiDiscussion') {
             setActiveView('aiDiscussion');
+            return;
+        }
+        if (view === 'agilePbi') {
+            setActiveView('agilePbi');
             return;
         }
         if (view === 'brainstorm') {
@@ -9580,7 +10036,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                                 })();
                                                 const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
                                                 const url = URL.createObjectURL(blob);
-                                                const a = document.createElement('a'); a.href = url; a.download = 'quizvragen.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                                                const a = document.createElement('a'); a.href = url; a.download = buildRecapHorizonFilename('txt'); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
                                                 displayToast(t('downloadTxt'), 'success');
                                                 setActiveDropdown(null);
                                             }}
@@ -11095,6 +11551,55 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             );
         }
 
+        if (activeView === 'agilePbi') {
+            return (
+                <AgilePBITab
+                    t={t}
+                    transcript={transcript}
+                    summary={summary}
+                    isGenerating={isGenerating}
+                    language={outputLang}
+                    userId={authState.user?.uid || ''}
+                    userTier={userSubscription}
+                    sessionId={sessionId}
+                    onMoveToTranscript={async (content) => {
+                        setTranscript(content);
+                        setRecordingStartMs(Date.now());
+                        setMainMode('transcript');
+                        setSelectedAnalysis(null);
+                        setSummary('');
+                        setFaq('');
+                        setLearningDoc('');
+                        setFollowUpQuestions('');
+                        setKeywordAnalysis(null);
+                        setSentimentAnalysisResult(null);
+                        setChatHistory([]);
+                        setMindmapMermaid('');
+                        setExecutiveSummaryData(null);
+                        setStorytellingData(null);
+                        setBusinessCaseData(null);
+                        setBlogData(null);
+                        setExplainData(null);
+                        setTeachMeData(null);
+                        setThinkingPartnerAnalysis('');
+                        setSelectedThinkingPartnerTopic('');
+                        setSelectedThinkingPartner(null);
+                        setOpportunitiesData(null);
+                        setMckinseyAnalysis(null);
+                        setSelectedMckinseyTopic('');
+                        setSelectedMckinseyRole('');
+                        setSelectedMckinseyFramework('');
+                        setSocialPostData(null);
+                        setSocialPostXData(null);
+                        setQuizQuestions([]);
+                        if (authState.user?.uid) {
+                            try { await incrementUserMonthlySessions(authState.user.uid); } catch {}
+                        }
+                        setActiveView('transcript');
+                    }}
+                />
+            );
+        }
         if (activeView === 'socialPost') {
             return (
                 <div className="p-6 bg-white dark:bg-slate-800 rounded-b-lg transition-colors">
@@ -12082,6 +12587,135 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       />
 
       <AudioUploadHelpModal isOpen={audioUploadHelpModal.isOpen} onClose={audioUploadHelpModal.close} t={t} />
+      <PowerPointUploadHelpModal isOpen={powerPointHelpModal.isOpen} onClose={powerPointHelpModal.close} t={t} />
+
+      {powerPointAnalyzeModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('pptxModalTitle', 'PowerPoint analyseren')}</h3>
+                <button onClick={() => powerPointHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline">
+                  📄 {t('pptxHelpTitle', 'PowerPoint hulp')}
+                </button>
+              </div>
+              <button onClick={() => { setPptxModalText(''); setPptxModalIsEditing(false); setPptxModalLengthWarning(null); setPptxFile(null); powerPointAnalyzeModal.close(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-slate-700 dark:text-slate-300">{t('pptxModalDescription', 'Upload of sleep een .pptx; kies opties; zet om naar platte tekst voor de analyse')}</p>
+              <div className="space-y-2">
+                <div 
+                  onDragOver={(e) => { e.preventDefault(); }}
+                  onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer?.files?.[0] || null; if (f) handlePptxSelectedFile(f); }}
+                  className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-lg p-8 border-slate-300 dark:border-slate-600 cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700`}
+                  onClick={() => pptxInputRef.current?.click()}
+                >
+                  <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <p className="text-slate-700 dark:text-slate-300 font-medium">{t('pptxUploadDragText', 'Sleep je PowerPoint hier of klik')}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t('pptxSupportedFormats')}</p>
+                  <input type="file" ref={pptxInputRef} onChange={(e) => { const f = e.target.files?.[0] || null; handlePptxSelectedFile(f); }} className="hidden" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={pptxOptions.slides} onChange={(e) => { const o = { ...pptxOptions, slides: e.target.checked }; setPptxOptions(o); }} />
+                    {t('pptxOptionSlidesTextLabel', 'Teksten uit slides')}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={pptxOptions.notes} onChange={(e) => { const o = { ...pptxOptions, notes: e.target.checked }; setPptxOptions(o); }} />
+                    {t('pptxOptionNotesLabel', '(spreker) notities')}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm opacity-60">
+                    <input type="checkbox" checked={pptxOptions.ocr} onChange={(e) => { const o = { ...pptxOptions, ocr: e.target.checked }; setPptxOptions(o); }} />
+                    {t('pptxOptionOCRLabel', 'plaatjes OCR')}
+                  </label>
+                  <button onClick={runPptxAnalysis} disabled={!pptxFile || (!(pptxOptions.slides || pptxOptions.notes || pptxOptions.ocr)) || isProcessing || !language || !outputLang} className="flex items-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                    <UploadIcon className="w-5 h-5" />
+                    <span>{t('sessionOptionAnalyzePowerPoint', 'Analyseren Powerpoint')}</span>
+                  </button>
+                </div>
+                {pptxOcrInProgress && (
+                  <div className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+                    OCR: {pptxOcrCount}/{pptxOcrTotal} — {pptxOcrCurrentName}
+      </div>
+      )}
+
+      {/* Excel Analyze Modal moved to global modals area below */}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t('multiUploadReadOnlyTitle')}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('multiUploadReadOnlySubtitle')}</p>
+                  </div>
+                  <button 
+                    onClick={() => setPptxModalIsEditing((v) => !v)}
+                    className={pptxModalIsEditing ? 'px-3 py-1.5 rounded-md bg-cyan-600 text-white hover:bg-cyan-700 transition-colors' : 'px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors'}
+                  >
+                    {pptxModalIsEditing ? '✓ ' + t('multiUploadEdit') : t('multiUploadEdit')}
+                  </button>
+                </div>
+                <textarea 
+                  ref={pptxTextareaRef}
+                  className={`w-full h-48 p-3 border rounded-lg text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-y ${pptxModalIsEditing ? 'border-cyan-500 bg-white dark:bg-slate-800' : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800'}`}
+                  readOnly={!pptxModalIsEditing}
+                  value={pptxModalText}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPptxModalText(val);
+                    const limits = subscriptionService.getTierLimits(userSubscription);
+                    if (val.length > limits.maxTranscriptLength) {
+                      setPptxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: val.length, maxLength: limits.maxTranscriptLength }));
+                    } else {
+                      setPptxModalLengthWarning(null);
+                    }
+                  }}
+                />
+                {!!pptxModalLengthWarning && (
+                  <div className="text-xs text-red-600 dark:text-red-400">{pptxModalLengthWarning}</div>
+                )}
+              </div>
+
+              <div className="flex justify-between items-center">
+                {(() => {
+                  const limits = subscriptionService.getTierLimits(userSubscription);
+                  const current = pptxModalText.length;
+                  const percent = Math.min(100, Math.round((current / limits.maxTranscriptLength) * 100));
+                  const color = current > limits.maxTranscriptLength ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
+                  return (
+                    <div className={`text-xs ${color}`}>Lengte: {current} / Max: {limits.maxTranscriptLength} ({percent}%)</div>
+                  );
+                })()}
+                <div className="flex justify-end gap-3">
+                  <button onClick={() => { if (pptxModalText.trim()) { setPptxModalText(''); setPptxModalLengthWarning(null); } }} disabled={!pptxModalText.trim()} className={`px-4 py-2 rounded-lg font-semibold ${!pptxModalText.trim() ? 'bg-slate-300 dark:bg-slate-600 text-white cursor-not-allowed' : 'border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>{t('multiUploadClear')}</button>
+                  <button onClick={downloadPptxText} disabled={!pptxModalText.trim()} className={`px-4 py-2 rounded-lg font-semibold ${!pptxModalText.trim() ? 'bg-slate-300 dark:bg-slate-600 text-white cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}>{t('multiUploadDownload')}</button>
+                  <button onClick={() => { setPptxModalText(''); setPptxModalIsEditing(false); setPptxModalLengthWarning(null); setPptxFile(null); powerPointAnalyzeModal.close(); }} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium">{t('cancel')}</button>
+                  <button onClick={async () => {
+                    const effectiveTier = userSubscription;
+                    const sanitized = sanitizeTextInput(pptxModalText);
+                    const validation = subscriptionService.validateTranscriptLength(effectiveTier, sanitized.length, t);
+                    if (!validation.allowed) {
+                      setPptxModalLengthWarning(validation.reason || t('transcriptTooLong', { currentLength: sanitized.length, maxLength: subscriptionService.getTierLimits(effectiveTier).maxTranscriptLength }));
+                      return;
+                    }
+                    if (!sanitized.trim()) return;
+                    setTranscript(sanitized);
+                    setRecordingStartMs(Date.now());
+                    setStatus(RecordingStatus.FINISHED);
+                    setActiveView('transcript');
+                    powerPointAnalyzeModal.close();
+                  }} disabled={!pptxModalText.trim() || !!pptxModalLengthWarning} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-semibold disabled:cursor-not-allowed">{t('processTranscript')}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      )}
 
       <AudioLimitModal 
         isOpen={showAudioLimitModal} 
@@ -12124,6 +12758,8 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
           </div>
         </div>
       )}
+      <PowerPointUploadHelpModal isOpen={powerPointHelpModal.isOpen} onClose={powerPointHelpModal.close} t={t} />
+      <ExcelUploadHelpModal isOpen={excelHelpModal.isOpen} onClose={excelHelpModal.close} t={t} />
 
       {/* Supported formats modal */}
       {formatsInfo.isOpen && (
@@ -13597,6 +14233,54 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     </div>
                                 </div>
 
+                                {/* Analyseren Powerpoint Option (Gold/Diamond/Enterprise) */}
+                                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
+                                  <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                      <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a4 4 0 014-4h10a4 4 0 014 4v10a4 4 0 01-4 4H7a4 4 0 01-4-4V7zm4 2h10m-9 5h5" />
+                                        </svg>
+                                      </div>
+                                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionAnalyzePowerPoint', 'Analyseren Powerpoint')}</h3>
+                                      <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionAnalyzePowerPointDesc', 'Upload of drag-n-drop je PowerPoint en zet om naar platte tekst')}</p>
+                                    </div>
+                                    <button type="button" onClick={() => { powerPointAnalyzeModal.open(); }} disabled={isProcessing} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-600 dark:from-violet-600 dark:to-fuchsia-700 text-white hover:from-violet-600 hover:to-fuchsia-700 dark:hover:from-violet-700 dark:hover:to-fuchsia-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                      <UploadIcon className="w-5 h-5" />
+                                      <span>{t('sessionOptionAnalyzePowerPoint', 'Analyseren Powerpoint')}</span>
+                                    </button>
+                                    <div className="mt-3 text-center">
+                                      <button onClick={() => powerPointHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                        📄 {t('pptxHelpTitle', 'PowerPoint hulp')}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
+                                  <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-green-300 dark:hover:border-green-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                      <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <svg className="w-8 h-8 text-teal-600 dark:text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a4 4 0 014-4h10a4 4 0 014 4v10a4 4 0 01-4 4H7a4 4 0 01-4-4V7zm4 2h10m-9 5h5" />
+                                        </svg>
+                                      </div>
+                                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionAnalyzeExcel', 'Analyseren Excel')}</h3>
+                                      <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionAnalyzeExcelDesc', 'Upload of drag-n-drop je Excel en zet om naar platte tekst')}</p>
+                                    </div>
+                                    <button type="button" onClick={() => { excelAnalyzeModal.open(); }} disabled={isProcessing} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-600 dark:from-teal-600 dark:to-cyan-700 text-white hover:from-teal-600 hover:to-cyan-700 dark:hover:from-teal-700 dark:hover:to-cyan-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                      <UploadIcon className="w-5 h-5" />
+                                      <span>{t('sessionOptionAnalyzeExcel', 'Analyseren Excel')}</span>
+                                    </button>
+                                    <div className="mt-3 text-center">
+                                      <button onClick={() => excelHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                        📄 {t('xlsxHelpTitle', 'Excel hulp')}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                                
+
                                 {/* Paste Text Option */}
                                 <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-purple-300 dark:hover:border-purple-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
                                     <div className="text-center mb-4">
@@ -13617,6 +14301,28 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Multi Uploads Option (Gold/Diamond/Enterprise) */}
+                                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
+                                  <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-cyan-300 dark:hover:border-cyan-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                      <div className="w-16 h-16 bg-cyan-100 dark:bg-cyan-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <UploadIcon className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />
+                                      </div>
+                                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionMultiUpload')}</h3>
+                                      <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionMultiUploadDesc')}</p>
+                                    </div>
+                                    <button onClick={handleSessionOptionMultiUpload} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-600 dark:to-blue-700 text-white hover:from-cyan-600 hover:to-blue-700 dark:hover:from-cyan-700 dark:hover:to-blue-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                      <UploadIcon className="w-5 h-5" />
+                                      <span>{t('sessionOptionMultiUpload')}</span>
+                                    </button>
+                                    <div className="mt-3 text-center">
+                                      <button onClick={() => multiUploadHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                        📋 {t('multiUploadHelpTitle')}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
 
                                 {/* Audio Upload Option */}
                                 <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-amber-300 dark:hover:border-amber-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
@@ -13669,17 +14375,17 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                 </div>
 
                                 {/* Idea Builder Option */}
-                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-amber-300 dark:hover:border-amber-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-lime-300 dark:hover:border-lime-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
                                     <div className="text-center mb-4">
-                                        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <svg className="w-8 h-8 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                        <div className="w-16 h-16 bg-lime-100 dark:bg-lime-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-8 h-8 text-lime-600 dark:text-lime-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3a7 7 0 00-7 7c0 2.29 1.06 4.33 2.7 5.62A3 3 0 009 18v1a3 3 0 003 3h0a3 3 0 003-3v-1a3 3 0 002.3-2.38A7 7 0 0011 3z" />
                                             </svg>
                                         </div>
                                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('ideaBuilderTitle', 'Idea Builder')}</h3>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">{t('ideaBuilderDesc', 'Generate high-quality ideas and outlines based on topic, audience and goals.')}</p>
                                     </div>
-                                    <button onClick={() => ideaBuilderModal.open()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 dark:from-amber-600 dark:to-orange-700 text-white hover:from-amber-600 hover:to-orange-700 dark:hover:from-amber-700 dark:hover:to-orange-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                    <button onClick={() => ideaBuilderModal.open()} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-lime-500 to-yellow-600 dark:from-lime-600 dark:to-yellow-700 text-white hover:from-lime-600 hover:to-yellow-700 dark:hover:from-lime-700 dark:hover:to-yellow-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
                                         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3a7 7 0 00-7 7c0 2.29 1.06 4.33 2.7 5.62A3 3 0 009 18v1a3 3 0 003 3h0a3 3 0 003-3v-1a3 3 0 002.3-2.38A7 7 0 0011 3z" />
                                         </svg>
@@ -13877,6 +14583,123 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
               </div>
               <div className="p-5 border-t border-slate-200 dark:border-slate-700 flex justify-end">
                 <button onClick={teamModal.close} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white transition-colors">{t('teamClose')}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {excelAnalyzeModal.isOpen && (
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[200]">
+            <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-0 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('xlsxModalTitle', 'Excel analyseren')}</h3>
+                  <button onClick={() => excelHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline">
+                    📄 {t('xlsxHelpTitle', 'Excel hulp')}
+                  </button>
+                </div>
+                <button onClick={() => { setXlsxModalText(''); setXlsxModalIsEditing(false); setXlsxModalLengthWarning(null); setXlsxFile(null); excelAnalyzeModal.close(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                  <XIcon className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <p className="text-sm text-slate-700 dark:text-slate-300">{t('xlsxModalDescription', 'Upload of sleep een .xlsx; zet om naar platte tekst voor de analyse')}</p>
+                <div className="space-y-2">
+                  {!!xlsxModalError && (
+                    <div className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700 rounded p-2">
+                      {xlsxModalError}
+                    </div>
+                  )}
+                  <div 
+                    onDragOver={(e) => { e.preventDefault(); }}
+                    onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer?.files?.[0] || null; if (f) handleXlsxSelectedFile(f); }}
+                    className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-lg p-8 border-slate-300 dark:border-slate-600 cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700`}
+                    onClick={() => xlsxInputRef.current?.click()}
+                  >
+                    <svg className="w-8 h-8 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <p className="text-slate-700 dark:text-slate-300 font-medium">{t('xlsxUploadDragText', 'Sleep je Excel hier of klik')}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('xlsxSupportedFormats', '.xlsx (Excel)')}</p>
+                    <input type="file" ref={xlsxInputRef} onChange={(e) => { const f = e.target.files?.[0] || null; handleXlsxSelectedFile(f); }} className="hidden" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={xlsxOptions.sheets} onChange={(e) => { const o = { ...xlsxOptions, sheets: e.target.checked }; setXlsxOptions(o); }} />
+                      {t('xlsxOptionSheetsLabel', 'Teksten uit bladen')}
+                    </label>
+                    <button onClick={runXlsxAnalysis} disabled={!xlsxFile || (!xlsxOptions.sheets) || isProcessing || !language || !outputLang} className="flex items-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 text-white hover:from-green-600 hover:to-emerald-700 dark:hover:from-green-700 dark:hover:to-emerald-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                      <UploadIcon className="w-5 h-5" />
+                      <span>{t('sessionOptionAnalyzeExcel', 'Analyseren Excel')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t('multiUploadReadOnlyTitle')}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{t('multiUploadReadOnlySubtitle')}</p>
+                    </div>
+                    <button 
+                      onClick={() => setXlsxModalIsEditing((v) => !v)}
+                      className={xlsxModalIsEditing ? 'px-3 py-1.5 rounded-md bg-cyan-600 text-white hover:bg-cyan-700 transition-colors' : 'px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors'}
+                    >
+                      {xlsxModalIsEditing ? '✓ ' + t('multiUploadEdit') : t('multiUploadEdit')}
+                    </button>
+                  </div>
+                  <textarea 
+                    ref={xlsxTextareaRef}
+                    className={`w-full h-48 p-3 border rounded-lg text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-y ${xlsxModalIsEditing ? 'border-cyan-500 bg-white dark:bg-slate-800' : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800'}`}
+                    readOnly={!xlsxModalIsEditing}
+                    value={xlsxModalText}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setXlsxModalText(val);
+                      const limits = subscriptionService.getTierLimits(userSubscription);
+                      if (val.length > limits.maxTranscriptLength) {
+                        setXlsxModalLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: val.length, maxLength: limits.maxTranscriptLength }));
+                      } else {
+                        setXlsxModalLengthWarning(null);
+                      }
+                    }}
+                  />
+                  {!!xlsxModalLengthWarning && (
+                    <div className="text-xs text-red-600 dark:text-red-400">{xlsxModalLengthWarning}</div>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center">
+                  {(() => {
+                    const limits = subscriptionService.getTierLimits(userSubscription);
+                    const current = xlsxModalText.length;
+                    const percent = Math.min(100, Math.round((current / limits.maxTranscriptLength) * 100));
+                    const color = current > limits.maxTranscriptLength ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
+                    return (
+                      <div className={`text-xs ${color}`}>Lengte: {current} / Max: {limits.maxTranscriptLength} ({percent}%)</div>
+                    );
+                  })()}
+                  <div className="flex justify-end gap-3">
+                    <button onClick={() => { if (xlsxModalText.trim()) { setXlsxModalText(''); setXlsxModalLengthWarning(null); } }} disabled={!xlsxModalText.trim()} className={`px-4 py-2 rounded-lg font-semibold ${!xlsxModalText.trim() ? 'bg-slate-300 dark:bg-slate-600 text-white cursor-not-allowed' : 'border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>{t('multiUploadClear')}</button>
+                    <button onClick={downloadXlsxText} disabled={!xlsxModalText.trim()} className={`px-4 py-2 rounded-lg font-semibold ${!xlsxModalText.trim() ? 'bg-slate-300 dark:bg-slate-600 text-white cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'}`}>{t('multiUploadDownload')}</button>
+                    <button onClick={() => { setXlsxModalText(''); setXlsxModalIsEditing(false); setXlsxModalLengthWarning(null); setXlsxFile(null); excelAnalyzeModal.close(); }} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium">{t('cancel')}</button>
+                    <button onClick={async () => {
+                      const effectiveTier = userSubscription;
+                      const sanitized = sanitizeTextInput(xlsxModalText);
+                      const validation = subscriptionService.validateTranscriptLength(effectiveTier, sanitized.length, t);
+                      if (!validation.allowed) {
+                        setXlsxModalLengthWarning(validation.reason || t('transcriptTooLong', { currentLength: sanitized.length, maxLength: subscriptionService.getTierLimits(effectiveTier).maxTranscriptLength }));
+                        return;
+                      }
+                      if (!sanitized.trim()) return;
+                      setTranscript(sanitized);
+                      setRecordingStartMs(Date.now());
+                      setStatus(RecordingStatus.FINISHED);
+                      setActiveView('transcript');
+                      excelAnalyzeModal.close();
+                    }} disabled={!xlsxModalText.trim() || !!xlsxModalLengthWarning} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-semibold disabled:cursor-not-allowed">{t('processTranscript')}</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -14128,6 +14951,176 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
       />
     )}
 
+    {/* Multi Uploads Modal */}
+    {multiUploadModal.isOpen && (
+      <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+        <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('multiUploadTitle')}</h3>
+            <button onClick={() => { setMultiUploadCombinedText(''); setMultiUploadIsEditing(false); setMultiUploadLengthWarning(null); multiUploadModal.close(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <XIcon className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-4 space-y-4">
+            <p className="text-sm text-slate-700 dark:text-slate-300">{t('multiUploadDescription')}</p>
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); if (!multiUploadIsEditing) handleMultiUploadFiles(e.dataTransfer.files); }}
+              className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-lg p-8 ${multiUploadIsEditing ? 'opacity-50 cursor-not-allowed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800' : 'border-slate-300 dark:border-slate-600 cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+              aria-disabled={multiUploadIsEditing}
+              onClick={() => { if (!multiUploadIsEditing) multiUploadInputRef.current?.click(); }}
+            >
+              <UploadIcon className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />
+              <div className="text-center">
+                <p className="text-slate-700 dark:text-slate-300 font-medium">{t('multiUploadDragText')}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t('sessionOptionMultiUploadFormats')}</p>
+              </div>
+              <input
+                ref={multiUploadInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                accept={
+                  userSubscription === SubscriptionTier.DIAMOND
+                    ? '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    : userSubscription === SubscriptionTier.FREE
+                      ? '.txt,text/plain'
+                      : '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                }
+                onChange={(e) => {
+                  const files = e.target.files;
+                  if (files && files.length) {
+                    handleMultiUploadFiles(files);
+                  }
+                }}
+              />
+              <button disabled={multiUploadIsEditing} className={`px-4 py-2 rounded-lg font-semibold ${multiUploadIsEditing ? 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed' : 'bg-cyan-500 hover:bg-cyan-600 text-white'}`}>{t('multiUploadSelectFiles')}</button>
+            </div>
+            {multiUploadLengthWarning && (
+              <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-amber-700 dark:text-amber-300 text-sm">
+                {multiUploadLengthWarning}
+              </div>
+            )}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t('multiUploadReadOnlyTitle')}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t('multiUploadReadOnlySubtitle')}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setMultiUploadIsEditing((v) => {
+                      const next = !v;
+                      if (next) setTimeout(focusTextareaEnd, 0);
+                      return next;
+                    });
+                  }}
+                  className={multiUploadIsEditing ? 'px-3 py-1.5 rounded-md bg-cyan-600 text-white hover:bg-cyan-700 transition-colors' : 'px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors'}
+                >
+                  {multiUploadIsEditing ? '✓ ' + t('multiUploadEdit') : t('multiUploadEdit')}
+                </button>
+              </div>
+              <textarea
+                ref={multiUploadTextareaRef}
+                className={`w-full h-48 p-3 border rounded-lg text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-y ${multiUploadIsEditing ? 'border-cyan-500 bg-white dark:bg-slate-800' : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800'}`}
+                readOnly={!multiUploadIsEditing}
+                value={multiUploadCombinedText}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setMultiUploadCombinedText(val);
+                  const limits = subscriptionService.getTierLimits(userSubscription);
+                  if (val.length > limits.maxTranscriptLength) {
+                    setMultiUploadLengthWarning(t('multiUploadMaxLengthWarning', { currentLength: val.length, maxLength: limits.maxTranscriptLength }));
+                  } else {
+                    setMultiUploadLengthWarning(null);
+                  }
+                }}
+                placeholder=""
+              />
+              {(() => {
+                const limits = subscriptionService.getTierLimits(userSubscription);
+                const current = multiUploadCombinedText.length;
+                const percent = Math.min(100, Math.round((current / limits.maxTranscriptLength) * 100));
+                const color = current > limits.maxTranscriptLength ? 'text-red-600 dark:text-red-400' : percent > 90 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400';
+                return (
+                  <div className={`text-xs ${color}`}>Lengte: {current} / Max: {limits.maxTranscriptLength} ({percent}%)</div>
+                );
+              })()}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => { if (multiUploadCombinedText.trim()) { setMultiUploadCombinedText(''); setMultiUploadLengthWarning(null); } }}
+                disabled={!multiUploadCombinedText.trim()}
+                className={`px-4 py-2 rounded-lg font-semibold ${!multiUploadCombinedText.trim() ? 'bg-slate-300 dark:bg-slate-600 text-white cursor-not-allowed' : 'border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+              >
+                {t('multiUploadClear')}
+              </button>
+              <button 
+                onClick={downloadCombinedText}
+                disabled={!multiUploadCombinedText.trim()}
+                className={`px-4 py-2 rounded-lg font-semibold ${!multiUploadCombinedText.trim() ? 'bg-slate-300 dark:bg-slate-600 text-white cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+              >
+                {t('multiUploadDownload')}
+              </button>
+              <button 
+                onClick={() => { setMultiUploadCombinedText(''); setMultiUploadIsEditing(false); setMultiUploadLengthWarning(null); multiUploadModal.close(); }}
+                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium"
+              >
+                {t('cancel')}
+              </button>
+              <button 
+                onClick={async () => {
+                  const effectiveTier = userSubscription;
+                  const sanitized = sanitizeTextInput(multiUploadCombinedText);
+                  const validation = subscriptionService.validateTranscriptLength(effectiveTier, sanitized.length, t);
+                  if (!validation.allowed) {
+                    setMultiUploadLengthWarning(validation.reason || t('transcriptTooLong', { currentLength: sanitized.length, maxLength: subscriptionService.getTierLimits(effectiveTier).maxTranscriptLength }));
+                    return;
+                  }
+                  if (!sanitized.trim()) return;
+                  setTranscript(sanitized);
+                  setRecordingStartMs(Date.now());
+                  setStatus(RecordingStatus.FINISHED);
+                  setActiveView('transcript');
+                  multiUploadModal.close();
+                }}
+                disabled={!multiUploadCombinedText.trim() || !!multiUploadLengthWarning}
+                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-semibold disabled:cursor-not-allowed"
+              >
+                {t('processTranscript')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Multi Uploads Help Modal */}
+    {multiUploadHelpModal.isOpen && (
+      <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+        <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-xl w-full m-4 p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('multiUploadHelpTitle')}</h3>
+            <button onClick={multiUploadHelpModal.close} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+              <XIcon className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-4 space-y-3 text-sm text-slate-700 dark:text-slate-300">
+            <p>{t('multiUploadHelpDescription')}</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>{t('multiUploadHelpStep1')}</li>
+              <li>{t('multiUploadHelpStep2')}</li>
+              <li>{t('multiUploadHelpStep3')}</li>
+              <li>{t('multiUploadHelpStep4')}</li>
+              <li>{t('multiUploadHelpStep5')}</li>
+            </ul>
+            <div className="pt-2 flex justify-end">
+              <button onClick={multiUploadHelpModal.close} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">{t('close')}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
     {/* Audio Upload Modal */}
     {audioUploadModal.isOpen && (
       <AudioUploadModal

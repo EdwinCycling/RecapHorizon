@@ -13,6 +13,7 @@ import {
 import { displayToast } from '../utils/clipboard';
 import BlurredLoadingOverlay from './BlurredLoadingOverlay';
 import { SubscriptionTier, TranslationFunction } from '../../types';
+import { buildRecapHorizonFilename } from '../utils/downloadUtils';
 
 interface OpportunitiesTabProps {
   t: TranslationFunction;
@@ -354,7 +355,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     const element = document.createElement('a');
     const file = new Blob([content], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = `kansen-analyse-${new Date().getTime()}.txt`;
+  element.download = buildRecapHorizonFilename('txt');
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -367,7 +368,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
     
     try {
       const { jsPDF } = await import('jspdf');
-      const doc = new jsPDF();
+    const doc = new jsPDF();
       
       doc.setFontSize(16);
       doc.text('Kansen Analyse', 20, 20);
@@ -401,7 +402,7 @@ const OpportunitiesTab: React.FC<OpportunitiesTabProps> = ({
         yPosition += lines.length * 6 + 12;
       });
       
-      doc.save(`kansen-analyse-${new Date().getTime()}.pdf`);
+    doc.save(buildRecapHorizonFilename('pdf'));
       displayToast(t('opportunitiesDownloadedPDF'), 'success');
     } catch (error) {
       console.error('Error generating PDF:', error);

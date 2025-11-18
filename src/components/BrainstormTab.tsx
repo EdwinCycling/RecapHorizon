@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { buildRecapHorizonFilename } from '../utils/downloadUtils';
 import { SubscriptionTier, TranslationFunction } from '../../types';
 import { generateBrainstormIdeas, generateBrainstormReport, BrainstormMethod } from '../services/brainstormService';
 import { markdownToPlainText } from '../utils/textUtils';
@@ -395,7 +396,7 @@ const BrainstormTab: React.FC<BrainstormTabProps> = ({
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = 'brainstorm-report.txt';
+              a.download = buildRecapHorizonFilename('txt');
               a.click();
               URL.revokeObjectURL(url);
             }}
@@ -408,7 +409,7 @@ const BrainstormTab: React.FC<BrainstormTabProps> = ({
               const doc = new jsPDF();
               const lines = doc.splitTextToSize(report, 180);
               doc.text(lines, 10, 10);
-              doc.save('brainstorm-report.pdf');
+              doc.save(buildRecapHorizonFilename('pdf'));
             }}
             className="px-3 py-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-200 dark:hover:bg-slate-600"
           >

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, JSX } from 'react';
+import { buildRecapHorizonFilename } from '../utils/downloadUtils';
 import { McKinseyTopic, McKinseyFramework, McKinseyAnalysisData, SubscriptionTier, TranslationFunction } from '../../types';
 import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck, FiMoreVertical, FiDownload, FiMail, FiTarget, FiUsers, FiTrendingUp } from 'react-icons/fi';
 import { generateMckinseyTopics, generateMckinseyAnalysis } from '../services/mckinseyService';
@@ -339,7 +340,7 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
     const element = document.createElement('a');
     const file = new Blob([formattedText], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = `mckinsey-strategische-analyse-${new Date().getTime()}.txt`;
+  element.download = buildRecapHorizonFilename('txt');
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -424,7 +425,7 @@ const McKinseyTab: React.FC<McKinseyTabProps> = ({
         doc.text(new Date().toLocaleString('nl-NL'), 190, 287, { align: 'right' });
       }
       
-      doc.save(`mckinsey-strategische-analyse-${new Date().getTime()}.pdf`);
+      doc.save(buildRecapHorizonFilename('pdf'));
       displayToast(t('analysisDownloadedPDF', 'Professionele PDF analyse gedownload'), 'success');
     } catch (error) {
       displayToast(t('pdfGenerationError', 'PDF genereren mislukt'), 'error');

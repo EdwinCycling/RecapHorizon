@@ -25,10 +25,11 @@ function isOriginAllowed(event) {
 }
 
 function getClientIp(event) {
+  const cip = event.headers?.['client-ip'] || event.headers?.['Client-Ip'] || '';
+  if (cip) return cip.trim();
   const xf = event.headers?.['x-forwarded-for'] || event.headers?.['X-Forwarded-For'] || '';
   if (xf) return xf.split(',')[0].trim();
-  const cip = event.headers?.['client-ip'] || event.headers?.['Client-Ip'] || '';
-  return cip || 'unknown';
+  return 'unknown';
 }
 
 function checkRateLimitIp(ip, limitPerMinute) {
@@ -72,7 +73,7 @@ exports.handler = async (event, context) => {
         'Access-Control-Allow-Origin': allowed ? origin : 'null',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      },
+      , 'Vary': 'Origin'},
       body: ''
     };
   }
@@ -86,7 +87,7 @@ exports.handler = async (event, context) => {
         'Access-Control-Allow-Origin': allowed ? origin : 'null',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      },
+      , 'Vary': 'Origin'},
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -95,8 +96,37 @@ exports.handler = async (event, context) => {
     if (!isOriginAllowed(event)) {
       return {
         statusCode: 403,
-        headers: { 'Access-Control-Allow-Origin': 'null' },
+        headers: { 'Access-Control-Allow-Origin': 'null', 'Vary': 'Origin' },
         body: JSON.stringify({ success: false, error: 'Error: Origin not allowed' })
+      };
+    }
+
+    const ct = String(event.headers?.['content-type'] || event.headers?.['Content-Type'] || '').toLowerCase();
+    if (!ct.includes('application/json')) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 415,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Vary': 'Origin'
+        },
+        body: JSON.stringify({ success: false, error: 'Unsupported Media Type' })
+      };
+    }
+
+    if ((event.body || '').length > 100 * 1024) {
+      const origin = getOrigin(event);
+      return {
+        statusCode: 413,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Vary': 'Origin'
+        },
+        body: JSON.stringify({ success: false, error: 'Payload too large' })
       };
     }
 
@@ -109,7 +139,8 @@ exports.handler = async (event, context) => {
         headers: {
           'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Headers': 'Content-Type',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Vary': 'Origin'
         },
         body: JSON.stringify({ success: false, error: 'Invalid prompt' })
       };
@@ -126,7 +157,7 @@ exports.handler = async (event, context) => {
         headers: {
           'Access-Control-Allow-Origin': origin,
           'Retry-After': String(ipCheck.retryAfter)
-        },
+        , 'Vary': 'Origin'},
         body: JSON.stringify({ success: false, error: 'Error: Rate limit exceeded for IP' })
       };
     }
@@ -138,7 +169,7 @@ exports.handler = async (event, context) => {
         headers: {
           'Access-Control-Allow-Origin': origin,
           'Retry-After': String(userCheck.retryAfter)
-        },
+        , 'Vary': 'Origin'},
         body: JSON.stringify({ success: false, error: 'Error: Rate limit exceeded for user' })
       };
     }
@@ -151,16 +182,20 @@ exports.handler = async (event, context) => {
         headers: {
           'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Headers': 'Content-Type',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Vary': 'Origin'
         },
         body: JSON.stringify({ success: false, error: 'Error: Missing GEMINI_API_KEY' })
       };
     }
 
     const safePrompt = prompt.slice(0, 20000);
-    const selectedModel = typeof model === 'string' && model.trim().length > 0 ? model : 'gemini-2.5-flash';
-    const temp = typeof temperature === 'number' ? temperature : 0.7;
-    const maxOut = typeof maxTokens === 'number' ? maxTokens : 4000;
+    const allowedModels = new Set(['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']);
+    const selectedModel = typeof model === 'string' && allowedModels.has(model.trim()) ? model.trim() : 'gemini-2.5-flash';
+    const tRaw = typeof temperature === 'number' ? temperature : 0.7;
+    const temp = Math.max(0, Math.min(1, tRaw));
+    const mRaw = typeof maxTokens === 'number' ? maxTokens : 4000;
+    const maxOut = Math.max(1, Math.min(4000, mRaw));
 
     const genai = new GoogleGenerativeAI(apiKey);
     const generativeModel = genai.getGenerativeModel({
@@ -186,7 +221,8 @@ exports.handler = async (event, context) => {
       headers: {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Vary': 'Origin'
       },
       body: JSON.stringify({ success: true, content: text, model: selectedModel, usage })
     };
@@ -198,7 +234,8 @@ exports.handler = async (event, context) => {
       headers: {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Vary': 'Origin'
       },
       body: JSON.stringify({ success: false, error: `Error: ${message}` })
     };

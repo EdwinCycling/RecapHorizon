@@ -745,3 +745,43 @@ export interface PromptDocument {
   updated_at: any;
   language?: string | null;
 }
+
+export type PbiTone =
+  | 'formeel_zakelijk'
+  | 'praktisch_direct'
+  | 'klantgericht_empathisch'
+  | 'technisch_gedetailleerd'
+  | 'motiverend_visionair'
+  | 'synthetisch_kort_bondig'
+  | 'informeel_vriendelijk';
+
+export type PbiApproach =
+  | 'frameworks'
+  | 'different_perspectives'
+  | 'step_by_step'
+  | 'creative_words'
+  | 'chain_of_density'
+  | 'first_principles';
+
+export interface PbiItem {
+  userType: string;
+  goal: string;
+  value: string;
+  acceptanceCriteria?: string[];
+  notes?: {
+    businessValue?: string;
+    technicalConsiderations?: string;
+    fundamentalReason?: string;
+    innovativeIdea?: boolean;
+  };
+  category?: string;
+  priority?: 'low' | 'medium' | 'high';
+  approachTag?: PbiApproach;
+}
+
+export interface PbiGenerationOptions {
+  includeAcceptanceCriteria?: boolean;
+  includeValueNote?: boolean;
+  includeTechnicalNote?: boolean;
+  maxItems?: number;
+}

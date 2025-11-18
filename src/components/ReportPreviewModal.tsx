@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { XMarkIcon, ArrowDownTrayIcon, DocumentTextIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { TranslationFunction } from '../../types';
 import { markdownToPlainText, markdownToSanitizedHtml } from '../utils/textUtils';
+import { buildRecapHorizonFilename } from '../utils/downloadUtils';
 
 interface ReportPreviewModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'idea_report.txt';
+    a.download = buildRecapHorizonFilename('txt');
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -43,11 +44,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
       setIsExportingPdf(true);
       const { jsPDF } = await import('jspdf');
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-      // Try Unicode font if available
-      try {
-        const { tryUseUnicodeFont } = await import('../utils/pdfFont');
-        tryUseUnicodeFont(doc);
-      } catch {}
+      // Gebruik standaard Helvetica voor stabiliteit in dev
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 40;
@@ -91,7 +88,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
         y += 2;
       });
 
-      doc.save('idea_report.pdf');
+      doc.save(buildRecapHorizonFilename('pdf'));
     } finally {
       setIsExportingPdf(false);
     }

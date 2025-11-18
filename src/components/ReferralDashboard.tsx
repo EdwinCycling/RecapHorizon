@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { buildRecapHorizonFilename } from '../utils/downloadUtils';
 import { db, auth } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
@@ -184,7 +185,7 @@ const ReferralDashboard: React.FC<ReferralDashboardProps> = ({ t, userId, hasRef
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'referral-dashboard.pdf';
+      a.download = buildRecapHorizonFilename('pdf');
       document.body.appendChild(a);
       a.click();
       a.remove();

@@ -127,24 +127,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
                     </div>
                   </label>
 
-                  <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <input
-                      type="radio"
-                      name="aiProvider"
-                      value={AIProvider.OPENROUTER}
-                      checked={selectedProvider === AIProvider.OPENROUTER}
-                      onChange={(e) => setSelectedProvider(e.target.value as AIProvider)}
-                      className="mr-3"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
-                        {t('openRouter')}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {t('openRouterDescription')}
-                      </div>
-                    </div>
-                  </label>
+                  
                 </div>
               </div>
 

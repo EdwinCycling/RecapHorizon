@@ -1,7 +1,7 @@
 {
   "name": "recaphorizon",
   "private": true,
-  "version": "0.91117.3",
+  "version": "0.91118.1",
   "type": "module",
   "scripts": {
     "dev": "powershell -ExecutionPolicy Bypass -File start-dev.ps1",
@@ -28,6 +28,7 @@
     "firebase-admin": "^13.5.0",
     "i18next": "^25.5.3",
     "jspdf": "^3.0.2",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.544.0",
     "mammoth": "^1.10.0",
     "mermaid": "^11.3.0",
@@ -41,6 +42,7 @@
     "react-icons": "^5.5.0",
     "stream-browserify": "^3.0.0",
     "stripe": "^18.5.0",
+    "tesseract.js": "^5.1.1",
     "util": "^0.12.5"
   },
   "devDependencies": {

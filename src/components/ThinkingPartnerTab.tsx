@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { buildRecapHorizonFilename } from '../utils/downloadUtils';
 import { ThinkingTopic, ThinkingPartner, ThinkingAnalysisData, TranslationFunction } from '../../types';
 import { FiZap, FiArrowLeft, FiRefreshCw, FiCopy, FiCheck, FiMoreVertical, FiDownload, FiMail } from 'react-icons/fi';
 import { generateThinkingTopics, generateThinkingPartnerAnalysis } from '../services/thinkingPartnerService';
@@ -291,7 +292,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
     const element = document.createElement('a');
     const file = new Blob([state.analysis], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = `denkpartner-analyse-${new Date().getTime()}.txt`;
+  element.download = buildRecapHorizonFilename('txt');
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -320,7 +321,7 @@ const ThinkingPartnerTab: React.FC<ThinkingPartnerTabProps> = ({
       const lines = doc.splitTextToSize(state.analysis, 170);
       doc.text(lines, 20, 60);
       
-      doc.save(`denkpartner-analyse-${new Date().getTime()}.pdf`);
+      doc.save(buildRecapHorizonFilename('pdf'));
       displayToast(t('analysisDownloadedPDF'), 'success');
     } catch (error) {
       console.error('Error generating PDF:', error);

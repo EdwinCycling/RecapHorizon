@@ -1,6 +1,7 @@
 import SocialPostXCard from './SocialPostXCard';
 import SocialPostCard from './SocialPostCard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { buildRecapHorizonFilename } from '../utils/downloadUtils';
 import jsPDF from 'jspdf';
 import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData, SocialPostData, TeachMeData, TranslationFunction } from '../../types';
 import { OpportunityAnalysisData } from './OpportunitiesTab';
@@ -700,7 +701,7 @@ const getOrCacheResult = (type: RecapItemType) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'recap.txt';
+        a.download = buildRecapHorizonFilename('txt');
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -711,10 +712,7 @@ const getOrCacheResult = (type: RecapItemType) => {
     const handleExportPdf = useCallback(() => {
         if (!enabledItems.length) return;
         const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-        // Try to register a Unicode font; fall back to helvetica (non-blocking)
-        import('../utils/pdfFont')
-            .then(({ tryUseUnicodeFont }) => tryUseUnicodeFont(doc))
-            .catch(() => {});
+        // Use standaard Helvetica in dev om fontload-problemen te voorkomen
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         const margin = 40;
@@ -774,7 +772,7 @@ const getOrCacheResult = (type: RecapItemType) => {
             });
         });
 
-        doc.save('recap.pdf');
+        doc.save(buildRecapHorizonFilename('pdf'));
         if (onNotify) onNotify('PDF gedownload', 'success');
     }, [enabledItems, composeSectionText, markdownToPlainText]);
 

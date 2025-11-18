@@ -303,7 +303,7 @@ function getSubscriptionTier(priceId) {
  * Main webhook handler
  */
 export async function handler(event) {
-  console.log('Webhook received:', event.httpMethod, event.headers);
+  console.log('Webhook received:', event.httpMethod);
   
   try {
     if (event.httpMethod !== 'POST') {
@@ -334,6 +334,15 @@ export async function handler(event) {
     const rawBody = event.isBase64Encoded
       ? Buffer.from(event.body || '', 'base64').toString('utf8')
       : (event.body || '');
+
+    if (rawBody.length > 256 * 1024) {
+      return { statusCode: 413, body: JSON.stringify({ error: 'Error: Payload too large' }) };
+    }
+
+    const ct = String(event.headers['content-type'] || event.headers['Content-Type'] || '').toLowerCase();
+    if (!ct.includes('application/json')) {
+      return { statusCode: 415, body: JSON.stringify({ error: 'Error: Unsupported Media Type' }) };
+    }
 
     const sig = event.headers['stripe-signature'] || event.headers['Stripe-Signature'] || event.headers['STRIPE-SIGNATURE'];
     if (!sig) {
@@ -366,7 +375,6 @@ export async function handler(event) {
       };
     }
 
-    // Log the webhook event
     await logWebhookEvent(stripeEvent);
  
     // Handle different event types

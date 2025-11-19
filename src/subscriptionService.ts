@@ -4,21 +4,21 @@ import { SubscriptionTier, TierLimits, SessionType, TranslationFunction } from '
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
   [SubscriptionTier.FREE]: {
     maxSessionDuration: 15,
-    maxSessionsPerDay: 1,
+    maxSessionsPerDay: 3,
     maxTranscriptLength: 5000,
     allowedFileTypes: ['.txt', 'text/plain'],
     maxTokensPerMonth: 10000, // 10k tokens per month
-    maxTokensPerDay: 500, // 500 tokens per day
+    maxTokensPerDay: -1, // unlimited daily tokens
     maxMonthlyAudioMinutes: 60, // 60 minutes per month
     trialDurationDays: 28 // 4 weeks trial period
   },
   [SubscriptionTier.SILVER]: {
     maxSessionDuration: 60,
-    maxSessionsPerDay: 3,
+    maxSessionsPerDay: 25,
     maxTranscriptLength: 15000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.eml', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'email'],
     maxTokensPerMonth: 50000, // 50k tokens per month
-    maxTokensPerDay: 2000, // 2k tokens per day
+    maxTokensPerDay: -1, // unlimited daily tokens
     maxMonthlyAudioMinutes: 500 // 500 minutes per month
   },
   [SubscriptionTier.GOLD]: {
@@ -27,7 +27,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxTranscriptLength: 30000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
     maxTokensPerMonth: 150000, // 150k tokens per month
-    maxTokensPerDay: 6000, // 6k tokens per day
+    maxTokensPerDay: -1, // unlimited daily tokens
     maxMonthlyAudioMinutes: 1000 // 1000 minutes per month
   },
   [SubscriptionTier.ENTERPRISE]: {
@@ -36,7 +36,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxTranscriptLength: 50000,
     allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
     maxTokensPerMonth: 500000, // 500k tokens per month
-    maxTokensPerDay: 20000, // 20k tokens per day
+    maxTokensPerDay: -1, // unlimited daily tokens
     maxMonthlyAudioMinutes: 2500 // 2500 minutes per month
   },
   [SubscriptionTier.DIAMOND]: {

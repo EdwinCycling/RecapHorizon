@@ -57,7 +57,7 @@ const AudioUsageMeter: React.FC<AudioUsageMeterProps> = ({
           </span>
         </div>
         <div className={`text-sm ${getTextColor()}`}>
-          <span className="font-medium">{t('settingsCurrentTier')}: </span>
+          <span className="font-medium">{t('settingsCurrentTier')}</span>
           <span className="capitalize">{userTier}</span>
         </div>
       </div>

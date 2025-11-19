@@ -342,6 +342,7 @@ export const pt = {
   promptsImportFailed: "A importação falhou",
   promptsItemsReady: "{count} item(s) validado(s), pronto(s) para importar",
   close: "Fechar",
+  gotoPricing: "Ir para a visão geral de preços",
 
   downloadScript: "Descarregar guião",
   play: "Reproduzir",

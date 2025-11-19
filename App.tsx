@@ -1913,9 +1913,9 @@ Tekst: ${content}`;
       const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
       
       if (!tokenValidation.allowed) {
-        displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
+        setQuotaExceededError(tokenValidation.reason || t('toastTokenLimitReached'));
+        setShowQuotaExceededModal(true);
         setIsGeneratingImage(false);
-        setTimeout(() => setShowPricingPage(true), 2000);
         return;
       }
 
@@ -2263,8 +2263,8 @@ Constraints:
       const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
       
       if (!tokenValidation.allowed) {
-        displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
-        setTimeout(() => setShowPricingPage(true), 2000);
+        setQuotaExceededError(tokenValidation.reason || t('toastTokenLimitReached'));
+        setShowQuotaExceededModal(true);
         setLoadingText('');
         return;
       }
@@ -2631,6 +2631,26 @@ ${sanitizedTranscript}`;
       return;
     }
     multiUploadModal.open();
+  };
+
+  const handleSessionOptionPowerPoint = () => {
+    const tier = userSubscription;
+    if (tier !== SubscriptionTier.GOLD && tier !== SubscriptionTier.DIAMOND && tier !== SubscriptionTier.ENTERPRISE) {
+      setError(t('pptxUnsupported', 'Deze optie is alleen voor Gold, Diamond en Enterprise.'));
+      upgradeModal.open();
+      return;
+    }
+    powerPointAnalyzeModal.open();
+  };
+
+  const handleSessionOptionExcel = () => {
+    const tier = userSubscription;
+    if (tier !== SubscriptionTier.GOLD && tier !== SubscriptionTier.DIAMOND && tier !== SubscriptionTier.ENTERPRISE) {
+      setError(t('xlsxUnsupported', 'Deze optie is alleen voor Gold, Diamond en Enterprise.'));
+      upgradeModal.open();
+      return;
+    }
+    excelAnalyzeModal.open();
   };
 
   const extractPlainTextFromFile = async (file: File): Promise<string> => {
@@ -3530,8 +3550,8 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
     const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
     
     if (!tokenValidation.allowed) {
-        displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
-        setTimeout(() => setShowPricingPage(true), 2000);
+        setQuotaExceededError(tokenValidation.reason || t('toastTokenLimitReached'));
+        setShowQuotaExceededModal(true);
         return;
     }
     
@@ -5694,8 +5714,8 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
         
         if (!tokenValidation.allowed) {
             const errorMsg = tokenValidation.reason || 'Token limiet bereikt. Upgrade je abonnement voor meer tokens.';
-            setSummary(errorMsg); setFaq(errorMsg); setLearningDoc(errorMsg); setFollowUpQuestions(errorMsg);
-            setTimeout(() => setShowPricingPage(true), 2000);
+            setQuotaExceededError(errorMsg);
+            setShowQuotaExceededModal(true);
             return;
         }
     }
@@ -5784,7 +5804,8 @@ const handleKeywordClick = async (keyword: string) => {
         );
         
         if (!tokenValidation.allowed) {
-            displayToast(tokenValidation.reason || t('toastTokenLimitKeywordExplanation'), 'error');
+            setQuotaExceededError(tokenValidation.reason || t('toastTokenLimitKeywordExplanation'));
+            setShowQuotaExceededModal(true);
             setIsFetchingExplanation(false);
             return;
         }
@@ -7024,8 +7045,8 @@ ${transcript}
         const tokenValidation = await tokenManager.validateTokenUsage(user.uid, userSubscription, tokenEstimate.totalTokens);
         
         if (!tokenValidation.allowed) {
-            displayToast(tokenValidation.reason || t('toastTokenLimitReached'), 'error');
-            setTimeout(() => setShowPricingPage(true), 2000);
+            setQuotaExceededError(tokenValidation.reason || t('toastTokenLimitReached'));
+            setShowQuotaExceededModal(true);
             setLoadingText('');
             return;
         }
@@ -14235,8 +14256,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     </div>
                                 </div>
 
-                                {/* Analyseren Powerpoint Option (Gold/Diamond/Enterprise) */}
-                                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
                                   <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
                                     <div className="text-center mb-4">
                                       <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -14247,7 +14266,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                       <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionAnalyzePowerPoint', 'Analyseren Powerpoint')}</h3>
                                       <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionAnalyzePowerPointDesc', 'Upload of drag-n-drop je PowerPoint en zet om naar platte tekst')}</p>
                                     </div>
-                                    <button type="button" onClick={() => { powerPointAnalyzeModal.open(); }} disabled={isProcessing} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-600 dark:from-violet-600 dark:to-fuchsia-700 text-white hover:from-violet-600 hover:to-fuchsia-700 dark:hover:from-violet-700 dark:hover:to-fuchsia-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                    <button type="button" onClick={handleSessionOptionPowerPoint} disabled={isProcessing} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-600 dark:from-violet-600 dark:to-fuchsia-700 text-white hover:from-violet-600 hover:to-fuchsia-700 dark:hover:from-violet-700 dark:hover:to-fuchsia-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
                                       <UploadIcon className="w-5 h-5" />
                                       <span>{t('sessionOptionAnalyzePowerPoint', 'Analyseren Powerpoint')}</span>
                                     </button>
@@ -14257,9 +14276,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                       </button>
                                     </div>
                                   </div>
-                                )}
 
-                                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
                                   <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-green-300 dark:hover:border-green-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
                                     <div className="text-center mb-4">
                                       <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -14270,7 +14287,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                       <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionAnalyzeExcel', 'Analyseren Excel')}</h3>
                                       <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionAnalyzeExcelDesc', 'Upload of drag-n-drop je Excel en zet om naar platte tekst')}</p>
                                     </div>
-                                    <button type="button" onClick={() => { excelAnalyzeModal.open(); }} disabled={isProcessing} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-600 dark:from-teal-600 dark:to-cyan-700 text-white hover:from-teal-600 hover:to-cyan-700 dark:hover:from-teal-700 dark:hover:to-cyan-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                    <button type="button" onClick={handleSessionOptionExcel} disabled={isProcessing} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-600 dark:from-teal-600 dark:to-cyan-700 text-white hover:from-teal-600 hover:to-cyan-700 dark:hover:from-teal-700 dark:hover:to-cyan-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
                                       <UploadIcon className="w-5 h-5" />
                                       <span>{t('sessionOptionAnalyzeExcel', 'Analyseren Excel')}</span>
                                     </button>
@@ -14280,7 +14297,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                       </button>
                                     </div>
                                   </div>
-                                )}
                                 
 
                                 {/* Paste Text Option */}
@@ -14304,8 +14320,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     </div>
                                 </div>
 
-                                {/* Multi Uploads Option (Gold/Diamond/Enterprise) */}
-                                {(userSubscription === SubscriptionTier.GOLD || userSubscription === SubscriptionTier.DIAMOND || userSubscription === SubscriptionTier.ENTERPRISE) && (
+                                {/* Multi Uploads Option */}
                                   <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-cyan-300 dark:hover:border-cyan-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
                                     <div className="text-center mb-4">
                                       <div className="w-16 h-16 bg-cyan-100 dark:bg-cyan-900 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -14324,7 +14339,6 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                       </button>
                                     </div>
                                   </div>
-                                )}
 
                                 {/* Audio Upload Option */}
                                 <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-amber-300 dark:hover:border-amber-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
@@ -14734,6 +14748,10 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
           }}
           message={error || ''}
           t={t}
+          onShowPricing={() => {
+            upgradeModal.close();
+            setShowPricingPage(true);
+          }}
         />
       </Modal>
     )}

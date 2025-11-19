@@ -283,6 +283,7 @@ export const fr = {
   promptsImportFailed: "L'importation a échoué",
   promptsItemsReady: "{count} élément(s) validé(s), prêt(s) à être importé(s)",
   close: "Fermer",
+  gotoPricing: "Aller à la page des tarifs",
 
   // Mobile Audio Help
   androidLabel: "🤖 Android :",

@@ -365,6 +365,7 @@ export const de = {
   shortParagraph: "Kurzer Absatz",
   fetchingExplanation: "Erklärung wird geladen...",
   close: "Schließen",
+  gotoPricing: "Zur Preisübersicht",
   uploadTemplate: "Vorlage hochladen",
   templateUploaded: "Vorlage: {name}",
   clearTemplate: "Vorlage löschen",

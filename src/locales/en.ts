@@ -323,6 +323,7 @@ export const en = {
   promptsImportFailed: "Import failed",
   promptsItemsReady: "Validated {count} item(s), ready to import",
   close: "Close",
+  gotoPricing: "Go to pricing overview",
 
   // Mobile Audio Help
   androidLabel: "🤖 Android:",

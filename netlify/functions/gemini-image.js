@@ -8,6 +8,7 @@ function isOriginAllowed(event) {
   const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
   if (allowed.length === 0) return true;
   const origin = getOrigin(event);
+  if ((origin || '').includes('localhost')) return true;
   return allowed.includes(origin);
 }
 

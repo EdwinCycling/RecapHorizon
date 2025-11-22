@@ -79,6 +79,7 @@ import ImageUploadModal from './src/components/ImageUploadModal.tsx';
 import AudioUploadModal from './src/components/AudioUploadModal.tsx';
 import ImageGenerationModal from './src/components/ImageGenerationModal.tsx';
 import SpecialsTab from './src/components/SpecialsTab.tsx';
+import ContentCalendarTab from './src/components/ContentCalendarTab.tsx';
 import { SafeUserText } from './src/utils/SafeHtml';
 import { sanitizeTextInput, extractEmailAddresses } from './src/utils/security';
 
@@ -105,6 +106,8 @@ import QuotaExceededModal from './src/components/QuotaExceededModal';
 import QuotaWarningBanner from './src/components/QuotaWarningBanner';
 import BlurredLoadingOverlay from './src/components/BlurredLoadingOverlay';
 import jsPDF from 'jspdf';
+import JSZip from 'jszip';
+import EpubUploadHelpModal from './src/components/EpubUploadHelpModal.tsx';
 
 // SEO Meta Tag Manager
 const updateMetaTags = (title: string, description: string, keywords?: string) => {
@@ -205,6 +208,9 @@ const LearningIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 const ChatIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 6v12c0 .55-.45 1-1 1H4.5l-2.5 2.5V4c0-.55.45-1 1-1h11c.55 0 1 .45 1 1Z"/><path d="M20 2H7c-.55 0-1 .45-1 1v2h12c.55 0 1 .45 1 1v10h2c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1Z"/></svg>
+);
+const CalendarIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 );
 const TranscriptIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
@@ -709,7 +715,7 @@ const PowerPointOptionsModal: React.FC<{
     );
 };
 // --- TYPES ---
-type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'brainstorm' | 'opportunities' | 'mckinsey' | 'agilePbi' | 'email' | 'socialPost' | 'socialPostX' | 'main' | 'podcast' | 'specials';
+type ViewType = 'transcript' | 'summary' | 'faq' | 'learning' | 'followUp' | 'chat' | 'keyword' | 'sentiment' | 'mindmap' | 'storytelling' | 'blog' | 'businessCase' | 'exec' | 'quiz' | 'explain' | 'teachMe' | 'showMe' | 'thinkingPartner' | 'aiDiscussion' | 'brainstorm' | 'opportunities' | 'mckinsey' | 'agilePbi' | 'email' | 'socialPost' | 'socialPostX' | 'main' | 'podcast' | 'specials' | 'contentCalendar';
 type AnalysisType = ViewType | 'presentation';
 
 interface SlideContent {
@@ -2653,6 +2659,148 @@ ${sanitizedTranscript}`;
     excelAnalyzeModal.open();
   };
 
+  const epubHelpModal = useModalState();
+  const epubAnalyzeModal = useModalState();
+  const epubInputRef = useRef<HTMLInputElement>(null);
+
+  const extractTextFromEPUB = async (file: File): Promise<string> => {
+    const zip = await JSZip.loadAsync(file);
+
+    const toText = (html: string): string => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      doc.querySelectorAll('script, style, svg, math').forEach(n => n.remove());
+      const body = doc.body?.textContent || '';
+      const cleaned = body
+        .replace(/\u0000/g, '')
+        .replace(/\s+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+      return cleaned;
+    };
+
+    const isLikelyText = (s: string): boolean => {
+      if (!s) return false;
+      const len = s.length;
+      const nonPrintable = (s.match(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g) || []).length;
+      const letters = (s.match(/[A-Za-zÀ-ÿ]/g) || []).length;
+      const ratioLetters = letters / Math.max(1, len);
+      const ratioNonPrintable = nonPrintable / Math.max(1, len);
+      return ratioLetters > 0.1 && ratioNonPrintable < 0.02;
+    };
+
+    const readEntryText = async (name: string): Promise<string> => {
+      const entry = zip.file(name);
+      if (!entry) return '';
+      const html = await entry.async('string');
+      return toText(html);
+    };
+
+    let orderedNames: string[] = [];
+    const container = zip.file('META-INF/container.xml');
+    if (container) {
+      try {
+        const xml = await container.async('string');
+        const cdoc = new DOMParser().parseFromString(xml, 'application/xml');
+        const rootPath = cdoc.querySelector('rootfile')?.getAttribute('full-path') || '';
+        if (rootPath) {
+          const opfEntry = zip.file(rootPath);
+          if (opfEntry) {
+            const opfText = await opfEntry.async('string');
+            const odoc = new DOMParser().parseFromString(opfText, 'application/xml');
+            const manifest: Record<string, string> = {};
+            odoc.querySelectorAll('manifest > item').forEach(it => {
+              const id = it.getAttribute('id') || '';
+              const href = it.getAttribute('href') || '';
+              const media = it.getAttribute('media-type') || '';
+              if (id && href && /html|xhtml/i.test(media)) manifest[id] = href;
+            });
+            const base = rootPath.replace(/[^/]+$/, '');
+            odoc.querySelectorAll('spine > itemref').forEach(ir => {
+              const idref = ir.getAttribute('idref') || '';
+              const href = manifest[idref];
+              if (href) orderedNames.push(base + href);
+            });
+          }
+        }
+      } catch {}
+    }
+
+    const parts: string[] = [];
+    let usedSpine = false;
+    if (orderedNames.length > 0) {
+      usedSpine = true;
+      for (const n of orderedNames) {
+        const txt = await readEntryText(n);
+        if (isLikelyText(txt)) parts.push(txt);
+      }
+    } else {
+      const files = Object.keys(zip.files);
+      for (const name of files) {
+        if (/\.(xhtml|html|htm)$/i.test(name)) {
+          const txt = await readEntryText(name);
+          if (isLikelyText(txt)) parts.push(txt);
+        }
+      }
+    }
+
+    if (parts.length === 0) {
+      const hasEncryption = !!zip.file('META-INF/encryption.xml');
+      if (hasEncryption) {
+        throw new Error(t('epubEncrypted', 'EPUB lijkt versleuteld/DRM te bevatten (META-INF/encryption.xml). Tekst kan niet worden uitgelezen.'));
+      }
+      if (usedSpine) {
+        throw new Error(t('epubNoSpineText', 'EPUB bevat geen leesbare hoofdstukken in de spine of gebruikt een niet-ondersteunde structuur.'));
+      }
+      const hasContainer = !!zip.file('META-INF/container.xml');
+      if (!hasContainer) {
+        throw new Error(t('epubInvalidContainer', 'Ongeldige EPUB: META-INF/container.xml ontbreekt.'));
+      }
+      throw new Error(t('epubNoTextFoundDetailed', 'Geen leesbare HTML/XHTML-inhoud gevonden in de EPUB.'));
+    }
+
+    return parts.join('\n\n').trim();
+  };
+
+  const handleEpubSelectedFile = async (file: File | null) => {
+    if (!file) return;
+    const effectiveTier = userSubscription;
+    const normalizedType = (file.type || 'application/epub+zip').toLowerCase();
+    const uploadValidation = subscriptionService.validateFileUpload(effectiveTier, normalizedType, t);
+    if (!uploadValidation.allowed) { setError(uploadValidation.reason || t('uploadFailedUnsupportedTier')); upgradeModal.open(); return; }
+    if (!language) setLanguage(uiLang || 'en');
+    setError(null);
+    setAnonymizationReport(null);
+    setLoadingText(t('processingFile', 'Processing file...'));
+    try {
+      if (authState.user) {
+        const fileSizeKB = file.size / 1024; const estimatedTokens = Math.ceil(fileSizeKB * 0.75);
+        const tokenValidation = await tokenManager.validateTokenUsage(authState.user.uid, effectiveTier, estimatedTokens);
+        if (!tokenValidation.allowed) { setError(tokenValidation.reason || t('errorTokenLimitFileProcessing')); setLoadingText(''); return; }
+      }
+      const raw = await extractTextFromEPUB(file);
+      if (!raw.trim()) throw new Error(t('noTextFound'));
+      const limits = subscriptionService.getTierLimits(effectiveTier);
+      const lengthValidation = subscriptionService.validateTranscriptLength(effectiveTier, raw.length, t);
+      if (!lengthValidation.allowed) { setError(lengthValidation.reason || t('transcriptTooLong', { currentLength: raw.length, maxLength: limits.maxTranscriptLength })); setShowUpgradeModal(true); setLoadingText(''); return; }
+      setTranscript(raw);
+      setRecordingStartMs(Date.now());
+      try { if (authState.user) { const actualTokens = tokenCounter.countTokens(raw); await tokenManager.recordTokenUsage(authState.user.uid, 0, actualTokens); } } catch {}
+      const emails = extractEmailAddresses(raw); setEmailAddresses(emails);
+      setSummary(''); setFaq(''); setLearningDoc(''); setFollowUpQuestions(''); setChatHistory([]);
+      setKeywordAnalysis(null); setSentimentAnalysisResult(null); setMindmapMermaid(''); setMindmapSvg(''); setExecutiveSummaryData(null); setStorytellingData(null); setBusinessCaseData(null); setQuizQuestions(null);
+      setStatus(RecordingStatus.FINISHED);
+      try { if (authState.user) { await incrementUserDailyUsage(authState.user.uid, 'upload'); await incrementUserMonthlySessions(authState.user.uid); setDailyUploadCount(prev => prev + 1); } } catch {}
+      setActiveView('transcript'); setLoadingText('');
+      try { epubAnalyzeModal.close(); } catch {}
+      if (epubInputRef.current) { try { epubInputRef.current.value = ""; } catch {} }
+    } catch (err: any) {
+      setError(`${t('fileReadFailed')}: ${err?.message || t('unknownError')}`);
+      setStatus(RecordingStatus.ERROR);
+      setLoadingText('');
+    }
+  };
+
   const extractPlainTextFromFile = async (file: File): Promise<string> => {
     const fileName = file.name.toLowerCase();
     const fileType = file.type;
@@ -4489,6 +4637,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
             if (name.endsWith('.html') || name.endsWith('.htm')) return 'text/html';
             if (name.endsWith('.md')) return 'text/markdown';
             if (name.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            if (name.endsWith('.epub')) return 'application/epub+zip';
             if (name.endsWith('.txt')) return 'text/plain';
             return '';
         };
@@ -4564,6 +4713,10 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
             else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileName.endsWith('.docx')) {
                 text = await extractTextFromDOCX(file);
             }
+            // EPUB bestanden
+            else if (fileType === 'application/epub+zip' || fileName.endsWith('.epub')) {
+                text = await extractTextFromEPUB(file);
+            }
             // Plain text bestanden
             else if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
                 text = await file.text();
@@ -4579,6 +4732,17 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
 
             if (!text.trim()) {
                 throw new Error(t('noTextFound', 'Geen tekst gevonden in het bestand.'));
+            }
+
+            // Validate transcript length against tier limits before recording usage
+            const limits = subscriptionService.getTierLimits(effectiveTier);
+            const lengthValidation = subscriptionService.validateTranscriptLength(effectiveTier, text.length, t);
+            if (!lengthValidation.allowed) {
+                setError(lengthValidation.reason || t('transcriptTooLong', { currentLength: text.length, maxLength: limits.maxTranscriptLength }));
+                setShowUpgradeModal(true);
+                setLoadingText('');
+                if (fileInputRef.current) { fileInputRef.current.value = ""; }
+                return;
             }
 
             setTranscript(text);
@@ -4613,7 +4777,7 @@ const [socialPostXData, setSocialPostXData] = useState<SocialPostData | null>(nu
             setBusinessCaseData(null);
             setQuizQuestions(null);
             setStatus(RecordingStatus.FINISHED);
-            // Increment usage counters on successful finish
+            // Increment usage counters on successful finish (only when within tier limits)
             try {
               if (authState.user) {
                 await incrementUserDailyUsage(authState.user.uid, 'upload');
@@ -5047,6 +5211,17 @@ Provide a detailed analysis that could be used for further AI processing and ana
             setError(tokenValidation.reason || t('errorTokenLimit'));
             setShowUpgradeModal(true);
             return;
+        }
+
+        // Enforce transcript length limits before recording usage
+        {
+          const limits = subscriptionService.getTierLimits(effectiveTier);
+          const lengthValidation = subscriptionService.validateTranscriptLength(effectiveTier, textLength, t);
+          if (!lengthValidation.allowed) {
+            setError(lengthValidation.reason || t('transcriptTooLong', { currentLength: textLength, maxLength: limits.maxTranscriptLength }));
+            setShowUpgradeModal(true);
+            return;
+          }
         }
 
         setError(null);
@@ -5618,9 +5793,16 @@ const callGeminiServer = async (
 ) => {
   const envBase = (import.meta as any).env?.VITE_FUNCTIONS_BASE_URL || '';
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
   const candidates: string[] = [];
-  if (origin) candidates.push(origin);
+  // Prefer explicit env base first
   if (envBase && String(envBase).startsWith('http')) candidates.push(String(envBase));
+  if (origin) candidates.push(origin);
+  // Local fallbacks for dev: Netlify dev (8888) and functions:serve (9000)
+  if (host.includes('localhost')) {
+    candidates.push('http://localhost:8888');
+    candidates.push('http://localhost:9000');
+  }
 
   const paths = ['/.netlify/functions/gemini-generate', '/gemini-generate'];
   let lastErr: any = null;
@@ -5703,7 +5885,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
     // Validate token usage before making API call
     if (authState.user) {
         const prompt = getAnalysisPrompt(type, language!, outputLang || language!);
-        const fullPrompt = `${prompt}\n\nHere is the text:\n\n${sanitizedTranscript}`;
+        const fullPrompt = `${prompt}\n\nHere is the text:\n\n${getTranscriptSlice(sanitizedTranscript, 20000)}`;
         const tokenEstimate = tokenManager.estimateTokens(fullPrompt, 2);
         
         const tokenValidation = await tokenManager.validateTokenUsage(
@@ -5726,7 +5908,7 @@ const handleGenerateAnalysis = async (type: ViewType, postCount: number = 1) => 
         const prompt = getAnalysisPrompt(type, language!, outputLang || language!);
         if (!prompt) throw new Error(t('invalidAnalysisType', 'Invalid analysis type'));
 
-        const fullPrompt = `${prompt}\n\nHere is the text:\n\n${sanitizedTranscript}`;
+        const fullPrompt = `${prompt}\n\nHere is the text:\n\n${getTranscriptSlice(sanitizedTranscript, 20000)}`;
 
         const { getModelForUser } = await import('./src/utils/tierModelService');
         const modelName = await getModelForUser(authState.user?.uid || '', 'analysisGeneration');
@@ -9720,6 +9902,53 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
             }
             return renderChatView();
         }
+        if (activeView === 'contentCalendar') {
+            return (
+                <ContentCalendarTab
+                    t={t}
+                    transcript={transcript}
+                    language={outputLang}
+                    userId={authState.user?.uid || ''}
+                    userTier={userSubscription}
+                    sessionId={sessionId}
+                    onMoveToTranscript={async (content) => {
+                        setTranscript(content);
+                        setRecordingStartMs(Date.now());
+                        setMainMode('transcript');
+                        setSelectedAnalysis(null);
+                        setSummary('');
+                        setFaq('');
+                        setLearningDoc('');
+                        setFollowUpQuestions('');
+                        setKeywordAnalysis(null);
+                        setSentimentAnalysisResult(null);
+                        setChatHistory([]);
+                        setMindmapMermaid('');
+                        setExecutiveSummaryData(null);
+                        setStorytellingData(null);
+                        setBusinessCaseData(null);
+                        setBlogData(null);
+                        setExplainData(null);
+                        setTeachMeData(null);
+                        setThinkingPartnerAnalysis('');
+                        setSelectedThinkingPartnerTopic('');
+                        setSelectedThinkingPartner(null);
+                        setOpportunitiesData(null);
+                        setMckinseyAnalysis(null);
+                        setSelectedMckinseyTopic('');
+                        setSelectedMckinseyRole('');
+                        setSelectedMckinseyFramework('');
+                        setSocialPostData(null);
+                        setSocialPostXData(null);
+                        setQuizQuestions([]);
+                        if (authState.user?.uid) {
+                            try { await incrementUserMonthlySessions(authState.user.uid); } catch {}
+                        }
+                        setActiveView('transcript');
+                    }}
+                />
+            );
+        }
         if (activeView === 'exec') {
             if (!executiveSummaryData && loadingText) {
                 return <BlurredLoadingOverlay text={`${loadingText}...`} />;
@@ -12133,6 +12362,21 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                     {t('chatWithTranscript')}
                                 </span>
                             </button>
+                            <button
+                                onClick={() => {
+                                  setMainMode('analysis');
+                                  setSelectedAnalysis('contentCalendar');
+                                  setActiveView('contentCalendar');
+                                }}
+                                disabled={isProcessing}
+                                className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={t('contentCalendar', 'Content kalender')}
+                            >
+                                <CalendarIcon className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {t('contentCalendar', 'Content kalender')}
+                                </span>
+                            </button>
                             {/* Specials button */}
                             <button
                               onClick={() => {
@@ -12609,6 +12853,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
 
       <AudioUploadHelpModal isOpen={audioUploadHelpModal.isOpen} onClose={audioUploadHelpModal.close} t={t} />
       <PowerPointUploadHelpModal isOpen={powerPointHelpModal.isOpen} onClose={powerPointHelpModal.close} t={t} />
+      <EpubUploadHelpModal isOpen={epubHelpModal.isOpen} onClose={epubHelpModal.close} t={t} />
 
       {powerPointAnalyzeModal.isOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
@@ -12776,6 +13021,42 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                 <button onClick={systemAudioHelp.close} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold">
                   {t('close')}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {epubAnalyzeModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[101]">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-3xl w-full m-4 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('sessionOptionAnalyzeEpub', 'Boek (EPUB) analyseren')}</h3>
+                <button onClick={() => epubHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline">
+                  📄 {t('epubHelpTitle', 'EPUB hulp')}
+                </button>
+              </div>
+              <button onClick={() => epubAnalyzeModal.close()} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-slate-700 dark:text-slate-300">{t('sessionOptionAnalyzeEpubDesc', 'Upload of drag‑en‑drop een EPUB‑boek en zet om naar platte tekst')}</p>
+              <div className="space-y-2">
+                <div
+                  onDragOver={(e) => { e.preventDefault(); }}
+                  onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer?.files?.[0] || null; if (f) handleEpubSelectedFile(f); }}
+                  className="flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-lg p-8 border-slate-300 dark:border-slate-600 cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  onClick={() => epubInputRef.current?.click()}
+                >
+                  <svg className="w-8 h-8 text-rose-600 dark:text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <p className="text-slate-700 dark:text-slate-300 font-medium">{t('epubUploadDragText', 'Sleep je EPUB hier of klik')}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t('epubSupportedFormats', 'Ondersteund formaat: .epub')}</p>
+                  <input type="file" ref={epubInputRef} onChange={(e) => { const f = e.target.files?.[0] || null; handleEpubSelectedFile(f); }} className="hidden" accept=".epub,application/epub+zip" />
+                </div>
               </div>
             </div>
           </div>
@@ -14242,7 +14523,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('uploadTranscript')}</h3>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionFileDesc')}</p>
                                     </div>
-                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(userSubscription === SubscriptionTier.DIAMOND ? '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,.docx,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document')}/>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept={(userSubscription === SubscriptionTier.DIAMOND ? '.txt,.pdf,.rtf,.html,.htm,.md,.docx,.epub,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/epub+zip' : userSubscription === SubscriptionTier.FREE ? '.txt,text/plain' : '.txt,.pdf,.rtf,.html,.htm,.md,.docx,.epub,text/plain,application/pdf,application/rtf,text/html,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/epub+zip')}/>
                                     <input type="file" ref={imageInputRef} onChange={handleImageUpload} className="hidden" accept="image/*,.jpg,.jpeg,.png,.webp,.gif"/>
                                     <button onClick={handleSessionOptionUpload} disabled={isProcessing || !language || !outputLang} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
                                         <UploadIcon className="w-5 h-5" />
@@ -14387,6 +14668,28 @@ IMPORTANT: Return ONLY the JSON object, no additional text or formatting.`;
                                         <button onClick={() => setShowWebPageHelp(true)} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
                                             {t('webPageHelpTitle')}
                                         </button>
+                                    </div>
+                                </div>
+
+                                {/* EPUB Books Option */}
+                                <div className="bg-white dark:bg-slate-700 rounded-xl border-2 border-slate-200 dark:border-slate-600 p-6 hover:border-rose-300 dark:hover:border-rose-500 transition-all duration-200 hover:shadow-lg h-full min-h-[300px] flex flex-col">
+                                    <div className="text-center mb-4">
+                                        <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-8 h-8 text-rose-600 dark:text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 19.5A2.5 2.5 0 016.5 17H20M4 4.5A2.5 2.5 0 016.5 7H20M6.5 7v10" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('sessionOptionAnalyzeEpub', 'Boek (EPUB) analyseren')}</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">{t('sessionOptionAnalyzeEpubDesc', 'Upload of drag‑en‑drop een EPUB‑boek en zet om naar platte tekst')}</p>
+                                    </div>
+                                    <button type="button" onClick={() => epubAnalyzeModal.open()} disabled={isProcessing} className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 dark:from-rose-600 dark:to-pink-700 text-white hover:from-rose-600 hover:to-pink-700 dark:hover:from-rose-700 dark:hover:to-pink-800 disabled:from-slate-300 dark:disabled:from-slate-800 disabled:to-slate-400 dark:disabled:to-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 font-medium">
+                                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 19.5A2.5 2.5 0 016.5 17H20M4 4.5A2.5 2.5 0 016.5 7H20M6.5 7v10" /></svg>
+                                      <span>{t('sessionOptionAnalyzeEpub', 'Boek (EPUB) analyseren')}</span>
+                                    </button>
+                                    <div className="mt-3 text-center">
+                                      <button onClick={() => epubHelpModal.open()} className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline hover:no-underline transition-all duration-200">
+                                        📄 {t('epubHelpTitle', 'EPUB hulp')}
+                                      </button>
                                     </div>
                                 </div>
 

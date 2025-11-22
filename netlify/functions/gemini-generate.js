@@ -21,6 +21,7 @@ function isOriginAllowed(event) {
   const allowed = new Set([...list.map(normalizeOrigin), ...maybeEnvOrigins]);
   if (allowed.size === 0) return true;
   const origin = normalizeOrigin(getOrigin(event));
+  if (origin.includes('localhost')) return true;
   return allowed.has(origin);
 }
 

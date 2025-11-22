@@ -3722,4 +3722,26 @@ RecapHorizon : Au-delà du chaos, l'essence en premier.`,
       innovativeIdea: "Idée innovante"
     }
   }
+  ,
+  contentCalendar: "Calendrier de contenu",
+  frequencyPerWeek: "Fréquence par semaine",
+  postingSchedule: "Plan de publication",
+  postsPerWeek: "Posts par semaine",
+  contentPillars: "Piliers de contenu",
+  "contentPillars.educational": "Éducatif",
+  "contentPillars.storytelling": "Storytelling",
+  "contentPillars.behindScenes": "Coulisses",
+  "contentPillars.faqs": "FAQs",
+  "contentPillars.objections": "Objections",
+  "contentPillars.socialProof": "Preuve sociale",
+  "contentPillars.engagement": "Prompts d’engagement",
+  "contentPillars.caseStudy": "Étude de cas",
+  "contentPillars.ugc": "Contenu généré par les utilisateurs"
+  ,
+  sessionOptionAnalyzeEpub: "Analyser un livre (EPUB)",
+  sessionOptionAnalyzeEpubDesc: "Téléchargez ou glissez‑déposez un livre EPUB et convertissez en texte brut",
+  epubUploadDragText: "Glissez votre EPUB ici ou cliquez",
+  epubSupportedFormats: "Format pris en charge : .epub (EPUB 2/3)",
+  epubHelpTitle: "Aide EPUB",
+  campaignDurationWeeks: "Durée de la campagne (semaines)"
 };

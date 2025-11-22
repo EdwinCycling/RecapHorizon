@@ -394,9 +394,7 @@ export class AIProviderManager {
     const envBase = (import.meta.env.VITE_FUNCTIONS_BASE_URL || '').trim();
     const origin = (typeof window !== 'undefined' ? window.location.origin : '');
     const candidates: string[] = [];
-    if (envBase && envBase.startsWith('http')) candidates.push(envBase);
     if (origin) candidates.push(origin);
-    // Always add localhost proxy for dev
     candidates.push('http://localhost:3000');
     const host = (typeof window !== 'undefined' ? window.location.hostname : '');
     const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
@@ -404,6 +402,7 @@ export class AIProviderManager {
       candidates.push('http://127.0.0.1:9000');
       candidates.push('http://localhost:8888');
     }
+    if (envBase && envBase.startsWith('http')) candidates.push(envBase);
 
     const tried = new Set<string>();
     for (const base of candidates) {
@@ -414,6 +413,7 @@ export class AIProviderManager {
       ];
       for (const p of paths) {
         const url = `${base}${p}`;
+        
         try {
           const response = await fetch(url, {
             method: 'POST',
@@ -461,6 +461,7 @@ export class AIProviderManager {
             }
           };
         } catch (_err) {
+          
           continue;
         }
       }

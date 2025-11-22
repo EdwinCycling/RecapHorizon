@@ -3971,4 +3971,26 @@ notionIntegrationSecurityDesc: "Ihre Notion-Daten bleiben sicher, da wir nur auf
       innovativeIdea: "Innovative Idee"
     }
   }
+  ,
+  contentCalendar: "Content‑Kalender",
+  frequencyPerWeek: "Frequenz pro Woche",
+  postingSchedule: "Veröffentlichungsplan",
+  postsPerWeek: "Posts pro Woche",
+  contentPillars: "Content‑Säulen",
+  "contentPillars.educational": "Lehrreich",
+  "contentPillars.storytelling": "Storytelling",
+  "contentPillars.behindScenes": "Hinter den Kulissen",
+  "contentPillars.faqs": "FAQs",
+  "contentPillars.objections": "Einwände",
+  "contentPillars.socialProof": "Social Proof",
+  "contentPillars.engagement": "Engagement‑Prompts",
+  "contentPillars.caseStudy": "Fallstudie",
+  "contentPillars.ugc": "User‑generated Content"
+  ,
+  sessionOptionAnalyzeEpub: "Buch (EPUB) analysieren",
+  sessionOptionAnalyzeEpubDesc: "Lade ein EPUB‑Buch hoch oder per Drag‑and‑Drop und konvertiere in Klartext",
+  epubUploadDragText: "Ziehe dein EPUB hierher oder klicke",
+  epubSupportedFormats: "Unterstütztes Format: .epub (EPUB 2/3)",
+  epubHelpTitle: "EPUB Hilfe",
+  campaignDurationWeeks: "Kampagnendauer (Wochen)"
 };

@@ -25,7 +25,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxSessionDuration: 90,
     maxSessionsPerDay: -1, // unlimited
     maxTranscriptLength: 30000,
-    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
+    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', '.epub', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/epub+zip', 'email'],
     maxTokensPerMonth: 150000, // 150k tokens per month
     maxTokensPerDay: -1, // unlimited daily tokens
     maxMonthlyAudioMinutes: 1000 // 1000 minutes per month
@@ -34,7 +34,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxSessionDuration: 90,
     maxSessionsPerDay: -1,
     maxTranscriptLength: 50000,
-    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
+    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', '.epub', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/epub+zip', 'email'],
     maxTokensPerMonth: 500000, // 500k tokens per month
     maxTokensPerDay: -1, // unlimited daily tokens
     maxMonthlyAudioMinutes: 2500 // 2500 minutes per month
@@ -43,7 +43,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxSessionDuration: 120,
     maxSessionsPerDay: -1,
     maxTranscriptLength: -1, // unlimited
-    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'email'],
+    allowedFileTypes: ['.txt', '.pdf', '.rtf', '.html', '.htm', '.md', '.docx', '.eml', '.msg', '.epub', 'text/plain', 'application/pdf', 'application/rtf', 'text/html', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/epub+zip', 'email'],
     maxTokensPerMonth: -1, // unlimited
     maxTokensPerDay: -1, // unlimited
     maxMonthlyAudioMinutes: 2500 // 2500 minutes per month

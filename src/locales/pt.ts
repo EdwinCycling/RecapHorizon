@@ -980,7 +980,29 @@ export const pt = {
     strategicAlignment: {
       name: "Alinhamento Estratégico",
       description: "Melhorar alinhamento estratégico, coerência organizacional e execução de estratégias."
-    }
+  ,
+  contentCalendar: "Calendário de conteúdo",
+  frequencyPerWeek: "Frequência por semana",
+  postingSchedule: "Plano de publicação",
+  postsPerWeek: "Publicações por semana",
+  contentPillars: "Pilares de conteúdo",
+  "contentPillars.educational": "Educacional",
+  "contentPillars.storytelling": "Storytelling",
+  "contentPillars.behindScenes": "Bastidores",
+  "contentPillars.faqs": "FAQs",
+  "contentPillars.objections": "Objeções",
+  "contentPillars.socialProof": "Prova social",
+  "contentPillars.engagement": "Prompts de engajamento",
+  "contentPillars.caseStudy": "Estudo de caso",
+  "contentPillars.ugc": "Conteúdo gerado por usuários"
+  ,
+  sessionOptionAnalyzeEpub: "Analisar livro (EPUB)",
+  sessionOptionAnalyzeEpubDesc: "Envie ou arraste e solte um livro EPUB e converta para texto simples",
+  epubUploadDragText: "Arraste seu EPUB aqui ou clique",
+  epubSupportedFormats: "Formato compatível: .epub (EPUB 2/3)",
+  epubHelpTitle: "Ajuda EPUB",
+  campaignDurationWeeks: "Duração da campanha (semanas)"
+}
   },
   
   // Clipboard messages

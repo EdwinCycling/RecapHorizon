@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface BlurredLoadingOverlayProps {
   isVisible?: boolean;
@@ -16,6 +16,18 @@ const BlurredLoadingOverlay: React.FC<BlurredLoadingOverlayProps> = ({
   if (!isVisible) return null;
   
   const displayText = text || loadingText;
+
+  useEffect(() => {
+    const prevOverflow = typeof document !== 'undefined' ? document.body.style.overflow : '';
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = prevOverflow || '';
+      }
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[9998] animate-in fade-in duration-300">

@@ -324,6 +324,11 @@ export const en = {
   promptsItemsReady: "Validated {count} item(s), ready to import",
   close: "Close",
   gotoPricing: "Go to pricing overview",
+  sessionOptionAnalyzeEpub: "Analyze Book (EPUB)",
+  sessionOptionAnalyzeEpubDesc: "Upload or drag‑and‑drop an EPUB book and convert to plain text",
+  epubUploadDragText: "Drag your EPUB here or click",
+  epubSupportedFormats: "Supported format: .epub (EPUB 2/3)",
+  epubHelpTitle: "EPUB Help",
 
   // Mobile Audio Help
   androidLabel: "🤖 Android:",
@@ -4432,14 +4437,31 @@ Generate the output as a comprehensive, structured report in {output_language}. 
       includeAcceptanceCriteria: "Include acceptance criteria",
       includeValueNote: "Include business value note",
       includeTechnicalNote: "Include technical considerations"
-    },
-    card: {
-      acceptanceCriteria: "Acceptance criteria",
-      notes: "Notes",
-      businessValue: "Business value",
-      technicalConsiderations: "Technical considerations",
-      fundamentalReason: "Fundamental reason",
-      innovativeIdea: "Innovative idea"
-    }
+  },
+  card: {
+    acceptanceCriteria: "Acceptance criteria",
+    notes: "Notes",
+    businessValue: "Business value",
+    technicalConsiderations: "Technical considerations",
+    fundamentalReason: "Fundamental reason",
+    innovativeIdea: "Innovative idea"
   }
+  ,
+  contentCalendar: "Content calendar",
+  frequencyPerWeek: "Frequency per week",
+  postingSchedule: "Posting schedule",
+  postsPerWeek: "Posts per week",
+  contentPillars: "Content pillars",
+  "contentPillars.educational": "Educational",
+  "contentPillars.storytelling": "Storytelling",
+  "contentPillars.behindScenes": "Behind the scenes",
+  "contentPillars.faqs": "FAQs",
+  "contentPillars.objections": "Objections",
+  "contentPillars.socialProof": "Social proof",
+  "contentPillars.engagement": "Engagement prompts",
+  "contentPillars.caseStudy": "Case study",
+  "contentPillars.ugc": "User-generated content"
+  ,
+  campaignDurationWeeks: "Campaign duration (weeks)",
+}
 };

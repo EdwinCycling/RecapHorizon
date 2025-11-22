@@ -201,6 +201,7 @@ const ContentCalendarTab: React.FC<ContentCalendarTabProps> = ({
     const allowedPillars = pillars;
     setIsGenerating(true);
     try {
+      const campaignWeeks = 4;
       const promptParts = [
         'Act als een professionele Social Media Strateeg. Gebruik de onderstaande inputs om een 30-dagen contentkalender te genereren, gericht op het behalen van het Hoofddoel.',
         'Voer eerst een beknopt intern onderzoek en strategiestap uit op basis van jouw bestaande kennis en, indien beschikbaar, live webgegevens voor dit Onderwerp/Niche en de Doelgroep. Gebruik deze inzichten alleen om de kalender te begeleiden; lever ze NIET afzonderlijk.',

@@ -2,6 +2,8 @@ import SocialPostXCard from './SocialPostXCard';
 import SocialPostCard from './SocialPostCard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { buildRecapHorizonFilename } from '../utils/downloadUtils';
+import { buildEpub } from '../utils/epub';
+import { markdownToSanitizedHtml } from '../utils/textUtils';
 import jsPDF from 'jspdf';
 import { StorytellingData, ExecutiveSummaryData, QuizQuestion, KeywordTopic, SentimentAnalysisResult, ChatMessage, BusinessCaseData, ExplainData, SocialPostData, TeachMeData, TranslationFunction } from '../../types';
 import { OpportunityAnalysisData } from './OpportunitiesTab';
@@ -683,7 +685,7 @@ const getOrCacheResult = (type: RecapItemType) => {
     }, [enabledItems, composeSectionText, resultsCache]);
 
     // Plain-text version for export/copy: convert markdown to formatted plain text
-    const composedPlainText = useMemo(() => {
+  const composedPlainText = useMemo(() => {
         if (enabledItems.length === 0) return '';
         const sections = enabledItems.map(i => {
             const section = composeSectionText(i.type);
@@ -691,7 +693,27 @@ const getOrCacheResult = (type: RecapItemType) => {
             return `${section.title}\n\n${cleanBody}`;
         });
         return sections.join('\n\n\n');
-    }, [enabledItems, composeSectionText, resultsCache, markdownToPlainText]);
+  }, [enabledItems, composeSectionText, resultsCache, markdownToPlainText]);
+
+    const handleExportEpub = useCallback(async () => {
+        if (!enabledItems.length) return;
+        const sections = enabledItems.map(i => {
+            const section = composeSectionText(i.type);
+            const htmlBody = markdownToSanitizedHtml(getOrCacheResult(i.type));
+            return { id: i.id, title: section.title, html: htmlBody };
+        });
+        const lang = outputLanguage || 'nl';
+        const blob = await buildEpub({ title: 'RecapHorizon Export', author: 'RecapHorizon', lang, sections });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = buildRecapHorizonFilename('epub');
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        if (onNotify) onNotify('EPUB gedownload', 'success');
+    }, [enabledItems, composeSectionText, resultsCache, outputLanguage]);
 
     const handleExportText = useCallback(() => {
         if (!composedPlainText) return;
@@ -848,11 +870,12 @@ To send via email:
 							</ul>
 
 							{numEnabled > 0 && (
-								<div className="flex flex-wrap items-center gap-2 mt-3">
-									<button onClick={handleExportPdf} className="px-3 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium">{t('exportToPdf')}</button>
-									<button onClick={handleExportText} className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium">{t('exportToText')}</button>
-									<button onClick={handleMailComposed} className="px-3 py-2 rounded bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-800 text-white text-sm font-medium">{t('copyForEmail')}</button>
-								</div>
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                    <button onClick={handleExportPdf} className="px-3 py-2 rounded bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium">{t('exportToPdf')}</button>
+                                    <button onClick={handleExportText} className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium">{t('exportToText')}</button>
+                                    <button onClick={handleExportEpub} className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium">{t('exportToEpub', 'Export to EPUB')}</button>
+                                    <button onClick={handleMailComposed} className="px-3 py-2 rounded bg-slate-600 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-800 text-white text-sm font-medium">{t('copyForEmail')}</button>
+                                </div>
 							)}
 						</>
 					)}
@@ -863,5 +886,7 @@ To send via email:
 };
 
 export default RecapHorizonPanel;
+
+async function handleExportEpub(this: any) {}
 
 
